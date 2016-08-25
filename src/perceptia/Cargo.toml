@@ -1,0 +1,12 @@
+[package]
+name = "perceptia"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+dharma = { path = "../dharma" }
+
+[[bin]]
+name = "perceptia"
+path = "perceptia.rs"
+

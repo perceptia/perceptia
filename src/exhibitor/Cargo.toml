@@ -1,0 +1,11 @@
+[package]
+name = "exhibitor"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+
+[lib]
+name = "exhibitor"
+path = "exhibitor.rs"
+

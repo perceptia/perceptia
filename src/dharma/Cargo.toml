@@ -1,0 +1,11 @@
+[package]
+name = "dharma"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+
+[lib]
+name = "dharma"
+path = "dharma.rs"
+

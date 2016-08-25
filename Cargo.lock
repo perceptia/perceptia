@@ -1,0 +1,11 @@
+[root]
+name = "perceptia"
+version = "0.0.1"
+dependencies = [
+ "dharma 0.0.1",
+]
+
+[[package]]
+name = "dharma"
+version = "0.0.1"
+

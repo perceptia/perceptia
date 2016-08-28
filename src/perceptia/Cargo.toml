@@ -4,7 +4,9 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-dharma = { path = "../dharma" }
+dharma         = { path = "../dharma" }
+qualia         = { path = "../qualia" }
+device_manager = { path = "../device_manager" }
 
 [[bin]]
 name = "perceptia"

@@ -1,3 +1,9 @@
 [workspace]
-members = ["src/dharma", "src/perceptia"]
+
+members = [
+        "src/dharma",
+        "src/qualia",
+        "src/device_manager",
+        "src/perceptia"
+    ]
 

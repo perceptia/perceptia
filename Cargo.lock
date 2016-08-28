@@ -1,11 +1,28 @@
 [root]
-name = "perceptia"
+name = "qualia"
 version = "0.0.1"
 dependencies = [
  "dharma 0.0.1",
 ]
 
 [[package]]
+name = "device_manager"
+version = "0.0.1"
+dependencies = [
+ "dharma 0.0.1",
+ "qualia 0.0.1",
+]
+
+[[package]]
 name = "dharma"
 version = "0.0.1"
+
+[[package]]
+name = "perceptia"
+version = "0.0.1"
+dependencies = [
+ "device_manager 0.0.1",
+ "dharma 0.0.1",
+ "qualia 0.0.1",
+]
 

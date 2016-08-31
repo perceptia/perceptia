@@ -3,7 +3,7 @@
 
 //! `Signaler` allows to send events (notifications) to other parts of application.
 //!
-//! Together with `Samsara` constitutes higher level framework over `Sender` and `Receiver`.
+//! Together with `EventLoop` constitutes higher level framework over `Sender` and `Receiver`.
 
 // -------------------------------------------------------------------------------------------------
 

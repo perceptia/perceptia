@@ -15,12 +15,14 @@
 //! On to of that we add `Signaler` which can subscribe receivers for signals (application defined
 //! events) creating notification mechanism.
 //!
-//! ### `samsara` module
+//! ### `event_loop` module
 //!
-//! On top of `Signaler` we add `Samsara`, which is event queue assigned to thread. `Samsara` has
-//! assigned `Modules` constituting separate application components. `Modules` can be assigned to
-//! `Samsara`s in flexible way making it easy to control tasks processed in threads. `Modules` do
-//! not share memory and communicate with signals.
+//! On top of `Signaler` we add `EventLoop`, which is event queue assigned to thread. `EventLoop`
+//! has assigned `Module`s constituting separate application components. `Module`s can be assigned
+//! to `EventLoop`s in flexible way making it easy to control tasks processed in threads. `Module`s
+//! do not share memory and communicate with signals.
+
+#![feature(fnbox)]
 
 /// Communication between two endpoints in different threads.
 ///
@@ -32,7 +34,7 @@ pub use bridge::{connect, Sender, Receiver, ReceiveResult, Transportable};
 pub mod signaler;
 pub use signaler::{Event, Signaler, SignalId};
 
-/// Main thread loop with notification listening.
+/// This module contains implementation of main thread loop with notification listening.
 ///
-pub mod samsara;
-pub use samsara::{Context, InitResult, Module, Samsara};
+pub mod event_loop;
+pub use event_loop::{Context, EventLoop, EventLoopInfo, InitResult, Module};

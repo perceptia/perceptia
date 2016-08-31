@@ -1,16 +1,19 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
+// the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! `Samsara` is event loop. It organizes work flow of a single thread. Independent logical parts
-//! of application called `Module`s can freely add to  given `Samsara`s creating flexible
-//! multi-threading framework. `Samsara` contains one receiver which can be used to push events and
-//! data to event queue.
+//! `EventLoop` organizes work flow of a single thread. Independent logical parts of application
+//! called `Module`s can be freely added to given `EventLoop`s creating flexible multi-threading
+//! framework. `EventLoop` contains one receiver which can be used to push events and data to event
+//! queue.
+//!
+//! `Module`s are created inside new thread so do not have to implement Send. User passes only
+//! their constructors to `EventLoopInfo` structure which is context for creation on `EventLoop`.
 
 // -------------------------------------------------------------------------------------------------
 
 use std;
 use std::collections::btree_map::BTreeMap as Map;
+use std::boxed::FnBox;
 
 use bridge::{self, ReceiveResult};
 use signaler;
@@ -26,7 +29,7 @@ pub type InitResult = Vec<signaler::SignalId>;
 /// `Module` defines independent part of application. One module is bounded only to single thread.
 /// More modules may be run in the same thread. Modules do not share memory, communicate with
 /// signals.
-pub trait Module: Send {
+pub trait Module {
     type T: bridge::Transportable;
     fn initialize(&mut self, context: &mut Context<Self::T>) -> InitResult;
     fn execute(&mut self, package: &Self::T);
@@ -56,39 +59,70 @@ impl<'a, P: bridge::Transportable> Context<'a, P> {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Thread loop with event queue with communication over `bridge`s.
-pub struct Samsara<P: bridge::Transportable + 'static> {
+/// Context for creation of `EventLoop`.
+pub struct EventLoopInfo<P: bridge::Transportable + 'static> {
     name: String,
+    signaler: signaler::Signaler<P>,
+    constructors: Vec<Box<FnBox() -> Box<Module<T = P>> + Send + Sync>>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<P: bridge::Transportable + std::fmt::Display> EventLoopInfo<P> {
+    /// `EventLoop` constructor.
+    pub fn new(name: String, signaler: signaler::Signaler<P>) -> Self {
+        EventLoopInfo {
+            name: name,
+            signaler: signaler,
+            constructors: Vec::new(),
+        }
+    }
+
+    /// Add module constructor.
+    pub fn add_module(&mut self, constructor: Box<FnBox() -> Box<Module<T = P>> + Send + Sync>) {
+        self.constructors.push(constructor);
+    }
+
+    /// Consume `EventLoopInfo` to start event loop in new thread.
+    pub fn start_event_loop(self) -> std::io::Result<std::thread::JoinHandle<()>> {
+        std::thread::Builder::new()
+            .name(self.name.clone())
+            .spawn(move || EventLoop::new(self).run() )
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Thread loop with event queue with communication over `bridge`s.
+pub struct EventLoop<P: bridge::Transportable + 'static> {
+    signaler: signaler::Signaler<P>,
     modules: Vec<Box<Module<T = P>>>,
     receiver: bridge::Receiver<signaler::Event<P>>,
-    signaler: signaler::Signaler<P>,
     subscriptions: Map<signaler::SignalId, Vec<usize>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P: bridge::Transportable + std::fmt::Display> Samsara<P> {
-    /// `Samsara` constructor.
-    pub fn new(name: String, signaler: signaler::Signaler<P>) -> Self {
-        Samsara {
-            name: name,
+impl<P: bridge::Transportable + std::fmt::Display> EventLoop<P> {
+    /// `EventLoop` constructor. Constructs `EventLoop` and all assigned modules.
+    pub fn new(mut info: EventLoopInfo<P>) -> Self {
+        // Create event loop
+        let mut event_loop = EventLoop {
+            signaler: info.signaler,
             modules: Vec::new(),
             receiver: bridge::Receiver::new(),
-            signaler: signaler,
             subscriptions: Map::new(),
+        };
+
+        // Consume constructors to return module instances
+        loop {
+            match info.constructors.pop() {
+                Some(constructor) => event_loop.modules.push(constructor.call_box(())),
+                None => break,
+            }
         }
-    }
 
-    /// Take `Samsara` to start event loop in new thread.
-    pub fn start(self) -> std::io::Result<std::thread::JoinHandle<()>> {
-        std::thread::Builder::new()
-            .name(self.name.clone())
-            .spawn(move || self.run())
-    }
-
-    /// Add module.
-    pub fn add_module(&mut self, module: Box<Module<T = P>>) {
-        self.modules.push(module);
+        event_loop
     }
 
     /// Thread body.
@@ -121,7 +155,7 @@ impl<P: bridge::Transportable + std::fmt::Display> Samsara<P> {
         }
     }
 
-    /// Helper method implementing main loop of `Samsara`.
+    /// Helper method implementing main loop of `EventLoop`.
     fn do_run(&mut self) {
         loop {
             match self.receiver.recv() {

@@ -4,32 +4,39 @@
 #![cfg_attr(not(test), allow(dead_code))]
 #![cfg_attr(not(test), allow(unused_variables))]
 
+#![feature(fnbox)]
+
 extern crate dharma;
 extern crate qualia;
 extern crate device_manager;
 
-use dharma::{Samsara, Signaler, Module};
+use std::boxed::FnBox;
+
+use dharma::{EventLoopInfo, Signaler, Module};
 use qualia::perceptron::Perceptron;
 use device_manager::DeviceManagerModule;
 
 type Mod = Box<Module<T = Perceptron>>;
+type Constructor = Box<FnBox() -> Box<Module<T = Perceptron>> + Send + Sync>;
 
 fn main() {
     // Prapare state
     let signaler = Signaler::new();
 
     // Create loops
-    let mut utils_loop: Samsara<Perceptron> = Samsara::new(String::from("P:utils"), signaler);
+    let mut utils_info: EventLoopInfo<_> = EventLoopInfo::new(String::from("P:utils"), signaler);
 
     // Create modules
-    let device_manager_module: Mod = Box::new(DeviceManagerModule::new());
+    let device_manager_module: Constructor = Box::new(|| {
+        Box::new(DeviceManagerModule::new()) as Mod
+    });
 
     // Assign modules to threads
-    utils_loop.add_module(device_manager_module);
+    utils_info.add_module(device_manager_module);
 
     // Start threads
     let mut join_handles = std::collections::VecDeque::new();
-    join_handles.push_back(utils_loop.start().unwrap());
+    join_handles.push_back(utils_info.start_event_loop().unwrap());
 
     // Join threads
     for jh in join_handles.pop_front() {

@@ -4,6 +4,8 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
+libudev = "0.2.0"
+nix = "0.6.0"
 dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
 

@@ -12,24 +12,26 @@ extern crate device_manager;
 
 use std::boxed::FnBox;
 
-use dharma::{EventLoopInfo, Signaler, Module};
-use qualia::perceptron::Perceptron;
+use dharma::{EventLoopInfo, Dispatcher, Signaler, Module};
+use qualia::{Context, Perceptron};
 use device_manager::DeviceManagerModule;
 
-type Mod = Box<Module<T = Perceptron>>;
-type Constructor = Box<FnBox() -> Box<Module<T = Perceptron>> + Send + Sync>;
+type Mod = Box<Module<T = Perceptron, C = Context>>;
+type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
 
 fn main() {
-    // Prapare state
+    // Prepare state
     let signaler = Signaler::new();
+    let dispatcher = Dispatcher::new();
+    let context = Context::new(signaler.clone(), dispatcher.clone());
 
     // Create loops
-    let mut utils_info: EventLoopInfo<_> = EventLoopInfo::new(String::from("P:utils"), signaler);
+    let mut utils_info: EventLoopInfo<_, _> =
+        EventLoopInfo::new("p:utils".to_owned(), signaler, context);
 
     // Create modules
-    let device_manager_module: Constructor = Box::new(|| {
-        Box::new(DeviceManagerModule::new()) as Mod
-    });
+    let device_manager_module: Constructor =
+        Box::new(|| Box::new(DeviceManagerModule::new()) as Mod);
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);
@@ -37,6 +39,9 @@ fn main() {
     // Start threads
     let mut join_handles = std::collections::VecDeque::new();
     join_handles.push_back(utils_info.start_event_loop().unwrap());
+
+    // Start main loop
+    dispatcher.start();
 
     // Join threads
     for jh in join_handles.pop_front() {

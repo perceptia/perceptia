@@ -31,55 +31,44 @@ pub type InitResult = Vec<signaler::SignalId>;
 /// signals.
 pub trait Module {
     type T: bridge::Transportable;
-    fn initialize(&mut self, context: &mut Context<Self::T>) -> InitResult;
+    type C: Send + Sync + Clone;
+    fn initialize(&mut self, mut context: Self::C) -> InitResult;
     fn execute(&mut self, package: &Self::T);
     fn finalize(&mut self);
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Application `Context` lets `Module` communicate with other `Module`s by mean of signals.
-pub struct Context<'a, P: 'a + bridge::Transportable> {
-    signaler: &'a mut signaler::Signaler<P>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl<'a, P: bridge::Transportable> Context<'a, P> {
-    /// Context constructor.
-    fn new(signaler: &'a mut signaler::Signaler<P>) -> Self {
-        Context { signaler: signaler }
-    }
-
-    /// Emit signal with given `id` and `package` data.
-    pub fn emit(&mut self, id: signaler::SignalId, package: P) {
-        self.signaler.emit(id, package);
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Context for creation of `EventLoop`.
-pub struct EventLoopInfo<P: bridge::Transportable + 'static> {
+pub struct EventLoopInfo<P, C>
+    where P: bridge::Transportable + 'static,
+          C: Send + Sync + Clone + 'static
+{
     name: String,
     signaler: signaler::Signaler<P>,
-    constructors: Vec<Box<FnBox() -> Box<Module<T = P>> + Send + Sync>>,
+    constructors: Vec<Box<FnBox() -> Box<Module<T = P, C = C>> + Send + Sync>>,
+    context: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P: bridge::Transportable + std::fmt::Display> EventLoopInfo<P> {
+impl<P, C> EventLoopInfo<P, C>
+    where P: bridge::Transportable + std::fmt::Display,
+          C: Send + Sync + Clone
+{
     /// `EventLoop` constructor.
-    pub fn new(name: String, signaler: signaler::Signaler<P>) -> Self {
+    pub fn new(name: String, signaler: signaler::Signaler<P>, context: C) -> Self {
         EventLoopInfo {
             name: name,
             signaler: signaler,
             constructors: Vec::new(),
+            context: context,
         }
     }
 
     /// Add module constructor.
-    pub fn add_module(&mut self, constructor: Box<FnBox() -> Box<Module<T = P>> + Send + Sync>) {
+    pub fn add_module(&mut self,
+                      constructor: Box<FnBox() -> Box<Module<T = P, C = C>> + Send + Sync>) {
         self.constructors.push(constructor);
     }
 
@@ -87,31 +76,39 @@ impl<P: bridge::Transportable + std::fmt::Display> EventLoopInfo<P> {
     pub fn start_event_loop(self) -> std::io::Result<std::thread::JoinHandle<()>> {
         std::thread::Builder::new()
             .name(self.name.clone())
-            .spawn(move || EventLoop::new(self).run() )
+            .spawn(move || EventLoop::new(self).run())
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Thread loop with event queue with communication over `bridge`s.
-pub struct EventLoop<P: bridge::Transportable + 'static> {
+pub struct EventLoop<P, C>
+    where P: bridge::Transportable + 'static,
+          C: Send + Sync + Clone
+{
     signaler: signaler::Signaler<P>,
-    modules: Vec<Box<Module<T = P>>>,
+    modules: Vec<Box<Module<T = P, C = C>>>,
     receiver: bridge::Receiver<signaler::Event<P>>,
     subscriptions: Map<signaler::SignalId, Vec<usize>>,
+    context: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P: bridge::Transportable + std::fmt::Display> EventLoop<P> {
+impl<P, C> EventLoop<P, C>
+    where P: bridge::Transportable + std::fmt::Display,
+          C: Send + Sync + Clone
+{
     /// `EventLoop` constructor. Constructs `EventLoop` and all assigned modules.
-    pub fn new(mut info: EventLoopInfo<P>) -> Self {
+    pub fn new(mut info: EventLoopInfo<P, C>) -> Self {
         // Create event loop
         let mut event_loop = EventLoop {
             signaler: info.signaler,
             modules: Vec::new(),
             receiver: bridge::Receiver::new(),
             subscriptions: Map::new(),
+            context: info.context,
         };
 
         // Consume constructors to return module instances
@@ -137,7 +134,7 @@ impl<P: bridge::Transportable + std::fmt::Display> EventLoop<P> {
         self.signaler.register(&self.receiver);
         let mut i = 0;
         for mut m in self.modules.iter_mut() {
-            let signals = m.initialize(&mut Context::new(&mut self.signaler));
+            let signals = m.initialize(self.context.clone());
             for s in signals {
                 if self.subscriptions.contains_key(&s) {
                     match self.subscriptions.get_mut(&s) {

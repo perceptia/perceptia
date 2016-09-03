@@ -13,12 +13,12 @@ use std::clone::Clone;
 use std::thread;
 use std::time;
 
-use common::mocks::ModuleMock;
+use common::mocks::{ContextStub, ModuleMock};
 use self::dharma::{EventLoopInfo, Module, Signaler};
 
 // -------------------------------------------------------------------------------------------------
 
-type StringModule = Box<Module<T = String>>;
+type StringModule = Box<Module<T = String, C = ContextStub>>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,8 @@ const D: u64 = 100;
 fn test_life_of_one_module() {
     // Prepare environment
     let mut signaler = Signaler::new();
-    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone());
+    let context = ContextStub::new();
+    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone(), context);
 
     // Prepare mock and set expectations
     let module = Box::new(move || {
@@ -78,7 +79,8 @@ fn test_life_of_two_modules() {
 
     // Prepare environment
     let mut signaler = Signaler::new();
-    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone());
+    let context = ContextStub::new();
+    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone(), context);
 
     // Do test
     info.add_module(module1);
@@ -110,7 +112,8 @@ fn test_execution_of_one_module() {
 
     // Prepare environment
     let mut signaler = Signaler::new();
-    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone());
+    let context = ContextStub::new();
+    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone(), context);
 
     // Do test
     info.add_module(module);
@@ -156,7 +159,8 @@ fn test_execution_of_two_modules() {
     });
     // Prepare environment
     let mut signaler = Signaler::new();
-    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone());
+    let context = ContextStub::new();
+    let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone(), context);
 
     // Do test
     info.add_module(module1);
@@ -205,8 +209,9 @@ fn test_execution_of_two_modules_in_different_threads() {
 
     // Prepare environment
     let mut signaler = Signaler::new();
-    let mut info1 = EventLoopInfo::new("test1".to_owned(), signaler.clone());
-    let mut info2 = EventLoopInfo::new("test2".to_owned(), signaler.clone());
+    let context = ContextStub::new();
+    let mut info1 = EventLoopInfo::new("test1".to_owned(), signaler.clone(), context.clone());
+    let mut info2 = EventLoopInfo::new("test2".to_owned(), signaler.clone(), context.clone());
 
     // Do test
     info1.add_module(module1);

@@ -21,8 +21,16 @@
 //! has assigned `Module`s constituting separate application components. `Module`s can be assigned
 //! to `EventLoop`s in flexible way making it easy to control tasks processed in threads. `Module`s
 //! do not share memory and communicate with signals.
+//!
+//! ### `dispatcher` module
+//!
+//! Every threading framework should provide mechanism for listening on system events. `Dispatcher`
+//! allows to register `EventHandler`s (wrapping file descriptors) and invokes them when system
+//! events they are assigned are ready to be processed.
 
 #![feature(fnbox)]
+
+extern crate nix;
 
 /// Communication between two endpoints in different threads.
 ///
@@ -34,7 +42,12 @@ pub use bridge::{connect, Sender, Receiver, ReceiveResult, Transportable};
 pub mod signaler;
 pub use signaler::{Event, Signaler, SignalId};
 
-/// This module contains implementation of main thread loop with notification listening.
+/// Implementation of main thread loop with notification listening.
 ///
 pub mod event_loop;
-pub use event_loop::{Context, EventLoop, EventLoopInfo, InitResult, Module};
+pub use event_loop::{EventLoop, EventLoopInfo, InitResult, Module};
+
+/// Handling system events (`epoll` wrapper).
+///
+pub mod dispatcher;
+pub use dispatcher::{EventHandler, Dispatcher};

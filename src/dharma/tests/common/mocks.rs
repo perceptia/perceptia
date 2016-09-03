@@ -1,7 +1,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! Module containg mocks for unit test in `dharma`.
+//! Module containing mocks for unit test in `dharma`.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,11 +11,11 @@ use std::clone::Clone;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use self::dharma::{Context, InitResult, Module};
+use self::dharma::{InitResult, Module};
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure constituting shared memory between mock's from different threads.
+/// Helper structure constituting shared memory between mocks from different threads.
 struct InnerModuleMock {
     times_initialized: i32,
     times_executed: i32,
@@ -28,6 +28,21 @@ struct InnerModuleMock {
     expected_packages: Option<Vec<String>>,
 
     signals: Option<Vec<dharma::SignalId>>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Stub for `Context`.
+#[derive(Clone)]
+pub struct ContextStub {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ContextStub {
+    /// `ContextStub` constructor.
+    pub fn new() -> Self {
+        ContextStub {}
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -72,12 +87,12 @@ impl ModuleMock {
     /// Set expectation on arguments of `execute`.
     pub fn expect_execute(&mut self, package: String) {
         let mut mine = self.inner.lock().unwrap();
-        let mut need_intialize = false;
+        let mut need_initialize = false;
         match mine.expected_packages {
             Some(ref mut pkgs) => pkgs.push(package.clone()),
-            None => need_intialize = true,
+            None => need_initialize = true,
         }
-        if need_intialize {
+        if need_initialize {
             mine.expected_packages = Some(vec![package.clone()]);
         }
     }
@@ -149,10 +164,11 @@ impl Clone for ModuleMock {
 
 impl Module for ModuleMock {
     type T = String;
+    type C = ContextStub;
 
-    /// Handle `initialize` ivokation.
+    /// Handle `initialize` invocation.
     #[allow(unused_variables)]
-    fn initialize(&mut self, context: &mut Context<Self::T>) -> InitResult {
+    fn initialize(&mut self, context: ContextStub) -> InitResult {
         let mut mine = self.inner.lock().unwrap();
         mine.times_initialized += 1;
         match mine.signals {
@@ -161,14 +177,14 @@ impl Module for ModuleMock {
         }
     }
 
-    /// Handle `execute` ivokation.
+    /// Handle `execute` invocation.
     fn execute(&mut self, package: &Self::T) {
         let mut mine = self.inner.lock().unwrap();
         mine.times_executed += 1;
         mine.packages.push(package.clone());
     }
 
-    /// Handle `finalize` ivokation.
+    /// Handle `finalize` invocation.
     fn finalize(&mut self) {
         let mut mine = self.inner.lock().unwrap();
         mine.times_finalized += 1;

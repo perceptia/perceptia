@@ -5,6 +5,7 @@
 //! `perceptia`.
 
 extern crate dbus;
+extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
 
 extern crate dharma;

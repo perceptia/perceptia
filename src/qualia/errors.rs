@@ -5,6 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use libudev;
 use std;
 
 // -------------------------------------------------------------------------------------------------
@@ -28,6 +29,14 @@ impl std::fmt::Display for Error {
             Error::General(ref s) => write!(f, "General error: {}", s),
             Error::Unknown(ref s) => write!(f, "Unknown error: {}", s),
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::convert::From<libudev::Error> for Error {
+    fn from(error: libudev::Error) -> Self {
+        Error::General(error.description().to_owned())
     }
 }
 

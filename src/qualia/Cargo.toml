@@ -5,6 +5,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 dbus = "0.3.4"
+libudev = "0.2.0"
 nix = "0.6.0"
 dharma = { path = "../dharma" }
 

@@ -5,11 +5,14 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::path::Path;
 use libudev;
 use nix;
+use std::os::unix::io::AsRawFd;
+use std::path::Path;
 
 use qualia;
+
+use device_monitor::DeviceMonitor;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -20,19 +23,24 @@ const INPUT_KEYBOARD: &'static str = "ID_INPUT_KEYBOARD";
 // -------------------------------------------------------------------------------------------------
 
 /// Wrapper for `libudev`'s context.
-pub struct Udev {
+pub struct Udev<'a> {
     context: libudev::Context,
+    monitor_socket: Option<libudev::MonitorSocket<'a>>
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl Udev {
+impl<'a> Udev<'a> {
     /// `Udev` constructor.
     pub fn new() -> Self {
-        Udev { context: libudev::Context::new().expect("Failed to create udev context") }
+        Udev {
+            context: libudev::Context::new().expect("Failed to create udev context"),
+            monitor_socket: None,
+        }
     }
 
     /// Iterate over connected input event devices and pass results to given handler.
+    /// Panic if something goes wrong - this is crucial for perceptia to have input.
     pub fn iterate_event_devices<F: FnMut(&Path)>(&self, mut f: F) {
         let mut enumerator = libudev::Enumerator::new(&self.context)
             .expect("Failed to create device enumerator");
@@ -55,6 +63,23 @@ impl Udev {
                 }
                 None => (), // Ignore devices without devnode
             };
+        }
+    }
+
+    /// TODO
+    /// Returned `DeviceMonitor` contains file descriptor from `udev` monitor. `DeviceMonitor` will
+    /// handle situations when the file descriptor becomes invalid.
+    pub fn start_device_monitor(&mut self) -> Result<DeviceMonitor, qualia::Error> {
+        if self.monitor_socket.is_none() {
+            let mut monitor = try!(libudev::Monitor::new(&self.context));
+            monitor.match_subsystem("input");
+            monitor.match_subsystem("drm");
+            //self.monitor_socket = Some(try!(monitor.listen()));
+        }
+
+        match self.monitor_socket {
+            Some(ref monitor_socket) => Ok(DeviceMonitor::new(monitor_socket.as_raw_fd())),
+            None => Err(qualia::Error::General("".to_owned())),
         }
     }
 }

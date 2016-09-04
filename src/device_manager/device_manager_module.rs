@@ -20,14 +20,14 @@ use drivers::InputDriver;
 
 // -------------------------------------------------------------------------------------------------
 
-pub struct DeviceManagerModule {
-    udev: udev::Udev,
+pub struct DeviceManagerModule<'a> {
+    udev: udev::Udev<'a>,
     ipc: Ipc,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl DeviceManagerModule {
+impl<'a> DeviceManagerModule<'a> {
     /// `DeviceManagerModule` constructor.
     pub fn new() -> Self {
         DeviceManagerModule {
@@ -55,17 +55,9 @@ impl DeviceManagerModule {
             }
         }
     }
-}
 
-// -------------------------------------------------------------------------------------------------
-
-impl Module for DeviceManagerModule {
-    type T = Perceptron;
-    type C = Context;
-
-    #[allow(unused_variables)]
-    fn initialize(&mut self, mut context: Self::C) -> InitResult {
-        // Initialize IPC
+    /// TODO
+    fn initialize_ipc(&mut self) {
         match self.ipc.initialize() {
             Ok(_) => (),
             Err(err) => {
@@ -74,8 +66,10 @@ impl Module for DeviceManagerModule {
                          err)
             }
         }
+    }
 
-        // Initialize input devices
+    /// TODO
+    fn initialize_input_devices(&mut self, context: &mut Context) {
         self.udev.iterate_event_devices(|devnode| {
             let r = evdev::Evdev::initialize_device(devnode, |path, oflag, mode| {
                 self.open_restricted(path, oflag, mode)
@@ -89,6 +83,41 @@ impl Module for DeviceManagerModule {
                 }
             }
         });
+    }
+
+    /// TODO
+    fn initialize_output_devices(&mut self, context: &mut Context) {
+        // FIXME: Finnish implementation of `initialize_output_devices`.
+    }
+
+    /// TODO
+    fn initialize_device_monitor(&mut self, context: &mut Context) {
+        match self.udev.start_device_monitor() {
+            Ok(device_monitor) => context.add_event_handler(Box::new(device_monitor)),
+            Err(err) => println!("Device Manager: {:?}", err),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<'a> Module for DeviceManagerModule<'a> {
+    type T = Perceptron;
+    type C = Context;
+
+    #[allow(unused_variables)]
+    fn initialize(&mut self, mut context: Self::C) -> InitResult {
+        // Initialize IPC
+        self.initialize_ipc();
+
+        // Initialize input devices
+        self.initialize_input_devices(&mut context);
+
+        // Initialize output devices
+        self.initialize_output_devices(&mut context);
+
+        // Initialize device monitor
+        self.initialize_device_monitor(&mut context);
 
         Vec::new()
     }

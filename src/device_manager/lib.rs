@@ -6,8 +6,11 @@
 extern crate libudev;
 extern crate nix;
 
-extern crate dharma;
+#[macro_use]
+extern crate timber;
+#[macro_use]
 extern crate qualia;
+extern crate dharma;
 
 pub mod device_manager_module;
 pub use device_manager_module::DeviceManagerModule;

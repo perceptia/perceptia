@@ -1,0 +1,12 @@
+[package]
+name = "timber"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+time = "0.1"
+
+[lib]
+name = "timber"
+path = "lib.rs"
+

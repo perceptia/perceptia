@@ -5,6 +5,10 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::fmt;
+
+// -------------------------------------------------------------------------------------------------
+
 /// Enum describing kind of input device.
 #[derive(PartialEq)]
 pub enum DeviceKind {
@@ -12,6 +16,19 @@ pub enum DeviceKind {
     Mouse,
     Touchpad,
     Unknown,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl fmt::Debug for DeviceKind {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            DeviceKind::Keyboard => write!(f, "keyboard"),
+            DeviceKind::Mouse => write!(f, "mouse"),
+            DeviceKind::Touchpad => write!(f, "touchpad"),
+            DeviceKind::Unknown => write!(f, "unknown device"),
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -1,7 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! TODO
+/// `DeviceMonitor` implements `dharma::Dispatcher`'s `EventHandler`. It is used to process
+/// notifications from `udev` about adding and removing devices..
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,7 +12,7 @@ use dharma::EventHandler;
 
 // -------------------------------------------------------------------------------------------------
 
-/// TODO
+/// `udev` device event handled.
 pub struct DeviceMonitor {
     monitor_fd: io::RawFd,
 }
@@ -19,11 +20,9 @@ pub struct DeviceMonitor {
 // -------------------------------------------------------------------------------------------------
 
 impl DeviceMonitor {
-    /// TODO
+    /// `DeviceMonitor` constructor.
     pub fn new(fd: io::RawFd) -> Self {
-        DeviceMonitor {
-            monitor_fd: fd,
-        }
+        DeviceMonitor { monitor_fd: fd }
     }
 }
 
@@ -36,6 +35,7 @@ impl EventHandler for DeviceMonitor {
     }
 
     fn process_event(&mut self) {
+        // FIXME: Implement handling of device adding and removing.
     }
 }
 

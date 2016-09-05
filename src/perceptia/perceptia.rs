@@ -6,8 +6,11 @@
 
 #![feature(fnbox)]
 
-extern crate dharma;
+#[macro_use]
+extern crate timber;
+#[macro_use]
 extern crate qualia;
+extern crate dharma;
 extern crate device_manager;
 
 use std::boxed::FnBox;
@@ -20,6 +23,11 @@ type Mod = Box<Module<T = Perceptron, C = Context>>;
 type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
 
 fn main() {
+    match timber::init(std::path::Path::new("/tmp/log")) {
+        Ok(_) => log_info1!("Welcome to perceptia! Log in /tmp/log"),
+        Err(err) => log_error!("Could not initialize logger: {}", err),
+    };
+
     // Prepare state
     let signaler = Signaler::new();
     let dispatcher = Dispatcher::new();

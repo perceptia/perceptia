@@ -86,9 +86,9 @@ impl Dispatcher {
     pub fn start(&self) {
         // We will process epoll events one by one
         let mut events: [epoll::EpollEvent; 1] = [epoll::EpollEvent {
-            events: epoll::EpollEventKind::empty(),
-            data: 0,
-        }];
+                                                      events: epoll::EpollEventKind::empty(),
+                                                      data: 0,
+                                                  }];
 
         // Initial setup
         let epfd;

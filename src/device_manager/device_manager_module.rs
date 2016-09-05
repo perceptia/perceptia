@@ -56,19 +56,19 @@ impl<'a> DeviceManagerModule<'a> {
         }
     }
 
-    /// TODO
+    /// Initialize connection to `logind`.
     fn initialize_ipc(&mut self) {
         match self.ipc.initialize() {
             Ok(_) => (),
             Err(err) => {
-                println!("Failed to initialize IPC ({:?}). This may cause problems with access to \
-                          devices.",
-                         err)
+                log_warn1!("Failed to initialize IPC ({:?}). \
+                           This may cause problems with access to devices.",
+                           err);
             }
         }
     }
 
-    /// TODO
+    /// Iterate over input devices to find usable ones and initialize event handlers for them.
     fn initialize_input_devices(&mut self, context: &mut Context) {
         self.udev.iterate_event_devices(|devnode| {
             let r = evdev::Evdev::initialize_device(devnode, |path, oflag, mode| {
@@ -79,22 +79,23 @@ impl<'a> DeviceManagerModule<'a> {
                     context.add_event_handler(driver);
                 }
                 Err(err) => {
-                    println!("Could not initialize {:?}", err);
+                    log_error!("Could not initialize input devices: {}", err);
                 }
             }
         });
     }
 
-    /// TODO
+    /// Find and initialize outputs.
+    #[allow(unused_variables)]
     fn initialize_output_devices(&mut self, context: &mut Context) {
         // FIXME: Finnish implementation of `initialize_output_devices`.
     }
 
-    /// TODO
+    /// Initialize device monitoring.
     fn initialize_device_monitor(&mut self, context: &mut Context) {
         match self.udev.start_device_monitor() {
             Ok(device_monitor) => context.add_event_handler(Box::new(device_monitor)),
-            Err(err) => println!("Device Manager: {:?}", err),
+            Err(err) => log_warn1!("Device Manager: {}", err),
         }
     }
 }
@@ -122,6 +123,8 @@ impl<'a> Module for DeviceManagerModule<'a> {
         Vec::new()
     }
 
+    // FIXME: Finnish handling signals in `DeviceManagerModule`.
+    #[allow(unused_variables)]
     fn execute(&mut self, package: &Self::T) {}
 
     fn finalize(&mut self) {}

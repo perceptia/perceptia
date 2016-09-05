@@ -25,7 +25,7 @@ const INPUT_KEYBOARD: &'static str = "ID_INPUT_KEYBOARD";
 /// Wrapper for `libudev`'s context.
 pub struct Udev<'a> {
     context: libudev::Context,
-    monitor_socket: Option<libudev::MonitorSocket<'a>>
+    monitor_socket: Option<libudev::MonitorSocket<'a>>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -53,7 +53,7 @@ impl<'a> Udev<'a> {
                             if is_event_device(devnode, &sysname) {
                                 let device_kind = determine_device_kind(&device);
                                 if device_kind != qualia::enums::DeviceKind::Unknown {
-                                    println!("{:?}", device.devpath());
+                                    log_info2!("Found {:?} {:?}", device_kind, devnode);
                                     f(devnode);
                                 }
                             }
@@ -66,20 +66,22 @@ impl<'a> Udev<'a> {
         }
     }
 
-    /// TODO
+    /// Start device monitoring and return instance of `Dispatcher` `EventHandler` for processing
+    /// device events.
+    ///
     /// Returned `DeviceMonitor` contains file descriptor from `udev` monitor. `DeviceMonitor` will
     /// handle situations when the file descriptor becomes invalid.
     pub fn start_device_monitor(&mut self) -> Result<DeviceMonitor, qualia::Error> {
         if self.monitor_socket.is_none() {
             let mut monitor = try!(libudev::Monitor::new(&self.context));
-            monitor.match_subsystem("input");
-            monitor.match_subsystem("drm");
-            //self.monitor_socket = Some(try!(monitor.listen()));
+            ensure!(monitor.match_subsystem("input"));
+            ensure!(monitor.match_subsystem("drm"));
+            // self.monitor_socket = Some(try!(monitor.listen()));
         }
 
         match self.monitor_socket {
             Some(ref monitor_socket) => Ok(DeviceMonitor::new(monitor_socket.as_raw_fd())),
-            None => Err(qualia::Error::General("".to_owned())),
+            None => Err(qualia::Error::General("Failed to create device monitor".to_owned())),
         }
     }
 }
@@ -99,7 +101,6 @@ fn is_event_device(devnode: &Path, sysname: &String) -> bool {
 /// Reads devices properties and determines device kind basing on them.
 fn determine_device_kind(device: &libudev::Device) -> qualia::enums::DeviceKind {
     for property in device.properties() {
-        println!("- {:?}", property.name());
         if property.name() == INPUT_MOUSE {
             return qualia::enums::DeviceKind::Mouse;
         } else if property.name() == INPUT_TOUCHPAD {

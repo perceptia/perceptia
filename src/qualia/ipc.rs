@@ -69,7 +69,13 @@ macro_rules! assert_reply {
         match $reply {
             Ok(r) => r,
             Err(err) => {
-                return Err(Error::General(format!("{:?} ({:?})", err.message(), err.name())))
+                return Err(Error::General(format!("{}", if err.message().is_some() {
+                    err.message().unwrap()
+                } else if err.name().is_some() {
+                    err.name().unwrap()
+                } else {
+                    "Unknown error"
+                })))
             }
         }
     }

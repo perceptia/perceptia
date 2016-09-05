@@ -7,6 +7,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 dbus = "0.3.4"
 libudev = "0.2.0"
 nix = "0.6.0"
+timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 
 [lib]

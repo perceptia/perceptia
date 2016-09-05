@@ -47,12 +47,12 @@ impl EventHandler for Evdev {
 
     fn process_event(&mut self) {
         // FIXME: Implement real event handling
-        println!("Processing event! {:?}", self.get_fd());
+        log_info3!("Processing event! {:?}", self.get_fd());
         let mut buf: [u8; 3 * 8] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                                     0, 0, 0];
         match read(self.fd, &mut buf) {
-            Ok(size) => println!("Read {}", size),
-            Err(err) => println!("Error {:?}", err),
+            Ok(size) => log_info3!("Read {}", size),
+            Err(err) => log_info3!("Error {:?}", err),
         }
     }
 }

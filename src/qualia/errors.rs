@@ -26,7 +26,7 @@ impl std::fmt::Display for Error {
         match *self {
             Error::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
             Error::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
-            Error::General(ref s) => write!(f, "General error: {}", s),
+            Error::General(ref s) => write!(f, "{}", s),
             Error::Unknown(ref s) => write!(f, "Unknown error: {}", s),
         }
     }

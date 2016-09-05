@@ -8,6 +8,8 @@ extern crate dbus;
 extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
 
+#[macro_use(timber)]
+extern crate timber;
 extern crate dharma;
 
 pub mod enums;
@@ -18,6 +20,9 @@ pub use perceptron::Perceptron;
 pub mod errors;
 pub use errors::Error;
 
+#[macro_use]
+pub mod log;
+pub use log::level;
 
 pub mod context;
 pub use context::Context;

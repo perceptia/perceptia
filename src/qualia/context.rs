@@ -9,6 +9,8 @@ use dharma::{Dispatcher, EventHandler, Signaler, SignalId};
 
 use perceptron::Perceptron;
 
+use coordinator::Coordinator;
+
 // -------------------------------------------------------------------------------------------------
 
 /// Application `Context` lets `Module`s communicate with other `Module`s by mean of signals.
@@ -16,16 +18,21 @@ use perceptron::Perceptron;
 pub struct Context {
     signaler: Signaler<Perceptron>,
     dispatcher: Dispatcher,
+    coordinator: Coordinator,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Context {
     /// Context constructor.
-    pub fn new(signaler: Signaler<Perceptron>, dispatcher: Dispatcher) -> Self {
+    pub fn new(signaler: Signaler<Perceptron>,
+               dispatcher: Dispatcher,
+               coordinator: Coordinator)
+               -> Self {
         Context {
             signaler: signaler,
             dispatcher: dispatcher,
+            coordinator: coordinator,
         }
     }
 
@@ -37,6 +44,11 @@ impl Context {
     /// Add new event handler.
     pub fn add_event_handler(&mut self, event_handler: Box<EventHandler>) {
         self.dispatcher.add_source(event_handler);
+    }
+
+    /// Get reference to `Coordinator`.
+    pub fn get_coordinator(&mut self) -> &mut Coordinator {
+        &mut self.coordinator
     }
 }
 

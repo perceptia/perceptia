@@ -1,9 +1,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-#![cfg_attr(not(test), allow(dead_code))]
 #![cfg_attr(not(test), allow(unused_variables))]
-
 #![feature(fnbox)]
 
 #[macro_use]
@@ -12,12 +10,17 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 extern crate device_manager;
+extern crate wayland_frontend;
+
+mod wayland_module;
 
 use std::boxed::FnBox;
 
 use dharma::{EventLoopInfo, Dispatcher, Signaler, Module};
-use qualia::{Context, Perceptron};
+use qualia::{Context, Coordinator, Perceptron};
+
 use device_manager::DeviceManagerModule;
+use wayland_module::WaylandModule;
 
 type Mod = Box<Module<T = Perceptron, C = Context>>;
 type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
@@ -31,7 +34,8 @@ fn main() {
     // Prepare state
     let signaler = Signaler::new();
     let dispatcher = Dispatcher::new();
-    let context = Context::new(signaler.clone(), dispatcher.clone());
+    let coordinator = Coordinator::new();
+    let context = Context::new(signaler.clone(), dispatcher.clone(), coordinator.clone());
 
     // Create loops
     let mut utils_info: EventLoopInfo<_, _> =
@@ -40,9 +44,11 @@ fn main() {
     // Create modules
     let device_manager_module: Constructor =
         Box::new(|| Box::new(DeviceManagerModule::new()) as Mod);
+    let wayland_module: Constructor = Box::new(|| Box::new(WaylandModule::new()) as Mod);
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);
+    utils_info.add_module(wayland_module);
 
     // Start threads
     let mut join_handles = std::collections::VecDeque::new();

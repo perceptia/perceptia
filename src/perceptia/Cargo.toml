@@ -4,10 +4,11 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-timber         = { path = "../timber" }
-dharma         = { path = "../dharma" }
-qualia         = { path = "../qualia" }
-device_manager = { path = "../device_manager" }
+timber           = { path = "../timber" }
+dharma           = { path = "../dharma" }
+qualia           = { path = "../qualia" }
+device_manager   = { path = "../device_manager" }
+wayland_frontend = { path = "../wayland_frontend" }
 
 [[bin]]
 name = "perceptia"

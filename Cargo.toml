@@ -4,6 +4,7 @@ members = [
         "src/dharma",
         "src/qualia",
         "src/device_manager",
+        "src/wayland_frontend",
         "src/perceptia"
     ]
 

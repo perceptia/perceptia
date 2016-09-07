@@ -20,9 +20,18 @@ pub use perceptron::Perceptron;
 pub mod errors;
 pub use errors::Error;
 
+pub mod defs;
+pub use defs::{Area, Point, Position, Size, Vector};
+
+pub mod buffer;
+pub use buffer::Buffer;
+
 #[macro_use]
 pub mod log;
 pub use log::level;
+
+pub mod coordinator;
+pub use coordinator::{Coordinator, ShowReason, SurfaceId};
 
 pub mod context;
 pub use context::Context;

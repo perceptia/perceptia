@@ -5,8 +5,10 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 dbus = "0.3.4"
+libc = "0.2.15"
 libudev = "0.2.0"
 nix = "0.6.0"
+time = "0.1"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 

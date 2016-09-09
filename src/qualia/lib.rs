@@ -5,8 +5,10 @@
 //! `perceptia`.
 
 extern crate dbus;
+extern crate libc;
 extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
+extern crate time;
 
 #[macro_use(timber)]
 extern crate timber;
@@ -29,6 +31,9 @@ pub use buffer::Buffer;
 #[macro_use]
 pub mod log;
 pub use log::level;
+
+pub mod env;
+pub use env::Env;
 
 pub mod coordinator;
 pub use coordinator::{Coordinator, ShowReason, SurfaceId};

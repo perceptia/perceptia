@@ -114,7 +114,7 @@ impl Timber {
         let thread = current_thread.name().unwrap_or("<unknown>");
 
         // Format log entry
-        let entry = format!("{}:{}:{}.{:06} | {} | {:16} | {:4} | {:40} | {}",
+        let entry = format!("{:02}:{:02}:{:02}.{:06} | {} | {:16} | {:4} | {:40} | {}",
                             tm.tm_hour,
                             tm.tm_min,
                             tm.tm_sec,

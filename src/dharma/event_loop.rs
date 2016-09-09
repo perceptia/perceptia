@@ -17,6 +17,7 @@ use std::boxed::FnBox;
 
 use bridge::{self, ReceiveResult};
 use signaler;
+use system;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -102,6 +103,9 @@ impl<P, C> EventLoop<P, C>
 {
     /// `EventLoop` constructor. Constructs `EventLoop` and all assigned modules.
     pub fn new(mut info: EventLoopInfo<P, C>) -> Self {
+        // Block chosen signals for this thread.
+        system::block_signals();
+
         // Create event loop
         let mut event_loop = EventLoop {
             signaler: info.signaler,

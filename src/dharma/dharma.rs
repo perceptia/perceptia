@@ -27,6 +27,10 @@
 //! Every threading framework should provide mechanism for listening on system events. `Dispatcher`
 //! allows to register `EventHandler`s (wrapping file descriptors) and invokes them when system
 //! events they are assigned are ready to be processed.
+//!
+//! ### `system` module
+//!
+//! Last module contains helper code for and handling system signals.
 
 #![feature(fnbox)]
 
@@ -51,3 +55,8 @@ pub use event_loop::{EventLoop, EventLoopInfo, InitResult, Module};
 ///
 pub mod dispatcher;
 pub use dispatcher::{EventHandler, Dispatcher};
+
+/// System signal handling.
+///
+pub mod system;
+pub use system::{block_signals, unblock_signals, SignalEventHandler};

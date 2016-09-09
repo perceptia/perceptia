@@ -8,8 +8,11 @@
 
 use std::ops::IndexMut;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::os::unix::io::RawFd;
-use nix::sys::epoll;
+use nix::sys::{epoll, signal};
+
+use system;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,24 +32,18 @@ pub trait EventHandler: Send {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure constituting shared memory between `Dispatcher`s from different threads.
+/// Helper structure guarded by mutex.
 struct InnerDispatcher {
-    run: bool,
     epfd: RawFd,
     handlers: Vec<Box<EventHandler>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl InnerDispatcher {
-    /// `InnerDispatcher` constructor.
-    pub fn new() -> Self {
-        InnerDispatcher {
-            run: false,
-            epfd: epoll::epoll_create().expect("Failed to create epoll!"),
-            handlers: Vec::new(),
-        }
-    }
+/// Helper structure constituting shared memory between `Dispatcher`s from different threads.
+struct OuterDispatcher {
+    inner: Mutex<InnerDispatcher>,
+    run: AtomicBool,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -54,7 +51,7 @@ impl InnerDispatcher {
 /// Structure representing dispatcher of system events.
 #[derive(Clone)]
 pub struct Dispatcher {
-    inner: Arc<Mutex<InnerDispatcher>>,
+    state: Arc<OuterDispatcher>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -62,12 +59,20 @@ pub struct Dispatcher {
 impl Dispatcher {
     /// `Dispatcher` constructor.
     pub fn new() -> Self {
-        Dispatcher { inner: Arc::new(Mutex::new(InnerDispatcher::new())) }
+        Dispatcher {
+            state: Arc::new(OuterDispatcher {
+                inner: Mutex::new(InnerDispatcher {
+                    epfd: epoll::epoll_create().expect("Failed to create epoll!"),
+                    handlers: Vec::new(),
+                }),
+                run: AtomicBool::new(false),
+            }),
+        }
     }
 
     /// Add `EventHandler`.
     pub fn add_source(&mut self, source: Box<EventHandler>) {
-        let mut mine = self.inner.lock().unwrap();
+        let mut mine = self.state.inner.lock().unwrap();
 
         let fd = source.get_fd();
         let pos = mine.handlers.len();
@@ -84,6 +89,8 @@ impl Dispatcher {
 
     /// Starts processing events in current thread.
     pub fn start(&self) {
+        system::block_signals();
+
         // We will process epoll events one by one
         let mut events: [epoll::EpollEvent; 1] = [epoll::EpollEvent {
                                                       events: epoll::EpollEventKind::empty(),
@@ -93,8 +100,8 @@ impl Dispatcher {
         // Initial setup
         let epfd;
         {
-            let mut mine = self.inner.lock().unwrap();
-            mine.run = true;
+            let mut mine = self.state.inner.lock().unwrap();
+            self.state.run.store(true, Ordering::Relaxed);
             epfd = mine.epfd;
         }
 
@@ -102,29 +109,27 @@ impl Dispatcher {
             let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], WAIT_INFINITELY);
 
             {
-                let mut mine = self.inner.lock().unwrap();
+                let mut mine = self.state.inner.lock().unwrap();
                 match wait_result {
                     Ok(_) => {
                         let ref mut handler = mine.handlers.index_mut(events[0].data as usize);
                         handler.process_event();
                     }
                     Err(err) => {
-                        // FIXME: An error occurred. What should be done now?
                         panic!("Error occurred during processing epoll events! ({:?})", err);
                     }
                 }
+            }
 
-                if !mine.run {
-                    break;
-                }
+            if !self.state.run.load(Ordering::Relaxed) {
+                break;
             }
         }
     }
 
     /// Stops `Dispatcher`s loop.
     pub fn stop(&self) {
-        let mut mine = self.inner.lock().unwrap();
-        mine.run = false;
+        self.state.run.store(false, Ordering::Relaxed);
     }
 }
 

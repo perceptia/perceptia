@@ -2,6 +2,7 @@
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 #![cfg_attr(not(test), allow(unused_variables))]
+
 #![feature(fnbox)]
 
 #[macro_use]
@@ -16,7 +17,7 @@ mod wayland_module;
 
 use std::boxed::FnBox;
 
-use dharma::{EventLoopInfo, Dispatcher, Signaler, Module};
+use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module};
 use qualia::{Context, Coordinator, Perceptron};
 
 use device_manager::DeviceManagerModule;
@@ -26,16 +27,16 @@ type Mod = Box<Module<T = Perceptron, C = Context>>;
 type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
 
 fn main() {
-    match timber::init(std::path::Path::new("/tmp/log")) {
-        Ok(_) => log_info1!("Welcome to perceptia! Log in /tmp/log"),
-        Err(err) => log_error!("Could not initialize logger: {}", err),
-    };
+    let env = qualia::Env::create();
 
     // Prepare state
     let signaler = Signaler::new();
-    let dispatcher = Dispatcher::new();
+    let mut dispatcher = Dispatcher::new();
     let coordinator = Coordinator::new();
     let context = Context::new(signaler.clone(), dispatcher.clone(), coordinator.clone());
+
+    let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
+    dispatcher.add_source(signal_source);
 
     // Create loops
     let mut utils_info: EventLoopInfo<_, _> =
@@ -56,9 +57,11 @@ fn main() {
 
     // Start main loop
     dispatcher.start();
+    log_info1!("Stoped dispatcher!");
 
     // Join threads
     for jh in join_handles.pop_front() {
         jh.join().unwrap();
     }
+    log_info1!("Joined all threads!");
 }

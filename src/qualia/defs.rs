@@ -5,8 +5,60 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std;
+
 pub type Point = Position;
 pub type Vector = Position;
+
+/// Type of surface ID.
+pub type SurfaceIdType = u64;
+
+// -------------------------------------------------------------------------------------------------
+
+pub const INVALID_SURFACE_ID: SurfaceIdType = 0;
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure representing surface ID.
+#[derive(Clone, Copy, Eq, PartialEq, Hash)]
+pub struct SurfaceId(SurfaceIdType);
+
+// -------------------------------------------------------------------------------------------------
+
+impl SurfaceId {
+    /// Create new surface ID.
+    pub fn new(sid: SurfaceIdType) -> Self {
+        SurfaceId(sid)
+    }
+
+    /// Create new invalid surface ID.
+    pub fn invalid() -> Self {
+        SurfaceId(INVALID_SURFACE_ID)
+    }
+
+    /// Check if the surface ID is valid.
+    #[inline]
+    pub fn is_valid(&self) -> bool {
+        self.0 != INVALID_SURFACE_ID
+    }
+
+    /// Cast surface ID as number.
+    pub fn as_number(&self) -> SurfaceIdType {
+        self.0
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::fmt::Display for SurfaceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        if self.is_valid() {
+            write!(f, "SID({})", self)
+        } else {
+            write!(f, "<invalid>")
+        }
+    }
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -14,8 +66,16 @@ pub type Vector = Position;
 #[repr(C)]
 #[derive(Clone)]
 pub struct Position {
-    x: i32,
-    y: i32,
+    pub x: i32,
+    pub y: i32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::default::Default for Position {
+    fn default() -> Self {
+        Position { x: 0, y: 0 }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -24,8 +84,19 @@ pub struct Position {
 #[repr(C)]
 #[derive(Clone)]
 pub struct Size {
-    width: u32,
-    height: u32,
+    pub width: u32,
+    pub height: u32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::default::Default for Size {
+    fn default() -> Self {
+        Size {
+            width: 0,
+            height: 0,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -34,8 +105,19 @@ pub struct Size {
 #[repr(C)]
 #[derive(Clone)]
 pub struct Area {
-    pos: Position,
-    size: Size,
+    pub pos: Position,
+    pub size: Size,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::default::Default for Area {
+    fn default() -> Self {
+        Area {
+            pos: Position::default(),
+            size: Size::default(),
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

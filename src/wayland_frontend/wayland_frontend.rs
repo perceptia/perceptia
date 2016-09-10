@@ -11,7 +11,7 @@ use std::ffi::CStr;
 use std::str;
 
 use timber;
-use qualia::{Buffer, Coordinator, ShowReason, Size, SurfaceId, Vector};
+use qualia::{Buffer, Coordinator, Size, SurfaceId, Vector};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -37,9 +37,13 @@ pub extern fn noia_surface_attach(coordinator: *mut Coordinator,
                                   width: u32,
                                   height: u32,
                                   stride: u32,
-                                  buffer: *const u8,
+                                  data: *mut u8,
                                   resource: *const u64) {
-    unsafe { (*coordinator).attach(sid, Buffer::new(width, height, stride)) }
+    unsafe {
+        let capacity = (stride * height) as usize;
+        let data = Vec::from_raw_parts(data, capacity, capacity);
+        (*coordinator).attach(sid, Buffer::new(width, height, stride, data))
+    }
 }
 
 #[no_mangle]
@@ -48,8 +52,7 @@ pub extern fn noia_surface_commit(coordinator: *mut Coordinator, sid: SurfaceId)
 }
 
 #[no_mangle]
-pub extern fn noia_surface_show(coordinator: *mut Coordinator, sid: SurfaceId, ireason: i32) {
-    let reason = if ireason == 1 { ShowReason::DRAWABLE } else { ShowReason::IN_SHELL };
+pub extern fn noia_surface_show(coordinator: *mut Coordinator, sid: SurfaceId, reason: i32) {
     unsafe { (*coordinator).show_surface(sid, reason) }
 }
 
@@ -118,6 +121,8 @@ pub struct WaylandFrontend {
 impl WaylandFrontend {
     pub fn init(coordinator: &mut Coordinator) {
         unsafe {
+            coordinator.create_surface();
+            (*(coordinator as *mut Coordinator)).create_surface();
             noia_wayland_initialize(coordinator as *mut Coordinator);
         }
     }

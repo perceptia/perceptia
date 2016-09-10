@@ -15,8 +15,6 @@ use std::ops::BitAnd;
 use errors;
 use timber;
 
-use dharma;
-
 // -------------------------------------------------------------------------------------------------
 
 const DATA_DIR_VAR: &'static str = "XDG_DATA_HOME";
@@ -72,7 +70,9 @@ impl Env {
     /// Clean up environment: remove runtime directory.
     fn cleanup(&mut self) {
         if let Some(ref path) = self.runtime_dir {
-            std::fs::remove_dir_all(path);
+            if let Err(err) = std::fs::remove_dir_all(path) {
+                log_warn1!("Failed to remove runtime directory: {:?}", err);
+            }
         }
     }
 }

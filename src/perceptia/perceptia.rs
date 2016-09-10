@@ -10,9 +10,11 @@ extern crate timber;
 #[macro_use]
 extern crate qualia;
 extern crate dharma;
+extern crate exhibitor;
 extern crate device_manager;
 extern crate wayland_frontend;
 
+mod exhibitor_module;
 mod wayland_module;
 
 use std::boxed::FnBox;
@@ -20,6 +22,7 @@ use std::boxed::FnBox;
 use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module};
 use qualia::{Context, Coordinator, Perceptron};
 
+use exhibitor_module::ExhibitorModule;
 use device_manager::DeviceManagerModule;
 use wayland_module::WaylandModule;
 
@@ -32,7 +35,7 @@ fn main() {
     // Prepare state
     let signaler = Signaler::new();
     let mut dispatcher = Dispatcher::new();
-    let coordinator = Coordinator::new();
+    let coordinator = Coordinator::new(signaler.clone());
     let context = Context::new(signaler.clone(), dispatcher.clone(), coordinator.clone());
 
     let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
@@ -40,20 +43,26 @@ fn main() {
 
     // Create loops
     let mut utils_info: EventLoopInfo<_, _> =
-        EventLoopInfo::new("p:utils".to_owned(), signaler, context);
+        EventLoopInfo::new("p:utils".to_owned(), signaler.clone(), context.clone());
+
+    let mut exhibitor_info: EventLoopInfo<_, _> =
+        EventLoopInfo::new("p:exhibitor".to_owned(), signaler.clone(), context.clone());
 
     // Create modules
     let device_manager_module: Constructor =
         Box::new(|| Box::new(DeviceManagerModule::new()) as Mod);
     let wayland_module: Constructor = Box::new(|| Box::new(WaylandModule::new()) as Mod);
+    let exhibitor_module: Constructor = Box::new(|| Box::new(ExhibitorModule::new()) as Mod);
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);
     utils_info.add_module(wayland_module);
+    exhibitor_info.add_module(exhibitor_module);
 
     // Start threads
     let mut join_handles = std::collections::VecDeque::new();
     join_handles.push_back(utils_info.start_event_loop().unwrap());
+    join_handles.push_back(exhibitor_info.start_event_loop().unwrap());
 
     // Start main loop
     dispatcher.start();

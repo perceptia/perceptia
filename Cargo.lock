@@ -71,6 +71,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "exhibitor"
+version = "0.0.1"
+dependencies = [
+ "qualia 0.0.1",
+]
+
+[[package]]
 name = "gcc"
 version = "0.3.35"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -126,6 +133,7 @@ version = "0.0.1"
 dependencies = [
  "device_manager 0.0.1",
  "dharma 0.0.1",
+ "exhibitor 0.0.1",
  "qualia 0.0.1",
  "timber 0.0.1",
  "wayland_frontend 0.0.1",

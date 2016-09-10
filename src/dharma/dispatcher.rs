@@ -10,7 +10,7 @@ use std::ops::IndexMut;
 use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::os::unix::io::RawFd;
-use nix::sys::{epoll, signal};
+use nix::sys::epoll;
 
 use system;
 
@@ -100,7 +100,7 @@ impl Dispatcher {
         // Initial setup
         let epfd;
         {
-            let mut mine = self.state.inner.lock().unwrap();
+            let mine = self.state.inner.lock().unwrap();
             self.state.run.store(true, Ordering::Relaxed);
             epfd = mine.epfd;
         }

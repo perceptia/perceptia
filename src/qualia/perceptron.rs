@@ -9,8 +9,11 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
+use defs::SurfaceId;
+
 // -------------------------------------------------------------------------------------------------
 
+pub const SURFACE_READY: SignalId = 0;
 pub const EVENT_A: SignalId = 0;
 pub const EVENT_B: SignalId = 1;
 
@@ -21,6 +24,7 @@ pub const EVENT_B: SignalId = 1;
 #[repr(C)]
 #[derive(Clone)]
 pub enum Perceptron {
+    SurfaceReady(SurfaceId),
     A(String),
     B(i32),
 }
@@ -34,6 +38,7 @@ impl Transportable for Perceptron {}
 impl std::fmt::Display for Perceptron {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
+            Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
             Perceptron::A(ref s) => write!(f, "EVENT_A('{}')", s),
             Perceptron::B(ref i) => write!(f, "EVENT_B({})", i),
         }

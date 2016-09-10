@@ -17,5 +17,6 @@ pub use device_manager_module::DeviceManagerModule;
 
 mod evdev;
 mod drivers;
-mod udev;
 mod device_monitor;
+
+pub mod udev;

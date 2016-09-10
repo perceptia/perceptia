@@ -41,7 +41,7 @@ impl<'a> Udev<'a> {
 
     /// Iterate over connected input event devices and pass results to given handler.
     /// Panic if something goes wrong - this is crucial for perceptia to have input.
-    pub fn iterate_event_devices<F: FnMut(&Path)>(&self, mut f: F) {
+    pub fn iterate_event_devices<F: FnMut(&Path, &libudev::Device)>(&self, mut f: F) {
         let mut enumerator = libudev::Enumerator::new(&self.context)
             .expect("Failed to create device enumerator");
         enumerator.match_subsystem("input").expect("Failed to apply filter for device enumerator");
@@ -54,7 +54,7 @@ impl<'a> Udev<'a> {
                                 let device_kind = determine_device_kind(&device);
                                 if device_kind != qualia::enums::DeviceKind::Unknown {
                                     log_info2!("Found {:?} {:?}", device_kind, devnode);
-                                    f(devnode);
+                                    f(devnode, &device);
                                 }
                             }
                         }
@@ -99,7 +99,7 @@ fn is_event_device(devnode: &Path, sysname: &String) -> bool {
 // -------------------------------------------------------------------------------------------------
 
 /// Reads devices properties and determines device kind basing on them.
-fn determine_device_kind(device: &libudev::Device) -> qualia::enums::DeviceKind {
+pub fn determine_device_kind(device: &libudev::Device) -> qualia::enums::DeviceKind {
     for property in device.properties() {
         if property.name() == INPUT_MOUSE {
             return qualia::enums::DeviceKind::Mouse;

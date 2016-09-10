@@ -70,7 +70,7 @@ impl<'a> DeviceManagerModule<'a> {
 
     /// Iterate over input devices to find usable ones and initialize event handlers for them.
     fn initialize_input_devices(&mut self, context: &mut Context) {
-        self.udev.iterate_event_devices(|devnode| {
+        self.udev.iterate_event_devices(|devnode, _| {
             let r = evdev::Evdev::initialize_device(devnode, |path, oflag, mode| {
                 self.open_restricted(path, oflag, mode)
             });

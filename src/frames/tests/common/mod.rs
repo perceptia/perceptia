@@ -1,6 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! Common parts of `dharma` tests.
+//! Common functionality for unit tests.
 
-pub mod mocks;
+pub mod layouts;
+pub mod frame_representation;
+pub mod assertions;

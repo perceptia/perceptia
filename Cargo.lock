@@ -74,6 +74,15 @@ dependencies = [
 name = "exhibitor"
 version = "0.0.1"
 dependencies = [
+ "frames 0.0.1",
+ "qualia 0.0.1",
+ "timber 0.0.1",
+]
+
+[[package]]
+name = "frames"
+version = "0.0.1"
+dependencies = [
  "qualia 0.0.1",
 ]
 

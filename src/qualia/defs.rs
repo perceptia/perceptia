@@ -50,6 +50,18 @@ impl SurfaceId {
 
 // -------------------------------------------------------------------------------------------------
 
+impl std::fmt::Debug for SurfaceId {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        if self.is_valid() {
+            write!(f, "SID({:?})", self.0)
+        } else {
+            write!(f, "<invalid>")
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 impl std::fmt::Display for SurfaceId {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if self.is_valid() {

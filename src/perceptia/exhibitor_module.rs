@@ -13,7 +13,7 @@ use exhibitor::Exhibitor;
 
 /// Implementation of `dharma::Module` for Device Manager.
 pub struct ExhibitorModule {
-    exhibitor: Exhibitor,
+    exhibitor: Option<Exhibitor>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -21,7 +21,7 @@ pub struct ExhibitorModule {
 impl ExhibitorModule {
     /// `ExhibitorModule` constructor.
     pub fn new() -> Self {
-        ExhibitorModule { exhibitor: Exhibitor::new() }
+        ExhibitorModule { exhibitor: None }
     }
 }
 
@@ -31,17 +31,18 @@ impl Module for ExhibitorModule {
     type T = Perceptron;
     type C = Context;
 
-    #[allow(unused_variables)]
     fn initialize(&mut self, mut context: Self::C) -> InitResult {
-        log_info1!("Started Exhibitor module");
+        log_info1!("Starting Exhibitor module");
+        self.exhibitor = Some(Exhibitor::new(context.get_coordinator().clone()));
         vec![perceptron::SURFACE_READY]
     }
 
-    #[allow(unused_variables)]
     fn execute(&mut self, package: &Self::T) {
-        match *package {
-            Perceptron::SurfaceReady(sid) => self.exhibitor.on_surface_ready(sid),
-            _ => {}
+        if let Some(ref mut exhibitor) = self.exhibitor {
+            match *package {
+                Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
+                _ => {}
+            }
         }
     }
 

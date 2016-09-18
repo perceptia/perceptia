@@ -3,6 +3,7 @@
 members = [
         "src/dharma",
         "src/qualia",
+        "src/frames",
         "src/exhibitor",
         "src/device_manager",
         "src/wayland_frontend",

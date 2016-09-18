@@ -1,0 +1,132 @@
+// This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
+// the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
+
+//! This module contains assertions for checking validity of frame layouts contained in module
+//! `layouts`.
+
+// -------------------------------------------------------------------------------------------------
+
+use frames::{Frame, Parameters};
+use frames::Geometry::{Horizontal, Stacked, Vertical};
+
+use common::frame_representation::FrameRepresentation;
+
+// -------------------------------------------------------------------------------------------------
+
+/// Assert if given two frames are exactly the same by comparing their internals.
+pub fn assert_frame_equal_exact(frame1: &Frame, frame2: &Frame) {
+    assert!(frame1.equals_exact(frame2), "Frames are not exactly equal");
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Validate timed part if `simple` layout.
+pub fn assert_simple_frames_timed(frame: &Frame) {
+    let repr = FrameRepresentation {
+        params: Parameters::new_root(),
+        branches: vec![
+            FrameRepresentation {
+                params: Parameters::new_container(Vertical),
+                branches: vec![
+                    FrameRepresentation::new_leaf(11, Stacked),
+                    FrameRepresentation::new_leaf(12, Stacked),
+                    FrameRepresentation::new_leaf(13, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Horizontal),
+                branches: vec![
+                    FrameRepresentation::new_leaf(21, Stacked),
+                    FrameRepresentation::new_leaf(22, Stacked),
+                    FrameRepresentation::new_leaf(23, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Stacked),
+                branches: vec![
+                    FrameRepresentation::new_leaf(31, Stacked),
+                    FrameRepresentation::new_leaf(32, Stacked),
+                    FrameRepresentation::new_leaf(33, Stacked),
+                ]
+            },
+        ]
+    };
+
+    repr.assert_frames_timed(frame);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Validate timed part if `reversed simple` layout.
+pub fn assert_simple_frames_timed_reversed(frame: &Frame) {
+    let repr = FrameRepresentation {
+        params: Parameters::new_root(),
+        branches: vec![
+            FrameRepresentation {
+                params: Parameters::new_container(Stacked),
+                branches: vec![
+                    FrameRepresentation::new_leaf(33, Stacked),
+                    FrameRepresentation::new_leaf(32, Stacked),
+                    FrameRepresentation::new_leaf(31, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Horizontal),
+                branches: vec![
+                    FrameRepresentation::new_leaf(23, Stacked),
+                    FrameRepresentation::new_leaf(22, Stacked),
+                    FrameRepresentation::new_leaf(21, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Vertical),
+                branches: vec![
+                    FrameRepresentation::new_leaf(13, Stacked),
+                    FrameRepresentation::new_leaf(12, Stacked),
+                    FrameRepresentation::new_leaf(11, Stacked),
+                ]
+            },
+        ]
+    };
+
+    repr.assert_frames_timed(frame);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Validate spaced part if `simple` layout.
+pub fn assert_simple_frames_spaced(frame: &Frame) {
+    let repr = FrameRepresentation {
+        params: Parameters::new_root(),
+        branches: vec![
+            FrameRepresentation {
+                params: Parameters::new_container(Vertical),
+                branches: vec![
+                    FrameRepresentation::new_leaf(11, Stacked),
+                    FrameRepresentation::new_leaf(12, Stacked),
+                    FrameRepresentation::new_leaf(13, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Horizontal),
+                branches: vec![
+                    FrameRepresentation::new_leaf(21, Stacked),
+                    FrameRepresentation::new_leaf(22, Stacked),
+                    FrameRepresentation::new_leaf(23, Stacked),
+                ]
+            },
+            FrameRepresentation {
+                params: Parameters::new_container(Stacked),
+                branches: vec![
+                    FrameRepresentation::new_leaf(31, Stacked),
+                    FrameRepresentation::new_leaf(32, Stacked),
+                    FrameRepresentation::new_leaf(33, Stacked),
+                ]
+            },
+        ]
+    };
+
+    repr.assert_frames_spaced(frame);
+}
+
+// -------------------------------------------------------------------------------------------------

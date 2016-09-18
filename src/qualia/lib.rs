@@ -36,7 +36,7 @@ pub mod env;
 pub use env::Env;
 
 pub mod coordinator;
-pub use coordinator::{Coordinator, SurfaceId, show_reason};
+pub use coordinator::{Coordinator, SurfaceAccess, SurfaceId, SurfaceInfo, show_reason};
 
 pub mod context;
 pub use context::Context;

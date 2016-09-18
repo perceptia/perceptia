@@ -37,6 +37,20 @@ macro_rules! try_get_surface {
 
 // -------------------------------------------------------------------------------------------------
 
+macro_rules! try_get_surface_or_none {
+    ($coordinator:expr, $sid:ident) => {
+        match $coordinator.surfaces.get(&$sid) {
+            Some(surface) => surface,
+            None => {
+                log_warn2!("Surface {} not found!", $sid);
+                return None
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// These flags describe readiness of `Surface` to be displayed.
 pub mod show_reason {
     pub type ShowReason = i32;
@@ -44,6 +58,16 @@ pub mod show_reason {
     pub const DRAWABLE:      ShowReason = 0b0001;
     pub const IN_SHELL:      ShowReason = 0b0010;
     pub const READY:         ShowReason = DRAWABLE | IN_SHELL;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure containing public information about surface.
+pub struct SurfaceInfo {
+    pub id: SurfaceId,
+    pub parent_sid: SurfaceId,
+    pub desired_size: Size,
+    pub requested_size: Size,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -140,6 +164,23 @@ impl Surface {
 
         is_first_time_commited
     }
+
+    /// Returns information about surface.
+    pub fn get_info(&self) -> SurfaceInfo {
+        SurfaceInfo {
+            id: self.id,
+            parent_sid: self.parent_sid,
+            desired_size: self.desired_size.clone(),
+            requested_size: self.requested_size.clone(),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Trait used for configuring and manipulating surfaces.
+pub trait SurfaceAccess {
+    fn configure(&mut self, sid: SurfaceId, i: i32);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -162,6 +203,15 @@ impl InnerCoordinator {
             surfaces: Map::new(),
             last_id: SurfaceId::invalid(),
         }
+    }
+
+    /// Notifis coordinator about event that requires screen to be refreshed.
+    pub fn notify(&mut self) {}
+
+    /// Return inforamtion about surface.
+    pub fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
+        let surface = try_get_surface_or_none!(self, sid);
+        Some(surface.get_info())
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -257,6 +307,18 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn notify(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.notify()
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.get_surface(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn create_surface(&mut self) -> SurfaceId {
         let mut mine = self.inner.lock().unwrap();
         mine.create_surface()
@@ -314,6 +376,14 @@ impl Coordinator {
     pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
         let mine = self.inner.lock().unwrap();
         mine.set_surface_as_cursor(sid)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl SurfaceAccess for Coordinator {
+    fn configure(&mut self, sid: SurfaceId, i: i32) {
+        
     }
 }
 

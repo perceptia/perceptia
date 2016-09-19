@@ -46,23 +46,35 @@ impl<'a> Udev<'a> {
             .expect("Failed to create device enumerator");
         enumerator.match_subsystem("input").expect("Failed to apply filter for device enumerator");
         for device in enumerator.scan_devices().expect("Failed to scan devices") {
-            match device.devnode() {
-                Some(devnode) => {
-                    match device.sysname().to_os_string().into_string() {
-                        Ok(sysname) => {
-                            if is_event_device(devnode, &sysname) {
-                                let device_kind = determine_device_kind(&device);
-                                if device_kind != qualia::enums::DeviceKind::Unknown {
-                                    log_info2!("Found {:?} {:?}", device_kind, devnode);
-                                    f(devnode, &device);
-                                }
-                            }
+            if let Some(devnode) = device.devnode() {
+                if let Ok(sysname) = device.sysname().to_os_string().into_string() {
+                    if is_event_device(devnode, &sysname) {
+                        let device_kind = determine_device_kind(&device);
+                        if device_kind != qualia::enums::DeviceKind::Unknown {
+                            log_info1!("Found {:?}: {:?}", device_kind, devnode);
+                            f(devnode, &device);
                         }
-                        Err(_) => (),
                     }
                 }
-                None => (), // Ignore devices without devnode
-            };
+            }
+        }
+    }
+
+    /// Iterate over connected output DRM devices and pass results to given handler.
+    /// Panic if something goes wrong - this is crucial for perceptia to have output.
+    pub fn iterate_drm_devices<F: FnMut(&Path, &libudev::Device)>(&self, mut f: F) {
+        let mut enumerator = libudev::Enumerator::new(&self.context)
+            .expect("Failed to create device enumerator");
+        enumerator.match_subsystem("drm").expect("Failed to apply filter for device enumerator");
+        for device in enumerator.scan_devices().expect("Failed to scan devices") {
+            if let Some(devnode) = device.devnode() {
+                if let Ok(sysname) = device.sysname().to_os_string().into_string() {
+                    if is_output_device(devnode, &sysname) {
+                        log_info1!("Found output device: {:?}", devnode);
+                        f(devnode, &device);
+                    }
+                }
+            }
         }
     }
 
@@ -92,6 +104,16 @@ impl<'a> Udev<'a> {
 fn is_event_device(devnode: &Path, sysname: &String) -> bool {
     match nix::sys::stat::stat(devnode) {
         Ok(_) => sysname.starts_with("event"),
+        Err(_) => false,
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Checks if given device exists is output device.
+fn is_output_device(devnode: &Path, sysname: &String) -> bool {
+    match nix::sys::stat::stat(devnode) {
+        Ok(_) => sysname.starts_with("card"),
         Err(_) => false,
     }
 }

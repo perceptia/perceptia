@@ -9,13 +9,14 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
-use defs::SurfaceId;
+use defs::{DrmBundle, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
 
 pub const SURFACE_READY: SignalId = 0;
-pub const EVENT_A: SignalId = 0;
-pub const EVENT_B: SignalId = 1;
+pub const OUTPUT_FOUND: SignalId = 1;
+pub const VERTICAL_BLANK: SignalId = 2;
+pub const PAGE_FLIP: SignalId = 3;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -25,8 +26,9 @@ pub const EVENT_B: SignalId = 1;
 #[derive(Clone)]
 pub enum Perceptron {
     SurfaceReady(SurfaceId),
-    A(String),
-    B(i32),
+    OutputFound(DrmBundle),
+    VerticalBlank(i32),
+    PageFlip(i32),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -39,8 +41,9 @@ impl std::fmt::Display for Perceptron {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
-            Perceptron::A(ref s) => write!(f, "EVENT_A('{}')", s),
-            Perceptron::B(ref i) => write!(f, "EVENT_B({})", i),
+            Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
+            Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),
+            Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
         }
     }
 }

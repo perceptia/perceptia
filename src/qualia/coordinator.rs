@@ -55,9 +55,9 @@ macro_rules! try_get_surface_or_none {
 pub mod show_reason {
     pub type ShowReason = i32;
     pub const UNINITIALIZED: ShowReason = 0b0000;
-    pub const DRAWABLE:      ShowReason = 0b0001;
-    pub const IN_SHELL:      ShowReason = 0b0010;
-    pub const READY:         ShowReason = DRAWABLE | IN_SHELL;
+    pub const DRAWABLE: ShowReason = 0b0001;
+    pub const IN_SHELL: ShowReason = 0b0010;
+    pub const READY: ShowReason = DRAWABLE | IN_SHELL;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -145,11 +145,11 @@ impl Surface {
     /// not set, assign size of buffer as requested size. Return `true` if surface was committed for
     /// the first time, `false` otherwise.
     pub fn commit(&mut self) -> bool {
-        let is_first_time_commited = self.buffer.is_empty();
+        let is_first_time_committed = self.buffer.is_empty();
         self.buffer.assign_from(&self.pending_buffer);
 
         // If surface was just created...
-        if is_first_time_commited {
+        if is_first_time_committed {
             // ... size was not yet requested by surface ...
             if !((self.requested_size.width == 0) || (self.requested_size.height == 0)) {
                 // ... use its buffer size as requested size ...
@@ -162,7 +162,7 @@ impl Surface {
             }
         }
 
-        is_first_time_commited
+        is_first_time_committed
     }
 
     /// Returns information about surface.
@@ -205,13 +205,19 @@ impl InnerCoordinator {
         }
     }
 
-    /// Notifis coordinator about event that requires screen to be refreshed.
+    /// Notifies coordinator about event that requires screen to be refreshed.
     pub fn notify(&mut self) {}
 
-    /// Return inforamtion about surface.
+    /// Returns information about surface.
     pub fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
         let surface = try_get_surface_or_none!(self, sid);
         Some(surface.get_info())
+    }
+
+    /// Returns buffer of the surface.
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Buffer> {
+        let surface = try_get_surface_or_none!(self, sid);
+        Some(surface.buffer.clone())
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -319,6 +325,12 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Buffer> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.get_buffer(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn create_surface(&mut self) -> SurfaceId {
         let mut mine = self.inner.lock().unwrap();
         mine.create_surface()
@@ -382,9 +394,7 @@ impl Coordinator {
 // -------------------------------------------------------------------------------------------------
 
 impl SurfaceAccess for Coordinator {
-    fn configure(&mut self, sid: SurfaceId, i: i32) {
-        
-    }
+    fn configure(&mut self, sid: SurfaceId, i: i32) {}
 }
 
 // -------------------------------------------------------------------------------------------------

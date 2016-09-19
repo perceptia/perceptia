@@ -6,7 +6,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Coordinator, SurfaceId, SurfaceInfo};
+use qualia::{Coordinator, Size, SurfaceId, SurfaceInfo};
 
 use surface_history::SurfaceHistory;
 use frames::{self, Frame};
@@ -64,6 +64,15 @@ impl Compositor {
         }
     }
 
+    /// Creates new display with default workspace.
+    pub fn create_display(&mut self, size: Size, name: String) -> Frame {
+        let mut display = Frame::new_display(size, name);
+        let mut workspace = Frame::new_workspace();
+        self.root.append(&mut display);
+        display.settle(&mut workspace, &self.coordinator);
+        display
+    }
+
     /// Handles new surface by settling it in frame tree, adding to history and notifying
     /// coordinator.
     pub fn manage_surface(&mut self, sid: SurfaceId) {
@@ -71,11 +80,11 @@ impl Compositor {
         let surface = try_get_surface!(self, sid);
 
         // Consult about placement strategy
-        let decision = self.choose_target(&surface);
+        let mut decision = self.choose_target(&surface);
 
         // Settle and optionally select new frame
-        let frame = Frame::new_leaf(sid, decision.geometry);
-        frame.settle(&decision.target, &self.coordinator);
+        let mut frame = Frame::new_leaf(sid, decision.geometry);
+        frame.settle(&mut decision.target, &self.coordinator);
         if decision.selection {
             self.select(Some(frame));
         }

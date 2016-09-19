@@ -23,7 +23,7 @@ pub mod errors;
 pub use errors::Error;
 
 pub mod defs;
-pub use defs::{Area, Point, Position, Size, Vector};
+pub use defs::{Area, Point, Position, Size, Vector, DrmBundle};
 
 pub mod buffer;
 pub use buffer::Buffer;
@@ -37,6 +37,9 @@ pub use env::Env;
 
 pub mod coordinator;
 pub use coordinator::{Coordinator, SurfaceAccess, SurfaceId, SurfaceInfo, show_reason};
+
+pub mod surface;
+pub use surface::SurfaceContext;
 
 pub mod context;
 pub use context::Context;

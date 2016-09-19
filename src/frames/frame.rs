@@ -10,7 +10,7 @@ use std::default::Default;
 
 use alloc::heap;
 
-use qualia::SurfaceId;
+use qualia::{SurfaceId, Size};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -98,6 +98,9 @@ pub enum Geometry {
 
     /// Children of frame with this geometry are placed on stack - only one is visible at a time.
     Stacked,
+
+    /// Children of frame with this geometry can be in arbitrary place and have arbitrary size.
+    Floating,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -112,6 +115,12 @@ pub struct Parameters {
 
     /// Geometry.
     pub geometry: Geometry,
+
+    /// Size.
+    pub size: Size,
+
+    /// Title.
+    pub title: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -122,16 +131,31 @@ impl Parameters {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Root,
-            geometry: Geometry::Stacked,
+            geometry: Geometry::Floating,
+            size: Size::default(),
+            title: "PERCEPTIA".to_owned(),
         }
     }
 
-    /// Creates new parameters for special frame.
-    pub fn new_special() -> Self {
+    /// Creates new parameters for display frame.
+    pub fn new_display(size: Size, title: String) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Special,
             geometry: Geometry::Stacked,
+            size: size,
+            title: title,
+        }
+    }
+
+    /// Creates new parameters for workspace frame.
+    pub fn new_workspace() -> Self {
+        Parameters {
+            sid: SurfaceId::invalid(),
+            mode: Mode::Special,
+            geometry: Geometry::Stacked,
+            size: Size::default(),
+            title: "".to_owned(),
         }
     }
 
@@ -141,6 +165,8 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Container,
             geometry: geometry,
+            size: Size::default(),
+            title: "".to_owned(),
         }
     }
 
@@ -150,6 +176,8 @@ impl Parameters {
             sid: sid,
             mode: Mode::Leaf,
             geometry: geometry,
+            size: Size::default(),
+            title: "".to_owned(),
         }
     }
 }
@@ -186,10 +214,18 @@ impl Frame {
         })
     }
 
-    /// Creates new special frame.
-    pub fn new_special() -> Self {
+    /// Creates new display frame.
+    pub fn new_display(size: Size, title: String) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_special(),
+            params: Parameters::new_display(size, title),
+            node: Node::default(),
+        })
+    }
+
+    /// Creates new workspace frame.
+    pub fn new_workspace() -> Self {
+        Self::allocate(InnerFrame {
+            params: Parameters::new_workspace(),
             node: Node::default(),
         })
     }
@@ -254,6 +290,12 @@ impl Frame {
     #[inline]
     pub fn get_geometry(&self) -> Geometry {
         unsafe { (*self.inner).params.geometry }
+    }
+
+    /// Gets size.
+    #[inline]
+    pub fn get_size(&self) -> Size {
+        unsafe { (*self.inner).params.size.clone() }
     }
 }
 
@@ -542,10 +584,11 @@ impl Frame {
 impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
-               "Frame(sid: {:?}, mode: {:?}, geometry: {:?})",
+               "Frame(sid: {:?}, mode: {:?}, geometry: {:?}, size: {:?})",
                self.get_sid(),
                self.get_mode(),
-               self.get_geometry())
+               self.get_geometry(),
+               self.get_size())
     }
 }
 

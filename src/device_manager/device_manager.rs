@@ -1,7 +1,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! Implementation of `dharma::Module` for Device Manager.
+//! Device manager.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,29 +11,47 @@ use nix::{self, Errno};
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::{Mode, stat};
 
-use dharma::{InitResult, Module};
-use qualia::{Context, Error, Ipc, Perceptron};
+use qualia::{Context, Error, Ipc, perceptron, Perceptron};
 
 use evdev;
 use udev;
+use output_collector::OutputCollector;
 use drivers::InputDriver;
 
 // -------------------------------------------------------------------------------------------------
 
-pub struct DeviceManagerModule<'a> {
+/// Device Manager manages searching input and output devices and monitoring them.
+pub struct DeviceManager<'a> {
     udev: udev::Udev<'a>,
     ipc: Ipc,
+    output_collector: OutputCollector,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<'a> DeviceManagerModule<'a> {
-    /// `DeviceManagerModule` constructor.
-    pub fn new() -> Self {
-        DeviceManagerModule {
+impl<'a> DeviceManager<'a> {
+    /// `DeviceManager` constructor.
+    pub fn new(mut context: Context) -> Self {
+        let mut mine = DeviceManager {
             udev: udev::Udev::new(),
             ipc: Ipc::new(),
-        }
+            output_collector: OutputCollector::new(context.get_dispatcher().clone(),
+                                                   context.get_signaler().clone()),
+        };
+
+        // Initialize IPC
+        mine.initialize_ipc();
+
+        // Initialize input devices
+        mine.initialize_input_devices(&mut context);
+
+        // Initialize output devices
+        mine.initialize_output_devices(&mut context);
+
+        // Initialize device monitor
+        mine.initialize_device_monitor(&mut context);
+
+        mine
     }
 
     /// Try to open device. If we have insufficient permissions ask `logind` to do it for us.
@@ -86,9 +104,16 @@ impl<'a> DeviceManagerModule<'a> {
     }
 
     /// Find and initialize outputs.
-    #[allow(unused_variables)]
     fn initialize_output_devices(&mut self, context: &mut Context) {
-        // FIXME: Finnish implementation of `initialize_output_devices`.
+        let oc = &mut self.output_collector;
+        self.udev.iterate_drm_devices(|devnode, _| {
+            // FIXME: Can not do:
+            // self.output_collector.scan_device(devnode);
+            // Is it compiler bug?
+            if let Err(err) = oc.scan_device(devnode) {
+                log_error!("{}", err);
+            }
+        });
     }
 
     /// Initialize device monitoring.
@@ -98,36 +123,6 @@ impl<'a> DeviceManagerModule<'a> {
             Err(err) => log_warn1!("Device Manager: {}", err),
         }
     }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl<'a> Module for DeviceManagerModule<'a> {
-    type T = Perceptron;
-    type C = Context;
-
-    #[allow(unused_variables)]
-    fn initialize(&mut self, mut context: Self::C) -> InitResult {
-        // Initialize IPC
-        self.initialize_ipc();
-
-        // Initialize input devices
-        self.initialize_input_devices(&mut context);
-
-        // Initialize output devices
-        self.initialize_output_devices(&mut context);
-
-        // Initialize device monitor
-        self.initialize_device_monitor(&mut context);
-
-        Vec::new()
-    }
-
-    // FIXME: Finnish handling signals in `DeviceManagerModule`.
-    #[allow(unused_variables)]
-    fn execute(&mut self, package: &Self::T) {}
-
-    fn finalize(&mut self) {}
 }
 
 // -------------------------------------------------------------------------------------------------

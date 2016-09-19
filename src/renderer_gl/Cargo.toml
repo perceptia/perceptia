@@ -1,18 +1,15 @@
 [package]
-name = "wayland_frontend"
+name = "renderer_gl"
 version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
-build = "build.rs"
-
-[build-dependencies]
-gcc = "0.3"
 
 [dependencies]
-libc = "0.2.16"
+egl = "0.2.6"
+gl = "0.6.0"
 timber = { path = "../timber" }
 qualia = { path = "../qualia" }
 
 [lib]
-name = "wayland_frontend"
+name = "renderer_gl"
 path = "lib.rs"
 

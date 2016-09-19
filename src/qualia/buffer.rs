@@ -11,10 +11,12 @@ use defs::Size;
 
 /// Container for all data required to draw an image.
 /// FIXME: Finish implementation of Buffer.
+/// FIXME: Buffer should not be clonable.
+#[derive(Clone, Debug)]
 pub struct Buffer {
-    width: u32,
-    height: u32,
-    stride: u32,
+    width: usize,
+    height: usize,
+    stride: usize,
     data: Vec<u8>,
 }
 
@@ -23,10 +25,12 @@ pub struct Buffer {
 impl Buffer {
     /// `Buffer` constructor.
     /// Will panic if passed data size does not match declared size.
-    pub fn new(width: u32, height: u32, stride: u32, data: Vec<u8>) -> Self {
-        if (stride * height) as usize != data.len() {
+    pub fn new(width: usize, height: usize, stride: usize, data: Vec<u8>) -> Self {
+        if (stride * height) != data.len() {
             panic!("Data size ({}) does not match declaration ({} * {})",
-                   data.len(), stride, height);
+                   data.len(),
+                   stride,
+                   height);
         }
 
         Buffer {
@@ -60,9 +64,27 @@ impl Buffer {
     #[inline]
     pub fn get_size(&self) -> Size {
         Size {
-            width: self.width,
-            height: self.height,
+            width: self.width as u32,
+            height: self.height as u32,
         }
+    }
+
+    /// Get width of the buffer.
+    #[inline]
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    /// Get height of the buffer.
+    #[inline]
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+
+    /// Get data.
+    #[inline]
+    pub fn get_data(&self) -> &Vec<u8> {
+        &self.data
     }
 
     /// Check if buffer contains drawable data.

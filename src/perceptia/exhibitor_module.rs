@@ -34,13 +34,15 @@ impl Module for ExhibitorModule {
     fn initialize(&mut self, mut context: Self::C) -> InitResult {
         log_info1!("Starting Exhibitor module");
         self.exhibitor = Some(Exhibitor::new(context.get_coordinator().clone()));
-        vec![perceptron::SURFACE_READY]
+        vec![perceptron::SURFACE_READY, perceptron::OUTPUT_FOUND, perceptron::PAGE_FLIP]
     }
 
     fn execute(&mut self, package: &Self::T) {
         if let Some(ref mut exhibitor) = self.exhibitor {
             match *package {
                 Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
+                Perceptron::OutputFound(bundle) => exhibitor.on_output_found(bundle),
+                Perceptron::PageFlip(id) => exhibitor.on_pageflip(id),
                 _ => {}
             }
         }

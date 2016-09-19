@@ -2,9 +2,16 @@
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 extern crate clap;
+extern crate nix;
+extern crate egl;
+extern crate gl;
+extern crate libudev;
 
 extern crate timber;
+extern crate qualia;
 extern crate device_manager;
+extern crate output;
+extern crate renderer_gl;
 
 mod info;
 mod about;
@@ -24,12 +31,12 @@ fn main() {
         .get_matches();
 
     match matches.subcommand() {
-        ("info",  Some(_)) => {
+        ("info", Some(_)) => {
             info::process();
         }
         ("about", Some(_)) => {
             about::process();
         }
-        _ => { println!("Error during parsing arguments!") }
+        _ => println!("Error during parsing arguments!"),
     }
 }

@@ -5,4 +5,3 @@ pub fn process() {
     // TODO: Add information about repository, bug tracker, authors.
     println!("Not yet implemented");
 }
-

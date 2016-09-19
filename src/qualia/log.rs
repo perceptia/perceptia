@@ -28,7 +28,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-#[cfg(debug)]
+#[cfg(debug_assertions)]
 pub mod level {
     pub const ERROR: i32 = 1;
     pub const DEBUG: i32 = 2;
@@ -43,11 +43,11 @@ pub mod level {
     pub const INFO4: i32 = 0;
 }
 
-#[cfg(not(debug))]
+#[cfg(not(debug_assertions))]
 pub mod level {
     pub const ERROR: i32 = 1;
-    pub const DEBUG: i32 = 0;
-    pub const NYIMP: i32 = 0;
+    pub const DEBUG: i32 = 2;
+    pub const NYIMP: i32 = 3;
     pub const WARN1: i32 = 4;
     pub const INFO1: i32 = 5;
     pub const WARN2: i32 = 6;

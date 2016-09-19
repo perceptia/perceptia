@@ -7,6 +7,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 timber = { path = "../timber" }
 qualia = { path = "../qualia" }
 frames = { path = "../frames" }
+output = { path = "../output" }
 
 [lib]
 name = "exhibitor"

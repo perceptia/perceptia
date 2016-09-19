@@ -14,6 +14,7 @@ extern crate exhibitor;
 extern crate device_manager;
 extern crate wayland_frontend;
 
+mod device_manager_module;
 mod exhibitor_module;
 mod wayland_module;
 
@@ -22,8 +23,8 @@ use std::boxed::FnBox;
 use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module};
 use qualia::{Context, Coordinator, Perceptron};
 
+use device_manager_module::DeviceManagerModule;
 use exhibitor_module::ExhibitorModule;
-use device_manager::DeviceManagerModule;
 use wayland_module::WaylandModule;
 
 type Mod = Box<Module<T = Perceptron, C = Context>>;

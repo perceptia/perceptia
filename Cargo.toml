@@ -2,12 +2,15 @@
 
 members = [
         "src/dharma",
+        "src/timber",
         "src/qualia",
         "src/frames",
-        "src/exhibitor",
+        "src/renderer_gl",
+        "src/output",
         "src/device_manager",
+        "src/exhibitor",
         "src/wayland_frontend",
         "src/perceptia",
-        "src/perceptiactl"
+        "src/perceptiactl",
     ]
 

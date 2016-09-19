@@ -13,6 +13,8 @@ pub type Vector = Position;
 /// Type of surface ID.
 pub type SurfaceIdType = u64;
 
+pub type Fd = i32;
+
 // -------------------------------------------------------------------------------------------------
 
 pub const INVALID_SURFACE_ID: SurfaceIdType = 0;
@@ -76,7 +78,7 @@ impl std::fmt::Display for SurfaceId {
 
 /// Type defining position, point coordinates or 2D vector.
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
@@ -94,10 +96,22 @@ impl std::default::Default for Position {
 
 /// Type defining 2D size, dimensions or resolution.
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Size {
     pub width: u32,
     pub height: u32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Size {
+    /// `Size` constructor.
+    pub fn new(width: u32, height: u32) -> Self {
+        Size {
+            width: width,
+            height: height,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -115,7 +129,7 @@ impl std::default::Default for Size {
 
 /// Type defining 2D area.
 #[repr(C)]
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Area {
     pub pos: Position,
     pub size: Size,
@@ -130,6 +144,16 @@ impl std::default::Default for Area {
             size: Size::default(),
         }
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure containing all data needed to initialize DRM output.
+#[derive(Clone, Copy, Debug)]
+pub struct DrmBundle {
+    pub fd: Fd,
+    pub crtc_id: u32,
+    pub connector_id: u32,
 }
 
 // -------------------------------------------------------------------------------------------------

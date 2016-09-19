@@ -46,6 +46,16 @@ impl Context {
         self.dispatcher.add_source(event_handler);
     }
 
+    /// Get reference to `Signaler`.
+    pub fn get_signaler(&mut self) -> &mut Signaler<Perceptron> {
+        &mut self.signaler
+    }
+
+    /// Get reference to `Dispatcher`.
+    pub fn get_dispatcher(&mut self) -> &mut Dispatcher {
+        &mut self.dispatcher
+    }
+
     /// Get reference to `Coordinator`.
     pub fn get_coordinator(&mut self) -> &mut Coordinator {
         &mut self.coordinator

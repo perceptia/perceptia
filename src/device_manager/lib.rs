@@ -5,6 +5,7 @@
 
 extern crate libudev;
 extern crate nix;
+extern crate drm as libdrm;
 
 #[macro_use]
 extern crate timber;
@@ -12,11 +13,13 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 
-pub mod device_manager_module;
-pub use device_manager_module::DeviceManagerModule;
-
 mod evdev;
 mod drivers;
+mod pageflip;
+mod output_collector;
 mod device_monitor;
 
 pub mod udev;
+
+pub mod device_manager;
+pub use device_manager::DeviceManager;

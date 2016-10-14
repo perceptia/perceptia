@@ -15,6 +15,7 @@ extern crate timber;
 extern crate dharma;
 
 pub mod enums;
+pub use enums::{DeviceKind, KeyState};
 
 pub mod perceptron;
 pub use perceptron::Perceptron;
@@ -23,7 +24,10 @@ pub mod errors;
 pub use errors::Error;
 
 pub mod defs;
-pub use defs::{Area, Point, Position, Size, Vector, DrmBundle};
+pub use defs::{Area, Point, Button, Position, OptionalPosition, Size, Vector, DrmBundle};
+
+pub mod config;
+pub use config::{Config, InputConfig};
 
 pub mod buffer;
 pub use buffer::Buffer;

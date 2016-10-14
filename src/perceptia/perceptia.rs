@@ -32,12 +32,16 @@ type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Sen
 
 fn main() {
     let env = qualia::Env::create();
+    let config = env.read_config();
 
     // Prepare state
     let signaler = Signaler::new();
     let mut dispatcher = Dispatcher::new();
     let coordinator = Coordinator::new(signaler.clone());
-    let context = Context::new(signaler.clone(), dispatcher.clone(), coordinator.clone());
+    let context = Context::new(config.clone(),
+                               signaler.clone(),
+                               dispatcher.clone(),
+                               coordinator.clone());
 
     let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
     dispatcher.add_source(signal_source);

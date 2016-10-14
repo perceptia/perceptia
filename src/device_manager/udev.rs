@@ -41,7 +41,9 @@ impl<'a> Udev<'a> {
 
     /// Iterate over connected input event devices and pass results to given handler.
     /// Panic if something goes wrong - this is crucial for perceptia to have input.
-    pub fn iterate_event_devices<F: FnMut(&Path, &libudev::Device)>(&self, mut f: F) {
+    pub fn iterate_event_devices<F>(&self, mut f: F)
+        where F: FnMut(&Path, qualia::DeviceKind, &libudev::Device)
+    {
         let mut enumerator = libudev::Enumerator::new(&self.context)
             .expect("Failed to create device enumerator");
         enumerator.match_subsystem("input").expect("Failed to apply filter for device enumerator");
@@ -50,9 +52,9 @@ impl<'a> Udev<'a> {
                 if let Ok(sysname) = device.sysname().to_os_string().into_string() {
                     if is_event_device(devnode, &sysname) {
                         let device_kind = determine_device_kind(&device);
-                        if device_kind != qualia::enums::DeviceKind::Unknown {
+                        if device_kind != qualia::DeviceKind::Unknown {
                             log_info1!("Found {:?}: {:?}", device_kind, devnode);
-                            f(devnode, &device);
+                            f(devnode, device_kind, &device);
                         }
                     }
                 }
@@ -124,14 +126,14 @@ fn is_output_device(devnode: &Path, sysname: &String) -> bool {
 pub fn determine_device_kind(device: &libudev::Device) -> qualia::enums::DeviceKind {
     for property in device.properties() {
         if property.name() == INPUT_MOUSE {
-            return qualia::enums::DeviceKind::Mouse;
+            return qualia::DeviceKind::Mouse;
         } else if property.name() == INPUT_TOUCHPAD {
-            return qualia::enums::DeviceKind::Touchpad;
+            return qualia::DeviceKind::Touchpad;
         } else if property.name() == INPUT_KEYBOARD {
-            return qualia::enums::DeviceKind::Keyboard;
+            return qualia::DeviceKind::Keyboard;
         }
     }
-    qualia::enums::DeviceKind::Unknown
+    qualia::DeviceKind::Unknown
 }
 
 // -------------------------------------------------------------------------------------------------

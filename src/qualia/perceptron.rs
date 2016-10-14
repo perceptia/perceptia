@@ -9,7 +9,7 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
-use defs::{DrmBundle, SurfaceId};
+use defs::{DrmBundle, SurfaceId, OptionalPosition, Vector, Button};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -17,6 +17,11 @@ pub const SURFACE_READY: SignalId = 0;
 pub const OUTPUT_FOUND: SignalId = 1;
 pub const VERTICAL_BLANK: SignalId = 2;
 pub const PAGE_FLIP: SignalId = 3;
+pub const INPUT_POINTER_MOTION: SignalId = 10;
+pub const INPUT_POINTER_POSITION: SignalId = 11;
+pub const INPUT_POINTER_BUTTON: SignalId = 12;
+pub const INPUT_POINTER_AXIS: SignalId = 13;
+pub const INPUT_POINTER_POSITION_RESET: SignalId = 14;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,6 +34,11 @@ pub enum Perceptron {
     OutputFound(DrmBundle),
     VerticalBlank(i32),
     PageFlip(i32),
+    InputPointerMotion(Vector),
+    InputPointerPosition(OptionalPosition),
+    InputPointerButton(Button),
+    InputPointerAxis(Vector),
+    InputPointerPositionReset,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -44,6 +54,15 @@ impl std::fmt::Display for Perceptron {
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
             Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
+            Perceptron::InputPointerMotion(ref vector) => {
+                write!(f, "InputPointerMotion({:?})", vector)
+            }
+            Perceptron::InputPointerPosition(ref pos) => {
+                write!(f, "InputPointerPosition({:?})", pos)
+            }
+            Perceptron::InputPointerButton(ref btn) => write!(f, "InputPointerButton({:?})", btn),
+            Perceptron::InputPointerAxis(ref axis) => write!(f, "InputPointerAxis({:?})", axis),
+            Perceptron::InputPointerPositionReset => write!(f, "InputPointerPositionReset"),
         }
     }
 }

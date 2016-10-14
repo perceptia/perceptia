@@ -4,6 +4,7 @@
 //! This module provides device management functionality for Perceptia.
 
 extern crate libudev;
+extern crate uinput_sys;
 extern crate nix;
 extern crate drm as libdrm;
 
@@ -13,6 +14,7 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 
+mod input_gateway;
 mod evdev;
 mod drivers;
 mod pageflip;

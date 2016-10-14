@@ -10,14 +10,21 @@ use std::os::unix::io;
 use nix::fcntl::OFlag;
 use nix::sys::stat::Mode;
 
-use qualia::Error;
+use qualia::{DeviceKind, Error, InputConfig};
+
+use input_gateway::InputGateway;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Trait for input event devices like keyboard, mouse or touchpad.
 pub trait InputDriver {
     /// Initialize drive. Return driver instance on success or error otherwise.
-    fn initialize_device<F>(devnode: &Path, open_restricted: F) -> Result<Box<Self>, Error>
+    fn initialize_device<F>(devnode: &Path,
+                            device_kind: DeviceKind,
+                            config: InputConfig,
+                            gateway: InputGateway,
+                            open_restricted: F)
+                            -> Result<Box<Self>, Error>
         where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Error>;
 }
 

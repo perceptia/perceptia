@@ -22,9 +22,10 @@ mod display;
 // -------------------------------------------------------------------------------------------------
 
 use std::rc::Rc;
+use std::cell::RefCell;
 use std::collections::HashMap;
 
-use qualia::{Coordinator, SurfaceId};
+use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Position, Vector};
 use output::Output;
 
 use compositor::Compositor;
@@ -37,7 +38,7 @@ use display::Display;
 pub struct Exhibitor {
     last_output_id: i32,
     compositor: Compositor,
-    pointer: Rc<Pointer>,
+    pointer: Rc<RefCell<Pointer>>,
     displays: HashMap<i32, Display>,
     coordinator: Coordinator,
 }
@@ -51,7 +52,7 @@ impl Exhibitor {
         Exhibitor {
             last_output_id: 0,
             compositor: Compositor::new(coordinator.clone()),
-            pointer: Rc::new(Pointer::new(&mut coordinator)),
+            pointer: Rc::new(RefCell::new(Pointer::new(&mut coordinator))),
             displays: HashMap::new(),
             coordinator: coordinator,
         }
@@ -97,6 +98,31 @@ impl Exhibitor {
     /// This method is called when new surface is ready to be managed.
     pub fn on_surface_ready(&mut self, sid: SurfaceId) {
         self.compositor.manage_surface(sid);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Input handlers.
+impl Exhibitor {
+    /// Handle pointer motion event.
+    pub fn on_motion(&mut self, vector: Vector) {
+        self.pointer.borrow_mut().move_and_cast(vector, &self.displays);
+        self.coordinator.notify();
+    }
+
+    /// Handle pointer position event.
+    pub fn on_position(&mut self, position: OptionalPosition) {
+        self.pointer.borrow_mut().update_position(position, &self.displays);
+        self.coordinator.notify();
+    }
+
+    /// Handle pointer button event.
+    pub fn on_button(&self, button: Button) {}
+
+    /// Handle pointer position reset event.
+    pub fn on_position_reset(&self) {
+        self.pointer.borrow_mut().reset_position()
     }
 }
 

@@ -14,6 +14,7 @@ use std::ops::BitAnd;
 
 use errors;
 use timber;
+use config;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -74,6 +75,12 @@ impl Env {
                 log_warn1!("Failed to remove runtime directory: {:?}", err);
             }
         }
+    }
+
+    /// Read in configuration.
+    /// TODO: Read configuration from file.
+    pub fn read_config(&self) -> config::Config {
+        config::Config::default()
     }
 }
 

@@ -16,6 +16,7 @@ use qualia::{Context, Error, Ipc, perceptron, Perceptron};
 use evdev;
 use udev;
 use output_collector::OutputCollector;
+use input_gateway::InputGateway;
 use drivers::InputDriver;
 
 // -------------------------------------------------------------------------------------------------
@@ -88,10 +89,16 @@ impl<'a> DeviceManager<'a> {
 
     /// Iterate over input devices to find usable ones and initialize event handlers for them.
     fn initialize_input_devices(&mut self, context: &mut Context) {
-        self.udev.iterate_event_devices(|devnode, _| {
-            let r = evdev::Evdev::initialize_device(devnode, |path, oflag, mode| {
-                self.open_restricted(path, oflag, mode)
-            });
+        self.udev.iterate_event_devices(|devnode, devkind, _| {
+            let config = context.get_config().get_input_config();
+            let gateway = InputGateway::new(config, context.get_signaler().clone());
+            let r = evdev::Evdev::initialize_device(devnode,
+                                                    devkind,
+                                                    config,
+                                                    gateway,
+                                                    |path, oflag, mode| {
+                                                        self.open_restricted(path, oflag, mode)
+                                                    });
             match r {
                 Ok(driver) => {
                     context.add_event_handler(driver);

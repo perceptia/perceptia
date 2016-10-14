@@ -6,8 +6,9 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::rc::Rc;
+use std::cell::RefCell;
 
-use qualia::{Coordinator, Error, SurfaceContext};
+use qualia::{Area, Coordinator, Error, SurfaceContext};
 
 use frames::Frame;
 use output::Output;
@@ -19,7 +20,7 @@ use pointer::Pointer;
 /// `Display`
 pub struct Display {
     coordinator: Coordinator,
-    pointer: Rc<Pointer>,
+    pointer: Rc<RefCell<Pointer>>,
     output: Output,
     frame: Frame,
     redraw_needed: bool,
@@ -31,7 +32,7 @@ pub struct Display {
 impl Display {
     /// `Display` constructor.
     pub fn new(coordinator: Coordinator,
-               pointer: Rc<Pointer>,
+               pointer: Rc<RefCell<Pointer>>,
                output: Output,
                frame: Frame)
                -> Self {
@@ -65,7 +66,8 @@ impl Display {
 
     /// Prepare rendering context for layover.
     pub fn prepare_layover_context(&self) -> SurfaceContext {
-        SurfaceContext::new(self.pointer.get_sid(), self.pointer.get_global_position())
+        SurfaceContext::new(self.pointer.borrow().get_sid(),
+                            self.pointer.borrow().get_global_position())
     }
 
     /// Draw the scene and then schedule pageflip.
@@ -86,6 +88,11 @@ impl Display {
                 log_error!("Display: {}", err);
             }
         }
+    }
+
+    /// Get area of the output in global coordinates.
+    pub fn get_area(&self) -> Area {
+        self.output.get_area()
     }
 }
 

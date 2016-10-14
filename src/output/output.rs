@@ -11,7 +11,7 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use qualia::{Coordinator, DrmBundle, Error, Size, SurfaceContext};
+use qualia::{Coordinator, DrmBundle, Error, Area, Position, Size, SurfaceContext};
 use renderer_gl::{egl_tools, RendererGl};
 
 use gbm_tools::GbmBucket;
@@ -50,7 +50,7 @@ pub struct Output {
 
     /// Container for Buffer Objects.
     // This does not have to be vector. We only need one buffer at a time. Container was introduced
-    // to satify borrow checker.
+    // to satisfy borrow checker.
     bo: VecDeque<libgbm::BufferObject>,
 
     /// Current framebuffer id.
@@ -129,6 +129,12 @@ impl Output {
         self.size.clone()
     }
 
+    /// Return area of the output in global coordinates.
+    pub fn get_area(&self) -> Area {
+        // TODO: Make Output aware of its position.
+        Area::new(Position::new(0, 0), self.size.clone())
+    }
+
     /// Get name of the output. This name should uniquely identify output.
     pub fn get_name(&self) -> String {
         self.name.clone()
@@ -143,9 +149,7 @@ impl Output {
     /// Create buffer if necessary.
     fn swap_gbm_buffers(&mut self) -> Result<u32, Error> {
         if let Some(bo) = self.bo.pop_front() {
-            unsafe {
-                self.gbm.surface.release_buffer(bo);
-            };
+            self.gbm.surface.release_buffer(bo);
         }
 
         if let Some(bo) = self.gbm.surface.lock_front_buffer() {

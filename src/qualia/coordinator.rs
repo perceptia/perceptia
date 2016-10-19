@@ -15,7 +15,7 @@ use dharma;
 use defs::{Size, Vector};
 use buffer::Buffer;
 use perceptron::{self, Perceptron};
-pub use defs::SurfaceId;
+use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -51,140 +51,6 @@ macro_rules! try_get_surface_or_none {
 
 // -------------------------------------------------------------------------------------------------
 
-/// These flags describe readiness of `Surface` to be displayed.
-pub mod show_reason {
-    pub type ShowReason = i32;
-    pub const UNINITIALIZED: ShowReason = 0b0000;
-    pub const DRAWABLE: ShowReason = 0b0001;
-    pub const IN_SHELL: ShowReason = 0b0010;
-    pub const READY: ShowReason = DRAWABLE | IN_SHELL;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure containing public information about surface.
-pub struct SurfaceInfo {
-    pub id: SurfaceId,
-    pub parent_sid: SurfaceId,
-    pub desired_size: Size,
-    pub requested_size: Size,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// This structure represents surface.
-struct Surface {
-    /// ID of the surface.
-    id: SurfaceId,
-
-    /// Offset used to move coordinate system of surface.
-    offset: Vector,
-
-    /// Size desired by compositor.
-    desired_size: Size,
-
-    /// Size requested by client.
-    requested_size: Size,
-
-    /// ID of parent surface.
-    parent_sid: SurfaceId,
-
-    /// Data required for draw.
-    buffer: Buffer,
-
-    /// Data to be used after commit.
-    pending_buffer: Buffer,
-
-    /// Flags indicating if surface is ready to be shown.
-    show_reasons: show_reason::ShowReason,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Surface {
-    /// `Surface` constructor.
-    pub fn new(id: &SurfaceId) -> Self {
-        Surface {
-            id: *id,
-            offset: Vector::default(),
-            desired_size: Size::default(),
-            requested_size: Size::default(),
-            parent_sid: SurfaceId::invalid(),
-            buffer: Buffer::empty(),
-            pending_buffer: Buffer::empty(),
-            show_reasons: show_reason::UNINITIALIZED,
-        }
-    }
-
-    /// Sets position offset.
-    pub fn set_offset(&mut self, offset: Vector) {
-        self.offset.x = if offset.x > 0 { offset.x } else { 0 };
-        self.offset.y = if offset.y > 0 { offset.y } else { 0 };
-    }
-
-    /// Sets size requested by client.
-    #[inline]
-    pub fn set_requested_size(&mut self, size: Size) {
-        self.requested_size = size
-    }
-
-    /// Adds given reason to show reasons. Returns updates set of reasons.
-    #[inline]
-    pub fn show(&mut self, reason: show_reason::ShowReason) -> show_reason::ShowReason {
-        self.show_reasons |= reason;
-        self.show_reasons
-    }
-
-    /// Sets given buffer as pending.
-    #[inline]
-    pub fn attach(&mut self, buffer: Buffer) {
-        self.pending_buffer = buffer
-    }
-
-    /// Sets pending buffer as current. If surface was committed for the first time and sizes are
-    /// not set, assign size of buffer as requested size. Return `true` if surface was committed for
-    /// the first time, `false` otherwise.
-    pub fn commit(&mut self) -> bool {
-        let is_first_time_committed = self.buffer.is_empty();
-        self.buffer.assign_from(&self.pending_buffer);
-
-        // If surface was just created...
-        if is_first_time_committed {
-            // ... size was not yet requested by surface ...
-            if !((self.requested_size.width == 0) || (self.requested_size.height == 0)) {
-                // ... use its buffer size as requested size ...
-                self.requested_size = self.buffer.get_size();
-            }
-            // ... and if it is subsurface ...
-            if self.parent_sid.is_valid() {
-                // ... set its desired size.
-                self.desired_size = self.buffer.get_size();
-            }
-        }
-
-        is_first_time_committed
-    }
-
-    /// Returns information about surface.
-    pub fn get_info(&self) -> SurfaceInfo {
-        SurfaceInfo {
-            id: self.id,
-            parent_sid: self.parent_sid,
-            desired_size: self.desired_size.clone(),
-            requested_size: self.requested_size.clone(),
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Trait used for configuring and manipulating surfaces.
-pub trait SurfaceAccess {
-    fn configure(&mut self, sid: SurfaceId, i: i32);
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// This structure contains logic related to maintaining shared application state about surfaces.
 /// For thread-safe public version see `Coordinator`.
 struct InnerCoordinator {
@@ -206,7 +72,9 @@ impl InnerCoordinator {
     }
 
     /// Notifies coordinator about event that requires screen to be refreshed.
-    pub fn notify(&mut self) {}
+    pub fn notify(&mut self) {
+        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+    }
 
     /// Returns information about surface.
     pub fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
@@ -215,9 +83,17 @@ impl InnerCoordinator {
     }
 
     /// Returns buffer of the surface.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Buffer> {
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Arc<Buffer>> {
         let surface = try_get_surface_or_none!(self, sid);
-        Some(surface.buffer.clone())
+        Some(surface.get_buffer())
+    }
+
+    /// Returns surface context.
+    pub fn get_renderer_context(&self, sid: SurfaceId) -> Option<Vec<SurfaceContext>> {
+        let mut result = Vec::new();
+        let surface = try_get_surface_or_none!(self, sid);
+        result.push(surface.get_renderer_context());
+        Some(result)
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -325,9 +201,15 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Buffer> {
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Arc<Buffer>> {
         let mut mine = self.inner.lock().unwrap();
         mine.get_buffer(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn get_renderer_context(&self, sid: SurfaceId) -> Option<Vec<SurfaceContext>> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.get_renderer_context(sid)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

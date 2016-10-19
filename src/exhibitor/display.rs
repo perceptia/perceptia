@@ -10,7 +10,7 @@ use std::cell::RefCell;
 
 use qualia::{Area, Coordinator, Error, SurfaceContext};
 
-use frames::Frame;
+use frames::{Frame, Displaying};
 use output::Output;
 
 use pointer::Pointer;
@@ -24,7 +24,7 @@ pub struct Display {
     output: Output,
     frame: Frame,
     redraw_needed: bool,
-    pageflip_scheduled: bool,
+    page_flip_scheduled: bool,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -42,26 +42,39 @@ impl Display {
             output: output,
             frame: frame,
             redraw_needed: true,
-            pageflip_scheduled: false,
+            page_flip_scheduled: false,
         };
         d.redraw_all(); // TODO: Remove when notifications are supported in Wayland module.
         d
     }
 
-    /// Schedule pageflip on assigned output.
+    /// Schedule page flip on assigned output.
     fn schedule_pageflip(&mut self) -> Result<(), Error> {
-        if !self.pageflip_scheduled {
-            self.pageflip_scheduled = true;
+        if !self.page_flip_scheduled {
+            self.page_flip_scheduled = true;
             self.output.schedule_pageflip()
         } else {
             Ok(())
         }
     }
 
-    /// Handle pageflip: redraw everything.
+    /// Handle page flip: redraw everything.
     pub fn on_pageflip(&mut self) {
-        self.pageflip_scheduled = false;
+        self.page_flip_scheduled = false;
         self.redraw_all();
+    }
+
+    /// Handle notification about needed redraw.
+    ///
+    /// This will cause display redraw. If page flip is already scheduled, display will be redraw
+    /// again after page flip.
+    pub fn on_notify(&mut self) {
+        if !self.redraw_needed {
+            self.redraw_needed = true;
+            if !self.page_flip_scheduled {
+                self.redraw_all();
+            }
+        }
     }
 
     /// Prepare rendering context for layover.
@@ -70,10 +83,10 @@ impl Display {
                             self.pointer.borrow().get_global_position())
     }
 
-    /// Draw the scene and then schedule pageflip.
+    /// Draw the scene and then schedule page flip.
     pub fn redraw_all(&mut self) {
         if self.redraw_needed {
-            let surfaces = Vec::new();
+            let surfaces = self.frame.to_array(&self.coordinator);
             let pointer = self.prepare_layover_context();
 
             if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
@@ -84,6 +97,7 @@ impl Display {
                 log_error!("Display: {}", err);
             }
 
+            self.redraw_needed = false;
             if let Err(err) = self.schedule_pageflip() {
                 log_error!("Display: {}", err);
             }

@@ -8,7 +8,9 @@
 
 extern crate libc;
 
+#[macro_use]
 extern crate timber;
+#[macro_use]
 extern crate qualia;
 
 pub mod wayland_frontend;

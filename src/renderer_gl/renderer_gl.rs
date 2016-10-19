@@ -176,18 +176,18 @@ impl RendererGl {
                 gl::TexImage2D(gl::TEXTURE_2D,                          // target
                                0,                                       // level, 0 = no mipmap
                                gl::RGBA as gl::types::GLint,            // internal format
-                               buffer.get_width() as gl::types::GLint,  // width
-                               buffer.get_height() as gl::types::GLint, // height
+                               (*buffer).get_width() as gl::types::GLint,  // width
+                               (*buffer).get_height() as gl::types::GLint, // height
                                0,                                       // always 0 in OpenGL ES
                                gl::RGBA,                                // format
                                gl::UNSIGNED_BYTE,                       // type
-                               buffer.get_data().as_ptr() as *const _);
+                               (*buffer).get_data().as_ptr() as *const _);
             }
 
             let left   = context.pos.x as gl::types::GLfloat;
             let top    = context.pos.y as gl::types::GLfloat;
-            let right  = left + buffer.get_width() as gl::types::GLfloat;
-            let bottom = top + buffer.get_height() as gl::types::GLfloat;
+            let right  = left + (*buffer).get_width() as gl::types::GLfloat;
+            let bottom = top + (*buffer).get_height() as gl::types::GLfloat;
 
             vertices[ 0] = left;  vertices[ 1] = top;
             vertices[ 2] = right; vertices[ 3] = top;

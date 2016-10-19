@@ -27,18 +27,11 @@ void noia_wayland_output_bind(struct wl_client* client,
                               uint32_t version,
                               uint32_t id)
 {
+    /// @todo Use more realistic data for output.
     struct wl_resource* rc;
-    NoiaOutput* output = (NoiaOutput*) data;
-
-    if (not output) {
-        LOG_WARN1("Invalid output!");
-        wl_client_post_no_memory(client);
-        return;
-    }
-
-    NoiaArea area = noia_output_get_area(output);
-    NoiaSize physical_size = noia_output_get_physical_size(output);
-    const char* name = noia_output_get_name(output);
+    NoiaArea area = {{0, 0}, {800, 600}};
+    NoiaSize physical_size = {800, 600};
+    const char* name = "out";
 
     LOG_WAYL2("Binding Wayland output (version: %d, id: %d, x: %d, y: %d, "
               "width: %u, height: %u, name: '%s')", version, id,

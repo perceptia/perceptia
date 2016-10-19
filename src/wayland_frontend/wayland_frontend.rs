@@ -17,6 +17,7 @@ use qualia::{Buffer, Coordinator, Size, SurfaceId, Vector};
 
 extern "C" {
     fn noia_wayland_initialize(coordinator: *mut Coordinator);
+    fn noia_wayland_advertise_output();
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -129,6 +130,12 @@ impl WaylandFrontend {
             coordinator.create_surface();
             (*(coordinator as *mut Coordinator)).create_surface();
             noia_wayland_initialize(coordinator as *mut Coordinator);
+        }
+    }
+
+    pub fn on_output_found() {
+        unsafe {
+            noia_wayland_advertise_output();
         }
     }
 }

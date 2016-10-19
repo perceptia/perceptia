@@ -34,8 +34,7 @@ void noia_wayland_engine_stop(NoiaWaylandEngine* self);
 int noia_wayland_engine_next_serial(NoiaWaylandEngine* self);
 
 /// Add global Wayland object representing newly found output.
-void noia_wayland_engine_advertise_output(NoiaWaylandEngine* self,
-                                          NoiaOutput* output);
+void noia_wayland_engine_advertise_output(NoiaWaylandEngine* self);
 
 /// Remove global Wayland object representing output.
 void noia_wayland_engine_destroy_output(NoiaWaylandEngine* self,

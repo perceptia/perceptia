@@ -96,7 +96,6 @@ impl Timber {
         match self.log_file {
             Some(ref mut log_file) => {
                 log_file.write(format!("{}", args).as_bytes()).expect("Failed to log!");
-                log_file.write("\n".as_bytes()).expect("Failed to log!");
             }
             None => {
                 println!("{}", args);

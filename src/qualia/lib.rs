@@ -39,11 +39,11 @@ pub use log::level;
 pub mod env;
 pub use env::Env;
 
-pub mod coordinator;
-pub use coordinator::{Coordinator, SurfaceAccess, SurfaceId, SurfaceInfo, show_reason};
-
 pub mod surface;
-pub use surface::SurfaceContext;
+pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason};
+
+pub mod coordinator;
+pub use coordinator::Coordinator;
 
 pub mod context;
 pub use context::Context;

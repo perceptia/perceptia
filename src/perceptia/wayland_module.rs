@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module};
-use qualia::{Context, Perceptron};
+use qualia::{Context, perceptron, Perceptron};
 use wayland_frontend;
 
 // -------------------------------------------------------------------------------------------------
@@ -39,11 +39,15 @@ impl Module for WaylandModule {
         if let Some(ref mut context) = self.context {
             wayland_frontend::WaylandFrontend::init(context.get_coordinator());
         }
-        Vec::new()
+        vec![perceptron::OUTPUT_FOUND]
     }
 
-    #[allow(unused_variables)]
-    fn execute(&mut self, package: &Self::T) {}
+    fn execute(&mut self, package: &Self::T) {
+        match *package {
+            Perceptron::OutputFound(_) => wayland_frontend::WaylandFrontend::on_output_found(),
+            _ => {}
+        }
+    }
 
     fn finalize(&mut self) {}
 }

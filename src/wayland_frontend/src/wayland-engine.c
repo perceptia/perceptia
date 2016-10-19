@@ -207,21 +207,14 @@ int noia_wayland_engine_next_serial(NoiaWaylandEngine* self)
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_engine_advertise_output(NoiaWaylandEngine* self,
-                                          NoiaOutput* output)
+void noia_wayland_engine_advertise_output(NoiaWaylandEngine* self)
 {
     struct wl_global* global =
                         wl_global_create(self->display, &wl_output_interface, 2,
-                                         output, noia_wayland_output_bind);
+                                         NULL, noia_wayland_output_bind);
     if (not global) {
         LOG_ERROR("Could not create global output!");
     }
-
-    NoiaWaylandOutput* wayland_output =
-                                     noia_wayland_output_create(global, output);
-    noia_store_add(self->outputs,
-                   strdup(noia_output_get_name(output)),
-                   wayland_output);
 }
 
 //------------------------------------------------------------------------------

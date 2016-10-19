@@ -6,6 +6,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use timber;
 use qualia::{Coordinator, Size, SurfaceId, SurfaceInfo};
 
 use surface_history::SurfaceHistory;
@@ -48,7 +49,7 @@ pub struct Compositor {
     history: SurfaceHistory,
     coordinator: Coordinator,
     root: Frame,
-    selection: Option<Frame>,
+    selection: Frame,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -56,11 +57,12 @@ pub struct Compositor {
 impl Compositor {
     /// `Compositor` constructor.
     pub fn new(coordinator: Coordinator) -> Self {
+        let root = Frame::new_root();
         Compositor {
             history: SurfaceHistory::new(),
             coordinator: coordinator,
-            root: Frame::new_root(),
-            selection: None,
+            root: root.clone(),
+            selection: root,
         }
     }
 
@@ -69,7 +71,8 @@ impl Compositor {
         let mut display = Frame::new_display(size, name);
         let mut workspace = Frame::new_workspace();
         self.root.append(&mut display);
-        display.settle(&mut workspace, &self.coordinator);
+        workspace.settle(&mut display, &self.coordinator);
+        self.select(workspace);
         display
     }
 
@@ -86,12 +89,13 @@ impl Compositor {
         let mut frame = Frame::new_leaf(sid, decision.geometry);
         frame.settle(&mut decision.target, &self.coordinator);
         if decision.selection {
-            self.select(Some(frame));
+            self.select(frame);
         }
 
         // Finalize
         self.history.add(sid);
         self.coordinator.notify();
+        self.log_frames(&self.root, 0);
     }
 }
 
@@ -100,13 +104,13 @@ impl Compositor {
 // Private methods
 impl Compositor {
     /// Set given frame as selected.
-    fn select(&mut self, frame: Option<Frame>) {
+    fn select(&mut self, frame: Frame) {
         self.selection = frame
     }
 
     /// Get selected frame.
     fn get_selection(&self) -> Frame {
-        self.selection.clone().unwrap()
+        self.selection.clone()
     }
 
     /// Decide how to handle new surface.
@@ -124,6 +128,25 @@ impl Compositor {
                 geometry: frames::Geometry::Vertical,
                 selection: true,
             }
+        }
+    }
+
+    /// Print frame layout for log file.
+    fn log_frames(&self, frame: &Frame, depth: i32) {
+        if depth == 0 {
+            timber::log(format_args!("===============================================\
+                                      ===============================================\n"));
+        }
+        for ref subframe in frame.space_iter() {
+            for i in 0..depth {
+                timber::log(format_args!("\t"));
+            }
+            timber::log(format_args!("{:?}\n", subframe));
+            self.log_frames(subframe, depth + 1);
+        }
+        if depth == 0 {
+            timber::log(format_args!("===============================================\
+                                      ===============================================\n"));
         }
     }
 }

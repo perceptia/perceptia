@@ -63,6 +63,13 @@ impl Exhibitor {
 
 /// Notification handlers.
 impl Exhibitor {
+    /// Handle notification about needed redraw.
+    pub fn on_notify(&mut self) {
+        for ref mut display in self.displays.values_mut() {
+            display.on_notify();
+        }
+    }
+
     /// This method is called when new output was found.
     pub fn on_output_found(&mut self, bundle: qualia::DrmBundle) {
         log_info1!("Exhibitor: found output");

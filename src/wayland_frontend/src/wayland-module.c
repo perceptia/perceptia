@@ -9,6 +9,10 @@
 
 #include "utils-log.h"
 #include "utils-time.h"
+
+static NoiaWaylandContext* ctx = NULL;
+
+
 // FIXME
 /*#include "global-objects.h"
 
@@ -154,12 +158,20 @@ void noia_wayland_module_finalize(void* edata NOIA_UNUSED, void* sdata)
 
 //------------------------------------------------------------------------------
 */
+
+void noia_wayland_advertise_output()
+{
+    noia_wayland_engine_advertise_output(ctx->engine);
+}
+
+//------------------------------------------------------------------------------
+
 void noia_wayland_initialize(NoiaCoordinator* coordinator)
 {
     LOG_INFO1("Initializing Wayland...");
 
     // Init Wayland
-    NoiaWaylandContext* ctx = noia_wayland_context_new();
+    ctx = noia_wayland_context_new();
     NoiaResult result = noia_wayland_context_initialize(ctx, coordinator);
     if (result != NOIA_RESULT_SUCCESS) {
         LOG_ERROR("Initializing Wayland: Failed to create context!");

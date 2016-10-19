@@ -34,19 +34,20 @@ impl Module for ExhibitorModule {
     fn initialize(&mut self, mut context: Self::C) -> InitResult {
         log_info1!("Starting Exhibitor module");
         self.exhibitor = Some(Exhibitor::new(context.get_coordinator().clone()));
-        vec![perceptron::SURFACE_READY,
-             perceptron::OUTPUT_FOUND,
+        vec![perceptron::NOTIFY,
              perceptron::PAGE_FLIP,
+             perceptron::OUTPUT_FOUND,
              perceptron::INPUT_POINTER_MOTION,
              perceptron::INPUT_POINTER_POSITION,
              perceptron::INPUT_POINTER_BUTTON,
-             perceptron::INPUT_POINTER_POSITION_RESET]
+             perceptron::INPUT_POINTER_POSITION_RESET,
+             perceptron::SURFACE_READY]
     }
 
     fn execute(&mut self, package: &Self::T) {
         if let Some(ref mut exhibitor) = self.exhibitor {
             match *package {
-                Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
+                Perceptron::Notify => exhibitor.on_notify(),
                 Perceptron::OutputFound(bundle) => exhibitor.on_output_found(bundle),
                 Perceptron::PageFlip(id) => exhibitor.on_pageflip(id),
 
@@ -55,6 +56,7 @@ impl Module for ExhibitorModule {
                 Perceptron::InputPointerButton(ref btn) => exhibitor.on_button(btn.clone()),
                 Perceptron::InputPointerPositionReset => exhibitor.on_position_reset(),
 
+                Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
                 _ => {}
             }
         }

@@ -24,7 +24,7 @@ pub mod errors;
 pub use errors::Error;
 
 pub mod defs;
-pub use defs::{Area, Point, Button, Position, OptionalPosition, Size, Vector, DrmBundle};
+pub use defs::{Area, Point, Button, Position, OptionalPosition, SurfacePosition, Size, Vector, DrmBundle};
 
 pub mod config;
 pub use config::{Config, InputConfig};
@@ -40,7 +40,7 @@ pub mod env;
 pub use env::Env;
 
 pub mod surface;
-pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason};
+pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, show_reason};
 
 pub mod coordinator;
 pub use coordinator::Coordinator;

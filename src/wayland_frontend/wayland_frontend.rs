@@ -8,16 +8,19 @@
 
 use libc::c_char;
 use std::ffi::CStr;
-use std::str;
+use std::{str, mem};
 
 use timber;
-use qualia::{Buffer, Coordinator, Size, SurfaceId, Vector};
+use qualia::{Buffer, Coordinator, Size, SurfaceId, SurfaceIdType, Position, SurfacePosition, Vector};
 
 // -------------------------------------------------------------------------------------------------
 
 extern "C" {
     fn noia_wayland_initialize(coordinator: *mut Coordinator);
     fn noia_wayland_advertise_output();
+    fn noia_wayland_module_on_surface_frame(sid: SurfaceIdType);
+    fn noia_wayland_module_on_pointer_focus_changed(sid: SurfaceIdType, pos: Position);
+    fn noia_wayland_module_on_pointer_relative_motion(sid: SurfaceIdType, pos: Position);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -43,8 +46,9 @@ pub extern "C" fn noia_surface_attach(coordinator: *mut Coordinator,
     unsafe {
         let capacity = (stride * height) as usize;
         let data = Vec::from_raw_parts(data, capacity, capacity);
-        let buffer = Buffer::new(width as usize, height as usize, stride as usize, data);
-        (*coordinator).attach(sid, buffer)
+        let buffer = Buffer::new(width as usize, height as usize, stride as usize, data.clone());
+        (*coordinator).attach(sid, buffer);
+        mem::forget(data);
     }
 }
 
@@ -136,6 +140,26 @@ impl WaylandFrontend {
     pub fn on_output_found() {
         unsafe {
             noia_wayland_advertise_output();
+        }
+    }
+
+    pub fn on_surface_frame(sid: SurfaceId) {
+        unsafe {
+            noia_wayland_module_on_surface_frame(sid.as_number());
+        }
+    }
+
+    pub fn on_pointer_focus_changed(surface_position: SurfacePosition) {
+        unsafe {
+            noia_wayland_module_on_pointer_focus_changed(surface_position.sid.as_number(),
+                                                         surface_position.pos.clone());
+        }
+    }
+
+    pub fn on_pointer_relative_motion(surface_position: SurfacePosition) {
+        unsafe {
+            noia_wayland_module_on_pointer_relative_motion(surface_position.sid.as_number(),
+                                                           surface_position.pos.clone());
         }
     }
 }

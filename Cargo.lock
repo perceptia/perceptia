@@ -100,6 +100,7 @@ dependencies = [
 name = "exhibitor"
 version = "0.0.1"
 dependencies = [
+ "dharma 0.0.1",
  "frames 0.0.1",
  "output 0.0.1",
  "qualia 0.0.1",

@@ -33,7 +33,8 @@ impl Module for ExhibitorModule {
 
     fn initialize(&mut self, mut context: Self::C) -> InitResult {
         log_info1!("Starting Exhibitor module");
-        self.exhibitor = Some(Exhibitor::new(context.get_coordinator().clone()));
+        self.exhibitor = Some(Exhibitor::new(context.get_signaler().clone(),
+                                             context.get_coordinator().clone()));
         vec![perceptron::NOTIFY,
              perceptron::PAGE_FLIP,
              perceptron::OUTPUT_FOUND,

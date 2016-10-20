@@ -67,7 +67,7 @@ void noia_wayland_facade_set_cursor(int serial NOIA_UNUSED,
 {
     NoiaPosition hotspot = {hotspot_x, hotspot_y};
     noia_surface_set_offset(C->coordinator, sid, hotspot);
-    noia_surface_set_as_cursor(sid);
+    noia_surface_set_as_cursor(C->coordinator, sid);
 }
 
 //------------------------------------------------------------------------------

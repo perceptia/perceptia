@@ -7,7 +7,7 @@
 
 use dharma::{InitResult, Module};
 use qualia::{Context, perceptron, Perceptron};
-use wayland_frontend;
+use wayland_frontend::WaylandFrontend;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -37,14 +37,24 @@ impl Module for WaylandModule {
         // TODO: Simplify when Wayland part is rewritten in Rust.
         self.context = Some(context);
         if let Some(ref mut context) = self.context {
-            wayland_frontend::WaylandFrontend::init(context.get_coordinator());
+            WaylandFrontend::init(context.get_coordinator());
         }
-        vec![perceptron::OUTPUT_FOUND]
+        vec![perceptron::OUTPUT_FOUND,
+             perceptron::SURFACE_FRAME,
+             perceptron::POINTER_FOCUS_CHANGED,
+             perceptron::POINTER_RELATIVE_MOTION]
     }
 
     fn execute(&mut self, package: &Self::T) {
         match *package {
-            Perceptron::OutputFound(_) => wayland_frontend::WaylandFrontend::on_output_found(),
+            Perceptron::OutputFound(_) => WaylandFrontend::on_output_found(),
+            Perceptron::SurfaceFrame(sid) => WaylandFrontend::on_surface_frame(sid),
+            Perceptron::PointerFocusChanged(ref surface_position) => {
+                WaylandFrontend::on_pointer_focus_changed(surface_position.clone())
+            }
+            Perceptron::PointerRelativeMotion(ref surface_position) => {
+                WaylandFrontend::on_pointer_relative_motion(surface_position.clone())
+            }
             _ => {}
         }
     }

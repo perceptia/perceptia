@@ -9,7 +9,7 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
-use defs::{DrmBundle, SurfaceId, OptionalPosition, Vector, Button};
+use defs::{DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -23,6 +23,10 @@ pub const INPUT_POINTER_BUTTON: SignalId = 12;
 pub const INPUT_POINTER_AXIS: SignalId = 13;
 pub const INPUT_POINTER_POSITION_RESET: SignalId = 14;
 pub const SURFACE_READY: SignalId = 20;
+pub const CURSOR_SURFACE_CHANGE: SignalId = 25;
+pub const SURFACE_FRAME: SignalId = 30;
+pub const POINTER_FOCUS_CHANGED: SignalId = 31;
+pub const POINTER_RELATIVE_MOTION: SignalId = 32;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -41,6 +45,10 @@ pub enum Perceptron {
     InputPointerAxis(Vector),
     InputPointerPositionReset,
     SurfaceReady(SurfaceId),
+    CursorSurfaceChange(SurfaceId),
+    SurfaceFrame(SurfaceId),
+    PointerFocusChanged(SurfacePosition),
+    PointerRelativeMotion(SurfacePosition),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -68,6 +76,13 @@ impl std::fmt::Display for Perceptron {
             Perceptron::InputPointerPositionReset => write!(f, "InputPointerPositionReset"),
 
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
+            Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
+
+            Perceptron::SurfaceFrame(ref sid) => write!(f, "SurfaceFrame({})", sid),
+            Perceptron::PointerFocusChanged(ref pos) => write!(f, "PointerFocusChanged({:?})", pos),
+            Perceptron::PointerRelativeMotion(ref pos) => {
+                write!(f, "PointerRelativeMotion({:?})", pos)
+            }
         }
     }
 }

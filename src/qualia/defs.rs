@@ -154,6 +154,19 @@ impl std::ops::Add for Position {
 
 // -------------------------------------------------------------------------------------------------
 
+impl std::ops::Sub for Position {
+    type Output = Position;
+
+    fn sub(self, other: Position) -> Position {
+        Position {
+            x: self.x - other.x,
+            y: self.y - other.y,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Type defining position, point coordinates or 2D vector.
 #[derive(Clone, Debug)]
 pub struct OptionalPosition {
@@ -196,9 +209,30 @@ impl std::default::Default for OptionalPosition {
 
 // -------------------------------------------------------------------------------------------------
 
+/// This structure combines information about surface ID with position.
+#[derive(Clone, Debug)]
+pub struct SurfacePosition {
+    pub sid: SurfaceId,
+    pub pos: Position,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl SurfacePosition {
+    /// `SurfacePosition` constructor.
+    pub fn new(sid: SurfaceId, pos: Position) -> Self {
+        SurfacePosition {
+            sid: sid,
+            pos: pos,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Type defining 2D size, dimensions or resolution.
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Size {
     pub width: u32,
     pub height: u32,
@@ -231,7 +265,7 @@ impl std::default::Default for Size {
 
 /// Type defining 2D area.
 #[repr(C)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Area {
     pub pos: Position,
     pub size: Size,

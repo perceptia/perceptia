@@ -4,6 +4,7 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
+dharma = { path = "../dharma" }
 timber = { path = "../timber" }
 qualia = { path = "../qualia" }
 frames = { path = "../frames" }

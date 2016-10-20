@@ -8,7 +8,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use qualia::{Area, Coordinator, Error, SurfaceContext};
+use dharma::Signaler;
+use qualia::{Area, Coordinator, Error, SurfaceContext, perceptron, Perceptron};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -20,6 +21,7 @@ use pointer::Pointer;
 /// `Display`
 pub struct Display {
     coordinator: Coordinator,
+    signaler: Signaler<Perceptron>,
     pointer: Rc<RefCell<Pointer>>,
     output: Output,
     frame: Frame,
@@ -32,12 +34,14 @@ pub struct Display {
 impl Display {
     /// `Display` constructor.
     pub fn new(coordinator: Coordinator,
+               signaler: Signaler<Perceptron>,
                pointer: Rc<RefCell<Pointer>>,
                output: Output,
                frame: Frame)
                -> Self {
         let mut d = Display {
             coordinator: coordinator,
+            signaler: signaler,
             pointer: pointer,
             output: output,
             frame: frame,
@@ -89,12 +93,19 @@ impl Display {
             let surfaces = self.frame.to_array(&self.coordinator);
             let pointer = self.prepare_layover_context();
 
+            self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
+
             if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
                 log_error!("Display: {}", err);
             }
 
             if let Err(err) = self.output.swap_buffers() {
                 log_error!("Display: {}", err);
+            }
+
+            // Send frame notifications
+            for context in surfaces {
+                self.signaler.emit(perceptron::SURFACE_FRAME, Perceptron::SurfaceFrame(context.id));
             }
 
             self.redraw_needed = false;

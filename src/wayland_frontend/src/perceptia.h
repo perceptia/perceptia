@@ -91,7 +91,7 @@ void noia_surface_to_array(NoiaCoordinator* coordinator,
 */
 //------------------------------------------------------------------------------
 
-void noia_surface_set_as_cursor(NoiaSurfaceId sid);
+void noia_surface_set_as_cursor(NoiaCoordinator* coordinator, NoiaSurfaceId sid);
 /*
 int noia_surface_compare(NoiaSurfaceId first, NoiaSurfaceId second);
 */

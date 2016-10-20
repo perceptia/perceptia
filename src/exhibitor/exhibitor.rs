@@ -7,6 +7,7 @@
 
 #![feature(deque_extras)]
 
+extern crate dharma;
 #[macro_use]
 extern crate timber;
 #[macro_use]
@@ -25,7 +26,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Position, Vector};
+use dharma::Signaler;
+use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Position, Vector, Perceptron};
 use output::Output;
 
 use compositor::Compositor;
@@ -41,6 +43,7 @@ pub struct Exhibitor {
     pointer: Rc<RefCell<Pointer>>,
     displays: HashMap<i32, Display>,
     coordinator: Coordinator,
+    signaler: Signaler<Perceptron>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -48,13 +51,14 @@ pub struct Exhibitor {
 /// General methods.
 impl Exhibitor {
     /// `Exhibitor` constructor.
-    pub fn new(mut coordinator: Coordinator) -> Self {
+    pub fn new(signaler: Signaler<Perceptron>, coordinator: Coordinator) -> Self {
         Exhibitor {
             last_output_id: 0,
             compositor: Compositor::new(coordinator.clone()),
-            pointer: Rc::new(RefCell::new(Pointer::new(&mut coordinator))),
+            pointer: Rc::new(RefCell::new(Pointer::new(signaler.clone(), coordinator.clone()))),
             displays: HashMap::new(),
             coordinator: coordinator,
+            signaler: signaler,
         }
     }
 }
@@ -87,6 +91,7 @@ impl Exhibitor {
         log_info1!("Exhibitor: creating display");
         let display_frame = self.compositor.create_display(output.get_size(), output.get_name());
         let display = Display::new(self.coordinator.clone(),
+                                   self.signaler.clone(),
                                    self.pointer.clone(),
                                    output,
                                    display_frame);

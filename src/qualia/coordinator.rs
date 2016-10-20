@@ -155,9 +155,9 @@ impl InnerCoordinator {
         unimplemented!()
     }
 
-    // FIXME: Finish implementation of Coordinator
-    pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
-        unimplemented!()
+    /// Inform other parts of application about request from client to change cursor surface.
+    pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
+        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
     }
 }
 
@@ -227,13 +227,14 @@ impl Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn attach(&self, sid: SurfaceId, buffer: Buffer) {
         let mut mine = self.inner.lock().unwrap();
-        mine.attach(sid, buffer)
+        mine.attach(sid, buffer);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn commit_surface(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.commit_surface(sid)
+        mine.commit_surface(sid);
+        mine.notify();
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
@@ -268,7 +269,7 @@ impl Coordinator {
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
-        let mine = self.inner.lock().unwrap();
+        let mut mine = self.inner.lock().unwrap();
         mine.set_surface_as_cursor(sid)
     }
 }

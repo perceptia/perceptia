@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use buffer::Buffer;
 use defs::{Position, Size, Vector};
-pub use defs::SurfaceId;
+pub use defs::{SurfaceId, SurfaceIdType};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -45,6 +45,7 @@ pub mod show_reason {
 /// Structure containing public information about surface.
 pub struct SurfaceInfo {
     pub id: SurfaceId,
+    pub offset: Vector,
     pub parent_sid: SurfaceId,
     pub desired_size: Size,
     pub requested_size: Size,
@@ -127,7 +128,7 @@ impl Surface {
     /// Sets given buffer as pending.
     #[inline]
     pub fn attach(&mut self, buffer: Buffer) {
-        self.pending_buffer = buffer
+        self.pending_buffer.assign_from(&buffer);
     }
 
     /// Sets pending buffer as current. If surface was committed for the first time and sizes are
@@ -160,6 +161,7 @@ impl Surface {
     pub fn get_info(&self) -> SurfaceInfo {
         SurfaceInfo {
             id: self.id,
+            offset: self.offset.clone(),
             parent_sid: self.parent_sid,
             desired_size: self.desired_size.clone(),
             requested_size: self.requested_size.clone(),

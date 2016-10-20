@@ -12,23 +12,20 @@
 
 static NoiaWaylandContext* ctx = NULL;
 
-
 // FIXME
-/*#include "global-objects.h"
+//#include "global-objects.h"
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_screen_refresh(void* edata, void* sdata)
+void noia_wayland_module_on_surface_frame(NoiaSurfaceId sid)
 {
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaSurfaceId sid = noia_uint_unref_get((NoiaIntObject*) edata);
     LOG_WAYL4("Wayland: handling screen refresh");
     NoiaMilliseconds ms = noia_time_get_monotonic_milliseconds();
     noia_wayland_gateway_screen_refresh(ctx->cache, sid, ms);
 }
 
 //------------------------------------------------------------------------------
-
+/*
 void noia_wayland_module_on_keyboard_focus_changed(void* edata, void* sdata)
 {
     NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
@@ -55,36 +52,28 @@ void noia_wayland_module_on_keyboard_event(void* edata, void* sdata)
                              object->keydata.value);
     noia_object_unref((NoiaObject*) object);
 }
-
+*/
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_pointer_focus_changed(void* edata, void* sdata)
+void noia_wayland_module_on_pointer_focus_changed(NoiaSurfaceId sid, NoiaPosition pos)
 {
     LOG_WAYL4("Wayland: handling pointer focus change");
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaMotionObject* object = (NoiaMotionObject*) edata;
-    NOIA_ENSURE(object, return);
     noia_wayland_gateway_pointer_focus_update
-                (ctx->state, ctx->cache, ctx->engine, object->sid, object->pos);
-    noia_object_unref((NoiaObject*) object);
+                                (ctx->state, ctx->cache, ctx->engine, sid, pos);
 }
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_pointer_relative_motion(void* edata, void* sdata)
+void noia_wayland_module_on_pointer_relative_motion(NoiaSurfaceId sid, NoiaPosition pos)
 {
     LOG_WAYL4("Wayland: handling pointer motion");
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaMotionObject* object = (NoiaMotionObject*) edata;
-    NOIA_ENSURE(object, return);
     NoiaMilliseconds ms = noia_time_get_monotonic_milliseconds();
     noia_wayland_gateway_pointer_motion
-                          (ctx->cache, object->sid, object->pos, ms);
-    noia_object_unref((NoiaObject*) object);
+                          (ctx->cache, sid, pos, ms);
 }
 
 //------------------------------------------------------------------------------
-
+/*
 void noia_wayland_module_on_pointer_button(void* edata, void* sdata)
 {
     LOG_WAYL4("Wayland: handling pointer button");

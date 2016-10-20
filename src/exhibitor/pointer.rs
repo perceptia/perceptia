@@ -7,7 +7,9 @@
 
 use std::collections::HashMap;
 
-use qualia::{Buffer, Coordinator, Area, Button, OptionalPosition, Position, Vector, SurfaceId};
+use dharma::Signaler;
+
+use qualia::{Buffer, Coordinator, Area, Button, OptionalPosition, Position, Vector, SurfaceId, SurfaceContext, SurfacePosition, perceptron, Perceptron};
 
 use display::Display;
 
@@ -23,7 +25,10 @@ pub struct Pointer {
     position: Position,
 
     /// Last position received from input device.
-    last_pos: OptionalPosition,
+    last_position: OptionalPosition,
+
+    /// Last relative position inside focused surface.
+    last_surface_relative: Position,
 
     /// Area of display on which the pointer is placed.
     display_area: Area,
@@ -31,15 +36,27 @@ pub struct Pointer {
     /// Surface ID of cursor surface.
     csid: SurfaceId,
 
+    /// Surface ID of pointer-focused surface.
+    pfsid: SurfaceId,
+
+    /// Surface ID of keyboard-focused surface.
+    kfsid: SurfaceId,
+
     /// Default surface ID of cursor surface.
     default_csid: SurfaceId,
+
+    /// Signaler.
+    signaler: Signaler<Perceptron>,
+
+    /// Coordinator.
+    coordinator: Coordinator,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Pointer {
     /// `Pointer` constructor.
-    pub fn new(coordinator: &mut Coordinator) -> Self {
+    pub fn new(signaler: Signaler<Perceptron>, mut coordinator: Coordinator) -> Self {
         let mut data = vec![200; 4 * DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE];
         for z in 0..(DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE) {
             data[4 * z + 3] = 100;
@@ -55,10 +72,15 @@ impl Pointer {
 
         Pointer {
             position: Position::default(),
-            last_pos: OptionalPosition::default(),
+            last_position: OptionalPosition::default(),
+            last_surface_relative: Position::default(),
             display_area: Area::default(),
             csid: default_csid,
+            pfsid: SurfaceId::invalid(),
+            kfsid: SurfaceId::invalid(),
             default_csid: default_csid,
+            signaler: signaler,
+            coordinator: coordinator,
         }
     }
 }
@@ -94,18 +116,18 @@ impl Pointer {
 
         // Calculate X-axis part of position
         if let Some(x) = pos.x {
-            if let Some(last_x) = self.last_pos.x {
+            if let Some(last_x) = self.last_position.x {
                 vector.x = x - last_x;
             }
-            self.last_pos.x = Some(x);
+            self.last_position.x = Some(x);
         }
 
         // Calculate Y-axis part of position
         if let Some(y) = pos.y {
-            if let Some(last_y) = self.last_pos.y {
+            if let Some(last_y) = self.last_position.y {
                 vector.y = y - last_y;
             }
-            self.last_pos.y = Some(y);
+            self.last_position.y = Some(y);
         }
 
         // Update position
@@ -114,7 +136,49 @@ impl Pointer {
 
     /// Reset position of the pointer.
     pub fn reset_position(&mut self) {
-        self.last_pos = OptionalPosition::default()
+        self.last_position = OptionalPosition::default()
+    }
+
+    /// Checks for change of surface pointer is hovering or relative position to this surface and
+    /// notify rest of the application about changes.
+    pub fn update_hover_state(&mut self,
+                              display_area: Area,
+                              surfaces: &Vec<SurfaceContext>) {
+        // Check if this update is for display on which this pointer is placed
+        if self.display_area != display_area {
+            return;
+        }
+
+        let mut sid = SurfaceId::invalid();
+        let mut surface_relative = Position::default();
+        let display_relative = Position::new(self.position.x - display_area.pos.x,
+                                             self.position.y - display_area.pos.y);
+
+        // Find surface pointer hovers
+        for context in surfaces {
+            if let Some(info) = self.coordinator.get_surface(context.id) {
+                let surface_area = Area::new(context.pos.clone(), info.requested_size);
+                if surface_area.contains(&display_relative) {
+                    sid = context.id;
+                    surface_relative = display_relative - context.pos.clone() + info.offset;
+                    break;
+                }
+            }
+        }
+
+        // Handle focus change if hovered surface is different than current one or handle motion
+        // otherwise
+        let surface_position = SurfacePosition::new(sid, surface_relative.clone());
+        if sid != self.pfsid {
+            self.pfsid = sid;
+            self.csid = self.default_csid;
+            self.signaler.emit(perceptron::POINTER_FOCUS_CHANGED,
+                               Perceptron::PointerFocusChanged(surface_position));
+        } else if self.pfsid.is_valid() && (surface_relative != self.last_surface_relative) {
+            self.last_surface_relative = surface_relative;
+            self.signaler.emit(perceptron::POINTER_RELATIVE_MOTION,
+                               Perceptron::PointerRelativeMotion(surface_position));
+        }
     }
 }
 

@@ -58,7 +58,7 @@
 
 extern crate time;
 
-use std::sync::{Arc, Mutex, Once, ONCE_INIT};
+use std::sync::{Arc, Mutex, MutexGuard, PoisonError, Once, ONCE_INIT};
 use std::io::Write;
 
 // -------------------------------------------------------------------------------------------------
@@ -77,7 +77,7 @@ macro_rules! timber {
 // -------------------------------------------------------------------------------------------------
 
 /// Timber struct - used as singleton.
-struct Timber {
+pub struct Timber {
     log_file: Option<std::fs::File>,
 }
 
@@ -164,10 +164,9 @@ fn get_instance() -> &'static Wrapper {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Print not formated log.
-pub fn log(args: std::fmt::Arguments) {
-    let mut timber = get_instance().inner.lock().unwrap();
-    timber.log(args);
+/// Get locked instance of `Timber` for guarded loging.
+pub fn lock<'a>() -> Result<MutexGuard<'a, Timber>, PoisonError<std::sync::MutexGuard<'a, Timber>>>{
+    get_instance().inner.lock()
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -95,7 +95,23 @@ impl Compositor {
         // Finalize
         self.history.add(sid);
         self.coordinator.notify();
-        self.log_frames(&self.root, 0);
+        self.log_frames();
+    }
+
+    /// Handles destruction of surface. Removes it from history and frame free.
+    pub fn unmanage_surface(&mut self, sid: SurfaceId) {
+        if let Some(ref mut frame) = self.root.find_with_sid(sid) {
+            self.history.remove(sid);
+            if frame.get_sid() == self.selection.get_sid() {
+                // TODO: This should be configurable
+                let new_selection = self.selection.find_buildable().unwrap();
+                self.select(new_selection);
+            }
+
+            frame.remove();
+            self.coordinator.notify();
+            self.log_frames();
+        }
     }
 }
 
@@ -135,21 +151,23 @@ impl Compositor {
     }
 
     /// Print frame layout for log file.
-    fn log_frames(&self, frame: &Frame, depth: i32) {
-        if depth == 0 {
-            timber::log(format_args!("===============================================\
-                                      ===============================================\n"));
-        }
+    fn log_frames(&self) {
+        let mut timber = timber::lock().unwrap();
+        timber.log(format_args!("===============================================\
+                                 ===============================================\n"));
+        self.log_frames_helper(&self.root, 0, &mut timber);
+        timber.log(format_args!("===============================================\
+                                 ===============================================\n"));
+    }
+
+    /// Helper for frame layout printer.
+    fn log_frames_helper(&self, frame: &Frame, depth: i32, timber: &mut timber::Timber) {
         for ref subframe in frame.space_iter() {
             for i in 0..depth {
-                timber::log(format_args!("\t"));
+                timber.log(format_args!("\t"));
             }
-            timber::log(format_args!("{:?}\n", subframe));
-            self.log_frames(subframe, depth + 1);
-        }
-        if depth == 0 {
-            timber::log(format_args!("===============================================\
-                                      ===============================================\n"));
+            timber.log(format_args!("{:?}\n", subframe));
+            self.log_frames_helper(subframe, depth + 1, timber);
         }
     }
 }

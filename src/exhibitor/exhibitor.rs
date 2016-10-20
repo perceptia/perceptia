@@ -111,6 +111,12 @@ impl Exhibitor {
     pub fn on_surface_ready(&mut self, sid: SurfaceId) {
         self.compositor.manage_surface(sid);
     }
+
+    /// This method is called when surface was destroyed.
+    pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
+        self.compositor.unmanage_surface(sid);
+        self.pointer.borrow_mut().on_surface_destroyed(sid);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

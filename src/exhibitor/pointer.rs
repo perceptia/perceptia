@@ -180,6 +180,13 @@ impl Pointer {
                                Perceptron::PointerRelativeMotion(surface_position));
         }
     }
+
+    /// Handles destruction of cursor surface.
+    pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
+        if self.csid == sid {
+            self.csid = SurfaceId::invalid();
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

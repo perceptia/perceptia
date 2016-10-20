@@ -5,6 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use qualia::SurfaceId;
 use frame::{Frame, Mode};
 
 // -------------------------------------------------------------------------------------------------
@@ -18,6 +19,9 @@ pub trait Searching {
     /// Find first trunk which is `Special`.
     /// For normal frame this should be workspace.
     fn find_top(&self) -> Option<Frame>;
+
+    /// Find frame with given surface ID.
+    fn find_with_sid(&self, sid: SurfaceId) -> Option<Frame>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -42,6 +46,20 @@ impl Searching for Frame {
             } else {
                 return None;
             }
+        }
+    }
+
+    fn find_with_sid(&self, sid: SurfaceId) -> Option<Frame> {
+        if self.get_sid() == sid {
+            Some(self.clone())
+        } else {
+            for subsurface in self.time_iter() {
+                let result = subsurface.find_with_sid(sid);
+                if result.is_some() {
+                    return result;
+                }
+            }
+            None
         }
     }
 }

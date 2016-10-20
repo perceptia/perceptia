@@ -105,7 +105,10 @@ impl Compositor {
 impl Compositor {
     /// Set given frame as selected.
     fn select(&mut self, frame: Frame) {
-        self.selection = frame
+        self.selection = frame;
+        if self.selection.get_sid().is_valid() {
+            self.coordinator.set_focus(self.selection.get_sid());
+        }
     }
 
     /// Get selected frame.

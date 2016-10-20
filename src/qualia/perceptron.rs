@@ -9,7 +9,7 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
-use defs::{DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button};
+use defs::{DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -22,11 +22,14 @@ pub const INPUT_POINTER_POSITION: SignalId = 11;
 pub const INPUT_POINTER_BUTTON: SignalId = 12;
 pub const INPUT_POINTER_AXIS: SignalId = 13;
 pub const INPUT_POINTER_POSITION_RESET: SignalId = 14;
+pub const INPUT_KEYBOARD: SignalId = 15;
 pub const SURFACE_READY: SignalId = 20;
+pub const SURFACE_DESTROYED: SignalId = 21;
 pub const CURSOR_SURFACE_CHANGE: SignalId = 25;
 pub const SURFACE_FRAME: SignalId = 30;
 pub const POINTER_FOCUS_CHANGED: SignalId = 31;
 pub const POINTER_RELATIVE_MOTION: SignalId = 32;
+pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -44,11 +47,14 @@ pub enum Perceptron {
     InputPointerButton(Button),
     InputPointerAxis(Vector),
     InputPointerPositionReset,
+    InputKeyboard(Key),
     SurfaceReady(SurfaceId),
+    SurfaceDestroyed(SurfaceId),
     CursorSurfaceChange(SurfaceId),
     SurfaceFrame(SurfaceId),
     PointerFocusChanged(SurfacePosition),
     PointerRelativeMotion(SurfacePosition),
+    KeyboardFocusChanged(SurfaceId),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -74,8 +80,10 @@ impl std::fmt::Display for Perceptron {
             Perceptron::InputPointerButton(ref btn) => write!(f, "InputPointerButton({:?})", btn),
             Perceptron::InputPointerAxis(ref axis) => write!(f, "InputPointerAxis({:?})", axis),
             Perceptron::InputPointerPositionReset => write!(f, "InputPointerPositionReset"),
+            Perceptron::InputKeyboard(ref key) => write!(f, "InputKeyboard({:?})", key),
 
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
+            Perceptron::SurfaceDestroyed(ref sid) => write!(f, "SurfaceDestroyed({})", sid),
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
 
             Perceptron::SurfaceFrame(ref sid) => write!(f, "SurfaceFrame({})", sid),
@@ -83,6 +91,7 @@ impl std::fmt::Display for Perceptron {
             Perceptron::PointerRelativeMotion(ref pos) => {
                 write!(f, "PointerRelativeMotion({:?})", pos)
             }
+            Perceptron::KeyboardFocusChanged(ref sid) => write!(f, "KeyboardFocusChanged({:?})", sid),
         }
     }
 }

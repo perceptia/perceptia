@@ -6,12 +6,13 @@
 
 //------------------------------------------------------------------------------
 
-NoiaWaylandContext* noia_wayland_context_new(void)
+NoiaWaylandContext* noia_wayland_context_new(NoiaKeymapSettings* keymap_settings)
 {
     NoiaWaylandContext* self = malloc(sizeof(*self));
     self->engine = noia_wayland_engine_new();
     self->cache = noia_wayland_cache_new();
     self->state = noia_wayland_state_new();
+    self->keymap_settings = *keymap_settings;
     return self;
 }
 

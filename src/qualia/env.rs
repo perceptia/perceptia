@@ -5,12 +5,12 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std;
+use std::{self, fs};
 use libc;
 use time;
-use std::error::Error;
 use nix::sys::signal;
 use std::ops::BitAnd;
+use std::error::Error;
 
 use errors;
 use timber;
@@ -26,6 +26,14 @@ const DEFAULT_RUNTIME_DIR: &'static str = "/tmp";
 
 // -------------------------------------------------------------------------------------------------
 
+pub enum Directory {
+    Data,
+    Runtime,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// TODO: Directories should not be optional.
 pub struct Env {
     data_dir: Option<std::path::PathBuf>,
     runtime_dir: Option<std::path::PathBuf>,
@@ -36,7 +44,7 @@ pub struct Env {
 /// This class represents runtime environment. It cares for creating directories or initializing
 /// logger.
 impl Env {
-    /// Prepare environment:
+    /// Prepares environment:
     ///  - register signal handler
     ///  - create needed directories
     ///  - initialize logger
@@ -68,7 +76,7 @@ impl Env {
         mine
     }
 
-    /// Clean up environment: remove runtime directory.
+    /// Cleans up environment: remove runtime directory.
     fn cleanup(&mut self) {
         if let Some(ref path) = self.runtime_dir {
             if let Err(err) = std::fs::remove_dir_all(path) {
@@ -77,10 +85,28 @@ impl Env {
         }
     }
 
-    /// Read in configuration.
+    /// Reads in configuration.
     /// TODO: Read configuration from file.
     pub fn read_config(&self) -> config::Config {
         config::Config::default()
+    }
+
+    /// Opens file in predefined directory.
+    pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, errors::Error> {
+        let mut dir = if let Some(dir) = match dir {
+            Directory::Data => self.data_dir.clone(),
+            Directory::Runtime => self.runtime_dir.clone(),
+        } {
+            dir
+        } else {
+            return Err(errors::Error::General(format!("Requested directory is not available")));
+        };
+
+        dir.set_file_name(name);
+        match fs::OpenOptions::new().read(true).write(true).create(true).open(dir.as_path()) {
+            Ok(file) => Ok(file),
+            Err(err) => Err(errors::Error::IO(err.description().to_string())),
+        }
     }
 }
 

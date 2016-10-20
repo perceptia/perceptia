@@ -12,9 +12,6 @@
 
 static NoiaWaylandContext* ctx = NULL;
 
-// FIXME
-//#include "global-objects.h"
-
 //------------------------------------------------------------------------------
 
 void noia_wayland_module_on_surface_frame(NoiaSurfaceId sid)
@@ -25,11 +22,9 @@ void noia_wayland_module_on_surface_frame(NoiaSurfaceId sid)
 }
 
 //------------------------------------------------------------------------------
-/*
-void noia_wayland_module_on_keyboard_focus_changed(void* edata, void* sdata)
+
+void noia_wayland_module_on_keyboard_focus_changed(NoiaSurfaceId sid)
 {
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaSurfaceId sid = noia_uint_unref_get((NoiaIntObject*) edata);
     LOG_WAYL2("Wayland: handling keyboard focus change (sid: %d)", sid);
     noia_wayland_gateway_keyboard_focus_update
                    (ctx->state, ctx->cache, ctx->engine, ctx->coordinator, sid);
@@ -37,22 +32,18 @@ void noia_wayland_module_on_keyboard_focus_changed(void* edata, void* sdata)
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_keyboard_event(void* edata, void* sdata)
+void noia_wayland_module_on_keyboard_event(uint32_t time, uint32_t code, uint32_t value)
 {
     LOG_WAYL4("Wayland: handling keyboard event");
 
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaKeyObject* object = (NoiaKeyObject*) edata;
-    NOIA_ENSURE(object, return);
     noia_wayland_gateway_key(ctx->state,
                              ctx->cache,
                              ctx->engine,
-                             object->keydata.time,
-                             object->keydata.code,
-                             object->keydata.value);
-    noia_object_unref((NoiaObject*) object);
+                             time,
+                             code,
+                             value);
 }
-*/
+
 //------------------------------------------------------------------------------
 
 void noia_wayland_module_on_pointer_focus_changed(NoiaSurfaceId sid, NoiaPosition pos)
@@ -73,6 +64,8 @@ void noia_wayland_module_on_pointer_relative_motion(NoiaSurfaceId sid, NoiaPosit
 }
 
 //------------------------------------------------------------------------------
+
+// FIXME
 /*
 void noia_wayland_module_on_pointer_button(void* edata, void* sdata)
 {
@@ -155,12 +148,12 @@ void noia_wayland_advertise_output()
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_initialize(NoiaCoordinator* coordinator)
+void noia_wayland_initialize(NoiaCoordinator* coordinator, NoiaKeymapSettings* keymap_settings)
 {
     LOG_INFO1("Initializing Wayland...");
 
     // Init Wayland
-    ctx = noia_wayland_context_new();
+    ctx = noia_wayland_context_new(keymap_settings);
     NoiaResult result = noia_wayland_context_initialize(ctx, coordinator);
     if (result != NOIA_RESULT_SUCCESS) {
         LOG_ERROR("Initializing Wayland: Failed to create context!");
@@ -169,5 +162,4 @@ void noia_wayland_initialize(NoiaCoordinator* coordinator)
     }
     noia_wayland_facade_initialize(ctx);
 }
-
 

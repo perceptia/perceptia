@@ -11,16 +11,18 @@ use std::ffi::CStr;
 use std::{str, mem};
 
 use timber;
-use qualia::{Buffer, Coordinator, Size, SurfaceId, SurfaceIdType, Position, SurfacePosition, Vector};
+use qualia::{Buffer, Coordinator, Size, SurfaceId, SurfaceIdType, Key, Position, SurfacePosition, Vector, KeymapSettings};
 
 // -------------------------------------------------------------------------------------------------
 
 extern "C" {
-    fn noia_wayland_initialize(coordinator: *mut Coordinator);
+    fn noia_wayland_initialize(coordinator: *mut Coordinator, keymap_settings: *mut KeymapSettings);
     fn noia_wayland_advertise_output();
+    fn noia_wayland_module_on_keyboard_event(time: u32, code: u32, value: u32);
     fn noia_wayland_module_on_surface_frame(sid: SurfaceIdType);
     fn noia_wayland_module_on_pointer_focus_changed(sid: SurfaceIdType, pos: Position);
     fn noia_wayland_module_on_pointer_relative_motion(sid: SurfaceIdType, pos: Position);
+    fn noia_wayland_module_on_keyboard_focus_changed(sid: SurfaceIdType);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -129,17 +131,24 @@ pub struct WaylandFrontend {
 }
 
 impl WaylandFrontend {
-    pub fn init(coordinator: &mut Coordinator) {
+    pub fn init(coordinator: &mut Coordinator, settings: &mut KeymapSettings) {
         unsafe {
             coordinator.create_surface();
             (*(coordinator as *mut Coordinator)).create_surface();
-            noia_wayland_initialize(coordinator as *mut Coordinator);
+            noia_wayland_initialize(coordinator as *mut Coordinator,
+                                    settings as *mut KeymapSettings);
         }
     }
 
     pub fn on_output_found() {
         unsafe {
             noia_wayland_advertise_output();
+        }
+    }
+
+    pub fn on_keyboard_input(key: Key) {
+        unsafe {
+            noia_wayland_module_on_keyboard_event(0, key.code as u32, key.value as u32);
         }
     }
 
@@ -160,6 +169,12 @@ impl WaylandFrontend {
         unsafe {
             noia_wayland_module_on_pointer_relative_motion(surface_position.sid.as_number(),
                                                            surface_position.pos.clone());
+        }
+    }
+
+    pub fn on_keyboard_focus_changed(sid: SurfaceId) {
+        unsafe {
+            noia_wayland_module_on_keyboard_focus_changed(sid.as_number());
         }
     }
 }

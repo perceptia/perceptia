@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{perceptron, Perceptron, InputConfig, Button, KeyState, OptionalPosition, Vector};
+use qualia::{perceptron, Perceptron, InputConfig, Button, Key, KeyState, OptionalPosition, Vector};
 use dharma::Signaler;
 
 // -------------------------------------------------------------------------------------------------
@@ -32,7 +32,9 @@ impl InputGateway {
 impl InputGateway {
     /// Emit keyboards event.
     pub fn emit_key(&mut self, code: u16, value: i32) {
-        // FIXME: To do.
+        // If no binding found inform the rest of the world
+        let key = Key::new(code, value);
+        self.signaler.emit(perceptron::INPUT_KEYBOARD, Perceptron::InputKeyboard(key));
     }
 
     /// Scale displacements and emit pointer motion event.

@@ -21,6 +21,14 @@ typedef enum {
 
 //------------------------------------------------------------------------------
 
+typedef struct {
+    uint32_t format;
+    uint64_t size;
+    uint32_t fd;
+} NoiaKeymapSettings;
+
+//------------------------------------------------------------------------------
+
 typedef struct NoiaOutput NoiaOutput;
 
 const char* noia_output_get_name(NoiaOutput* self);

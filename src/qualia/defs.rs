@@ -9,6 +9,7 @@ use std;
 
 pub type Point = Position;
 pub type Vector = Position;
+pub type Key = Button;
 
 /// Type of surface ID.
 pub type SurfaceIdType = u64;
@@ -310,8 +311,8 @@ impl std::default::Default for Area {
 /// Data for button event.
 #[derive(Clone, Debug)]
 pub struct Button {
-    code: u16,
-    value: i32,
+    pub code: u16,
+    pub value: i32,
 }
 
 // -------------------------------------------------------------------------------------------------

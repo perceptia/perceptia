@@ -151,5 +151,9 @@ void noia_wayland_facade_receive_data_offer(NoiaWaylandTransfer* transfer,
 
 //------------------------------------------------------------------------------
 
+NoiaKeymapSettings noia_wayland_facade_get_keymap_settings();
+
+//------------------------------------------------------------------------------
+
 #endif // NOIA_WAYLAND_FACADE_H
 

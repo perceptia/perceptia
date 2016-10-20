@@ -18,10 +18,11 @@ typedef struct {
     NoiaWaylandCache* cache;
     NoiaWaylandState* state;
     NoiaCoordinator* coordinator;
+    NoiaKeymapSettings keymap_settings;
 } NoiaWaylandContext;
 
 /// Construct Context.
-NoiaWaylandContext* noia_wayland_context_new(void);
+NoiaWaylandContext* noia_wayland_context_new(NoiaKeymapSettings* keymap_settings);
 
 /// Initialize Context.
 NoiaResult noia_wayland_context_initialize(NoiaWaylandContext* self,

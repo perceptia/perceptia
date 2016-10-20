@@ -33,12 +33,15 @@ type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Sen
 fn main() {
     let env = qualia::Env::create();
     let config = env.read_config();
+    let keymap = qualia::Keymap::new(&env).unwrap();
+    let settings = qualia::Settings::new(keymap.get_settings());
 
     // Prepare state
     let signaler = Signaler::new();
     let mut dispatcher = Dispatcher::new();
     let coordinator = Coordinator::new(signaler.clone());
     let context = Context::new(config.clone(),
+                               settings.clone(),
                                signaler.clone(),
                                dispatcher.clone(),
                                coordinator.clone());

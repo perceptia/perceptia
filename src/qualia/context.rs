@@ -8,6 +8,7 @@
 use dharma::{Dispatcher, EventHandler, Signaler, SignalId};
 
 use config::Config;
+use settings::Settings;
 use perceptron::Perceptron;
 use coordinator::Coordinator;
 
@@ -17,6 +18,7 @@ use coordinator::Coordinator;
 #[derive(Clone)]
 pub struct Context {
     config: Config,
+    settings: Settings,
     signaler: Signaler<Perceptron>,
     dispatcher: Dispatcher,
     coordinator: Coordinator,
@@ -27,12 +29,14 @@ pub struct Context {
 impl Context {
     /// Context constructor.
     pub fn new(config: Config,
+               settings: Settings,
                signaler: Signaler<Perceptron>,
                dispatcher: Dispatcher,
                coordinator: Coordinator)
                -> Self {
         Context {
             config: config,
+            settings: settings,
             signaler: signaler,
             dispatcher: dispatcher,
             coordinator: coordinator,
@@ -52,6 +56,11 @@ impl Context {
     /// Get global configuration.
     pub fn get_config(&self) -> &Config {
         &self.config
+    }
+
+    /// Get global settings.
+    pub fn get_settings(&self) -> &Settings {
+        &self.settings
     }
 
     /// Get reference to `Signaler`.

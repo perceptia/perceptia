@@ -37,23 +37,30 @@ impl Module for WaylandModule {
         // TODO: Simplify when Wayland part is rewritten in Rust.
         self.context = Some(context);
         if let Some(ref mut context) = self.context {
-            WaylandFrontend::init(context.get_coordinator());
+            let mut keymap = context.get_settings().get_keymap();
+            WaylandFrontend::init(context.get_coordinator(), &mut keymap);
         }
         vec![perceptron::OUTPUT_FOUND,
+             perceptron::INPUT_KEYBOARD,
              perceptron::SURFACE_FRAME,
              perceptron::POINTER_FOCUS_CHANGED,
-             perceptron::POINTER_RELATIVE_MOTION]
+             perceptron::POINTER_RELATIVE_MOTION,
+             perceptron::KEYBOARD_FOCUS_CHANGED]
     }
 
     fn execute(&mut self, package: &Self::T) {
         match *package {
             Perceptron::OutputFound(_) => WaylandFrontend::on_output_found(),
+            Perceptron::InputKeyboard(ref key) => WaylandFrontend::on_keyboard_input(key.clone()),
             Perceptron::SurfaceFrame(sid) => WaylandFrontend::on_surface_frame(sid),
             Perceptron::PointerFocusChanged(ref surface_position) => {
                 WaylandFrontend::on_pointer_focus_changed(surface_position.clone())
             }
             Perceptron::PointerRelativeMotion(ref surface_position) => {
                 WaylandFrontend::on_pointer_relative_motion(surface_position.clone())
+            }
+            Perceptron::KeyboardFocusChanged(sid) => {
+                WaylandFrontend::on_keyboard_focus_changed(sid)
             }
             _ => {}
         }

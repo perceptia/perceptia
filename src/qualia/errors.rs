@@ -16,6 +16,7 @@ pub enum Error {
     Permissions(String),
     InvalidArgument(String),
     General(String),
+    IO(String),
     Unknown(String),
 }
 
@@ -27,6 +28,7 @@ impl std::fmt::Display for Error {
             Error::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
             Error::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
             Error::General(ref s) => write!(f, "{}", s),
+            Error::IO(ref s) => write!(f, "IO error: {}", s),
             Error::Unknown(ref s) => write!(f, "Unknown error: {}", s),
         }
     }

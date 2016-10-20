@@ -8,6 +8,8 @@
 #include "utils-log.h"
 #include "global-macros.h"
 
+#include "wayland-facade.h"
+
 //------------------------------------------------------------------------------
 
 void noia_wayland_keyboard_unbind(struct wl_resource* resource)
@@ -51,16 +53,11 @@ void noia_wayland_keyboard_bind(struct wl_client* client,
     // Store resource
     noia_wayland_facade_add_keyboard_resource(rc);
 
-    // FIXME
     // Send keymap to client
-    /*NoiaKeymap* keymap = noia_gears()->keymap;
-    NOIA_ENSURE(keymap, return);
+    NoiaKeymapSettings k = noia_wayland_facade_get_keymap_settings();
 
-    LOG_WAYL2("Wayland < keyboard map send (format: %d, fd: %d, size: %d)",
-              keymap->format, keymap->keymap_fd, keymap->keymap_size);
-    wl_keyboard_send_keymap(rc, (uint32_t) keymap->format,
-                                (uint32_t) keymap->keymap_fd,
-                                (uint32_t) keymap->keymap_size);*/
+    LOG_WAYL2("Wayland < keyboard map send (format: %d, fd: %d, size: %d)", k.format, k.fd, k.size);
+    wl_keyboard_send_keymap(rc, k.format, k.fd, k.size);
 }
 
 //------------------------------------------------------------------------------

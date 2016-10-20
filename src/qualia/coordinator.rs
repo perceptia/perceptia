@@ -57,6 +57,7 @@ struct InnerCoordinator {
     signaler: dharma::Signaler<Perceptron>,
     surfaces: Map,
     last_id: SurfaceId,
+    kfsid: SurfaceId,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -68,6 +69,7 @@ impl InnerCoordinator {
             signaler: signaler,
             surfaces: Map::new(),
             last_id: SurfaceId::invalid(),
+            kfsid: SurfaceId::invalid(),
         }
     }
 
@@ -96,6 +98,15 @@ impl InnerCoordinator {
         Some(result)
     }
 
+    /// Informs rest of the application exhibitor set focus to given surface.
+    pub fn set_focus(&mut self, sid: SurfaceId) {
+        if self.kfsid != sid {
+            self.kfsid = sid;
+            self.signaler.emit(perceptron::KEYBOARD_FOCUS_CHANGED,
+                               Perceptron::KeyboardFocusChanged(sid));
+        }
+    }
+
     /// Creates new surface with newly generated unique ID.
     pub fn create_surface(&mut self) -> SurfaceId {
         let id = self.generate_next_surface_id();
@@ -103,9 +114,9 @@ impl InnerCoordinator {
         id
     }
 
-    // FIXME: Finish implementation of Coordinator
-    pub fn destroy_surface(&self, sid: SurfaceId) {
-        unimplemented!()
+    /// Informs other parts of application about request from client to destroy surface.
+    pub fn destroy_surface(&mut self, sid: SurfaceId) {
+        self.signaler.emit(perceptron::SURFACE_DESTROYED, Perceptron::SurfaceDestroyed(sid));
     }
 
     /// Sets given buffer as pending for given surface.
@@ -155,7 +166,7 @@ impl InnerCoordinator {
         unimplemented!()
     }
 
-    /// Inform other parts of application about request from client to change cursor surface.
+    /// Informs other parts of application about request from client to change cursor surface.
     pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
         self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
     }
@@ -213,6 +224,12 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn set_focus(&mut self, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_focus(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn create_surface(&mut self) -> SurfaceId {
         let mut mine = self.inner.lock().unwrap();
         mine.create_surface()
@@ -220,7 +237,7 @@ impl Coordinator {
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn destroy_surface(&self, sid: SurfaceId) {
-        let mine = self.inner.lock().unwrap();
+        let mut mine = self.inner.lock().unwrap();
         mine.destroy_surface(sid)
     }
 

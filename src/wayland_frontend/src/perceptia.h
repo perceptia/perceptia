@@ -7,6 +7,8 @@
 
 #include "global-types.h"
 
+#define NOIA_SURFACE_STATE_MAXIMIZED 0x1 
+
 //------------------------------------------------------------------------------
 
 //typedef struct NoiaSurfaceDataStruct NoiaSurfaceData;

@@ -10,7 +10,7 @@ use std::default::Default;
 
 use alloc::heap;
 
-use qualia::{SurfaceId, Size};
+use qualia::{SurfaceId, Area, Position, Size};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -116,6 +116,9 @@ pub struct Parameters {
     /// Geometry.
     pub geometry: Geometry,
 
+    /// Position.
+    pub pos: Position,
+
     /// Size.
     pub size: Size,
 
@@ -132,18 +135,20 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Root,
             geometry: Geometry::Floating,
+            pos: Position::default(),
             size: Size::default(),
             title: "PERCEPTIA".to_owned(),
         }
     }
 
     /// Creates new parameters for display frame.
-    pub fn new_display(size: Size, title: String) -> Self {
+    pub fn new_display(area: Area, title: String) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Special,
             geometry: Geometry::Stacked,
-            size: size,
+            pos: area.pos,
+            size: area.size,
             title: title,
         }
     }
@@ -154,6 +159,7 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Special,
             geometry: Geometry::Stacked,
+            pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
         }
@@ -165,6 +171,7 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Container,
             geometry: geometry,
+            pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
         }
@@ -176,6 +183,7 @@ impl Parameters {
             sid: sid,
             mode: Mode::Leaf,
             geometry: geometry,
+            pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
         }
@@ -215,9 +223,9 @@ impl Frame {
     }
 
     /// Creates new display frame.
-    pub fn new_display(size: Size, title: String) -> Self {
+    pub fn new_display(area: Area, title: String) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_display(size, title),
+            params: Parameters::new_display(area, title),
             node: Node::default(),
         })
     }
@@ -292,11 +300,41 @@ impl Frame {
         unsafe { (*self.inner).params.geometry }
     }
 
+    /// Gets position.
+    #[inline]
+    pub fn get_position(&self) -> Position {
+        unsafe { (*self.inner).params.pos.clone() }
+    }
+
     /// Gets size.
     #[inline]
     pub fn get_size(&self) -> Size {
         unsafe { (*self.inner).params.size.clone() }
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Frame {
+    /// Sets size without informing other parts of application.
+    #[inline]
+    pub fn set_plumbing_position(&mut self, pos: Position) {
+        unsafe { (*self.inner).params.pos = pos; }
+    }
+
+    /// Sets size without informing other parts of application.
+    #[inline]
+    pub fn set_plumbing_size(&mut self, size: Size) {
+        unsafe { (*self.inner).params.size = size; }
+    }
+
+    /// Sets position and size without informing other parts of application.
+    #[inline]
+    pub fn set_plumbing_position_and_size(&mut self, pos: Position, size: Size) {
+        unsafe { (*self.inner).params.pos = pos; }
+        unsafe { (*self.inner).params.size = size; }
+    }
+
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -576,6 +614,15 @@ impl Frame {
     #[inline]
     pub fn equals_exact(&self, other: &Frame) -> bool {
         self.inner == other.inner
+    }
+
+    /// Counts children and returns their number.
+    pub fn count_children(&self) -> usize {
+        let mut result = 0;
+        for c in self.time_iter() {
+            result += 1
+        }
+        result
     }
 }
 

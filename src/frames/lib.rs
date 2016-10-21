@@ -63,6 +63,7 @@ pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Mode, Geometry, Pa
 mod displaying;
 pub use displaying::Displaying;
 
+pub mod packing;
 pub mod searching;
 pub mod settling;
 

@@ -47,7 +47,7 @@ pub mod settings;
 pub use settings::Settings;
 
 pub mod surface;
-pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, show_reason};
+pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, show_reason, surface_state};
 
 pub mod coordinator;
 pub use coordinator::Coordinator;

@@ -89,7 +89,7 @@ impl Exhibitor {
             }
         };
         log_info1!("Exhibitor: creating display");
-        let display_frame = self.compositor.create_display(output.get_size(), output.get_name());
+        let display_frame = self.compositor.create_display(output.get_area(), output.get_name());
         let display = Display::new(self.coordinator.clone(),
                                    self.signaler.clone(),
                                    self.pointer.clone(),

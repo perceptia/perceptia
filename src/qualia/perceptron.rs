@@ -25,6 +25,7 @@ pub const INPUT_POINTER_POSITION_RESET: SignalId = 14;
 pub const INPUT_KEYBOARD: SignalId = 15;
 pub const SURFACE_READY: SignalId = 20;
 pub const SURFACE_DESTROYED: SignalId = 21;
+pub const SURFACE_RECONFIGURED: SignalId = 22;
 pub const CURSOR_SURFACE_CHANGE: SignalId = 25;
 pub const SURFACE_FRAME: SignalId = 30;
 pub const POINTER_FOCUS_CHANGED: SignalId = 31;
@@ -50,6 +51,7 @@ pub enum Perceptron {
     InputKeyboard(Key),
     SurfaceReady(SurfaceId),
     SurfaceDestroyed(SurfaceId),
+    SurfaceReconfigured(SurfaceId),
     CursorSurfaceChange(SurfaceId),
     SurfaceFrame(SurfaceId),
     PointerFocusChanged(SurfacePosition),
@@ -84,6 +86,7 @@ impl std::fmt::Display for Perceptron {
 
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
             Perceptron::SurfaceDestroyed(ref sid) => write!(f, "SurfaceDestroyed({})", sid),
+            Perceptron::SurfaceReconfigured(ref sid) => write!(f, "SurfaceReconfigured({})", sid),
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
 
             Perceptron::SurfaceFrame(ref sid) => write!(f, "SurfaceFrame({})", sid),

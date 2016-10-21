@@ -15,7 +15,7 @@ use dharma;
 use defs::{Size, Vector};
 use buffer::Buffer;
 use perceptron::{self, Perceptron};
-use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason};
+use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -170,6 +170,17 @@ impl InnerCoordinator {
     pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
         self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
     }
+
+    /// Reconfigure surface and send notification about this event.
+    pub fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState) {
+        let surface = try_get_surface!(self, sid);
+        if (surface.get_desired_size() != size) || (surface.get_state_flags() != state_flags) {
+            surface.set_desired_size(size);
+            surface.set_state_flags(state_flags);
+            self.signaler.emit(perceptron::SURFACE_RECONFIGURED,
+                               Perceptron::SurfaceReconfigured(sid));
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -294,7 +305,10 @@ impl Coordinator {
 // -------------------------------------------------------------------------------------------------
 
 impl SurfaceAccess for Coordinator {
-    fn configure(&mut self, sid: SurfaceId, i: i32) {}
+    fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.reconfigure(sid, size, state_flags);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -9,30 +9,24 @@ use qualia::SurfaceAccess;
 
 use frame::Frame;
 use searching::Searching;
+use packing::Packing;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Extension trait for `Frame` adding more settling functionality.
 pub trait Settling {
     /// Settle self in buildable of target and relax it.
-    fn settle(&mut self, target: &mut Frame, surface: &SurfaceAccess);
-
-    /// XXX
-    fn relax(&mut self);
+    fn settle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Settling for Frame {
-    fn settle(&mut self, target: &mut Frame, surface: &SurfaceAccess) {
+    fn settle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
         if let Some(ref mut buildable) = target.find_buildable() {
             buildable.append(self);
-            buildable.relax();
+            buildable.relax(sa);
         }
-    }
-
-    fn relax(&mut self) {
-        // XXX
     }
 }
 

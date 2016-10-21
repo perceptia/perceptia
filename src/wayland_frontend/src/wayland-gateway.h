@@ -87,7 +87,9 @@ void noia_wayland_gateway_surface_reconfigured(NoiaWaylandState* state,
                                                NoiaWaylandCache* cache,
                                                NoiaWaylandEngine* engine,
                                                NoiaCoordinator* coordinator,
-                                               NoiaSurfaceId sid);
+                                               NoiaSurfaceId sid,
+                                               NoiaSize size,
+                                               uint32_t state_flags);
 
 //------------------------------------------------------------------------------
 

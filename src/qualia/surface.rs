@@ -42,6 +42,17 @@ pub mod show_reason {
 
 // -------------------------------------------------------------------------------------------------
 
+/// These flags describe readiness of `Surface` to be displayed.
+pub mod surface_state {
+    pub type SurfaceState = u8;
+    pub const EMPTY: SurfaceState = 0x0;
+    pub const MAXIMIZED: SurfaceState = 0x1;
+    pub const FULLSCREEN: SurfaceState = 0x2;
+    pub const RESIZING: SurfaceState = 0x3;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Structure containing public information about surface.
 pub struct SurfaceInfo {
     pub id: SurfaceId,
@@ -49,6 +60,7 @@ pub struct SurfaceInfo {
     pub parent_sid: SurfaceId,
     pub desired_size: Size,
     pub requested_size: Size,
+    pub state_flags: surface_state::SurfaceState,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -83,6 +95,9 @@ pub struct Surface {
     /// Data to be used after commit.
     pending_buffer: Buffer,
 
+    /// Flags describing logical state of surface
+    state_flags: surface_state::SurfaceState,
+
     /// Flags indicating if surface is ready to be shown.
     show_reasons: show_reason::ShowReason,
 }
@@ -103,6 +118,7 @@ impl Surface {
             buffer: Arc::new(Buffer::empty()),
             pending_buffer: Buffer::empty(),
             show_reasons: show_reason::UNINITIALIZED,
+            state_flags: surface_state::EMPTY,
         }
     }
 
@@ -116,6 +132,18 @@ impl Surface {
     #[inline]
     pub fn set_requested_size(&mut self, size: Size) {
         self.requested_size = size
+    }
+
+    /// Sets size desired by compositor.
+    #[inline]
+    pub fn set_desired_size(&mut self, size: Size) {
+        self.desired_size = size
+    }
+
+    /// Sets state flags.
+    #[inline]
+    pub fn set_state_flags(&mut self, state_flags: surface_state::SurfaceState) {
+        self.state_flags = state_flags
     }
 
     /// Adds given reason to show reasons. Returns updates set of reasons.
@@ -165,6 +193,7 @@ impl Surface {
             parent_sid: self.parent_sid,
             desired_size: self.desired_size.clone(),
             requested_size: self.requested_size.clone(),
+            state_flags: self.state_flags,
         }
     }
 
@@ -180,13 +209,23 @@ impl Surface {
             pos: self.relative_position.clone(),
         }
     }
+
+    /// Return size desired by compositor.
+    pub fn get_desired_size(&self) -> Size {
+        self.desired_size.clone()
+    }
+
+    /// Return flags describing state of the surface.
+    pub fn get_state_flags(&self) -> surface_state::SurfaceState {
+        self.state_flags
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Trait used for configuring and manipulating surfaces.
 pub trait SurfaceAccess {
-    fn configure(&mut self, sid: SurfaceId, i: i32);
+    fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState);
 }
 
 // -------------------------------------------------------------------------------------------------

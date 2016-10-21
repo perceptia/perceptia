@@ -45,7 +45,8 @@ impl Module for WaylandModule {
              perceptron::SURFACE_FRAME,
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::POINTER_RELATIVE_MOTION,
-             perceptron::KEYBOARD_FOCUS_CHANGED]
+             perceptron::KEYBOARD_FOCUS_CHANGED,
+             perceptron::SURFACE_RECONFIGURED]
     }
 
     fn execute(&mut self, package: &Self::T) {
@@ -61,6 +62,15 @@ impl Module for WaylandModule {
             }
             Perceptron::KeyboardFocusChanged(sid) => {
                 WaylandFrontend::on_keyboard_focus_changed(sid)
+            }
+            Perceptron::SurfaceReconfigured(sid) => {
+                if let Some(ref mut context) = self.context {
+                    if let Some(info) = context.get_coordinator().get_surface(sid) {
+                        WaylandFrontend::on_surface_reconfigured(sid,
+                                                                 info.desired_size,
+                                                                 info.state_flags as u32);
+                    }
+                }
             }
             _ => {}
         }

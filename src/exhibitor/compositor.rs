@@ -7,7 +7,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use timber;
-use qualia::{Coordinator, Size, SurfaceId, SurfaceInfo};
+use qualia::{Coordinator, Area, SurfaceId, SurfaceInfo};
 
 use surface_history::SurfaceHistory;
 use frames::{self, Frame};
@@ -67,11 +67,11 @@ impl Compositor {
     }
 
     /// Creates new display with default workspace.
-    pub fn create_display(&mut self, size: Size, name: String) -> Frame {
-        let mut display = Frame::new_display(size, name);
+    pub fn create_display(&mut self, area: Area, name: String) -> Frame {
+        let mut display = Frame::new_display(area, name);
         let mut workspace = Frame::new_workspace();
         self.root.append(&mut display);
-        workspace.settle(&mut display, &self.coordinator);
+        workspace.settle(&mut display, &mut self.coordinator);
         self.select(workspace);
         display
     }
@@ -87,7 +87,7 @@ impl Compositor {
 
         // Settle and optionally select new frame
         let mut frame = Frame::new_leaf(sid, decision.geometry);
-        frame.settle(&mut decision.target, &self.coordinator);
+        frame.settle(&mut decision.target, &mut self.coordinator);
         if decision.selection {
             self.select(frame);
         }

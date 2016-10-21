@@ -8,6 +8,8 @@
 
 #include "xdg-shell-server-protocol.h"
 
+#include "perceptia.h"
+
 #include "utils-log.h"
 
 //------------------------------------------------------------------------------
@@ -138,10 +140,10 @@ void noia_wayland_gateway_keyboard_focus_update(NoiaWaylandState* state,
     }
 
     // Inform surfaces their states changed
-    noia_wayland_gateway_surface_reconfigured
+    /*noia_wayland_gateway_surface_reconfigured
                          (state, cache, engine, coordinator, old_sid);
     noia_wayland_gateway_surface_reconfigured
-                         (state, cache, engine, coordinator, new_sid);
+                         (state, cache, engine, coordinator, new_sid);*/
 }
 
 //------------------------------------------------------------------------------
@@ -364,22 +366,18 @@ void noia_wayland_gateway_surface_reconfigured(NoiaWaylandState* state,
                                                NoiaWaylandCache* cache,
                                                NoiaWaylandEngine* engine,
                                                NoiaCoordinator* coordinator,
-                                               NoiaSurfaceId sid)
+                                               NoiaSurfaceId sid,
+                                               NoiaSize size,
+                                               uint32_t state_flags)
 {
-// FIXME
-    /*noia_wayland_cache_lock(cache);
-
-    NoiaSurfaceData* data = NULL;
+    noia_wayland_cache_lock(cache);
     NoiaWaylandSurface* surface = noia_wayland_cache_find_surface(cache, sid);
+
+    LOG_WAYL3("Wayland < surface reconfiguration "
+              "(sid: %d, width: %d, height: %d)",
+               sid, size.width, size.height);
+
     if (surface) {
-        data = noia_surface_get(coordinator, sid);
-    }
-
-    if (surface and data) {
-        LOG_WAYL3("Wayland < surface reconfiguration "
-                  "(sid: %d, width: %d, height: %d)",
-                   sid, data->desired_size.width, data->desired_size.height);
-
         struct wl_resource* shell_surface_rc =
                             noia_wayland_surface_get_resource
                                          (surface, NOIA_RESOURCE_SHELL_SURFACE);
@@ -390,13 +388,13 @@ void noia_wayland_gateway_surface_reconfigured(NoiaWaylandState* state,
         if (shell_surface_rc) {
             wl_shell_surface_send_configure(shell_surface_rc,
                                             0x0,
-                                            data->desired_size.width,
-                                            data->desired_size.height);
+                                            size.width,
+                                            size.height);
         } else if (xdg_shell_surface_rc) {
             struct wl_array states;
             uint32_t* s;
             wl_array_init(&states);
-            if (data->state_flags & NOIA_SURFACE_STATE_MAXIMIZED) {
+            if (state_flags & NOIA_SURFACE_STATE_MAXIMIZED) {
                 s = wl_array_add(&states, sizeof(*s));
                 *s = XDG_SURFACE_STATE_MAXIMIZED;
             }
@@ -407,14 +405,14 @@ void noia_wayland_gateway_surface_reconfigured(NoiaWaylandState* state,
 
             int serial = noia_wayland_engine_next_serial(engine);
             xdg_surface_send_configure(xdg_shell_surface_rc,
-                                       data->desired_size.width,
-                                       data->desired_size.height,
+                                       size.width,
+                                       size.height,
                                        &states, serial);
             wl_array_release(&states);
         }
     }
 
-    noia_wayland_cache_unlock(cache);*/
+    noia_wayland_cache_unlock(cache);
 }
 
 //------------------------------------------------------------------------------

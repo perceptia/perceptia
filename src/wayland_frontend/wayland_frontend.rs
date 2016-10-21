@@ -23,6 +23,7 @@ extern "C" {
     fn noia_wayland_module_on_pointer_focus_changed(sid: SurfaceIdType, pos: Position);
     fn noia_wayland_module_on_pointer_relative_motion(sid: SurfaceIdType, pos: Position);
     fn noia_wayland_module_on_keyboard_focus_changed(sid: SurfaceIdType);
+    fn noia_wayland_module_on_surface_reconfigured(sid: SurfaceIdType, size: Size, state_flags: u32);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -175,6 +176,12 @@ impl WaylandFrontend {
     pub fn on_keyboard_focus_changed(sid: SurfaceId) {
         unsafe {
             noia_wayland_module_on_keyboard_focus_changed(sid.as_number());
+        }
+    }
+
+    pub fn on_surface_reconfigured(sid: SurfaceId, size: Size, state_flags: u32) {
+        unsafe {
+            noia_wayland_module_on_surface_reconfigured(sid.as_number(), size, state_flags);
         }
     }
 }

@@ -6,3 +6,4 @@
 pub mod layouts;
 pub mod frame_representation;
 pub mod assertions;
+pub mod surface_access_mock;

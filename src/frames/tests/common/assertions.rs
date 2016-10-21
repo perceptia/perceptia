@@ -11,6 +11,8 @@ use frames::Geometry::{Horizontal, Stacked, Vertical};
 
 use common::frame_representation::FrameRepresentation;
 
+use qualia::{Position, Size};
+
 // -------------------------------------------------------------------------------------------------
 
 /// Assert if given two frames are exactly the same by comparing their internals.
@@ -127,6 +129,16 @@ pub fn assert_simple_frames_spaced(frame: &Frame) {
     };
 
     repr.assert_frames_spaced(frame);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Assert frame area by comparing frames area with expected area.
+///
+/// TODO: Extend this assertion to also check area set to `SurfaceAccess`.
+pub fn assert_area(frame: &Frame, pos: Position, size: Size) {
+    assert_eq!(pos, frame.get_position(), "");
+    assert_eq!(size, frame.get_size(), "");
 }
 
 // -------------------------------------------------------------------------------------------------

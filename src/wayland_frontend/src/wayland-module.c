@@ -96,19 +96,19 @@ void noia_wayland_module_on_pointer_axis(void* edata, void* sdata)
                                       object->axisdata.vd);
     noia_object_unref((NoiaObject*) object);
 }
-
+*/
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_surface_reconfigured(void* edata, void* sdata)
+void noia_wayland_module_on_surface_reconfigured(NoiaSurfaceId sid,
+                                                 NoiaSize size,
+                                                 uint32_t state_flags)
 {
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaSurfaceId sid = noia_uint_unref_get((NoiaIntObject*) edata);
     noia_wayland_gateway_surface_reconfigured
-                   (ctx->state, ctx->cache, ctx->engine, ctx->coordinator, sid);
+                   (ctx->state, ctx->cache, ctx->engine, ctx->coordinator, sid, size, state_flags);
 }
 
 //------------------------------------------------------------------------------
-
+/*
 void noia_wayland_module_on_output_found(void* edata, void* sdata)
 {
     NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;

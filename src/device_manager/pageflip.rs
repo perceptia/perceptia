@@ -9,7 +9,7 @@ use std::os::unix::io;
 use libdrm::drm;
 
 use dharma::{EventHandler, Signaler};
-use qualia::{DrmBundle, Error, perceptron, Perceptron};
+use qualia::{perceptron, Perceptron};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -30,9 +30,12 @@ impl PageFlipContext {
 // -------------------------------------------------------------------------------------------------
 
 impl drm::EventContext for PageFlipContext {
+    #[allow(unused_variables)]
     fn vblank_handler(&mut self, fd: io::RawFd, sequence: u32, sec: u32, usec: u32, data: i32) {
         self.signaler.emit(perceptron::VERTICAL_BLANK, Perceptron::VerticalBlank(data));
     }
+
+    #[allow(unused_variables)]
     fn page_flip_handler(&mut self, fd: io::RawFd, sequence: u32, sec: u32, usec: u32, data: i32) {
         self.signaler.emit(perceptron::PAGE_FLIP, Perceptron::PageFlip(data));
     }

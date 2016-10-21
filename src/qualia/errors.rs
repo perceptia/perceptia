@@ -8,11 +8,16 @@
 use libudev;
 use std;
 
+use std::error::Error;
+
 // -------------------------------------------------------------------------------------------------
 
 /// Generic application-wide error.
+///
+/// This enum could not be named `Error`. Illusion is "a distortion of the senses" (error in
+/// perceptia).
 #[derive(Debug)]
-pub enum Error {
+pub enum Illusion {
     Permissions(String),
     InvalidArgument(String),
     General(String),
@@ -22,23 +27,31 @@ pub enum Error {
 
 // -------------------------------------------------------------------------------------------------
 
-impl std::fmt::Display for Error {
+impl std::fmt::Display for Illusion {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
-            Error::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
-            Error::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
-            Error::General(ref s) => write!(f, "{}", s),
-            Error::IO(ref s) => write!(f, "IO error: {}", s),
-            Error::Unknown(ref s) => write!(f, "Unknown error: {}", s),
+            Illusion::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
+            Illusion::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
+            Illusion::General(ref s) => write!(f, "{}", s),
+            Illusion::IO(ref s) => write!(f, "IO error: {}", s),
+            Illusion::Unknown(ref s) => write!(f, "Unknown error: {}", s),
         }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl std::convert::From<libudev::Error> for Error {
+impl std::convert::From<std::io::Error> for Illusion {
+    fn from(error: std::io::Error) -> Self {
+        Illusion::IO(error.description().to_owned())
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::convert::From<libudev::Error> for Illusion {
     fn from(error: libudev::Error) -> Self {
-        Error::General(error.description().to_owned())
+        Illusion::General(error.description().to_owned())
     }
 }
 

@@ -48,7 +48,7 @@ pub struct Config {
 impl Config {
     /// Return configuration for input devices.
     pub fn get_input_config(&self) -> InputConfig {
-        let mut mine = self.inner.lock().unwrap();
+        let mine = self.inner.lock().unwrap();
         InputConfig {
             touchpad_scale: mine.touchpad_scale,
             touchpad_pressure_treshold: mine.touchpad_pressure_treshold,

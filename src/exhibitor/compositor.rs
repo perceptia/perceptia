@@ -163,7 +163,7 @@ impl Compositor {
     /// Helper for frame layout printer.
     fn log_frames_helper(&self, frame: &Frame, depth: i32, timber: &mut timber::Timber) {
         for ref subframe in frame.space_iter() {
-            for i in 0..depth {
+            for _ in 0..depth {
                 timber.log(format_args!("\t"));
             }
             timber.log(format_args!("{:?}\n", subframe));

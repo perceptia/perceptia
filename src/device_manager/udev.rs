@@ -85,7 +85,7 @@ impl<'a> Udev<'a> {
     ///
     /// Returned `DeviceMonitor` contains file descriptor from `udev` monitor. `DeviceMonitor` will
     /// handle situations when the file descriptor becomes invalid.
-    pub fn start_device_monitor(&mut self) -> Result<DeviceMonitor, qualia::Error> {
+    pub fn start_device_monitor(&mut self) -> Result<DeviceMonitor, qualia::Illusion> {
         if self.monitor_socket.is_none() {
             let mut monitor = try!(libudev::Monitor::new(&self.context));
             ensure!(monitor.match_subsystem("input"));
@@ -95,7 +95,7 @@ impl<'a> Udev<'a> {
 
         match self.monitor_socket {
             Some(ref monitor_socket) => Ok(DeviceMonitor::new(monitor_socket.as_raw_fd())),
-            None => Err(qualia::Error::General("Failed to create device monitor".to_owned())),
+            None => Err(qualia::Illusion::General("Failed to create device monitor".to_owned())),
         }
     }
 }

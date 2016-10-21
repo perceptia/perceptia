@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use dharma::Signaler;
-use qualia::{Area, Coordinator, Error, SurfaceContext, perceptron, Perceptron};
+use qualia::{Area, Coordinator, Illusion, SurfaceContext, perceptron, Perceptron};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -53,7 +53,7 @@ impl Display {
     }
 
     /// Schedule page flip on assigned output.
-    fn schedule_pageflip(&mut self) -> Result<(), Error> {
+    fn schedule_pageflip(&mut self) -> Result<(), Illusion> {
         if !self.page_flip_scheduled {
             self.page_flip_scheduled = true;
             self.output.schedule_pageflip()

@@ -10,7 +10,7 @@ use std::os::unix::io;
 use nix::fcntl::OFlag;
 use nix::sys::stat::Mode;
 
-use qualia::{DeviceKind, Error, InputConfig};
+use qualia::{DeviceKind, Illusion, InputConfig};
 
 use input_gateway::InputGateway;
 
@@ -24,8 +24,8 @@ pub trait InputDriver {
                             config: InputConfig,
                             gateway: InputGateway,
                             open_restricted: F)
-                            -> Result<Box<Self>, Error>
-        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Error>;
+                            -> Result<Box<Self>, Illusion>
+        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Illusion>;
 }
 
 // -------------------------------------------------------------------------------------------------

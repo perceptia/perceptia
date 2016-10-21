@@ -11,7 +11,7 @@ use nix::unistd::getpid;
 use std::os::unix::io::RawFd;
 use std::sync::{Arc, Mutex};
 
-use errors::Error;
+use errors::Illusion;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ macro_rules! get_connection_or_return {
     ($connection:expr) => {
         match $connection {
             Some(ref connection) => connection,
-            None => return Err(Error::General(format!("No connection to DBUS!"))),
+            None => return Err(Illusion::General(format!("No connection to DBUS!"))),
         }
     }
 }
@@ -52,7 +52,7 @@ macro_rules! get_session_or_return {
     ($session_object_path:expr) => {
         match $session_object_path {
             Some(ref session) => session,
-            None => return Err(Error::General(format!("Session object path is unknown!"))),
+            None => return Err(Illusion::General(format!("Session object path is unknown!"))),
         }
     }
 }
@@ -69,7 +69,7 @@ macro_rules! assert_reply {
         match $reply {
             Ok(r) => r,
             Err(err) => {
-                return Err(Error::General(format!("{}", if err.message().is_some() {
+                return Err(Illusion::General(format!("{}", if err.message().is_some() {
                     err.message().unwrap()
                 } else if err.name().is_some() {
                     err.name().unwrap()
@@ -145,7 +145,7 @@ impl InnerIpc {
     }
 
     /// Communicate to `logind` to take control over session.
-    fn take_control(&mut self) -> Result<(), Error> {
+    fn take_control(&mut self) -> Result<(), Illusion> {
         let connection = get_connection_or_return!(self.connection);
         let session_object_path = get_session_or_return!(self.session_object_path);
         let message_name = "TakeControl";
@@ -180,14 +180,14 @@ impl Ipc {
     }
 
     /// Take control over session.
-    pub fn initialize(&mut self) -> Result<(), Error> {
+    pub fn initialize(&mut self) -> Result<(), Illusion> {
         let mut mine = self.inner.lock().unwrap();
         mine.session_object_path = mine.get_session_by_pid();
         mine.take_control()
     }
 
     /// Communicate to `logind` to take control over given device.
-    pub fn take_device(&self, rdev: u64) -> Result<RawFd, Error> {
+    pub fn take_device(&self, rdev: u64) -> Result<RawFd, Illusion> {
         let mine = self.inner.lock().unwrap();
         let connection = get_connection_or_return!(mine.connection);
         let session_object_path = get_session_or_return!(mine.session_object_path);
@@ -206,7 +206,7 @@ impl Ipc {
         let r = assert_reply!(connection.send_with_reply_and_block(message, TIMEOUT));
         match r.get1().expect(message_name) {
             MessageItem::UnixFd(fd) => Ok(fd.into_fd()),
-            _ => Err(Error::Unknown(format!("Received wrong answer!"))),
+            _ => Err(Illusion::Unknown(format!("Received wrong answer!"))),
         }
     }
 }

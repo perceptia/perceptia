@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{perceptron, Perceptron, InputConfig, Button, Key, KeyState, OptionalPosition, Vector};
+use qualia::{perceptron, Perceptron, InputConfig, Button, Key, OptionalPosition, Vector};
 use dharma::Signaler;
 
 // -------------------------------------------------------------------------------------------------

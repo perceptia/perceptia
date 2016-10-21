@@ -22,7 +22,7 @@ pub mod perceptron;
 pub use perceptron::Perceptron;
 
 pub mod errors;
-pub use errors::Error;
+pub use errors::Illusion;
 
 pub mod defs;
 pub use defs::{Area, Point, Button, Key, Position, OptionalPosition, SurfacePosition, Size, Vector, DrmBundle};

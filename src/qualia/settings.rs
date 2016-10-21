@@ -39,7 +39,7 @@ impl Settings {
 
     /// Get key map related settings.
     pub fn get_keymap(&self) -> keymap::Settings {
-        let mut mine = self.inner.lock().unwrap();
+        let mine = self.inner.lock().unwrap();
         mine.keymap.clone()
     }
 }

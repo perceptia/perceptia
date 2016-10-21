@@ -11,7 +11,7 @@ use nix::{self, Errno};
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::{Mode, stat};
 
-use qualia::{Context, Error, Ipc, perceptron, Perceptron};
+use qualia::{Context, Illusion, Ipc};
 
 use evdev;
 use udev;
@@ -47,7 +47,7 @@ impl<'a> DeviceManager<'a> {
         mine.initialize_input_devices(&mut context);
 
         // Initialize output devices
-        mine.initialize_output_devices(&mut context);
+        mine.initialize_output_devices();
 
         // Initialize device monitor
         mine.initialize_device_monitor(&mut context);
@@ -56,21 +56,21 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Try to open device. If we have insufficient permissions ask `logind` to do it for us.
-    fn open_restricted(&self, path: &Path, oflag: OFlag, mode: Mode) -> Result<io::RawFd, Error> {
+    fn open_restricted(&self, path: &Path, oflag: OFlag, mode: Mode) -> Result<io::RawFd, Illusion> {
         match open(path, oflag, mode) {
             Ok(fd) => Ok(fd),
             Err(nix::Error::Sys(errno)) => {
                 if (errno == Errno::EPERM) || (errno == Errno::EACCES) {
                     match stat(path) {
                         Ok(st) => self.ipc.take_device(st.st_rdev as u64),
-                        _ => Err(Error::General(format!("Could not stat file '{:?}'", path))),
+                        _ => Err(Illusion::General(format!("Could not stat file '{:?}'", path))),
                     }
                 } else {
-                    Err(Error::InvalidArgument(errno.desc().to_owned()))
+                    Err(Illusion::InvalidArgument(errno.desc().to_owned()))
                 }
             }
             Err(nix::Error::InvalidPath) => {
-                Err(Error::InvalidArgument(format!("Path '{:?}' does not exist!", path)))
+                Err(Illusion::InvalidArgument(format!("Path '{:?}' does not exist!", path)))
             }
         }
     }
@@ -111,7 +111,7 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Find and initialize outputs.
-    fn initialize_output_devices(&mut self, context: &mut Context) {
+    fn initialize_output_devices(&mut self) {
         let oc = &mut self.output_collector;
         self.udev.iterate_drm_devices(|devnode, _| {
             // FIXME: Can not do:

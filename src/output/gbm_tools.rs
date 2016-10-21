@@ -8,7 +8,7 @@
 use std::os::unix::io;
 use libgbm;
 
-use qualia::{Error, Size};
+use qualia::{Illusion, Size};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -25,12 +25,12 @@ pub struct GbmBucket {
 
 impl GbmBucket {
     /// `GbmBucket` constructor.
-    pub fn new(fd: io::RawFd, size: Size) -> Result<Self, Error> {
+    pub fn new(fd: io::RawFd, size: Size) -> Result<Self, Illusion> {
         // Create device
         let device = if let Some(device) = libgbm::Device::from_fd(fd) {
             device
         } else {
-            return Err(Error::General(format!("Failed to create GBM device")));
+            return Err(Illusion::General(format!("Failed to create GBM device")));
         };
 
         // Create surface
@@ -42,7 +42,7 @@ impl GbmBucket {
                                                                   libgbm::USE_RENDERING) {
             surface
         } else {
-            return Err(Error::General(format!("Failed to create GBM surface")));
+            return Err(Illusion::General(format!("Failed to create GBM surface")));
         };
 
 

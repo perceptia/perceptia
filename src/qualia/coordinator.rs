@@ -218,19 +218,19 @@ impl Coordinator {
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
-        let mut mine = self.inner.lock().unwrap();
+        let mine = self.inner.lock().unwrap();
         mine.get_surface(sid)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn get_buffer(&self, sid: SurfaceId) -> Option<Arc<Buffer>> {
-        let mut mine = self.inner.lock().unwrap();
+        let mine = self.inner.lock().unwrap();
         mine.get_buffer(sid)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn get_renderer_context(&self, sid: SurfaceId) -> Option<Vec<SurfaceContext>> {
-        let mut mine = self.inner.lock().unwrap();
+        let mine = self.inner.lock().unwrap();
         mine.get_renderer_context(sid)
     }
 

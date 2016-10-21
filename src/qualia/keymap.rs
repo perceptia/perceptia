@@ -12,7 +12,7 @@ use xkbcommon::xkb;
 use nix;
 use nix::sys::mman;
 
-use errors::Error;
+use errors::Illusion;
 use env;
 
 // -------------------------------------------------------------------------------------------------
@@ -30,6 +30,7 @@ pub struct Settings {
 
 /// This structure handles creation of file used for communicating clients current keymap using
 /// xkbcommon.
+#[allow(dead_code)]
 pub struct Keymap {
     settings: Settings,
     file: std::fs::File,
@@ -42,7 +43,7 @@ pub struct Keymap {
 
 impl Keymap {
     /// `Keymap` constructor.
-    pub fn new(env: &env::Env) -> Result<Self, Error> {
+    pub fn new(env: &env::Env) -> Result<Self, Illusion> {
         let format = xkb::KEYMAP_FORMAT_TEXT_V1;
         let rules = "evdev".to_owned();
         let model = "evdev".to_owned();
@@ -55,14 +56,14 @@ impl Keymap {
             xkb::Keymap::new_from_names(&context, &rules, &model, &layout, &variant, None, 0x0) {
             keymap
         } else {
-            return Err(Error::General(format!("Failed to create key map")));
+            return Err(Illusion::General(format!("Failed to create key map")));
         };
 
         // Save keymap to file
         let keymap_str = keymap.get_as_string(format);
         let mut file = try!(env.open_file(file_name, env::Directory::Runtime));
-        file.write_all(keymap_str.as_bytes());
-        file.write_all("\0".as_bytes());
+        try!(file.write_all(keymap_str.as_bytes()));
+        try!(file.write_all("\0".as_bytes()));
 
         // TODO: Unmap the memory.
         match mman::mmap(std::ptr::null_mut(), keymap_str.len() + 1,
@@ -80,7 +81,7 @@ impl Keymap {
                     keymap: keymap,
                     memory: memory,
                 })}
-            Err(err) => Err(Error::General(format!("mmap error"))),
+            Err(_) => Err(Illusion::General(format!("mmap error"))),
         }
     }
 

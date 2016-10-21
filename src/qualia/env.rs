@@ -12,7 +12,7 @@ use nix::sys::signal;
 use std::ops::BitAnd;
 use std::error::Error;
 
-use errors;
+use errors::Illusion;
 use timber;
 use config;
 
@@ -92,20 +92,20 @@ impl Env {
     }
 
     /// Opens file in predefined directory.
-    pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, errors::Error> {
+    pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, Illusion> {
         let mut dir = if let Some(dir) = match dir {
             Directory::Data => self.data_dir.clone(),
             Directory::Runtime => self.runtime_dir.clone(),
         } {
             dir
         } else {
-            return Err(errors::Error::General(format!("Requested directory is not available")));
+            return Err(Illusion::General(format!("Requested directory is not available")));
         };
 
         dir.set_file_name(name);
         match fs::OpenOptions::new().read(true).write(true).create(true).open(dir.as_path()) {
             Ok(file) => Ok(file),
-            Err(err) => Err(errors::Error::IO(err.description().to_string())),
+            Err(err) => Err(Illusion::IO(err.description().to_string())),
         }
     }
 }
@@ -130,7 +130,7 @@ impl Env {
     }
 
     /// Create data directory.
-    fn create_data_dir(&mut self) -> Result<(), errors::Error> {
+    fn create_data_dir(&mut self) -> Result<(), Illusion> {
         let path = Self::read_path(DATA_DIR_VAR, DEFAULT_DATA_DIR);
         let result = Self::mkdir(&path);
         if result.is_ok() {
@@ -140,7 +140,7 @@ impl Env {
     }
 
     /// Create runtime directory.
-    fn create_runtime_dir(&mut self) -> Result<(), errors::Error> {
+    fn create_runtime_dir(&mut self) -> Result<(), Illusion> {
         let path = Self::read_path(RUNTIME_DIR_VAR, DEFAULT_RUNTIME_DIR);
         let path = path.join(format!("perceptia-{}", Self::get_time_representation()));
         let result = Self::mkdir(&path);
@@ -151,7 +151,7 @@ impl Env {
     }
 
     /// Chose log file path and initialize logger.
-    fn initialize_logger(&mut self) -> Result<(), errors::Error> {
+    fn initialize_logger(&mut self) -> Result<(), Illusion> {
         if let Some(ref data_dir) = self.data_dir {
             let path = data_dir.join(format!("log-{}", Self::get_time_representation()));
             match timber::init(&path) {
@@ -161,12 +161,12 @@ impl Env {
                     Ok(ok)
                 }
                 Err(err) => {
-                    Err(errors::Error::General(err.description().to_owned()))
+                    Err(Illusion::General(err.description().to_owned()))
                 }
             }
         } else {
             let text = "Could not create log file! Data directory not available!".to_owned();
-            Err(errors::Error::General(text))
+            Err(Illusion::General(text))
         }
     }
 }
@@ -183,15 +183,15 @@ impl Env {
     }
 
     /// Helper function for creating directory.
-    fn mkdir(path: &std::path::PathBuf) -> Result<(), errors::Error> {
+    fn mkdir(path: &std::path::PathBuf) -> Result<(), Illusion> {
         if path.exists() {
             if path.is_dir() {
                 return Ok(());
             } else {
-                Err(errors::Error::InvalidArgument(format!("Path '{:?}' is not directory!", path)))
+                Err(Illusion::InvalidArgument(format!("Path '{:?}' is not directory!", path)))
             }
         } else if let Err(err) = std::fs::create_dir(path) {
-            Err(errors::Error::General(format!("Could not create directory '{:?}': {}", path, err)))
+            Err(Illusion::General(format!("Could not create directory '{:?}': {}", path, err)))
         } else {
             Ok(())
         }

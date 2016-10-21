@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use dharma::Signaler;
 
-use qualia::{Buffer, Coordinator, Area, Button, OptionalPosition, Position, Vector, SurfaceId, SurfaceContext, SurfacePosition, perceptron, Perceptron};
+use qualia::{Buffer, Coordinator, Area, OptionalPosition, Position, Vector, SurfaceId, SurfaceContext, SurfacePosition, perceptron, Perceptron};
 
 use display::Display;
 

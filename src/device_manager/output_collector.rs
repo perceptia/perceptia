@@ -14,7 +14,7 @@ use nix::sys::stat;
 use libdrm::drm_mode;
 
 use dharma::{Dispatcher, Signaler};
-use qualia::{DrmBundle, Error, perceptron, Perceptron};
+use qualia::{DrmBundle, Illusion, perceptron, Perceptron};
 
 use pageflip::PageFlipEventHandler;
 
@@ -39,13 +39,13 @@ impl OutputCollector {
     }
 
     /// Scan DRM devices to find outputs. When the output is found emits `OutputFound` signal.
-    pub fn scan_device(&mut self, path: &Path) -> Result<(), Error> {
+    pub fn scan_device(&mut self, path: &Path) -> Result<(), Illusion> {
         // Open device
         log_info1!("OutputCollector: scan device '{:?}'", path);
         let fd = match fcntl::open(path, fcntl::O_RDWR, stat::Mode::empty()) {
             Ok(fd) => fd,
             Err(err) => {
-                return Err(Error::General(format!("Could open output device {:?}: {}", path, err)))
+                return Err(Illusion::General(format!("Could open output device {:?}: {}", path, err)))
             }
         };
 

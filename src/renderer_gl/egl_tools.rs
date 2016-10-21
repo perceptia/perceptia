@@ -7,7 +7,7 @@
 
 use egl;
 
-use qualia::Error;
+use qualia::Illusion;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -67,30 +67,30 @@ pub struct EglContext {
 impl EglBucket {
     /// `EglBucket` constructor.
     pub fn new(display_type: egl::EGLNativeDisplayType, window_type: egl::EGLNativeWindowType)
-    -> Result<Self, Error> {
+    -> Result<Self, Illusion> {
         // Get display
         let display = if let Some(display) = egl::get_display(display_type) {
             display
         } else {
-            return Err(Error::General(format!("Failed to get EGL display")))
+            return Err(Illusion::General(format!("Failed to get EGL display")))
         };
 
         // Initialize EGL
         let mut major = 0;
         let mut minor = 0;
         if !egl::initialize(display, &mut major, &mut minor) {
-            return Err(Error::General(format!("Failed to initialize EGL")))
+            return Err(Illusion::General(format!("Failed to initialize EGL")))
         };
 
         if !egl::bind_api(egl::EGL_OPENGL_ES_API) {
-            return Err(Error::General(format!("Failed to bind EGL API")))
+            return Err(Illusion::General(format!("Failed to bind EGL API")))
         };
 
         // Choose config
         let config = if let Some(config) = egl::choose_config(display, &CONFIG_ATTRIB_LIST, 1) {
             config
         } else {
-            return Err(Error::General(format!("Failed to choose EGL config")))
+            return Err(Illusion::General(format!("Failed to choose EGL config")))
         };
 
         // Create context
@@ -98,7 +98,7 @@ impl EglBucket {
                  = egl::create_context(display, config, egl::EGL_NO_CONTEXT, &CONTEXT_ATTRIB_LIST) {
             context
         } else {
-            return Err(Error::General(format!("Failed to create EGL context")))
+            return Err(Illusion::General(format!("Failed to create EGL context")))
         };
 
         // Create window surface
@@ -106,7 +106,7 @@ impl EglBucket {
                   = egl::create_window_surface(display, config, window_type, &SURFACE_ATTRIB_LIST) {
             surface
         } else {
-            return Err(Error::General(format!("Failed to create EGL window surface")))
+            return Err(Illusion::General(format!("Failed to create EGL window surface")))
         };
 
         // Return bundle
@@ -121,9 +121,9 @@ impl EglBucket {
     /// Make EGL context current.
     /// This method returns `EglContext` structure which will release context when goes out of the
     /// scope.
-    pub fn make_current(&self) -> Result<EglContext, Error> {
+    pub fn make_current(&self) -> Result<EglContext, Illusion> {
         if !egl::make_current(self.display, self.surface, self.surface, self.context) {
-            Err(Error::General(format!("Failed to make EGL context current")))
+            Err(Illusion::General(format!("Failed to make EGL context current")))
         } else {
             Ok(EglContext::new(*self))
         }
@@ -145,23 +145,23 @@ impl EglContext {
 
 impl EglContext {
     /// Release EGL context.
-    fn release(&self) -> Result<(), Error> {
+    fn release(&self) -> Result<(), Illusion> {
         if !egl::make_current(self.egl.display,
                               egl::EGL_NO_SURFACE,
                               egl::EGL_NO_SURFACE,
                               egl::EGL_NO_CONTEXT) {
-            Err(Error::General(format!("Failed to release EGL context")))
+            Err(Illusion::General(format!("Failed to release EGL context")))
         } else {
             Ok(())
         }
     }
 
     /// Swap buffers.
-    pub fn swap_buffers(&self) -> Result<(), Error> {
+    pub fn swap_buffers(&self) -> Result<(), Illusion> {
         if egl::swap_buffers(self.egl.display, self.egl.surface) {
             Ok(())
         } else {
-            Err(Error::General(format!("Failed to swap EGL buffers (0x{:x})", egl::get_error())))
+            Err(Illusion::General(format!("Failed to swap EGL buffers (0x{:x})", egl::get_error())))
         }
     }
 }

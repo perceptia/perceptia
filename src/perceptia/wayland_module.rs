@@ -32,7 +32,7 @@ impl Module for WaylandModule {
     type C = Context;
 
     #[allow(unused_variables)]
-    fn initialize(&mut self, mut context: Self::C) -> InitResult {
+    fn initialize(&mut self, context: Self::C) -> InitResult {
         log_info1!("Started Wayland module");
         // TODO: Simplify when Wayland part is rewritten in Rust.
         self.context = Some(context);

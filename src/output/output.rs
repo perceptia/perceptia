@@ -11,7 +11,7 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use qualia::{Coordinator, DrmBundle, Error, Area, Position, Size, SurfaceContext};
+use qualia::{Coordinator, DrmBundle, Illusion, Area, Position, Size, SurfaceContext};
 use renderer_gl::{egl_tools, RendererGl};
 
 use gbm_tools::GbmBucket;
@@ -61,7 +61,7 @@ pub struct Output {
 
 impl Output {
     /// `Output` constructor.
-    pub fn new(drm: DrmBundle, id: i32) -> Result<Self, Error> {
+    pub fn new(drm: DrmBundle, id: i32) -> Result<Self, Illusion> {
         // Get size
         let mode;
         let size;
@@ -71,7 +71,7 @@ impl Output {
             mode = modes.get(0).unwrap().clone();
             size = Size::new(mode.get_hdisplay() as u32, mode.get_vdisplay() as u32);
         } else {
-            return Err(Error::General(format!("Failed to get mode for connector")));
+            return Err(Illusion::General(format!("Failed to get mode for connector")));
         }
 
         // GBM
@@ -115,7 +115,7 @@ impl Output {
                 surfaces: &Vec<SurfaceContext>,
                 pointer: SurfaceContext,
                 coordinator: &Coordinator)
-                -> Result<(), Error> {
+                -> Result<(), Illusion> {
         self.renderer.draw(surfaces, pointer, coordinator)
     }
 }
@@ -147,7 +147,7 @@ impl Output {
 impl Output {
     /// Swap device buffers.
     /// Create buffer if necessary.
-    fn swap_gbm_buffers(&mut self) -> Result<u32, Error> {
+    fn swap_gbm_buffers(&mut self) -> Result<u32, Illusion> {
         if let Some(bo) = self.bo.pop_front() {
             self.gbm.surface.release_buffer(bo);
         }
@@ -176,25 +176,25 @@ impl Output {
                                 self.fb = fb;
                                 Ok(fb)
                             }
-                            Err(_) => Err(Error::General(format!("Failed to set CRTC"))),
+                            Err(_) => Err(Illusion::General(format!("Failed to set CRTC"))),
                         }
                     }
-                    Err(_) => Err(Error::General(format!("Failed to create DRM framebuffer"))),
+                    Err(_) => Err(Illusion::General(format!("Failed to create DRM framebuffer"))),
                 }
             }
         } else {
-            Err(Error::General(format!("Failed to lock front buffer")))
+            Err(Illusion::General(format!("Failed to lock front buffer")))
         }
     }
 
     /// Swap renderers and devices buffers.
-    pub fn swap_buffers(&mut self) -> Result<u32, Error> {
+    pub fn swap_buffers(&mut self) -> Result<u32, Illusion> {
         try!(self.renderer.swap_buffers());
         self.swap_gbm_buffers()
     }
 
     /// Schedule pageflip. Handler is registers by DeviceManager.
-    pub fn schedule_pageflip(&self) -> Result<(), Error> {
+    pub fn schedule_pageflip(&self) -> Result<(), Illusion> {
         match drm_mode::page_flip(self.drm.fd,
                                   self.drm.crtc_id,
                                   self.fb,
@@ -202,9 +202,9 @@ impl Output {
                                   self.id) {
             Ok(_) => Ok(()),
             Err(_) => {
-                Err(Error::General(format!("Failed to page flip (crtc_id: {}, connector_id: {})",
-                                           self.drm.crtc_id,
-                                           self.drm.connector_id)))
+                Err(Illusion::General(format!("Failed to page flip (crtc_id: {}, connector_id: {})",
+                                              self.drm.crtc_id,
+                                              self.drm.connector_id)))
             }
         }
     }

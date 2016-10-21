@@ -9,7 +9,7 @@ use std;
 use gl;
 use egl;
 
-use qualia::{Coordinator, SurfaceContext, Error, Size};
+use qualia::{Coordinator, SurfaceContext, Illusion, Size};
 
 use gl_tools;
 use egl_tools;
@@ -72,7 +72,7 @@ impl RendererGl {
     ///  - bind locations,
     ///  - generate buffers,
     ///  - configure textures,
-    pub fn initialize(&mut self) -> Result<(), Error> {
+    pub fn initialize(&mut self) -> Result<(), Illusion> {
         gl::load_with(|s| egl::get_proc_address(s) as *const std::os::raw::c_void);
 
         let context = try!(self.egl.make_current());
@@ -86,7 +86,7 @@ impl RendererGl {
                 (VERTEX_SHADER_300.to_owned(), FRAGMENT_SHADER_300.to_owned())
             }
             gl_tools::GlslVersion::Unknown => {
-                return Err(Error::General(format!("Could not figure out GLSL version")));
+                return Err(Illusion::General(format!("Could not figure out GLSL version")));
             }
         };
 
@@ -123,7 +123,7 @@ impl RendererGl {
                 surfaces: &Vec<SurfaceContext>,
                 pointer: SurfaceContext,
                 coordinator: &Coordinator)
-    -> Result<(), Error> {
+    -> Result<(), Illusion> {
         let context = try!(self.egl.make_current());
         self.prepare_view();
         self.draw_bg_image();
@@ -134,7 +134,7 @@ impl RendererGl {
     }
 
     /// Swap buffers.
-    pub fn swap_buffers(&mut self) -> Result<(), Error> {
+    pub fn swap_buffers(&mut self) -> Result<(), Illusion> {
         let context = try!(self.egl.make_current());
         context.swap_buffers()
     }
@@ -217,7 +217,6 @@ impl RendererGl {
         let mut vertices = vec![0.0; vertices_len];
         let mut texcoords = vec![0.0; vertices_len];
 
-        let index = 0;
         for i in 0..surfaces.len() {
             self.load_texture_and_prepare_vertices(coordinator,
                                                    &surfaces[i],

@@ -619,7 +619,7 @@ impl Frame {
     /// Counts children and returns their number.
     pub fn count_children(&self) -> usize {
         let mut result = 0;
-        for c in self.time_iter() {
+        for _ in self.time_iter() {
             result += 1
         }
         result

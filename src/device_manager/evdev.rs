@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::{fmt, mem};
+use std::mem;
 use std::os::unix::io;
 use std::path::Path;
 use uinput_sys::{self, input_event};
@@ -14,7 +14,7 @@ use nix::fcntl::{self, OFlag};
 use nix::sys::stat::Mode;
 use nix::unistd::read;
 
-use qualia::{DeviceKind, Error, InputConfig};
+use qualia::{DeviceKind, Illusion, InputConfig};
 use dharma::EventHandler;
 
 use drivers;
@@ -39,8 +39,8 @@ impl drivers::InputDriver for Evdev {
                             config: InputConfig,
                             gateway: InputGateway,
                             open_restricted: F)
-                            -> Result<Box<Self>, Error>
-        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Error>
+                            -> Result<Box<Self>, Illusion>
+        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Illusion>
     {
         let r = open_restricted(devnode, fcntl::O_RDONLY, Mode::empty());
         match r {
@@ -61,7 +61,7 @@ impl EventHandler for Evdev {
         let mut ev: input_event = unsafe { mem::uninitialized() };
         match read(self.fd,
                    unsafe { mem::transmute::<&mut input_event, &mut [u8; 3 * 8]>(&mut ev) }) {
-            Ok(size) => {
+            Ok(_) => {
                 match self.device_kind {
                     DeviceKind::Keyboard => self.process_keyboard_event(&ev),
                     DeviceKind::Mouse => self.process_mouse_event(&ev),

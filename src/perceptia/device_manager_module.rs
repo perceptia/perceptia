@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module};
-use qualia::{Context, perceptron, Perceptron};
+use qualia::{Context, Perceptron};
 use device_manager::DeviceManager;
 
 // -------------------------------------------------------------------------------------------------
@@ -30,7 +30,7 @@ impl<'a> Module for DeviceManagerModule<'a> {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self, mut context: Self::C) -> InitResult {
+    fn initialize(&mut self, context: Self::C) -> InitResult {
         self.manager = Some(DeviceManager::new(context));
         Vec::new()
     }

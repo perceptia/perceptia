@@ -27,7 +27,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use dharma::Signaler;
-use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Position, Vector, Perceptron};
+use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Vector, Perceptron};
 use output::Output;
 
 use compositor::Compositor;
@@ -78,7 +78,7 @@ impl Exhibitor {
     pub fn on_output_found(&mut self, bundle: qualia::DrmBundle) {
         log_info1!("Exhibitor: found output");
         let id = self.generate_next_output_id();
-        let mut output = match Output::new(bundle, id) {
+        let output = match Output::new(bundle, id) {
             Ok(output) => {
                 log_info2!("Created output: {}", output.get_name());
                 output

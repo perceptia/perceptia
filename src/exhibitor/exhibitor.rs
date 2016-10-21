@@ -117,6 +117,11 @@ impl Exhibitor {
         self.compositor.unmanage_surface(sid);
         self.pointer.borrow_mut().on_surface_destroyed(sid);
     }
+
+    /// This method is called when keybord focus changed.
+    pub fn on_keyboard_focus_changed(&mut self, sid: SurfaceId) {
+        self.pointer.borrow_mut().on_keyboard_focus_changed(sid);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -136,7 +141,15 @@ impl Exhibitor {
     }
 
     /// Handle pointer button event.
-    pub fn on_button(&self, button: Button) {}
+    pub fn on_button(&mut self, button: Button) {
+        // TODO: Be more speciffic about button codes and values.
+        if button.value != 0 {
+            let pfsid = self.pointer.borrow_mut().get_pointer_focussed_sid();
+            if self.pointer.borrow_mut().get_keyboard_focussed_sid() != pfsid {
+                self.compositor.pop_surface(pfsid);
+            }
+        }
+    }
 
     /// Handle pointer position reset event.
     pub fn on_position_reset(&self) {

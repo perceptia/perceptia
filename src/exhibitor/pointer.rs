@@ -89,14 +89,24 @@ impl Pointer {
 
 // Getters
 impl Pointer {
-    /// Get position in global coordinates.
+    /// Returns pointer position in global coordinates.
     pub fn get_global_position(&self) -> Position {
         self.position.clone()
     }
 
-    /// Get ID of the cursor surface.
-    pub fn get_sid(&self) -> SurfaceId {
-        self.csid.clone()
+    /// Returns ID of the cursor surface.
+    pub fn get_cursor_sid(&self) -> SurfaceId {
+        self.csid
+    }
+
+    /// Return ID of the surface with keyboard focus.
+    pub fn get_keyboard_focussed_sid(&self) -> SurfaceId {
+        self.kfsid
+    }
+
+    /// Return ID of the surface with pointer focus.
+    pub fn get_pointer_focussed_sid(&self) -> SurfaceId {
+        self.pfsid
     }
 }
 
@@ -186,6 +196,11 @@ impl Pointer {
         if self.csid == sid {
             self.csid = SurfaceId::invalid();
         }
+    }
+
+    /// Sets surface ID of currently keyboard focused surface.
+    pub fn on_keyboard_focus_changed(&mut self, sid: SurfaceId) {
+        self.kfsid = sid;
     }
 }
 

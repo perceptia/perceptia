@@ -83,7 +83,7 @@ impl Display {
 
     /// Prepare rendering context for layover.
     pub fn prepare_layover_context(&self) -> SurfaceContext {
-        SurfaceContext::new(self.pointer.borrow().get_sid(),
+        SurfaceContext::new(self.pointer.borrow().get_cursor_sid(),
                             self.pointer.borrow().get_global_position())
     }
 

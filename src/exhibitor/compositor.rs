@@ -113,6 +113,20 @@ impl Compositor {
             self.log_frames();
         }
     }
+
+    /// Pop given surface in history.
+    pub fn pop_surface(&mut self, sid: SurfaceId) {
+        if let Some(mut frame) = self.root.find_with_sid(sid) {
+            // Pop in frame hierarchy.
+            self.root.pop_recursively(&mut frame);
+
+            // Update selection.
+            self.select(frame);
+        }
+
+        // Pop in history.
+        self.history.pop(sid);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

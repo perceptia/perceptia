@@ -43,7 +43,8 @@ impl Module for ExhibitorModule {
              perceptron::INPUT_POINTER_BUTTON,
              perceptron::INPUT_POINTER_POSITION_RESET,
              perceptron::SURFACE_READY,
-             perceptron::SURFACE_DESTROYED]
+             perceptron::SURFACE_DESTROYED,
+             perceptron::KEYBOARD_FOCUS_CHANGED]
     }
 
     fn execute(&mut self, package: &Self::T) {
@@ -60,6 +61,8 @@ impl Module for ExhibitorModule {
 
                 Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
                 Perceptron::SurfaceDestroyed(sid) => exhibitor.on_surface_destroyed(sid),
+
+                Perceptron::KeyboardFocusChanged(sid) => exhibitor.on_keyboard_focus_changed(sid),
                 _ => {}
             }
         }

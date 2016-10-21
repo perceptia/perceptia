@@ -9,6 +9,7 @@ egl = "0.2.6"
 gl = "0.6.0"
 nix = "0.6.0"
 libudev = "0.2.0"
+drm-rs = "0.1.2"
 timber         = { path = "../timber" }
 qualia         = { path = "../qualia" }
 device_manager = { path = "../device_manager" }

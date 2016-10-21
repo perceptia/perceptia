@@ -6,6 +6,7 @@ extern crate nix;
 extern crate egl;
 extern crate gl;
 extern crate libudev;
+extern crate drm as libdrm;
 
 extern crate timber;
 extern crate qualia;

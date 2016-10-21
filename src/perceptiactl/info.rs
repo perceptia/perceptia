@@ -2,12 +2,15 @@
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 use std;
+use std::os::unix::io;
 use nix::fcntl::{self, open};
+use nix::unistd::close;
 use nix::sys::stat::Mode;
 
 use egl;
 use gl;
 use libudev;
+use libdrm::drm_mode;
 
 use qualia;
 use device_manager;
@@ -51,34 +54,77 @@ fn print_properties_and_attributes(device: &libudev::Device) {
 
 // -------------------------------------------------------------------------------------------------
 
-fn print_egl_info(devnode: &std::path::Path) {
-    println!("\tEGL/GL info:");
-
-    // Open device
-    let fd = match open(devnode, fcntl::O_RDONLY, Mode::empty()) {
-        Ok(fd) => fd,
-        Err(err) => {
-            println!("\t\tCould not open device {}", err);
-            return;
+fn print_crtcs(fd: io::RawFd, resources: &drm_mode::Resources) {
+    println!("\t\tcount ctrcs: {}", resources.get_count_crtcs());
+    for id in resources.get_crtcs() {
+        match drm_mode::get_crtc(fd, id) {
+            Some(crtc) => println!("\t\t - {:?}", crtc),
+            None => println!("\t\t - failed to get info"),
         }
-    };
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+fn print_encoders(fd: io::RawFd, resources: &drm_mode::Resources) {
+    println!("\t\tcount encoders: {}", resources.get_count_encoders());
+    for id in resources.get_encoders() {
+        match drm_mode::get_encoder(fd, id) {
+            Some(encoder) => println!("\t\t - {:?}", encoder),
+            None => println!("\t\t - failed to get info"),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+fn print_connectors(fd: io::RawFd, resources: &drm_mode::Resources) {
+    println!("\t\tcount connectors: {}", resources.get_count_connectors());
+    for id in resources.get_connectors() {
+        match drm_mode::get_connector(fd, id) {
+            Some(connector) => println!("\t\t - {:?}", connector),
+            None => println!("\t\t - failed to get info"),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+fn print_drm_info(fd: io::RawFd) {
+    println!("\tDRM info:");
+
+    match drm_mode::get_resources(fd) {
+        Some(resources) => {
+            println!("\t\tcount fbs: {}", resources.get_count_fbs());
+            print_crtcs(fd, &resources);
+            print_encoders(fd, &resources);
+            print_connectors(fd, &resources);
+        }
+        None => println!("\t\tNo resources"),
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+fn print_egl_info(fd: io::RawFd) {
+    println!("\tEGL/GL info:");
 
     // Prepare GBM device and create surface
     let size = qualia::Size::new(16, 16);
-    let gbm = match output::gbm_tools::GbmBundle::new(fd, size) {
+    let gbm = match output::gbm_tools::GbmBucket::new(fd, size) {
         Ok(gbm) => gbm,
         Err(err) => {
-            println!("\t\t{}", err);
+            println!("\t\tError: {}", err);
             return;
         }
     };
 
     // Create on-screen EGL
-    let egl = match renderer_gl::egl_tools::EglBundle::new(gbm.device.c_struct() as *mut _,
+    let egl = match renderer_gl::egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
                                                            gbm.surface.c_struct() as *mut _) {
         Ok(egl) => egl,
         Err(err) => {
-            println!("\t\t{}", err);
+            println!("\t\tError {}", err);
             return;
         }
     };
@@ -110,16 +156,16 @@ fn print_egl_info(devnode: &std::path::Path) {
         println!("\t\tGLSL version: {:?}",
                  ptr_to_string(gl::GetString(gl::SHADING_LANGUAGE_VERSION)));
     }
+
+    egl.destroy();
 }
 
 // -------------------------------------------------------------------------------------------------
 
 fn print_devices() {
     let udev = device_manager::udev::Udev::new();
-    udev.iterate_event_devices(|devnode, device| {
-        println!("{:?}: ({:?})",
-                 device_manager::udev::determine_device_kind(&device),
-                 devnode);
+    udev.iterate_event_devices(|devnode, device_kind, device| {
+        println!("{:?}: ({:?})", device_kind, devnode);
         print_properties_and_attributes(&device);
         println!("");
     });
@@ -127,7 +173,19 @@ fn print_devices() {
     udev.iterate_drm_devices(|devnode, device| {
         println!("display: ({:?})", devnode);
         print_properties_and_attributes(&device);
-        print_egl_info(&devnode);
+
+        // Open device
+        match open(devnode, fcntl::O_RDWR, Mode::empty()) {
+            Ok(fd) => {
+                print_drm_info(fd);
+                print_egl_info(fd);
+                close(fd).unwrap();
+            }
+            Err(err) => {
+                println!("\t\tCould not open device {}", err);
+            }
+        };
+
         println!("");
     });
 }

@@ -255,6 +255,7 @@ version = "0.0.1"
 dependencies = [
  "clap 2.13.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "device_manager 0.0.1",
+ "drm-rs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "gl 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libudev 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",

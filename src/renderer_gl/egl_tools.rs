@@ -38,8 +38,7 @@ static SURFACE_ATTRIB_LIST: [egl::EGLint; 0] = [];
 // -------------------------------------------------------------------------------------------------
 
 /// Log EGL error.
-pub fn log_status()
-{
+pub fn log_status() {
     log_info1!("Status - EGL: 0x{:x}", egl::get_error());
 }
 
@@ -52,6 +51,17 @@ pub struct EglBucket {
     pub config: egl::EGLConfig,
     pub context: egl::EGLContext,
     pub surface: egl::EGLSurface,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl EglBucket {
+    /// Destroys surface, context and terminates display.
+    pub fn destroy(self) {
+        egl::destroy_surface(self.display, self.surface);
+        egl::destroy_context(self.display, self.context);
+        egl::terminate(self.display);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

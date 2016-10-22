@@ -38,6 +38,7 @@ impl Module for ExhibitorModule {
         vec![perceptron::NOTIFY,
              perceptron::PAGE_FLIP,
              perceptron::OUTPUT_FOUND,
+             perceptron::COMMAND,
              perceptron::INPUT_POINTER_MOTION,
              perceptron::INPUT_POINTER_POSITION,
              perceptron::INPUT_POINTER_BUTTON,
@@ -53,6 +54,7 @@ impl Module for ExhibitorModule {
                 Perceptron::Notify => exhibitor.on_notify(),
                 Perceptron::OutputFound(bundle) => exhibitor.on_output_found(bundle),
                 Perceptron::PageFlip(id) => exhibitor.on_pageflip(id),
+                Perceptron::Command(ref command) => exhibitor.on_command(command.clone()),
 
                 Perceptron::InputPointerMotion(ref vector) => exhibitor.on_motion(vector.clone()),
                 Perceptron::InputPointerPosition(ref pos) => exhibitor.on_position(pos.clone()),

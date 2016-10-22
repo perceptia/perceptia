@@ -21,7 +21,7 @@ mod wayland_module;
 use std::boxed::FnBox;
 
 use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module};
-use qualia::{Context, Coordinator, Perceptron};
+use qualia::{Context, Coordinator, InputManager, Perceptron};
 
 use device_manager_module::DeviceManagerModule;
 use exhibitor_module::ExhibitorModule;
@@ -40,11 +40,13 @@ fn main() {
     let signaler = Signaler::new();
     let mut dispatcher = Dispatcher::new();
     let coordinator = Coordinator::new(signaler.clone());
+    let input_manager = InputManager::new(&config, signaler.clone());
     let context = Context::new(config.clone(),
                                settings.clone(),
                                signaler.clone(),
                                dispatcher.clone(),
-                               coordinator.clone());
+                               coordinator.clone(),
+                               input_manager.clone());
 
     let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
     dispatcher.add_source(signal_source);

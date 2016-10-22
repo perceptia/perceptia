@@ -9,7 +9,7 @@ use std;
 
 use dharma::{SignalId, Transportable};
 
-use defs::{DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button, Key};
+use defs::{Command, DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -17,6 +17,7 @@ pub const NOTIFY: SignalId = 0;
 pub const VERTICAL_BLANK: SignalId = 1;
 pub const PAGE_FLIP: SignalId = 2;
 pub const OUTPUT_FOUND: SignalId = 3;
+pub const COMMAND: SignalId = 5;
 pub const INPUT_POINTER_MOTION: SignalId = 10;
 pub const INPUT_POINTER_POSITION: SignalId = 11;
 pub const INPUT_POINTER_BUTTON: SignalId = 12;
@@ -43,6 +44,7 @@ pub enum Perceptron {
     VerticalBlank(i32),
     PageFlip(i32),
     OutputFound(DrmBundle),
+    Command(Command),
     InputPointerMotion(Vector),
     InputPointerPosition(OptionalPosition),
     InputPointerButton(Button),
@@ -72,6 +74,7 @@ impl std::fmt::Display for Perceptron {
             Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
+            Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
 
             Perceptron::InputPointerMotion(ref vector) => {
                 write!(f, "InputPointerMotion({:?})", vector)

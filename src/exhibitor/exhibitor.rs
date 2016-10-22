@@ -27,7 +27,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use dharma::Signaler;
-use qualia::{Coordinator, SurfaceId, Button, OptionalPosition, Vector, Perceptron};
+use qualia::{Coordinator, SurfaceId, Button, Command, OptionalPosition, Vector, Perceptron};
 use output::Output;
 
 use compositor::Compositor;
@@ -105,6 +105,11 @@ impl Exhibitor {
         if let Some(ref mut display) = self.displays.get_mut(&id) {
             display.on_pageflip();
         }
+    }
+
+    /// This method is called when a command was requested to be executed by compositor.
+    pub fn on_command(&self, command: Command) {
+        log_debug!("Received  command: {:?}", command);
     }
 
     /// This method is called when new surface is ready to be managed.

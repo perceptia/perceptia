@@ -34,10 +34,82 @@ impl fmt::Debug for DeviceKind {
 // -------------------------------------------------------------------------------------------------
 
 /// Enum for key states.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum KeyState {
-    Released,
-    Pressed,
+    Released = 0,
+    Pressed = 1,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Action type for Exhibitor.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Action {
+    /// Dummy; do/parametrize nothing.
+    None,
+
+    /// Anchorize; de-anchorize.
+    Anchor,
+
+    /// Change configuration.
+    Configure,
+
+    /// Change focus.
+    Focus,
+
+    /// Swap.
+    Swap,
+
+    /// Change position.
+    Move,
+
+    /// Change placement by jumping over.
+    Jump,
+
+    /// Change placement by diving in.
+    Dive,
+
+    /// Change size.
+    Resize,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Enum representing directions on screen, in time and between frames.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Direction {
+    /// Dummy; point nowhere.
+    None,
+
+    /// North; up; above.
+    North,
+
+    /// East; right.
+    East,
+
+    /// South; down; below.
+    South,
+
+    /// West; left.
+    West,
+
+    /// Back in time; most recently used.
+    Back,
+
+    /// Forward in time; the oldest used.
+    Forward,
+
+    /// Begin; start; head.
+    Begin,
+
+    /// End; finish; tail.
+    End,
+
+    /// Trunk; parent; up in frame hierarchy.
+    Up,
+
+    /// Workspace.
+    Workspace,
 }
 
 // -------------------------------------------------------------------------------------------------

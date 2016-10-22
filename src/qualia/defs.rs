@@ -7,6 +7,10 @@
 
 use std;
 
+use enums;
+
+// -------------------------------------------------------------------------------------------------
+
 pub type Point = Position;
 pub type Vector = Position;
 pub type Key = Button;
@@ -15,6 +19,9 @@ pub type Key = Button;
 pub type SurfaceIdType = u64;
 
 pub type Fd = i32;
+
+pub type KeyCode = u16;
+pub type KeyValue = i32;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -73,6 +80,34 @@ impl std::fmt::Display for SurfaceId {
             write!(f, "<invalid>")
         }
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// These flags describe key modifiers.
+pub mod modifier {
+    pub type ModifierType = u16;
+    pub const NONE: ModifierType = 0b00000000;
+    pub const LCTL: ModifierType = 0b00000001;
+    pub const RCTL: ModifierType = 0b00000010;
+    pub const LSHF: ModifierType = 0b00000100;
+    pub const RSHF: ModifierType = 0b00001000;
+    pub const LALT: ModifierType = 0b00010000;
+    pub const RALT: ModifierType = 0b00100000;
+    pub const LMTA: ModifierType = 0b01000000;
+    pub const RMTA: ModifierType = 0b10000000;
+    pub const CTRL: ModifierType = LCTL | RCTL;
+    pub const SHIFT: ModifierType = LSHF | RSHF;
+    pub const ALT: ModifierType = LALT | RALT;
+    pub const META: ModifierType = LMTA | RMTA;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub mod mode_name {
+    pub const COMMON: &'static str = "common";
+    pub const INSERT: &'static str = "insert";
+    pub const NORMAL: &'static str = "normal";
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -335,6 +370,28 @@ pub struct DrmBundle {
     pub fd: Fd,
     pub crtc_id: u32,
     pub connector_id: u32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Command context for compositor. 
+#[derive(Clone, Debug)]
+pub struct Command {
+    pub action: enums::Action,
+    pub direction: enums::Direction,
+    pub magnitude: i32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::default::Default for Command {
+    fn default() -> Self {
+        Command {
+            action: enums::Action::None,
+            direction: enums::Direction::None,
+            magnitude: 0,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

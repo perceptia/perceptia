@@ -91,7 +91,9 @@ impl<'a> DeviceManager<'a> {
     fn initialize_input_devices(&mut self, context: &mut Context) {
         self.udev.iterate_event_devices(|devnode, devkind, _| {
             let config = context.get_config().get_input_config();
-            let gateway = InputGateway::new(config, context.get_signaler().clone());
+            let gateway = InputGateway::new(config,
+                                            context.get_input_manager().clone(),
+                                            context.get_signaler().clone());
             let r = evdev::Evdev::initialize_device(devnode,
                                                     devkind,
                                                     config,

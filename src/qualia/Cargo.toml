@@ -10,6 +10,7 @@ libudev = "0.2.0"
 nix = "0.6.0"
 time = "0.1"
 xkbcommon = "0.2"
+uinput-sys = "0.1.5"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 

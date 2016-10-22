@@ -10,6 +10,7 @@ extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
 extern crate time;
 extern crate xkbcommon;
+extern crate uinput_sys;
 
 #[macro_use(timber)]
 extern crate timber;
@@ -25,7 +26,7 @@ pub mod errors;
 pub use errors::Illusion;
 
 pub mod defs;
-pub use defs::{Area, Point, Button, Key, Position, OptionalPosition, SurfacePosition, Size, Vector, DrmBundle};
+pub use defs::{Area, Point, Button, Key, Position, OptionalPosition, SurfacePosition, Size, Vector, DrmBundle, Command, modifier, KeyCode, KeyValue};
 
 pub mod config;
 pub use config::{Config, InputConfig};
@@ -51,6 +52,10 @@ pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, Surfa
 
 pub mod coordinator;
 pub use coordinator::Coordinator;
+
+mod binding_functions;
+pub mod input_manager;
+pub use input_manager::{InputManager, KeyCatchResult};
 
 pub mod context;
 pub use context::Context;

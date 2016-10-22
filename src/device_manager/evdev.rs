@@ -162,7 +162,7 @@ impl Evdev {
                 self.pressure = ev.value;
             } else if ev.code == uinput_sys::ABS_MT_TRACKING_ID as _ {
                 self.gateway.emit_position_reset();
-            } else if self.pressure > self.config.touchpad_pressure_treshold {
+            } else if self.pressure > self.config.touchpad_pressure_threshold {
                 if (ev.code == uinput_sys::ABS_MT_POSITION_X as _) ||
                    (ev.code == uinput_sys::ABS_X as _) {
                     self.gateway.emit_position(Some(ev.value), None);

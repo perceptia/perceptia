@@ -328,6 +328,12 @@ impl Area {
         (margin_top <= pos.y) && (pos.y < margin_bottom) && (margin_left <= pos.x) &&
         (pos.x < margin_right)
     }
+
+    /// Calculate position in center of the area.
+    pub fn calculate_center(&self) -> Position {
+        Position::new((self.pos.x + self.size.width as i32) / 2,
+                      (self.pos.y + self.size.height as i32) / 2)
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -374,7 +380,7 @@ pub struct DrmBundle {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Command context for compositor. 
+/// Command context for compositor.
 #[derive(Clone, Debug)]
 pub struct Command {
     pub action: enums::Action,

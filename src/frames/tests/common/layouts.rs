@@ -220,3 +220,54 @@ pub fn make_sized_for_homogenizing()
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Prepares layout for testing search.
+///
+///
+///     ┌───────────────────────┐
+///     │┌───────┬─────────────┐│
+///     ││┌─────┐│┌─────┬─────┐││
+///     │││ ABC │││  D  │  E  │││
+///     ││└─────┘│└─────┴─────┘││
+///     │└───────┴─────────────┘│
+///     ├───────────────────────┤
+///     │┌────────────────┐     │
+///     ││        F       │     │
+///     │└────────────────┘     │
+///     └───────────────────────┘
+///
+pub fn make_positioned_for_searching()
+    -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r = Frame::new_root();
+    let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
+    let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
+    let mut d = Frame::new_leaf(SurfaceId::new(4), Stacked);
+    let mut e = Frame::new_leaf(SurfaceId::new(5), Stacked);
+    let mut f = Frame::new_leaf(SurfaceId::new(6), Stacked);
+    let mut abc = Frame::new_container(Stacked);
+    let mut de = Frame::new_container(Horizontal);
+    let mut abcde = Frame::new_container(Vertical);
+    abc.append(&mut a);
+    abc.append(&mut b);
+    abc.append(&mut c);
+    de.append(&mut d);
+    de.append(&mut e);
+    abcde.append(&mut abc);
+    abcde.append(&mut de);
+    r.append(&mut abcde);
+    r.append(&mut f);
+    a.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
+    b.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
+    c.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
+    d.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 30,  60));
+    e.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 30,  60));
+    f.    set_plumbing_position_and_size(Position::new( 0, 60), Size::new( 70,  60));
+    r.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(100, 120));
+    abc.  set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
+    de.   set_plumbing_position_and_size(Position::new(40,  0), Size::new( 60,  60));
+    abcde.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(100,  60));
+    (r, abcde, de, abc, a, b, c, d, e, f)
+}
+
+// -------------------------------------------------------------------------------------------------

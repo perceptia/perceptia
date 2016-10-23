@@ -325,6 +325,12 @@ impl Frame {
     pub fn get_size(&self) -> Size {
         unsafe { (*self.inner).params.size.clone() }
     }
+
+    /// Gets area.
+    #[inline]
+    pub fn get_area(&self) -> Area {
+        Area::new(self.get_position(), self.get_size())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

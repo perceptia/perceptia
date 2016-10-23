@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::SurfaceId;
-use frame::{Frame, Mode};
+use frame::Frame;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ impl Searching for Frame {
         let mut current = Some(self.clone());
         loop {
             current = if let Some(ref frame) = current {
-                if frame.get_mode() == Mode::Special {
+                if frame.get_mode().is_top() {
                     return current.clone();
                 }
                 frame.get_parent()

@@ -87,6 +87,20 @@ pub enum Mode {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Mode {
+    /// Returns `false` if mode is `Leaf` or `Container`, `true` otherwise.
+    pub fn is_top(self) -> bool {
+        (self != Mode::Container) && (self != Mode::Leaf)
+    }
+
+    /// Returns `true` if mode is `Leaf`, `Container` or `Workspace`, `false` otherwise.
+    pub fn is_regeometrizable(self) -> bool {
+        (self == Mode::Container) || (self == Mode::Leaf) || (self == Mode::Workspace)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Defines geometry of the frame.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Geometry {
@@ -157,7 +171,7 @@ impl Parameters {
     pub fn new_workspace() -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
-            mode: Mode::Special,
+            mode: Mode::Workspace,
             geometry: Geometry::Stacked,
             pos: Position::default(),
             size: Size::default(),
@@ -326,6 +340,12 @@ impl Frame {
     #[inline]
     pub fn set_plumbing_size(&mut self, size: Size) {
         unsafe { (*self.inner).params.size = size; }
+    }
+
+    /// Sets geometry without adjusting any sizes an positions.
+    #[inline]
+    pub fn set_plumbing_geometry(&mut self, geometry: Geometry) {
+        unsafe { (*self.inner).params.geometry = geometry; }
     }
 
     /// Sets position and size without informing other parts of application.
@@ -631,10 +651,11 @@ impl Frame {
 impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
-               "Frame(sid: {:?}, mode: {:?}, geometry: {:?}, size: {:?})",
+               "Frame(sid: {:?}, mode: {:?}, geometry: {:?}, {:?} {:?})",
                self.get_sid(),
                self.get_mode(),
                self.get_geometry(),
+               self.get_position(),
                self.get_size())
     }
 }

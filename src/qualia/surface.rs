@@ -24,8 +24,13 @@ pub struct SurfaceContext {
 
 impl SurfaceContext {
     /// `SurfaceContext` constructor.
-    pub fn new(id: SurfaceId, pos: Position) -> SurfaceContext {
+    pub fn new(id: SurfaceId, pos: Position) -> Self {
         SurfaceContext { id: id, pos: pos }
+    }
+
+    /// Creates new context with position moved by given vector.
+    pub fn moved(&self, vector: Vector) -> Self {
+        SurfaceContext::new(self.id, self.pos.clone() + vector)
     }
 }
 

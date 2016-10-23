@@ -21,6 +21,9 @@ pub trait Settling {
     /// Pop the surface `pop` and its parents inside surface `self`.
     /// After calling this function `pop` will be most recently used frame inside `self`.
     fn pop_recursively(&mut self, pop: &mut Frame);
+
+    /// Changes frames geometry and resizes all subframe accordingly.
+    fn change_geometry(&mut self, geometry: Geometry, sa: &mut SurfaceAccess);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -53,6 +56,11 @@ impl Settling for Frame {
             // Do the same recursively on trunk
             self.pop_recursively(parent);
         }
+    }
+
+    fn change_geometry(&mut self, geometry: Geometry, sa: &mut SurfaceAccess) {
+        self.set_plumbing_geometry(geometry);
+        self.homogenize(sa);
     }
 }
 

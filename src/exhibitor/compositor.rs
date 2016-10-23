@@ -6,11 +6,13 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std;
+
 use timber;
-use qualia::{Coordinator, Area, SurfaceId, SurfaceInfo};
+use qualia::{Action, Area, Command, Coordinator, Direction, SurfaceId, SurfaceInfo};
 
 use surface_history::SurfaceHistory;
-use frames::{self, Frame};
+use frames::{self, Frame, Geometry};
 use frames::searching::Searching;
 use frames::settling::Settling;
 
@@ -24,6 +26,35 @@ macro_rules! try_get_surface {
                 log_warn2!("Surface {} not found!", $sid);
                 return
             }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Result of executing command.
+enum CommandResult {
+    /// Everything went OK.
+    Ok,
+
+    /// Command not handled most probably because it is not yet implemented.
+    NotHandled,
+
+    /// Wrong frame was used for operation. This indicates error in compositor logic.
+    WrongFrame,
+
+    //// Command was invalid. This value probably should not be needed.
+    //InvalidArgument,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::fmt::Display for CommandResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match *self {
+            CommandResult::Ok => write!(f, "ok"),
+            CommandResult::NotHandled => write!(f, "not handled"),
+            CommandResult::WrongFrame => write!(f, "wrong frame"),
         }
     }
 }
@@ -76,26 +107,44 @@ impl Compositor {
         display
     }
 
+    /// Executes given command.
+    pub fn execute_command(&mut self, command: Command) {
+        // Execute command
+        let mut frame = self.selection.clone();
+        let result = match command.action {
+            Action::Configure => self.configure(&mut frame, command.direction),
+            _ => CommandResult::NotHandled,
+        };
+
+        // Check result and print appropriate log
+        match result {
+            CommandResult::Ok => self.log_frames(),
+            _ => log_error!("Command failed: {} ({:?})", result, command),
+        }
+    }
+
     /// Handles new surface by settling it in frame tree, adding to history and notifying
     /// coordinator.
     pub fn manage_surface(&mut self, sid: SurfaceId) {
-        // Get surface
-        let surface = try_get_surface!(self, sid);
+        if self.root.find_with_sid(sid).is_none() {
+            // Get surface
+            let surface = try_get_surface!(self, sid);
 
-        // Consult about placement strategy
-        let mut decision = self.choose_target(&surface);
+            // Consult about placement strategy
+            let mut decision = self.choose_target(&surface);
 
-        // Settle and optionally select new frame
-        let mut frame = Frame::new_leaf(sid, decision.geometry);
-        frame.settle(&mut decision.target, &mut self.coordinator);
-        if decision.selection {
-            self.select(frame);
+            // Settle and optionally select new frame
+            let mut frame = Frame::new_leaf(sid, decision.geometry);
+            frame.settle(&mut decision.target, &mut self.coordinator);
+            if decision.selection {
+                self.select(frame);
+            }
+
+            // Finalize
+            self.history.add(sid);
+            self.coordinator.notify();
+            self.log_frames();
         }
-
-        // Finalize
-        self.history.add(sid);
-        self.coordinator.notify();
-        self.log_frames();
     }
 
     /// Handles destruction of surface. Removes it from history and frame free.
@@ -131,7 +180,51 @@ impl Compositor {
 
 // -------------------------------------------------------------------------------------------------
 
-// Private methods
+/// Private methods related to handling commands.
+impl Compositor {
+    /// Reconfigure frame to have different geometry.
+    ///
+    /// Only `Container`, `Leaf` or `Workspace` can be reconfigured (from this follows that
+    /// reconfigured frame must have parent.)
+    ///
+    /// For convenience if target is `Leaf` its parent is reconfigured.
+    fn configure(&mut self, frame: &mut Frame, direction: Direction) -> CommandResult {
+        // Check validity of frame
+        if !frame.get_mode().is_regeometrizable() {
+            log_warn1!("Can not change geometry of frame which is not \
+                       container, leaf or workspace. {:?}",
+                       frame);
+            return CommandResult::WrongFrame;
+        }
+
+        let mut parent = frame.get_parent().expect("reconfigured frame should have parent");
+
+        // Choose geometry
+        let geometry = match direction {
+            Direction::North | Direction::South => Geometry::Vertical,
+            Direction::East | Direction::West => Geometry::Horizontal,
+            Direction::Begin | Direction::End => Geometry::Stacked,
+            Direction::Up => parent.get_geometry(),
+            Direction::None | Direction::Back | Direction::Forward | Direction::Workspace => {
+                return CommandResult::NotHandled;
+            }
+        };
+
+        log_info2!("Compositor: Change frame geometry to '{:?}'", geometry);
+
+        // Change frame geometry
+        if frame.has_children() {
+            frame.change_geometry(geometry, &mut self.coordinator);
+        } else {
+            parent.change_geometry(geometry, &mut self.coordinator);
+        }
+        CommandResult::Ok
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Miscellaneous private methods.
 impl Compositor {
     /// Set given frame as selected.
     fn select(&mut self, frame: Frame) {

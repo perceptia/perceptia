@@ -108,8 +108,9 @@ impl Exhibitor {
     }
 
     /// This method is called when a command was requested to be executed by compositor.
-    pub fn on_command(&self, command: Command) {
-        log_debug!("Received  command: {:?}", command);
+    pub fn on_command(&mut self, command: Command) {
+        log_info2!("Received  command: {:?}", command);
+        self.compositor.execute_command(command);
     }
 
     /// This method is called when new surface is ready to be managed.

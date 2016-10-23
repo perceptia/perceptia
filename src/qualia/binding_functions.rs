@@ -61,6 +61,33 @@ pub fn quit(context: &mut InputContext) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Execute command changing selected frame geometry to horizontal.
+pub fn horizontalize(context: &mut InputContext) {
+    context.set_action(Action::Configure);
+    context.set_direction(Direction::East);
+    context.execute_command();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Execute command changing selected frame geometry to vertical.
+pub fn verticalize(context: &mut InputContext) {
+    context.set_action(Action::Configure);
+    context.set_direction(Direction::North);
+    context.execute_command();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Execute command changing selected frame geometry to stacked.
+pub fn stackize(context: &mut InputContext) {
+    context.set_action(Action::Configure);
+    context.set_direction(Direction::End);
+    context.execute_command();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Execute command for circling surfaces forward.
 pub fn cicle_history_forward(context: &mut InputContext) {
     context.set_action(Action::Focus);

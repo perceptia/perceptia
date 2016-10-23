@@ -41,7 +41,7 @@ fn test_find_buildable() {
 
 /// Test finding top frame.
 ///
-///  - Top for any normal frame should be first parent with mode `Special`.
+///  - Top for any normal frame should be first parent with mode not `Leaf` and not `Container`.
 ///  - Top for any special frame should be itself.
 #[test]
 fn test_find_top() {
@@ -58,7 +58,7 @@ fn test_find_top() {
     c1.append(&mut c2);
     c2.append(&mut l);
 
-    assert!(&r.find_top().is_none());
+    assertions::assert_frame_equal_exact(&r.find_top().unwrap(), &r);
     assertions::assert_frame_equal_exact(&s1.find_top().unwrap(), &s1);
     assertions::assert_frame_equal_exact(&s2.find_top().unwrap(), &s2);
     assertions::assert_frame_equal_exact(&c1.find_top().unwrap(), &s2);

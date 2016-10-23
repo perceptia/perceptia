@@ -19,13 +19,16 @@ pub trait Displaying {
 // -------------------------------------------------------------------------------------------------
 
 impl Displaying for Frame {
+    // TODO: Add unit tests.
     fn to_array(&self, coordinator: &Coordinator) -> Vec<SurfaceContext> {
         // FIXME: Do not allocate here.
         let mut result = Vec::new();
         for frame in self.time_iter() {
             if frame.get_sid().is_valid() {
                 if let Some(ref mut array) = coordinator.get_renderer_context(frame.get_sid()) {
-                    result.append(array);
+                    for ref mut c in array.iter() {
+                        result.push(c.moved(frame.get_position()));
+                    }
                 }
             } else {
                 result.append(&mut frame.to_array(coordinator));

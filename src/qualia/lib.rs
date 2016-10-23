@@ -17,7 +17,7 @@ extern crate timber;
 extern crate dharma;
 
 pub mod enums;
-pub use enums::{DeviceKind, KeyState};
+pub use enums::{DeviceKind, KeyState, Action, Direction};
 
 pub mod perceptron;
 pub use perceptron::Perceptron;

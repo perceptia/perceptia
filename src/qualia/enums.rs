@@ -94,7 +94,7 @@ pub enum Direction {
     West,
 
     /// Back in time; most recently used.
-    Back,
+    Backward,
 
     /// Forward in time; the oldest used.
     Forward,
@@ -110,6 +110,27 @@ pub enum Direction {
 
     /// Workspace.
     Workspace,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Direction {
+    /// Reverse the direction.
+    pub fn reversed(self) -> Self {
+        match self {
+            Direction::None => Direction::None,
+            Direction::North => Direction::South,
+            Direction::East => Direction::West,
+            Direction::South => Direction::North,
+            Direction::West => Direction::South,
+            Direction::Backward => Direction::Forward,
+            Direction::Forward => Direction::Backward,
+            Direction::Begin => Direction::End,
+            Direction::End => Direction::Begin,
+            Direction::Up => Direction::Up,
+            Direction::Workspace => Direction::Workspace,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

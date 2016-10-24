@@ -8,7 +8,7 @@
 use libc;
 
 use enums::{Action, Direction};
-use defs::mode_name;
+use defs::{KeyCode, mode_name};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -23,23 +23,32 @@ pub type Executor = fn(&mut InputContext);
 /// - build command executed by compositor
 /// - activate/deactivate input modes
 pub trait InputContext {
-    /// Set command action.
+    /// Sets command action.
     fn set_action(&mut self, action: Action);
 
-    /// Set command direction.
+    /// Sets command direction.
     fn set_direction(&mut self, direction: Direction);
 
-    /// Set command magnitude.
+    /// Sets command magnitude.
     fn set_magnitude(&mut self, magnitude: i32);
 
-    /// Tell compositor to execute built command.
+    /// Sets command string.
+    fn set_string(&mut self, string: String);
+
+    /// Tells compositor to execute built command.
     fn execute_command(&mut self);
 
-    /// Clear command.
+    /// Clears command.
     fn clean_command(&mut self);
 
-    /// Activate/deactivate input mode.
+    /// Activates/deactivates input mode.
     fn activate_mode(&mut self, mode_name: &'static str, active: bool);
+
+    /// Returns the code of key that triggered the binging executor.
+    fn get_code(&self) -> KeyCode;
+
+    /// Just like `get_code` but returns number if number key was pressed, `None` otherwise.
+    fn get_code_as_number(&self) -> Option<i32>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -101,7 +110,7 @@ pub fn cicle_history_forward(context: &mut InputContext) {
 /// Execute command for circling surfaces backward.
 pub fn cicle_history_backward(context: &mut InputContext) {
     context.set_action(Action::Focus);
-    context.set_direction(Direction::Back);
+    context.set_direction(Direction::Backward);
     context.set_magnitude(1);
     context.execute_command();
 }
@@ -224,6 +233,20 @@ pub fn dive_up(context: &mut InputContext) {
     context.set_direction(Direction::North);
     context.set_magnitude(1);
     context.execute_command();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Focus the workspace basing on key code. E.g. if key [5] way pressed, workspace titled "5" will
+/// be focused.
+pub fn focus_workspace(context: &mut InputContext) {
+    if let Some(number) = context.get_code_as_number() {
+        context.set_action(Action::Focus);
+        context.set_direction(Direction::Workspace);
+        context.set_magnitude(1);
+        context.set_string(number.to_string());
+        context.execute_command();
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

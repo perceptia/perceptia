@@ -96,11 +96,15 @@ void noia_wayland_gateway_keyboard_focus_update(NoiaWaylandState* state,
                                                 NoiaWaylandCache* cache,
                                                 NoiaWaylandEngine* engine,
                                                 NoiaCoordinator* coordinator,
-                                                NoiaSurfaceId new_sid)
+                                                NoiaSurfaceId old_sid,
+                                                NoiaSize old_size,
+                                                uint32_t old_state_flags,
+                                                NoiaSurfaceId new_sid,
+                                                NoiaSize new_size,
+                                                uint32_t new_state_flags)
 {
     noia_wayland_cache_lock(cache);
 
-    NoiaSurfaceId old_sid = state->keyboard_focused_sid;
     NoiaWaylandRc new = noia_wayland_cache_get_rc_for_sid(cache, new_sid);
     NoiaWaylandRc old = noia_wayland_cache_get_rc_for_sid(cache, old_sid);
 
@@ -140,10 +144,10 @@ void noia_wayland_gateway_keyboard_focus_update(NoiaWaylandState* state,
     }
 
     // Inform surfaces their states changed
-    /*noia_wayland_gateway_surface_reconfigured
-                         (state, cache, engine, coordinator, old_sid);
     noia_wayland_gateway_surface_reconfigured
-                         (state, cache, engine, coordinator, new_sid);*/
+                         (state, cache, engine, coordinator, old_sid, old_size, old_state_flags);
+    noia_wayland_gateway_surface_reconfigured
+                         (state, cache, engine, coordinator, new_sid, new_size, new_state_flags);
 }
 
 //------------------------------------------------------------------------------

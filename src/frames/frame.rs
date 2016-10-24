@@ -168,14 +168,14 @@ impl Parameters {
     }
 
     /// Creates new parameters for workspace frame.
-    pub fn new_workspace() -> Self {
+    pub fn new_workspace(title: String) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Workspace,
             geometry: Geometry::Stacked,
             pos: Position::default(),
             size: Size::default(),
-            title: "".to_owned(),
+            title: title,
         }
     }
 
@@ -245,9 +245,9 @@ impl Frame {
     }
 
     /// Creates new workspace frame.
-    pub fn new_workspace() -> Self {
+    pub fn new_workspace(title: String) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_workspace(),
+            params: Parameters::new_workspace(title),
             node: Node::default(),
         })
     }
@@ -330,6 +330,11 @@ impl Frame {
     #[inline]
     pub fn get_area(&self) -> Area {
         Area::new(self.get_position(), self.get_size())
+    }
+
+    /// Gets title.
+    pub fn get_title(&self) -> String {
+        unsafe { (*self.inner).params.title.clone() }
     }
 }
 
@@ -657,8 +662,9 @@ impl Frame {
 impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
-               "Frame(sid: {:?}, mode: {:?}, geometry: {:?}, {:?} {:?})",
+               "Frame(sid: {:?}, title: '{}', mode: {:?}, geometry: {:?}, {:?} {:?})",
                self.get_sid(),
+               self.get_title(),
                self.get_mode(),
                self.get_geometry(),
                self.get_position(),

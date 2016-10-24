@@ -64,7 +64,7 @@ impl Module for ExhibitorModule {
                 Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
                 Perceptron::SurfaceDestroyed(sid) => exhibitor.on_surface_destroyed(sid),
 
-                Perceptron::KeyboardFocusChanged(sid) => exhibitor.on_keyboard_focus_changed(sid),
+                Perceptron::KeyboardFocusChanged(_, sid) => exhibitor.on_keyboard_focus_changed(sid),
                 _ => {}
             }
         }

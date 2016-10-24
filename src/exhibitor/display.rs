@@ -90,7 +90,9 @@ impl Display {
     /// Draw the scene and then schedule page flip.
     pub fn redraw_all(&mut self) {
         if self.redraw_needed {
-            let surfaces = self.frame.to_array(&self.coordinator);
+            let surfaces = self.frame.get_first_time()
+                                     .expect("display must have at least one workspace")
+                                     .to_array(&self.coordinator);
             let pointer = self.prepare_layover_context();
 
             self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);

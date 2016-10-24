@@ -58,7 +58,7 @@ pub enum Perceptron {
     SurfaceFrame(SurfaceId),
     PointerFocusChanged(SurfacePosition),
     PointerRelativeMotion(SurfacePosition),
-    KeyboardFocusChanged(SurfaceId),
+    KeyboardFocusChanged(SurfaceId, SurfaceId),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -97,7 +97,9 @@ impl std::fmt::Display for Perceptron {
             Perceptron::PointerRelativeMotion(ref pos) => {
                 write!(f, "PointerRelativeMotion({:?})", pos)
             }
-            Perceptron::KeyboardFocusChanged(ref sid) => write!(f, "KeyboardFocusChanged({:?})", sid),
+            Perceptron::KeyboardFocusChanged(ref old_sid, ref new_sid) => {
+                write!(f, "KeyboardFocusChanged({:?}, {:?})", old_sid, new_sid)
+            }
         }
     }
 }

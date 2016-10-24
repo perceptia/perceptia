@@ -39,7 +39,12 @@ void noia_wayland_gateway_keyboard_focus_update(NoiaWaylandState* state,
                                                 NoiaWaylandCache* cache,
                                                 NoiaWaylandEngine* engine,
                                                 NoiaCoordinator* coordinator,
-                                                NoiaSurfaceId new_sid);
+                                                NoiaSurfaceId old_sid,
+                                                NoiaSize old_size,
+                                                uint32_t old_state_flags,
+                                                NoiaSurfaceId new_sid,
+                                                NoiaSize new_size,
+                                                uint32_t new_state_flags);
 
 /// Send key event and modifiers to focused surface.
 void noia_wayland_gateway_key(NoiaWaylandState* state,

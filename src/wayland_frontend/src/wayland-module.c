@@ -23,11 +23,22 @@ void noia_wayland_module_on_surface_frame(NoiaSurfaceId sid)
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_keyboard_focus_changed(NoiaSurfaceId sid)
+void noia_wayland_module_on_keyboard_focus_changed(NoiaSurfaceId old_sid,
+                                                   NoiaSize old_size,
+                                                   uint32_t old_state_flags,
+                                                   NoiaSurfaceId new_sid,
+                                                   NoiaSize new_size,
+                                                   uint32_t new_state_flags)
 {
-    LOG_WAYL2("Wayland: handling keyboard focus change (sid: %d)", sid);
+    LOG_WAYL2("Wayland: handling keyboard focus change "
+              "(sid: %d, size: {%d, %d}, %d) "
+              "(sid: %d, size: {%d, %d}, %d)",
+              new_sid, new_size.width, new_size.height, new_state_flags,
+              old_sid, old_size.width, old_size.height, old_state_flags);
     noia_wayland_gateway_keyboard_focus_update
-                   (ctx->state, ctx->cache, ctx->engine, ctx->coordinator, sid);
+                   (ctx->state, ctx->cache, ctx->engine, ctx->coordinator,
+                    old_sid, old_size, old_state_flags,
+                    new_sid, new_size, new_state_flags);
 }
 
 //------------------------------------------------------------------------------

@@ -18,6 +18,10 @@ use frames::settling::Settling;
 
 // -------------------------------------------------------------------------------------------------
 
+const MAX_WORKSPACES: u32 = 1000;
+
+// -------------------------------------------------------------------------------------------------
+
 macro_rules! try_get_surface {
     ($compositor:expr, $sid:ident) => {
         match $compositor.coordinator.get_surface($sid) {
@@ -85,6 +89,7 @@ pub struct Compositor {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Public methods.
 impl Compositor {
     /// `Compositor` constructor.
     pub fn new(coordinator: Coordinator) -> Self {
@@ -100,7 +105,8 @@ impl Compositor {
     /// Creates new display with default workspace.
     pub fn create_display(&mut self, area: Area, name: String) -> Frame {
         let mut display = Frame::new_display(area, name);
-        let mut workspace = Frame::new_workspace();
+        let mut workspace = self.create_next_workspace()
+           .expect("Could not create workspace. This probably indicated error in compositor logic");
         self.root.append(&mut display);
         workspace.settle(&mut display, &mut self.coordinator);
         self.select(workspace);
@@ -113,12 +119,22 @@ impl Compositor {
         let mut frame = self.selection.clone();
         let result = match command.action {
             Action::Configure => self.configure(&mut frame, command.direction),
+            Action::Focus => match command.direction {
+                Direction::Workspace => {
+                    self.focus_workspace(command.string.clone());
+                    CommandResult::Ok
+                }
+                _ => self.focus(&mut frame, command.direction, command.magnitude),
+            },
             _ => CommandResult::NotHandled,
         };
 
         // Check result and print appropriate log
         match result {
-            CommandResult::Ok => self.log_frames(),
+            CommandResult::Ok => {
+                self.coordinator.notify();
+                self.log_frames();
+            }
             _ => log_error!("Command failed: {} ({:?})", result, command),
         }
     }
@@ -205,7 +221,7 @@ impl Compositor {
             Direction::East | Direction::West => Geometry::Horizontal,
             Direction::Begin | Direction::End => Geometry::Stacked,
             Direction::Up => parent.get_geometry(),
-            Direction::None | Direction::Back | Direction::Forward | Direction::Workspace => {
+            Direction::None | Direction::Backward | Direction::Forward | Direction::Workspace => {
                 return CommandResult::NotHandled;
             }
         };
@@ -219,6 +235,146 @@ impl Compositor {
             parent.change_geometry(geometry, &mut self.coordinator);
         }
         CommandResult::Ok
+    }
+
+    /// Focus frame found in given direction relatively to given `frame`.
+    fn focus(&mut self,
+             frame: &mut Frame,
+             mut direction: Direction,
+             mut position: i32)
+             -> CommandResult {
+        match direction {
+            Direction::Workspace => {
+                CommandResult::NotHandled
+            }
+            Direction::Backward | Direction::Forward => {
+                if direction == Direction::Forward {
+                    position = -1 * position;
+                }
+
+                if let Some(sid) = self.history.get_nth(position as isize) {
+                    self.pop_surface(sid);
+                }
+                CommandResult::Ok
+            }
+            _ => {
+                let position = if position < 0 {
+                    direction = direction.reversed();
+                    -position
+                } else {
+                    position
+                } as u32;
+
+                if let Some(new_selection) = frame.find_adjacent(direction, position) {
+                    self.select(new_selection);
+                }
+                CommandResult::Ok
+            }
+        }
+    }
+}
+
+
+// -------------------------------------------------------------------------------------------------
+
+/// Miscellaneous private methods.
+impl Compositor {
+    /// Find most recently focused frame inside given frame. This function is used to find most
+    /// recently used frame when focusing to workspace or when currently focussed frame jumps from
+    /// workspace.
+    ///
+    /// Returns most recently focused frame, or `reference` frame if nothing found.
+    ///
+    /// Searching for new selection is done by iterating through surface history and checking if
+    /// surface with given ID is somewhere in workspace three. Not the most efficient... Any ideas
+    /// for improvement?
+    fn find_most_recent(&self, reference: Frame) -> Frame {
+        for sid in self.history.iter() {
+            if let Some(frame) = reference.find_with_sid(sid) {
+                return frame.clone();
+            }
+        }
+        reference
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Private methods related to workspaces.
+impl Compositor {
+    /// Search for existing workspace with given title.
+    fn find_workspace(&self, title: &String) -> Option<Frame> {
+        for display_frame in self.root.time_iter() {
+            for workspace_frame in display_frame.time_iter() {
+                if workspace_frame.get_title() == *title {
+                    return Some(workspace_frame.clone());
+                }
+            }
+        }
+        None
+    }
+
+    /// Search for existing workspace with given title.
+    fn find_current_workspace(&self) -> Frame {
+        self.selection.find_top().expect("selection should have `top`")
+    }
+
+    /// Creates new frame, places it in proper place in frame tree and initializes it as a
+    /// workspace.
+    fn create_new_workspace(&mut self, mut display: &mut Frame, title: String, focus: bool) -> Frame {
+        log_info2!("Compositor: create new workspace (title: {}, focus: {})", title, focus);
+
+        // Create and configure workspace
+        let mut workspace = Frame::new_workspace(title);
+        workspace.settle(&mut display, &mut self.coordinator);
+
+        // Focus if requested or make sure current selection stays focused
+        if focus {
+            self.select(workspace.clone());
+            self.root.pop_recursively(&mut workspace);
+        } else {
+            self.root.pop_recursively(&mut self.selection);
+        }
+        workspace
+    }
+
+    /// Creates next workspace.
+    ///
+    /// This method will check if workspaces title "1", "2", "3" and so on up to "1000" exist and
+    /// create next workspace titled will first available name. 1000 frames is probably to much for
+    /// any use. We should not need to create more.
+    fn create_next_workspace(&mut self) -> Option<Frame> {
+        for i in 1..MAX_WORKSPACES {
+            let title = i.to_string();
+            if self.find_workspace(&title).is_none() {
+                return Some(Frame::new_workspace(title));
+            }
+        }
+        log_error!("Don't you think {} workspaces isn't enough?", MAX_WORKSPACES);
+        None
+    }
+
+    /// Search for existing workspace or create new with given title.
+    fn bring_workspace(&mut self, title: String, focus: bool) -> Frame {
+        if let Some(workspace) = self.find_workspace(&title) {
+            workspace.clone()
+        } else {
+            // TODO: For many output setup this should be configurable on which output the
+            // workspace will be created.
+            let mut display_frame = self.find_current_workspace().get_parent()
+                                        .expect("workspace must be contained in display frame");
+
+            self.create_new_workspace(&mut display_frame, title, focus)
+        }
+    }
+
+    /// Focus workspace with given title.
+    fn focus_workspace(&mut self, title: String) {
+        log_info1!("Compositor: Change workspace to '{}'", title);
+        let workspace = self.bring_workspace(title, true);
+        let mut most_recent = self.find_most_recent(workspace);
+        self.select(most_recent.clone());
+        self.root.pop_recursively(&mut most_recent);
     }
 }
 
@@ -273,7 +429,12 @@ impl Compositor {
             for _ in 0..depth {
                 timber.log(format_args!("\t"));
             }
-            timber.log(format_args!("{:?}\n", subframe));
+            timber.log(format_args!("{:?}", subframe));
+            if subframe.equals_exact(&self.selection) {
+                timber.log(format_args!(" <--\n"));
+            } else {
+                timber.log(format_args!("\n"));
+            }
             self.log_frames_helper(subframe, depth + 1, timber);
         }
     }

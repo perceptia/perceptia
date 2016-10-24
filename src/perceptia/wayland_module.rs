@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module};
-use qualia::{Context, perceptron, Perceptron};
+use qualia::{Context, perceptron, Perceptron, Size};
 use wayland_frontend::WaylandFrontend;
 
 // -------------------------------------------------------------------------------------------------
@@ -60,8 +60,23 @@ impl Module for WaylandModule {
             Perceptron::PointerRelativeMotion(ref surface_position) => {
                 WaylandFrontend::on_pointer_relative_motion(surface_position.clone())
             }
-            Perceptron::KeyboardFocusChanged(sid) => {
-                WaylandFrontend::on_keyboard_focus_changed(sid)
+            Perceptron::KeyboardFocusChanged(old_sid, new_sid) => {
+                if let Some(ref mut context) = self.context {
+                    let (old_size, old_flags) =
+                    if let Some(info) = context.get_coordinator().get_surface(old_sid) {
+                        (info.desired_size, info.state_flags as u32)
+                    } else {
+                        (Size::default(), 0)
+                    };
+                    let (new_size, new_flags) =
+                    if let Some(info) = context.get_coordinator().get_surface(new_sid) {
+                        (info.desired_size, info.state_flags as u32)
+                    } else {
+                        (Size::default(), 0)
+                    };
+                    WaylandFrontend::on_keyboard_focus_changed(old_sid, old_size, old_flags,
+                                                               new_sid, new_size, new_flags);
+                }
             }
             Perceptron::SurfaceReconfigured(sid) => {
                 if let Some(ref mut context) = self.context {

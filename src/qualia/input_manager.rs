@@ -11,6 +11,7 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use uinput_sys;
 
 use dharma::Signaler;
 
@@ -118,6 +119,7 @@ impl Mode {
 /// For thread-safe public version see `InputManager`.
 struct InnerInputManager {
     modes: Vec<Mode>,
+    code: KeyCode,
     command: Command,
     signaler: Signaler<Perceptron>,
 }
@@ -130,6 +132,7 @@ impl InnerInputManager {
         // Create manager
         let mut inner = InnerInputManager {
             modes: Vec::new(),
+            code: 0,
             command: Command::default(),
             signaler: signaler,
         };
@@ -166,6 +169,7 @@ impl InnerInputManager {
                      value: KeyValue,
                      modifiers: modifier::ModifierType)
                      -> KeyCatchResult {
+        self.code = code;
         if value == KeyState::Pressed as KeyValue {
             if let Some(executor) = self.find_executor(&Binding::create(code, modifiers)) {
                 executor(self);
@@ -267,6 +271,10 @@ impl binding_functions::InputContext for InnerInputManager {
         self.command.magnitude = magnitude;
     }
 
+    fn set_string(&mut self, string: String) {
+        self.command.string = string;
+    }
+
     fn execute_command(&mut self) {
         self.signaler.emit(perceptron::COMMAND, Perceptron::Command(self.command.clone()));
     }
@@ -277,6 +285,27 @@ impl binding_functions::InputContext for InnerInputManager {
 
     fn activate_mode(&mut self, mode_name: &'static str, active: bool) {
         self.make_mode_active(mode_name.to_string(), active);
+    }
+
+    fn get_code(&self) -> KeyCode {
+        self.code
+    }
+
+    fn get_code_as_number(&self) -> Option<i32> {
+        match self.code as i32 {
+            uinput_sys::KEY_MINUS => Some(-1),
+            uinput_sys::KEY_10 | uinput_sys::KEY_NUMERIC_0 => Some(0),
+            uinput_sys::KEY_1 | uinput_sys::KEY_NUMERIC_1 => Some(1),
+            uinput_sys::KEY_2 | uinput_sys::KEY_NUMERIC_2 => Some(2),
+            uinput_sys::KEY_3 | uinput_sys::KEY_NUMERIC_3 => Some(3),
+            uinput_sys::KEY_4 | uinput_sys::KEY_NUMERIC_4 => Some(4),
+            uinput_sys::KEY_5 | uinput_sys::KEY_NUMERIC_5 => Some(5),
+            uinput_sys::KEY_6 | uinput_sys::KEY_NUMERIC_6 => Some(6),
+            uinput_sys::KEY_7 | uinput_sys::KEY_NUMERIC_7 => Some(7),
+            uinput_sys::KEY_8 | uinput_sys::KEY_NUMERIC_8 => Some(8),
+            uinput_sys::KEY_9 | uinput_sys::KEY_NUMERIC_9 => Some(9),
+            _ => None
+        }
     }
 }
 

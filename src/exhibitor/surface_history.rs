@@ -40,6 +40,20 @@ impl SurfaceHistory {
         self.history.push_front(sid);
     }
 
+    /// Return `n`th element from begin. If `n` is negative, return `n`th element from end.
+    pub fn get_nth(&self, n: isize) -> Option<SurfaceId> {
+        if let Some(sid) = if n < 0 {
+            let m = -n as usize;
+            self.history.get(self.history.len() - m)
+        } else {
+            self.history.get(n as usize)
+        } {
+            Some(*sid)
+        } else {
+            None
+        }
+    }
+
     /// Make given surface the latest in history.
     pub fn pop(&mut self, sid: SurfaceId) {
         self.simple_remove(sid);
@@ -64,8 +78,44 @@ impl SurfaceHistory {
         for i in 0..len {
             if *self.history.get(i).unwrap() == sid {
                 self.history.remove(i);
+                break;
             }
         }
+    }
+
+    /// Return iterator for `SurfaceHistory`.
+    pub fn iter(&self) -> Iter {
+        Iter::new(self)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub struct Iter<'a> {
+    history: &'a SurfaceHistory,
+    pos: isize,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<'a> Iter<'a> {
+    /// `Iter` constructor.
+    fn new(history: &'a SurfaceHistory) -> Self {
+        Iter {
+            history: history,
+            pos: -1,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<'a> Iterator for Iter<'a> {
+    type Item = SurfaceId;
+
+    fn next(&mut self) -> Option<SurfaceId> {
+        self.pos += 1;
+        self.history.get_nth(self.pos)
     }
 }
 

@@ -386,6 +386,7 @@ pub struct Command {
     pub action: enums::Action,
     pub direction: enums::Direction,
     pub magnitude: i32,
+    pub string: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -396,6 +397,7 @@ impl std::default::Default for Command {
             action: enums::Action::None,
             direction: enums::Direction::None,
             magnitude: 0,
+            string: "".to_owned(),
         }
     }
 }

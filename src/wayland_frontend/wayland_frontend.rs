@@ -22,7 +22,12 @@ extern "C" {
     fn noia_wayland_module_on_surface_frame(sid: SurfaceIdType);
     fn noia_wayland_module_on_pointer_focus_changed(sid: SurfaceIdType, pos: Position);
     fn noia_wayland_module_on_pointer_relative_motion(sid: SurfaceIdType, pos: Position);
-    fn noia_wayland_module_on_keyboard_focus_changed(sid: SurfaceIdType);
+    fn noia_wayland_module_on_keyboard_focus_changed(old_sid: SurfaceIdType,
+                                                     old_size: Size,
+                                                     old_flags: u32,
+                                                     new_sid: SurfaceIdType,
+                                                     new_size: Size,
+                                                     new_flags: u32);
     fn noia_wayland_module_on_surface_reconfigured(sid: SurfaceIdType, size: Size, state_flags: u32);
 }
 
@@ -173,9 +178,19 @@ impl WaylandFrontend {
         }
     }
 
-    pub fn on_keyboard_focus_changed(sid: SurfaceId) {
+    pub fn on_keyboard_focus_changed(old_sid: SurfaceId,
+                                     old_size: Size,
+                                     old_flags: u32,
+                                     new_sid: SurfaceId,
+                                     new_size: Size,
+                                     new_flags: u32) {
         unsafe {
-            noia_wayland_module_on_keyboard_focus_changed(sid.as_number());
+            noia_wayland_module_on_keyboard_focus_changed(old_sid.as_number(),
+                                                          old_size,
+                                                          old_flags,
+                                                          new_sid.as_number(),
+                                                          new_size,
+                                                          new_flags);
         }
     }
 

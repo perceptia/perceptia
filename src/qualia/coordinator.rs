@@ -101,9 +101,9 @@ impl InnerCoordinator {
     /// Informs rest of the application exhibitor set focus to given surface.
     pub fn set_focus(&mut self, sid: SurfaceId) {
         if self.kfsid != sid {
-            self.kfsid = sid;
             self.signaler.emit(perceptron::KEYBOARD_FOCUS_CHANGED,
-                               Perceptron::KeyboardFocusChanged(sid));
+                               Perceptron::KeyboardFocusChanged(self.kfsid, sid));
+            self.kfsid = sid;
         }
     }
 

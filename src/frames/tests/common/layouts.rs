@@ -51,6 +51,19 @@ pub fn make_simple_frames_appending()
     s.append(&mut s1);
     s.append(&mut s2);
     s.append(&mut s3);
+    r. set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    v. set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    h. set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    s. set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    v1.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 10));
+    v2.set_plumbing_position_and_size(Position::new( 0, 10), Size::new(30, 10));
+    v3.set_plumbing_position_and_size(Position::new( 0, 20), Size::new(30, 10));
+    h1.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(10, 30));
+    h2.set_plumbing_position_and_size(Position::new(10,  0), Size::new(10, 30));
+    h3.set_plumbing_position_and_size(Position::new(20,  0), Size::new(10, 30));
+    s1.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    s2.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
+    s3.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(30, 30));
     (r, v, h, s, v1, v2, v3, h1, h2, h3, s1, s2, s3)
 }
 
@@ -151,6 +164,53 @@ pub fn make_simple_frames_joining()
     s2.adjoin(&mut s3);
     (r, v, h, s, v1, v2, v3, h1, h2, h3, s1, s2, s3)
 }
+
+// -------------------------------------------------------------------------------------------------
+
+/// Prepares frame layout used for testing deramification.
+///
+///                    R
+///
+///     ╭──────────────┼──────────────╮
+///
+///     A1             A2             A3
+///
+///     │              │
+///
+///     F              B
+///
+///                    │
+///
+///                    C
+///
+///             ╭──────┼──────╮
+///
+///             D1     D2     D3
+///
+pub fn make_simple_for_deramifying()
+-> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r  = Frame::new_root();
+    let mut a1 = Frame::new_container(Stacked);
+    let mut a2 = Frame::new_container(Stacked);
+    let mut a3 = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut f  = Frame::new_container(Stacked);
+    let mut b  = Frame::new_container(Stacked);
+    let mut c  = Frame::new_container(Stacked);
+    let mut d1 = Frame::new_leaf(SurfaceId::new(11), Stacked);
+    let mut d2 = Frame::new_leaf(SurfaceId::new(12), Stacked);
+    let mut d3 = Frame::new_leaf(SurfaceId::new(13), Stacked);
+    r. append(&mut a1);
+    r. append(&mut a2);
+    r. append(&mut a3);
+    a1.append(&mut f);
+    a2.append(&mut b);
+    b. append(&mut c);
+    c. append(&mut d1);
+    c. append(&mut d2);
+    c. append(&mut d3);
+    (r, a1, a2, a3, f, b, c, d1, d2, d3)
+}
+
 
 // -------------------------------------------------------------------------------------------------
 
@@ -268,6 +328,77 @@ pub fn make_positioned_for_searching()
     de.   set_plumbing_position_and_size(Position::new(40,  0), Size::new( 60,  60));
     abcde.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(100,  60));
     (r, abcde, de, abc, a, b, c, d, e, f)
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Prepares layout for testing jumping.
+///
+///
+///     ┌───────────────────────┐
+///     │┌───────┬─────────────┐│
+///     ││       │┌─────┬─────┐││
+///     ││   A   ││ BCD │  E  │││
+///     ││       │└─────┴─────┘││
+///     │└───────┴─────────────┘│
+///     ├───────────────────────┤
+///     │┌─────────────────────┐│
+///     ││          F          ││
+///     │├─────────────────────┤│
+///     ││         GHI         ││
+///     │└─────────────────────┘│
+///     └───────────────────────┘
+///
+pub fn make_positioned_for_jumping()
+-> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r     = Frame::new_root();
+    let mut w     = Frame::new_container(Vertical);
+    let mut a     = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut b     = Frame::new_leaf(SurfaceId::new(2), Stacked);
+    let mut c     = Frame::new_leaf(SurfaceId::new(3), Stacked);
+    let mut d     = Frame::new_leaf(SurfaceId::new(4), Stacked);
+    let mut e     = Frame::new_leaf(SurfaceId::new(5), Stacked);
+    let mut f     = Frame::new_leaf(SurfaceId::new(6), Stacked);
+    let mut g     = Frame::new_leaf(SurfaceId::new(7), Stacked);
+    let mut h     = Frame::new_leaf(SurfaceId::new(8), Stacked);
+    let mut i     = Frame::new_leaf(SurfaceId::new(9), Stacked);
+    let mut bcd   = Frame::new_container(Stacked);
+    let mut bcde  = Frame::new_container(Horizontal);
+    let mut abcde = Frame::new_container(Horizontal);
+    let mut ghi   = Frame::new_container(Stacked);
+    let mut fghi  = Frame::new_container(Vertical);
+    bcd.  append(&mut b);
+    bcd.  append(&mut c);
+    bcd.  append(&mut d);
+    bcde. append(&mut bcd);
+    bcde. append(&mut e);
+    abcde.append(&mut a);
+    abcde.append(&mut bcde);
+    ghi.  append(&mut g);
+    ghi.  append(&mut h);
+    ghi.  append(&mut i);
+    fghi. append(&mut f);
+    fghi. append(&mut ghi);
+    w.    append(&mut abcde);
+    w.    append(&mut fghi);
+    r.    append(&mut w);
+    a.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
+    b.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    c.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    d.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    e.    set_plumbing_position_and_size(Position::new(80,  0), Size::new( 40,  40));
+    f.    set_plumbing_position_and_size(Position::new( 0, 40), Size::new(120,  40));
+    g.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
+    h.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
+    i.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
+    bcd.  set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    bcde. set_plumbing_position_and_size(Position::new(40,  0), Size::new( 80,  40));
+    abcde.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
+    ghi.  set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
+    fghi. set_plumbing_position_and_size(Position::new( 0, 40), Size::new(120,  80));
+    w.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120, 120));
+    r.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120, 120));
+    (r, w, fghi, ghi, abcde, bcde, bcd, a, b, c, d, e, f, g, h, i)
 }
 
 // -------------------------------------------------------------------------------------------------

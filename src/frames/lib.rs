@@ -58,7 +58,7 @@ extern crate timber;
 extern crate qualia;
 
 mod frame;
-pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Mode, Geometry, Parameters};
+pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Mode, Geometry, Side, Parameters};
 
 mod displaying;
 pub use displaying::Displaying;

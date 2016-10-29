@@ -12,7 +12,7 @@ use timber;
 use qualia::{Action, Area, Command, Coordinator, Direction, SurfaceId, SurfaceInfo};
 
 use surface_history::SurfaceHistory;
-use frames::{self, Frame, Geometry};
+use frames::{self, Frame, Geometry, Side};
 use frames::searching::Searching;
 use frames::settling::Settling;
 
@@ -121,10 +121,32 @@ impl Compositor {
             Action::Configure => self.configure(&mut frame, command.direction),
             Action::Focus => match command.direction {
                 Direction::Workspace => {
-                    self.focus_workspace(command.string.clone());
+                    self.focus_workspace(&command.string);
                     CommandResult::Ok
                 }
                 _ => self.focus(&mut frame, command.direction, command.magnitude),
+            },
+            Action::Jump => match command.direction {
+                Direction::Workspace => {
+                    self.jump_to_workspace(&mut frame, &command.string);
+                    CommandResult::Ok
+                }
+                Direction::End => {
+                    self.ramify(frame);
+                    CommandResult::Ok
+                }
+                Direction::Begin => {
+                    self.exalt(&mut frame);
+                    CommandResult::Ok
+                }
+                _ => self.jump(&mut frame, command.direction, command.magnitude),
+            },
+            Action::Dive => match command.direction {
+                Direction::Workspace => {
+                    self.dive_to_workspace(frame, &command.string);
+                    CommandResult::Ok
+                }
+                _ => self.dive(&mut frame, command.direction, command.magnitude),
             },
             _ => CommandResult::NotHandled,
         };
@@ -173,7 +195,7 @@ impl Compositor {
                 self.select(new_selection);
             }
 
-            frame.remove();
+            frame.destroy_self(&mut self.coordinator);
             self.coordinator.notify();
             self.log_frames();
         }
@@ -272,8 +294,120 @@ impl Compositor {
             }
         }
     }
-}
 
+    /// Moves frame in frame layout in given direction by given distance. Moved frame jumps over
+    /// other frames.
+    fn jump(&mut self,
+            reference: &mut Frame,
+            mut direction: Direction,
+            distance: i32)
+            -> CommandResult {
+        log_info2!("Compositor: jump");
+
+        // Modify direction if needed
+        let distance = if distance < 0 {
+            direction = direction.reversed();
+            -distance
+        } else {
+            distance
+        } as u32;
+
+        // Choose side
+        let side = match direction {
+            Direction::North | Direction::West => Side::Before,
+            Direction::South | Direction::East => Side::After,
+            _ => {
+                return CommandResult::NotHandled;
+            }
+        };
+
+        // Perform jump
+        if let Some(mut target) = reference.find_adjacent(direction, distance) {
+            let mut source = reference.get_parent().expect("jump reference must have parent");
+            reference.jump(side, &mut target, &mut self.coordinator);
+            source.deramify();
+        }
+        CommandResult::Ok
+    }
+
+    /// Jumps given frame to workspace with given title. If workspace does not exist new one is
+    /// created. Old workspace stays focused.
+    fn jump_to_workspace(&mut self, frame: &mut Frame, title: &String) {
+        log_info2!("Compositor: jump to workspace '{}'", title);
+        let old_workspace = self.find_current_workspace();
+        let mut new_workspace = self.bring_workspace(title, false);
+        if !old_workspace.equals_exact(&new_workspace) {
+            frame.jump(Side::On, &mut new_workspace, &mut self.coordinator);
+            let most_recent = self.find_most_recent(old_workspace);
+            self.select(most_recent);
+        }
+    }
+
+    /// Moves frame in frame layout in given direction by given distance. Moved frame dives into
+    /// other frames.
+    fn dive(&mut self,
+            reference: &mut Frame,
+            mut direction: Direction,
+            distance: i32)
+            -> CommandResult {
+        log_info2!("Compositor: dive");
+
+        // Modify direction if needed
+        let distance = if distance < 0 {
+            direction = direction.reversed();
+            -distance
+        } else {
+            distance
+        } as u32;
+
+        // Perform dive
+        if let Some(mut target) = reference.find_adjacent(direction, distance) {
+            let mut source = reference.get_parent().expect("dive reference must have parent");
+            reference.jump(Side::On, &mut target, &mut self.coordinator);
+            source.deramify();
+        }
+        CommandResult::Ok
+    }
+
+    /// Dives given frame to workspace with given title. If workspace does not exist new one is
+    /// created. Chosen workspace becomes focused.
+    fn dive_to_workspace(&mut self, mut frame: Frame, title: &String) {
+        log_info2!("Compositor: dive to workspace '{}'", title);
+        let old_workspace = self.find_current_workspace();
+        let mut new_workspace = self.bring_workspace(title, false);
+        if !old_workspace.equals_exact(&new_workspace) {
+            frame.jump(Side::On, &mut new_workspace, &mut self.coordinator);
+            self.select(frame.clone());
+            self.root.pop_recursively(&mut frame);
+        }
+    }
+
+    /// Adds new container just above selection.
+    fn ramify(&mut self, mut frame: Frame) {
+        // TODO: Geometry should be configurable.
+        frame.ramify(Geometry::Stacked);
+        self.select(frame);
+    }
+
+    /// Jumps frame one level higher.
+    fn exalt(&mut self, frame: &mut Frame) {
+        // Choose target
+        let mut above = frame.get_parent().expect("exalted frame must have parent");
+        let mut target = if above.get_geometry() == Geometry::Stacked {
+            above = above.get_parent().expect("exalted frame must have grand parent");
+            if above.get_geometry() == Geometry::Stacked {
+                above
+            } else {
+                above.ramify(Geometry::Stacked)
+            }
+        } else {
+            above.ramify(Geometry::Stacked)
+        };
+
+        // Resettle to target
+        frame.resettle(&mut target, &mut self.coordinator);
+    }
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -321,11 +455,15 @@ impl Compositor {
 
     /// Creates new frame, places it in proper place in frame tree and initializes it as a
     /// workspace.
-    fn create_new_workspace(&mut self, mut display: &mut Frame, title: String, focus: bool) -> Frame {
+    fn create_new_workspace(&mut self,
+                            mut display: &mut Frame,
+                            title: &String,
+                            focus: bool)
+                            -> Frame {
         log_info2!("Compositor: create new workspace (title: {}, focus: {})", title, focus);
 
         // Create and configure workspace
-        let mut workspace = Frame::new_workspace(title);
+        let mut workspace = Frame::new_workspace(title.clone());
         workspace.settle(&mut display, &mut self.coordinator);
 
         // Focus if requested or make sure current selection stays focused
@@ -355,7 +493,7 @@ impl Compositor {
     }
 
     /// Search for existing workspace or create new with given title.
-    fn bring_workspace(&mut self, title: String, focus: bool) -> Frame {
+    fn bring_workspace(&mut self, title: &String, focus: bool) -> Frame {
         if let Some(workspace) = self.find_workspace(&title) {
             workspace.clone()
         } else {
@@ -369,7 +507,7 @@ impl Compositor {
     }
 
     /// Focus workspace with given title.
-    fn focus_workspace(&mut self, title: String) {
+    fn focus_workspace(&mut self, title: &String) {
         log_info1!("Compositor: Change workspace to '{}'", title);
         let workspace = self.bring_workspace(title, true);
         let mut most_recent = self.find_most_recent(workspace);
@@ -406,7 +544,7 @@ impl Compositor {
             }
         } else {
             ManageDecision {
-                target: self.get_selection().find_top().unwrap(),
+                target: self.get_selection().find_buildable().unwrap(),
                 geometry: frames::Geometry::Vertical,
                 selection: true,
             }

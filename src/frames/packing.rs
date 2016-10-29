@@ -29,6 +29,9 @@ pub trait Packing {
 
     /// Move the frame and all subframes by given vector.
     fn move_with_contents(&mut self, vector: Vector);
+
+    /// Remove given frame and relax old parent.
+    fn remove_self(&mut self, sa: &mut SurfaceAccess);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -127,6 +130,13 @@ impl Packing for Frame {
         // Move all subframes
         for mut frame in self.space_iter() {
             frame.move_with_contents(vector.clone());
+        }
+    }
+
+    fn remove_self(&mut self, sa: &mut SurfaceAccess) {
+        if let Some(ref mut parent) = self.get_parent() {
+            self.remove();
+            parent.relax(sa);
         }
     }
 }

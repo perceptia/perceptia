@@ -275,6 +275,22 @@ impl binding_functions::InputContext for InnerInputManager {
         self.command.string = string;
     }
 
+    fn get_action(&mut self) -> Action {
+        self.command.action
+    }
+
+    fn get_direction(&mut self) -> Direction {
+        self.command.direction
+    }
+
+    fn get_magnitude(&mut self) -> i32 {
+        self.command.magnitude
+    }
+
+    fn get_string(&mut self) -> String {
+        self.command.string.clone()
+    }
+
     fn execute_command(&mut self) {
         self.signaler.emit(perceptron::COMMAND, Perceptron::Command(self.command.clone()));
     }

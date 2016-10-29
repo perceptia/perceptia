@@ -46,8 +46,8 @@ fn test_find_buildable() {
 #[test]
 fn test_find_top() {
     let mut r = Frame::new_root();
-    let mut s1 = Frame::new_workspace();
-    let mut s2 = Frame::new_workspace();
+    let mut s1 = Frame::new_workspace("".to_string());
+    let mut s2 = Frame::new_workspace("".to_string());
     let mut c1 = Frame::new_container(Horizontal);
     let mut c2 = Frame::new_container(Vertical);
     let mut l = Frame::new_leaf(SurfaceId::new(1), Stacked);
@@ -528,7 +528,7 @@ fn test_find_adjacent_frames() {
     p = cd.find_adjacent(Direction::South, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &f);
 
-    // 1*North from AB should be NULL
+    // 1*North from AB should be None
     p = ab.find_adjacent(Direction::North, 1);
     assert!(p.is_none());
 

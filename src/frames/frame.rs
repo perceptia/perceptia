@@ -119,6 +119,21 @@ pub enum Geometry {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Enum used to define place relative to some frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Side {
+    /// Before; on the left; above.
+    Before,
+
+    /// In the same place.
+    On,
+
+    /// After; on the right; below.
+    After,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Parameters of the frame defining its properties.
 pub struct Parameters {
     /// ID of assigned surface.
@@ -228,6 +243,27 @@ pub struct Frame {
 
 /// Public constructors and destructor.
 impl Frame {
+    /// Creates new generic frame.
+    pub fn new(sid: SurfaceId,
+               mode: Mode,
+               geometry: Geometry,
+               pos: Position,
+               size: Size,
+               title: String)
+               -> Self {
+        Self::allocate(InnerFrame {
+            params: Parameters {
+                sid: sid,
+                mode: mode,
+                geometry: geometry,
+                pos: pos,
+                size: size,
+                title: title,
+            },
+            node: Node::default(),
+        })
+    }
+
     /// Creates new root frame.
     pub fn new_root() -> Self {
         Self::allocate(InnerFrame {
@@ -341,6 +377,12 @@ impl Frame {
 // -------------------------------------------------------------------------------------------------
 
 impl Frame {
+    /// Sets surface id without informing other parts of application.
+    #[inline]
+    pub fn set_plumbing_sid(&mut self, sid: SurfaceId) {
+        unsafe { (*self.inner).params.sid = sid; }
+    }
+
     /// Sets size without informing other parts of application.
     #[inline]
     pub fn set_plumbing_position(&mut self, pos: Position) {
@@ -357,6 +399,12 @@ impl Frame {
     #[inline]
     pub fn set_plumbing_geometry(&mut self, geometry: Geometry) {
         unsafe { (*self.inner).params.geometry = geometry; }
+    }
+
+    /// Sets mode without any checks.
+    #[inline]
+    pub fn set_plumbing_mode(&mut self, mode: Mode) {
+        unsafe { (*self.inner).params.mode = mode; }
     }
 
     /// Sets position and size without informing other parts of application.
@@ -662,7 +710,7 @@ impl Frame {
 impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f,
-               "Frame(sid: {:?}, title: '{}', mode: {:?}, geometry: {:?}, {:?} {:?})",
+               "Frame {{ sid: {:?}, title: '{}', mode: {:?}, geometry: {:?}, {:?}, {:?} }}",
                self.get_sid(),
                self.get_title(),
                self.get_mode(),

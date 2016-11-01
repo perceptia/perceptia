@@ -42,6 +42,8 @@ impl Module for WaylandModule {
         }
         vec![perceptron::OUTPUT_FOUND,
              perceptron::INPUT_KEYBOARD,
+             perceptron::INPUT_POINTER_BUTTON,
+             perceptron::INPUT_POINTER_AXIS,
              perceptron::SURFACE_FRAME,
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::POINTER_RELATIVE_MOTION,
@@ -53,6 +55,12 @@ impl Module for WaylandModule {
         match *package {
             Perceptron::OutputFound(_) => WaylandFrontend::on_output_found(),
             Perceptron::InputKeyboard(ref key) => WaylandFrontend::on_keyboard_input(key.clone()),
+            Perceptron::InputPointerButton(ref btn) => {
+                WaylandFrontend::on_pointer_button(btn.clone());
+            }
+            Perceptron::InputPointerAxis(ref axis) => {
+                WaylandFrontend::on_pointer_axis(axis.clone());
+            }
             Perceptron::SurfaceFrame(sid) => WaylandFrontend::on_surface_frame(sid),
             Perceptron::PointerFocusChanged(ref surface_position) => {
                 WaylandFrontend::on_pointer_focus_changed(surface_position.clone())

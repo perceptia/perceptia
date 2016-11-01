@@ -100,7 +100,6 @@ pub fn clean_command(context: &mut InputContext) {
 /// Shuts down the application by sending `SIGTERM` to itself.
 #[allow(unused_variables)]
 pub fn quit(context: &mut InputContext) {
-    log_info1!("QUIT!");
     functions::quit();
 }
 

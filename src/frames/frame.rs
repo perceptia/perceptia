@@ -322,6 +322,11 @@ impl Frame {
         FrameTimeIterator { frame: self.get_first_time() }
     }
 
+    /// Gets iterator over children in time reversed order.
+    pub fn time_rev_iter(&self) -> FrameTimeReveresedIterator {
+        FrameTimeReveresedIterator { frame: self.get_last_time() }
+    }
+
     /// Gets iterator over children in space order.
     pub fn space_iter(&self) -> FrameSpaceIterator {
         FrameSpaceIterator { frame: self.get_first_space() }
@@ -444,6 +449,18 @@ impl Frame {
         unsafe { (*self.inner).node.time.first.clone() }
     }
 
+    /// Optionally returns child last in time order.
+    #[inline]
+    pub fn get_last_time(&self) -> Option<Frame> {
+        unsafe { (*self.inner).node.time.last.clone() }
+    }
+
+    /// Optionally returns sibling previous in time order.
+    #[inline]
+    pub fn get_prev_time(&self) -> Option<Frame> {
+        unsafe { (*self.inner).node.time.prev.clone() }
+    }
+
     /// Optionally returns sibling next in time order.
     #[inline]
     pub fn get_next_time(&self) -> Option<Frame> {
@@ -454,6 +471,12 @@ impl Frame {
     #[inline]
     pub fn get_first_space(&self) -> Option<Frame> {
         unsafe { (*self.inner).node.space.first.clone() }
+    }
+
+    /// Optionally returns child last in space order.
+    #[inline]
+    pub fn get_last_space(&self) -> Option<Frame> {
+        unsafe { (*self.inner).node.space.last.clone() }
     }
 
     /// Optionally returns sibling previous in space order.
@@ -736,6 +759,29 @@ impl Iterator for FrameTimeIterator {
         let result = self.frame.clone();
         self.frame = if let Some(ref mut frame) = self.frame {
             frame.get_next_time()
+        } else {
+            None
+        };
+        result
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Iterator over frames in reversed time order.
+pub struct FrameTimeReveresedIterator {
+    frame: Link,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Iterator for FrameTimeReveresedIterator {
+    type Item = Frame;
+
+    fn next(&mut self) -> Option<Frame> {
+        let result = self.frame.clone();
+        self.frame = if let Some(ref mut frame) = self.frame {
+            frame.get_prev_time()
         } else {
             None
         };

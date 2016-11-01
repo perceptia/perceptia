@@ -17,7 +17,10 @@ use qualia::{Position, Size};
 
 /// Assert if given two frames are exactly the same by comparing their internals.
 pub fn assert_frame_equal_exact(frame1: &Frame, frame2: &Frame) {
-    assert!(frame1.equals_exact(frame2), "Frames are not exactly equal");
+    assert!(frame1.equals_exact(frame2),
+            "Frames are not exactly equal:\n\t{:?}\n\t{:?}",
+            frame1,
+            frame2);
 }
 
 // -------------------------------------------------------------------------------------------------

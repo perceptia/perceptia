@@ -11,7 +11,8 @@ use std::ffi::CStr;
 use std::{str, mem};
 
 use timber;
-use qualia::{Buffer, Coordinator, Size, SurfaceId, SurfaceIdType, Key, Position, SurfacePosition, Vector, KeymapSettings};
+use qualia::{Buffer, Coordinator, Size, SurfaceId, SurfaceIdType};
+use qualia::{Key, Button, Position, SurfacePosition, Vector, KeymapSettings};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -19,6 +20,8 @@ extern "C" {
     fn noia_wayland_initialize(coordinator: *mut Coordinator, keymap_settings: *mut KeymapSettings);
     fn noia_wayland_advertise_output();
     fn noia_wayland_module_on_keyboard_event(time: u32, code: u32, value: u32);
+    fn noia_wayland_module_on_pointer_button(time: u32, code: u32, value: u32);
+    fn noia_wayland_module_on_pointer_axis(horizontal: i32, vertical: i32);
     fn noia_wayland_module_on_surface_frame(sid: SurfaceIdType);
     fn noia_wayland_module_on_pointer_focus_changed(sid: SurfaceIdType, pos: Position);
     fn noia_wayland_module_on_pointer_relative_motion(sid: SurfaceIdType, pos: Position);
@@ -155,6 +158,18 @@ impl WaylandFrontend {
     pub fn on_keyboard_input(key: Key) {
         unsafe {
             noia_wayland_module_on_keyboard_event(0, key.code as u32, key.value as u32);
+        }
+    }
+
+    pub fn on_pointer_button(btn: Button) {
+        unsafe {
+            noia_wayland_module_on_pointer_button(0, btn.code as u32, btn.value as u32);
+        }
+    }
+
+    pub fn on_pointer_axis(axis: Vector) {
+        unsafe {
+            noia_wayland_module_on_pointer_axis(axis.x, axis.y);
         }
     }
 

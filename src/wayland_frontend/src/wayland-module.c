@@ -76,38 +76,30 @@ void noia_wayland_module_on_pointer_relative_motion(NoiaSurfaceId sid, NoiaPosit
 
 //------------------------------------------------------------------------------
 
-// FIXME
-/*
-void noia_wayland_module_on_pointer_button(void* edata, void* sdata)
+void noia_wayland_module_on_pointer_button(uint32_t time, uint32_t code, uint32_t value)
 {
     LOG_WAYL4("Wayland: handling pointer button");
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaButtonObject* object = (NoiaButtonObject*) edata;
-    NOIA_ENSURE(object, return);
+    NoiaMilliseconds ms = noia_time_get_monotonic_milliseconds();
     noia_wayland_gateway_pointer_button(ctx->state,
                                         ctx->cache,
                                         ctx->engine,
-                                        object->buttondata.time,
-                                        object->buttondata.code,
-                                        object->buttondata.value);
-    noia_object_unref((NoiaObject*) object);
+                                        ms,
+                                        code,
+                                        value);
 }
 
 //------------------------------------------------------------------------------
 
-void noia_wayland_module_on_pointer_axis(void* edata, void* sdata)
+void noia_wayland_module_on_pointer_axis(int32_t horizontal, int32_t vertical)
 {
     LOG_WAYL4("Wayland: handling pointer axis");
-    NoiaWaylandContext* ctx = (NoiaWaylandContext*) sdata;
-    NoiaAxisObject* object = (NoiaAxisObject*) edata;
     noia_wayland_gateway_pointer_axis(ctx->state, ctx->cache,
-                                      wl_fixed_from_double(object->axisdata.h),
-                                      wl_fixed_from_double(object->axisdata.v),
-                                      object->axisdata.hd,
-                                      object->axisdata.vd);
-    noia_object_unref((NoiaObject*) object);
+                                      wl_fixed_from_double(0.0),
+                                      wl_fixed_from_double(0.0),
+                                      horizontal,
+                                      vertical);
 }
-*/
+
 //------------------------------------------------------------------------------
 
 void noia_wayland_module_on_surface_reconfigured(NoiaSurfaceId sid,

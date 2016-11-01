@@ -166,3 +166,37 @@ fn test_prejoin_adjoin() {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Test forward iteration in time.
+#[test]
+fn test_iteration_forward_in_time() {
+    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _)
+      = layouts::make_simple_frames_appending();
+
+    let mut iter = v.time_iter();
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v1);
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v2);
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v3);
+    assert!(iter.next().is_none());
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Test backward iteration in time.
+#[test]
+fn test_iteration_backward_in_time() {
+    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _)
+      = layouts::make_simple_frames_appending();
+
+    let mut iter = v.time_rev_iter();
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v3);
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v2);
+    assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v1);
+    assert!(iter.next().is_none());
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------

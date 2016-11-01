@@ -31,6 +31,10 @@ type Mod = Box<Module<T = Perceptron, C = Context>>;
 type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
 
 fn main() {
+    // Set panic hook: log the panic and quit application
+    std::panic::set_hook(Box::new(|info| { qualia::functions::panic_hook(info) }));
+
+    // Prepare tools
     let env = qualia::Env::create();
     let config = env.read_config();
     let keymap = qualia::Keymap::new(&env).unwrap();

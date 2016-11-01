@@ -5,8 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use libc;
-
+use functions;
 use enums::{Action, Direction};
 use defs::{KeyCode, mode_name};
 
@@ -102,7 +101,7 @@ pub fn clean_command(context: &mut InputContext) {
 #[allow(unused_variables)]
 pub fn quit(context: &mut InputContext) {
     log_info1!("QUIT!");
-    unsafe { libc::kill(libc::getpid(), libc::SIGTERM) };
+    functions::quit();
 }
 
 // -------------------------------------------------------------------------------------------------

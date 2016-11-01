@@ -38,6 +38,8 @@ pub use buffer::Buffer;
 pub mod log;
 pub use log::level;
 
+pub mod functions;
+
 pub mod env;
 pub use env::Env;
 

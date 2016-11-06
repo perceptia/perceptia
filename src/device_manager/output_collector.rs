@@ -13,7 +13,7 @@ use nix::fcntl;
 use nix::sys::stat;
 use libdrm::drm_mode;
 
-use dharma::{Dispatcher, Signaler};
+use dharma::{Dispatcher, Signaler, event_kind};
 use qualia::{DrmBundle, Illusion, perceptron, Perceptron};
 
 use pageflip::PageFlipEventHandler;
@@ -45,7 +45,8 @@ impl OutputCollector {
         let fd = match fcntl::open(path, fcntl::O_RDWR, stat::Mode::empty()) {
             Ok(fd) => fd,
             Err(err) => {
-                return Err(Illusion::General(format!("Could open output device {:?}: {}", path, err)))
+                let text = format!("Could open output device {:?}: {}", path, err);
+                return Err(Illusion::General(text));
             }
         };
 
@@ -64,7 +65,7 @@ impl OutputCollector {
 
         // Register for pageflip events
         let pageflip_event_handler = Box::new(PageFlipEventHandler::new(fd, self.signaler.clone()));
-        self.dispatcher.add_source(pageflip_event_handler);
+        self.dispatcher.add_source(pageflip_event_handler, event_kind::READ);
 
         Ok(())
     }

@@ -7,14 +7,16 @@
 //! function, so single `Sender` may send to many `Receiver`s and single `Receiver` may receive from
 //! many `Sender`s.
 //!
+//! For cases when it is needed to ensure that only one `Receiver` is connected one should use
+//! `DirectSender` instead of `Sender`.
+//!
 //! # Example
 //!
 //! ```
-//! use dharma::{connect, Sender, Receiver, ReceiveResult, Transportable};
+//! use dharma::{connect, Sender, Receiver, ReceiveResult};
 //!
 //! #[derive(Clone, PartialEq, Debug)]
 //! enum E { A, B, C, D }
-//! impl Transportable for E {}
 //!
 //! let mut s1 = Sender::new();
 //! let mut s2 = Sender::new();
@@ -25,24 +27,25 @@
 //! connect(&mut s2, &r2);
 //!
 //! std::thread::spawn(move || {
-//!         s1.send(E::A);
-//!         s1.send(E::B);
-//!         s2.send(E::C);
-//!         s2.send(E::D);
+//!         s1.send_plain(E::A);
+//!         s1.send_plain(E::B);
+//!         s2.send_plain(E::C);
+//!         s2.send_plain(E::D);
 //!     });
 //!
-//! assert_eq!(r1.recv(), ReceiveResult::Ok(E::A));
-//! assert_eq!(r2.recv(), ReceiveResult::Ok(E::A));
-//! assert_eq!(r1.recv(), ReceiveResult::Ok(E::B));
-//! assert_eq!(r2.recv(), ReceiveResult::Ok(E::B));
-//! assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-//! assert_eq!(r2.recv(), ReceiveResult::Ok(E::C));
-//! assert_eq!(r2.recv(), ReceiveResult::Ok(E::D));
-//! assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+//! assert!(r1.recv().is_plain(E::A));
+//! assert!(r2.recv().is_plain(E::A));
+//! assert!(r1.recv().is_plain(E::B));
+//! assert!(r2.recv().is_plain(E::B));
+//! assert!(r1.try_recv().is_empty());
+//! assert!(r2.recv().is_plain(E::C));
+//! assert!(r2.recv().is_plain(E::D));
+//! assert!(r2.try_recv().is_empty());
 //! ```
 
 // -------------------------------------------------------------------------------------------------
 
+use std::any::Any;
 use std::clone::Clone;
 use std::collections::VecDeque as Fifo;
 use std::sync::{Arc, Condvar, Mutex};
@@ -50,19 +53,53 @@ use std::time::Duration;
 
 // -------------------------------------------------------------------------------------------------
 
-/// All transported data must derive from this trait. This ensures we can move it between threads
-/// and copy.
-pub trait Transportable: Send + Clone {}
+/// Type alias for signal IDs.
+pub type SignalId = usize;
 
-impl Transportable for String {}
+// -------------------------------------------------------------------------------------------------
+
+/// Enumeration for special type of command.
+#[derive(Debug, PartialEq)]
+pub enum SpecialCommand {
+    /// Request termination on receiver side.
+    Terminate,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Container for stored events.
+enum Container<T>
+    where T: Clone + Send
+{
+    /// Simple, plain package with no ID.
+    Plain(T),
+    /// Package with integer ID.
+    Defined(SignalId, T),
+    /// Package with custom string ID.
+    Custom(&'static str, T),
+    /// For use with `DirectSender` when copying is not allowed.
+    Any(String, Box<Any + Send>),
+    /// Special predefined command.
+    Special(SpecialCommand),
+}
 
 // -------------------------------------------------------------------------------------------------
 
 /// Result returned from `Receiver::recv`, `Receiver::try_recv` or `Receiver::recv_timeout`.
-#[derive(Clone, PartialEq, Debug)]
-pub enum ReceiveResult<T: Transportable> {
-    /// Everything went OK. Data is ready.
-    Ok(T),
+#[derive(Debug)]
+pub enum ReceiveResult<T>
+    where T: Clone + Send
+{
+    /// Successful receive with plain variant
+    Plain(T),
+    /// Successful receive with defined variant
+    Defined(SignalId, T),
+    /// Successful receive with custom variant
+    Custom(&'static str, T),
+    /// Successful receive with any variant
+    Any(String, Box<Any + Send>),
+    /// Successful receive with special variant
+    Special(SpecialCommand),
     /// Queue was empty.
     Empty,
     /// Wait timed out.
@@ -73,9 +110,66 @@ pub enum ReceiveResult<T: Transportable> {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Comparing `ReceiveResult`. This is needed because `Any` can not be compared directly.
+impl<T> ReceiveResult<T>
+    where T: Clone + Send + PartialEq
+{
+    /// Returns true if `ReceiveResult` is `Plain` with given parameters.
+    pub fn is_plain(&self, pkg1: T) -> bool {
+        match self {
+            &ReceiveResult::Plain(ref pkg2) => &pkg1 == pkg2,
+            _ => false,
+        }
+    }
+
+    /// Returns true if `ReceiveResult` is `Defined` with given parameters.
+    pub fn is_defined(&self, id1: SignalId, pkg1: T) -> bool {
+        match self {
+            &ReceiveResult::Defined(id2, ref pkg2) => (id1 == id2) && (&pkg1 == pkg2),
+            _ => false,
+        }
+    }
+
+    /// Returns true if `ReceiveResult` is `Custom` with given parameters.
+    pub fn is_custom(&self, id1: &'static str, pkg1: T) -> bool {
+        match self {
+            &ReceiveResult::Custom(id2, ref pkg2) => (id1 == id2) && (&pkg1 == pkg2),
+            _ => false,
+        }
+    }
+
+    /// Returns true if `ReceiveResult` is `Special` with given parameters.
+    pub fn is_special(&self, cmd1: SpecialCommand) -> bool {
+        match self {
+            &ReceiveResult::Special(ref cmd2) => &cmd1 == cmd2,
+            _ => false,
+        }
+    }
+
+    /// Returns true if `ReceiveResult` is `Empty`.
+    pub fn is_empty(&self) -> bool {
+        match self {
+            &ReceiveResult::Empty => true,
+            _ => false,
+        }
+    }
+
+    /// Returns true if `ReceiveResult` is `Timeout`.
+    pub fn is_timeout(&self) -> bool {
+        match self {
+            &ReceiveResult::Timeout => true,
+            _ => false,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Helper structure constituting shared memory between `Bridge`s from different threads.
-struct InnerBridge<T: Transportable> {
-    fifo: Fifo<T>,
+struct InnerBridge<T>
+    where T: Clone + Send
+{
+    fifo: Fifo<Container<T>>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -84,17 +178,21 @@ struct InnerBridge<T: Transportable> {
 /// `Bridge`.
 ///
 /// Bridge implements simple FIFO queue on which `Sender` pushes data and `Receiver` pops it.
-struct Bridge<T: Transportable> {
+struct Bridge<T>
+    where T: Clone + Send
+{
     inner: Arc<Mutex<InnerBridge<T>>>,
     on_ready: Arc<Condvar>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// All function in this `impl` intentionally panic if when error occurred using mutex or
-/// conditional value.
-impl<T: Transportable> Bridge<T> {
-    /// Bridge constructor.
+/// All function in this `impl` intentionally panic when error occurred using mutex or conditional
+/// value.
+impl<T> Bridge<T>
+    where T: Clone + Send
+{
+    /// `Bridge` constructor.
     pub fn new() -> Self {
         Bridge {
             inner: Arc::new(Mutex::new(InnerBridge { fifo: Fifo::with_capacity(10) })),
@@ -103,9 +201,9 @@ impl<T: Transportable> Bridge<T> {
     }
 
     /// Push new data to FIFO queue.
-    fn push(&mut self, package: T) {
+    fn push(&mut self, container: Container<T>) {
         let mut mine = self.inner.lock().unwrap();
-        mine.fifo.push_back(package.clone());
+        mine.fifo.push_back(container);
         self.on_ready.notify_one();
     }
 
@@ -148,9 +246,17 @@ impl<T: Transportable> Bridge<T> {
     }
 
     /// Helper function for processing output data.
-    fn process(fifo: &mut Fifo<T>) -> ReceiveResult<T> {
+    fn process(fifo: &mut Fifo<Container<T>>) -> ReceiveResult<T> {
         match fifo.pop_front() {
-            Some(package) => ReceiveResult::Ok(package),
+            Some(container) => {
+                match container {
+                    Container::Plain(package) => ReceiveResult::Plain(package),
+                    Container::Defined(id, package) => ReceiveResult::Defined(id, package),
+                    Container::Custom(id, package) => ReceiveResult::Custom(id, package),
+                    Container::Any(id, package) => ReceiveResult::Any(id, package),
+                    Container::Special(id) => ReceiveResult::Special(id),
+                }
+            }
             None => ReceiveResult::Err,
         }
     }
@@ -159,7 +265,9 @@ impl<T: Transportable> Bridge<T> {
 // -------------------------------------------------------------------------------------------------
 
 /// Implement clone: construct new object pointing to reference counted shared memory on heap.
-impl<T: Transportable> Clone for Bridge<T> {
+impl<T> Clone for Bridge<T>
+    where T: Clone + Send
+{
     fn clone(&self) -> Bridge<T> {
         Bridge {
             inner: self.inner.clone(),
@@ -170,23 +278,116 @@ impl<T: Transportable> Clone for Bridge<T> {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Allows sending data to `Receiver`s.
-pub struct Sender<T: Transportable> {
+/// Allows sending data to one `Receiver`.
+pub struct DirectSender<T>
+    where T: Clone + Send
+{
+    bridge: Option<Bridge<T>>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<T> DirectSender<T>
+    where T: Clone + Send
+{
+    /// `DirectSender` constructor.
+    pub fn new() -> Self {
+        DirectSender { bridge: None }
+    }
+
+    /// Sends plain package variant.
+    pub fn send_plain(&mut self, package: T) {
+        if let Some(ref mut bridge) = self.bridge {
+            bridge.push(Container::Plain(package));
+        }
+    }
+
+    /// Sends defined package variant.
+    pub fn send_defined(&mut self, id: SignalId, package: T) {
+        if let Some(ref mut bridge) = self.bridge {
+            bridge.push(Container::Defined(id, package));
+        }
+    }
+
+    /// Sends custom package variant.
+    pub fn send_custom(&mut self, id: &'static str, package: T) {
+        if let Some(ref mut bridge) = self.bridge {
+            bridge.push(Container::Custom(id, package));
+        }
+    }
+
+    /// Sends any variant.
+    pub fn send_any(&mut self, id: String, package: Box<Any + Send>) {
+        if let Some(ref mut bridge) = self.bridge {
+            bridge.push(Container::Any(id, package));
+        }
+    }
+
+    /// Sends special variant.
+    pub fn send_special(&mut self, id: SpecialCommand) {
+        if let Some(ref mut bridge) = self.bridge {
+            bridge.push(Container::Special(id));
+        }
+    }
+
+    /// Helper function to connect to `Receiver` with `Bridge`.
+    /// This function will fail override current bridge.
+    fn set_bridge(&mut self, bridge: Bridge<T>) {
+        self.bridge = Some(bridge)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl<T> Clone for DirectSender<T>
+    where T: Clone + Send
+{
+    fn clone(&self) -> Self {
+        let mut new = DirectSender::new();
+        if let Some(ref bridge) = self.bridge {
+            new.set_bridge(bridge.clone())
+        }
+        new
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Allows sending data to many `Receiver`s.
+pub struct Sender<T>
+    where T: Clone + Send
+{
     bridges: Vec<Bridge<T>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<T: Transportable> Sender<T> {
-    /// Sender constructor.
+impl<T> Sender<T>
+    where T: Clone + Send
+{
+    /// `Sender` constructor.
     pub fn new() -> Self {
         Sender { bridges: Vec::new() }
     }
 
-    /// Send passed data package to all connected `Receiver`s.
-    pub fn send(&mut self, package: T) {
+    /// Sends passed data package to all connected `Receiver`s.
+    pub fn send_plain(&mut self, package: T) {
         for b in self.bridges.iter_mut() {
-            b.push(package.clone());
+            b.push(Container::Plain(package.clone()));
+        }
+    }
+
+    /// Sends passed data package to all connected `Receiver`s.
+    pub fn send_defined(&mut self, id: SignalId, package: T) {
+        for b in self.bridges.iter_mut() {
+            b.push(Container::Defined(id, package.clone()));
+        }
+    }
+
+    /// Sends passed data package to all connected `Receiver`s.
+    pub fn send_custom(&mut self, id: &'static str, package: T) {
+        for b in self.bridges.iter_mut() {
+            b.push(Container::Custom(id, package.clone()));
         }
     }
 
@@ -199,14 +400,18 @@ impl<T: Transportable> Sender<T> {
 // -------------------------------------------------------------------------------------------------
 
 /// Allows receiving data from `Sender`s.
-pub struct Receiver<T: Transportable> {
+pub struct Receiver<T>
+    where T: Clone + Send
+{
     bridge: Bridge<T>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<T: Transportable> Receiver<T> {
-    /// Receiver constructor.
+impl<T> Receiver<T>
+    where T: Clone + Send
+{
+    /// `Receiver` constructor.
     pub fn new() -> Self {
         Receiver { bridge: Bridge::new() }
     }
@@ -243,15 +448,13 @@ impl<T: Transportable> Receiver<T> {
 #[cfg(test)]
 mod test_receiver {
     use std::time;
-    use bridge::ReceiveResult;
-    use bridge::Transportable;
+    use bridge::Container;
 
     #[derive(Clone, PartialEq, Debug)]
     enum F {
         A,
         B(i32),
     }
-    impl Transportable for F {}
 
     /// Get bridge from `Receiver` and check if `Receiver` will be able to receive data pushed
     /// once.
@@ -260,9 +463,9 @@ mod test_receiver {
         let d = time::Duration::new(1, 0);
         let mut r = super::Receiver::new();
         let mut b = r.get_bridge();
-        b.push(F::A);
-        assert_eq!(r.recv_timeout(d), ReceiveResult::Ok(F::A));
-        assert_eq!(r.try_recv(), ReceiveResult::Empty);
+        b.push(Container::Plain(F::A));
+        assert!(r.recv_timeout(d).is_plain(F::A));
+        assert!(r.try_recv().is_empty());
     }
 
     /// Get bridge from `Receiver` and check if `Receiver` will be able to receive data pushed many
@@ -272,21 +475,33 @@ mod test_receiver {
         let d = time::Duration::new(1, 0);
         let mut r = super::Receiver::new();
         let mut b = r.get_bridge();
-        b.push(F::B(1));
-        b.push(F::B(2));
-        b.push(F::B(3));
-        assert_eq!(r.recv_timeout(d), ReceiveResult::Ok(F::B(1)));
-        assert_eq!(r.recv_timeout(d), ReceiveResult::Ok(F::B(2)));
-        assert_eq!(r.recv_timeout(d), ReceiveResult::Ok(F::B(3)));
-        assert_eq!(r.try_recv(), ReceiveResult::Empty);
+        b.push(Container::Plain(F::B(4)));
+        b.push(Container::Plain(F::B(5)));
+        b.push(Container::Plain(F::B(6)));
+        assert!(r.recv_timeout(d).is_plain(F::B(4)));
+        assert!(r.recv_timeout(d).is_plain(F::B(5)));
+        assert!(r.recv_timeout(d).is_plain(F::B(6)));
+        assert!(r.try_recv().is_empty());
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Connect given `DirectSender` to given `Receiver`. One can connect `DirectSender` to only one
+/// `Receiver`. If `Sender` already has a `Receiver` the connection will be overridden.
+pub fn direct_connect<T>(sender: &mut DirectSender<T>, receiver: &Receiver<T>)
+    where T: Clone + Send
+{
+    sender.set_bridge(receiver.get_bridge());
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Connect given `Sender` to given `Receiver`. One can freely connect many `Sender`'s to many
 /// `Receiver`'s.
-pub fn connect<T: Transportable>(sender: &mut Sender<T>, receiver: &Receiver<T>) {
+pub fn connect<T>(sender: &mut Sender<T>, receiver: &Receiver<T>)
+    where T: Clone + Send
+{
     sender.add_bridge(receiver.get_bridge());
 }
 

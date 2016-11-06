@@ -9,7 +9,8 @@ use std::collections::HashMap;
 
 use dharma::Signaler;
 
-use qualia::{Buffer, Coordinator, Area, OptionalPosition, Position, Vector, SurfaceId, SurfaceContext, SurfacePosition, perceptron, Perceptron};
+use qualia::{Buffer, Coordinator, Area, OptionalPosition, Position, Vector, SurfaceId,
+             SurfaceContext, SurfacePosition, perceptron, Perceptron};
 
 use display::Display;
 
@@ -67,8 +68,15 @@ impl Pointer {
                             DEFAULT_CURSOR_SIZE,
                             4 * DEFAULT_CURSOR_SIZE,
                             data);
-        coordinator.attach(default_csid, b);
-        coordinator.commit_surface(default_csid);
+        let bid = coordinator.create_pool_from_buffer(b);
+        if let Some(mvid) = coordinator.create_memory_view(bid,
+                                                           0,
+                                                           DEFAULT_CURSOR_SIZE,
+                                                           DEFAULT_CURSOR_SIZE,
+                                                           DEFAULT_CURSOR_SIZE) {
+            coordinator.attach(mvid, default_csid);
+            coordinator.commit_surface(default_csid);
+        }
 
         Pointer {
             position: Position::default(),
@@ -151,9 +159,7 @@ impl Pointer {
 
     /// Checks for change of surface pointer is hovering or relative position to this surface and
     /// notify rest of the application about changes.
-    pub fn update_hover_state(&mut self,
-                              display_area: Area,
-                              surfaces: &Vec<SurfaceContext>) {
+    pub fn update_hover_state(&mut self, display_area: Area, surfaces: &Vec<SurfaceContext>) {
         // Check if this update is for display on which this pointer is placed
         if self.display_area != display_area {
             return;

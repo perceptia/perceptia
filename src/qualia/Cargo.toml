@@ -4,13 +4,15 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-dbus = "0.3.4"
-libc = "0.2.16"
-libudev = "0.2.0"
-nix = "0.6.0"
+bitflags = "0.7"
+backtrace = "0.2"
+dbus = "0.4"
+libc = "0.2"
+libudev = "0.2"
+nix = "0.7"
 time = "0.1"
 xkbcommon = "0.2"
-uinput-sys = "0.1.5"
+uinput-sys = "0.1"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 

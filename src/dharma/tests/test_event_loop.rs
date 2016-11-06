@@ -9,12 +9,11 @@ extern crate dharma;
 
 mod common;
 
-use std::clone::Clone;
 use std::thread;
 use std::time;
 
 use common::mocks::{ContextStub, ModuleMock};
-use self::dharma::{EventLoopInfo, Module, Signaler};
+use dharma::{EventLoopInfo, Module, Signaler};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -23,12 +22,12 @@ type StringModule = Box<Module<T = String, C = ContextStub>>;
 // -------------------------------------------------------------------------------------------------
 
 /// Timeout between starting thread and starting test.
-/// (Is there better way to syncronize with signal subscription?)
+/// FIXME: Is there better way to synchronize with signal subscription?
 const D: u64 = 100;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add one `Module` to one `EventLoop`, start and terminate. `Module` should be intialized and
+/// Add one `Module` to one `EventLoop`, start and terminate. `Module` should be initialized and
 /// finalized once.
 #[test]
 fn test_life_of_one_module() {
@@ -56,11 +55,11 @@ fn test_life_of_one_module() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add two `Module`s to one `EventLoop`, start and terminate. `Module`s should be intialized and
+/// Add two `Module`s to one `EventLoop`, start and terminate. `Module`s should be initialized and
 /// finalized once each.
 #[test]
 fn test_life_of_two_modules() {
-    // Prepare mockand set expectations
+    // Prepare mock and set expectations
     let module1 = Box::new(move || {
         let mut module = Box::new(ModuleMock::new(None));
         module.expect_initialized_times(1);
@@ -94,7 +93,7 @@ fn test_life_of_two_modules() {
 // -------------------------------------------------------------------------------------------------
 
 /// Add one `Module` which subscribes for three signals to one `EventLoop`, start, emit many signals
-/// and terminate. `Module` should be intialized and finalized once and be notified in correct order
+/// and terminate. `Module` should be initialized and finalized once and be notified in correct order
 /// for all signals it subscribed but not for the ones it did not subscribe.
 #[test]
 fn test_execution_of_one_module() {
@@ -129,8 +128,8 @@ fn test_execution_of_one_module() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add two `Module`s which subscribe for three signals (which partialy overlap) to one `EventLoop`,
-/// start, emit many signals and terminate. `Module`s should be intialized and finalized once each
+/// Add two `Module`s which subscribe for three signals (which partially overlap) to one `EventLoop`,
+/// start, emit many signals and terminate. `Module`s should be initialized and finalized once each
 /// and be notified in correct order for all signals they subscribed but not for the ones they did
 /// not subscribe.
 #[test]
@@ -178,8 +177,8 @@ fn test_execution_of_two_modules() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add two `Module`s which subscribe for three signals (which partialy overlap) to two
-/// `EventLoop`s, start, emit many signals and terminate. `Module`s should be intialized and
+/// Add two `Module`s which subscribe for three signals (which partially overlap) to two
+/// `EventLoop`s, start, emit many signals and terminate. `Module`s should be initialized and
 /// finalized once each and be notified in correct order for all signals they subscribed but not
 /// for the ones they did not subscribe.
 #[test]

@@ -406,8 +406,7 @@ pub fn focus_workspace(context: &mut InputContext) {
 // -------------------------------------------------------------------------------------------------
 
 /// Switches normal mode off and insert mode on.
-pub fn swap_mode_normal_to_insert(context: &mut InputContext)
-{
+pub fn swap_mode_normal_to_insert(context: &mut InputContext) {
     log_info2!("Swap mode from normal to insert");
     context.activate_mode(mode_name::NORMAL, false);
     context.activate_mode(mode_name::INSERT, true);
@@ -416,8 +415,7 @@ pub fn swap_mode_normal_to_insert(context: &mut InputContext)
 // -------------------------------------------------------------------------------------------------
 
 /// Switches insert mode off and normal mode on.
-pub fn swap_mode_insert_to_normal(context: &mut InputContext)
-{
+pub fn swap_mode_insert_to_normal(context: &mut InputContext) {
     log_info2!("Swap mode from insert to normal");
     context.activate_mode(mode_name::INSERT, false);
     context.activate_mode(mode_name::NORMAL, true);

@@ -5,9 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::sync::Arc;
-
-use buffer::Buffer;
+use memory::{MemoryView, Pixmap};
 use defs::{Position, Size, Vector};
 pub use defs::{SurfaceId, SurfaceIdType};
 
@@ -30,7 +28,7 @@ impl SurfaceContext {
 
     /// Creates new context with position moved by given vector.
     pub fn moved(&self, vector: Vector) -> Self {
-        SurfaceContext::new(self.id, self.pos.clone() + vector)
+        SurfaceContext::new(self.id, self.pos + vector)
     }
 }
 
@@ -38,22 +36,28 @@ impl SurfaceContext {
 
 /// These flags describe readiness of `Surface` to be displayed.
 pub mod show_reason {
-    pub type ShowReason = i32;
-    pub const UNINITIALIZED: ShowReason = 0b0000;
-    pub const DRAWABLE: ShowReason = 0b0001;
-    pub const IN_SHELL: ShowReason = 0b0010;
-    pub const READY: ShowReason = DRAWABLE | IN_SHELL;
+    bitflags!(
+        pub flags ShowReason: u32 {
+            const NONE = 0b0000,
+            const DRAWABLE = 0b0001,
+            const IN_SHELL = 0b0010,
+            const READY = DRAWABLE.bits | IN_SHELL.bits,
+        }
+    );
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// These flags describe readiness of `Surface` to be displayed.
+/// These constants describe statate of `Surface`.
 pub mod surface_state {
-    pub type SurfaceState = u8;
-    pub const EMPTY: SurfaceState = 0x0;
-    pub const MAXIMIZED: SurfaceState = 0x1;
-    pub const FULLSCREEN: SurfaceState = 0x2;
-    pub const RESIZING: SurfaceState = 0x3;
+    bitflags!(
+        pub flags SurfaceState: u32 {
+            const REGULAR = 0x0000,
+            const MAXIMIZED = 0b0001,
+            const FULLSCREEN = 0x0010,
+            const RESIZING = 0x0100,
+        }
+    );
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -71,6 +75,7 @@ pub struct SurfaceInfo {
 // -------------------------------------------------------------------------------------------------
 
 /// This structure represents surface.
+#[allow(dead_code)]
 pub struct Surface {
     /// ID of the surface.
     id: SurfaceId,
@@ -95,10 +100,10 @@ pub struct Surface {
     relative_position: Position,
 
     /// Data required for draw.
-    buffer: Arc<Buffer>,
+    buffer: Option<MemoryView>,
 
     /// Data to be used after commit.
-    pending_buffer: Buffer,
+    pending_buffer: Option<MemoryView>,
 
     /// Flags describing logical state of surface
     state_flags: surface_state::SurfaceState,
@@ -120,10 +125,10 @@ impl Surface {
             parent_sid: SurfaceId::invalid(),
             satellites: Vec::new(),
             relative_position: Position::default(),
-            buffer: Arc::new(Buffer::empty()),
-            pending_buffer: Buffer::empty(),
-            show_reasons: show_reason::UNINITIALIZED,
-            state_flags: surface_state::EMPTY,
+            buffer: None,
+            pending_buffer: None,
+            show_reasons: show_reason::NONE,
+            state_flags: surface_state::REGULAR,
         }
     }
 
@@ -160,30 +165,30 @@ impl Surface {
 
     /// Sets given buffer as pending.
     #[inline]
-    pub fn attach(&mut self, buffer: Buffer) {
-        self.pending_buffer.assign_from(&buffer);
+    pub fn attach(&mut self, buffer: MemoryView) {
+        self.pending_buffer = Some(buffer);
     }
 
     /// Sets pending buffer as current. If surface was committed for the first time and sizes are
     /// not set, assign size of buffer as requested size. Return `true` if surface was committed for
     /// the first time, `false` otherwise.
     pub fn commit(&mut self) -> bool {
-        let is_first_time_committed = self.buffer.is_empty();
-        if let Some(buffer) = Arc::get_mut(&mut self.buffer) {
-            buffer.assign_from(&self.pending_buffer);
-        }
+        let is_first_time_committed = self.buffer.is_none();
+        self.buffer = self.pending_buffer.clone();
 
-        // If surface was just created...
-        if is_first_time_committed {
-            // ... size was not yet requested by surface ...
-            if !((self.requested_size.width == 0) || (self.requested_size.height == 0)) {
-                // ... use its buffer size as requested size ...
-                self.requested_size = self.buffer.get_size();
-            }
-            // ... and if it is subsurface ...
-            if self.parent_sid.is_valid() {
-                // ... set its desired size.
-                self.desired_size = self.buffer.get_size();
+        if let Some(ref buffer) = self.buffer {
+            // If surface was just created...
+            if is_first_time_committed {
+                // ... size was not yet requested by surface ...
+                if !((self.requested_size.width == 0) || (self.requested_size.height == 0)) {
+                    // ... use its buffer size as requested size ...
+                    self.requested_size = buffer.get_size();
+                }
+                // ... and if it is subsurface ...
+                if self.parent_sid.is_valid() {
+                    // ... set its desired size.
+                    self.desired_size = buffer.get_size();
+                }
             }
         }
 
@@ -194,16 +199,16 @@ impl Surface {
     pub fn get_info(&self) -> SurfaceInfo {
         SurfaceInfo {
             id: self.id,
-            offset: self.offset.clone(),
+            offset: self.offset,
             parent_sid: self.parent_sid,
-            desired_size: self.desired_size.clone(),
-            requested_size: self.requested_size.clone(),
+            desired_size: self.desired_size,
+            requested_size: self.requested_size,
             state_flags: self.state_flags,
         }
     }
 
     /// Returns surfaces buffer.
-    pub fn get_buffer(&self) -> Arc<Buffer> {
+    pub fn get_buffer(&self) -> Option<MemoryView> {
         self.buffer.clone()
     }
 
@@ -211,13 +216,13 @@ impl Surface {
     pub fn get_renderer_context(&self) -> SurfaceContext {
         SurfaceContext {
             id: self.id,
-            pos: self.relative_position.clone(),
+            pos: self.relative_position,
         }
     }
 
     /// Return size desired by compositor.
     pub fn get_desired_size(&self) -> Size {
-        self.desired_size.clone()
+        self.desired_size
     }
 
     /// Return flags describing state of the surface.
@@ -230,7 +235,10 @@ impl Surface {
 
 /// Trait used for configuring and manipulating surfaces.
 pub trait SurfaceAccess {
-    fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState);
+    fn reconfigure(&mut self,
+                   sid: SurfaceId,
+                   size: Size,
+                   state_flags: surface_state::SurfaceState);
 }
 
 // -------------------------------------------------------------------------------------------------

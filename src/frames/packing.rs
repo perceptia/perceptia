@@ -42,7 +42,7 @@ impl Packing for Frame {
     }
 
     fn homogenize(&mut self, sa: &mut SurfaceAccess) {
-        let len = self.count_children() as u32;
+        let len = self.count_children();
         if len < 1 {
             return;
         }

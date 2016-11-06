@@ -12,9 +12,11 @@ use nix::sys::signal;
 use std::ops::BitAnd;
 use std::error::Error;
 
-use errors::Illusion;
 use timber;
+
+use errors::Illusion;
 use config;
+use log;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -34,6 +36,7 @@ pub enum Directory {
 // -------------------------------------------------------------------------------------------------
 
 // TODO: Directories should not be optional.
+// FIXME: Do not keep log in runtime directory, as it is removed at exit.
 pub struct Env {
     data_dir: Option<std::path::PathBuf>,
     runtime_dir: Option<std::path::PathBuf>,
@@ -160,9 +163,7 @@ impl Env {
                     println!("Log file in {:?}", path);
                     Ok(ok)
                 }
-                Err(err) => {
-                    Err(Illusion::General(err.description().to_owned()))
-                }
+                Err(err) => Err(Illusion::General(err.description().to_owned())),
             }
         } else {
             let text = "Could not create log file! Data directory not available!".to_owned();
@@ -178,7 +179,7 @@ impl Env {
     /// Reads given environment variable and if exists returns its value or default value otherwise.
     fn read_path(var: &str, default_path: &str) -> std::path::PathBuf {
         let mut path = std::path::PathBuf::new();
-        path.push(if let Ok(p) = std::env::var(var) { p } else { default_path.to_owned() });
+        path.push(std::env::var(var).unwrap_or(default_path.to_owned()));
         path
     }
 
@@ -205,13 +206,18 @@ impl Env {
 
     /// Helper function for generating temporary director and file names. Returns string in format
     /// `ddd-hh-mm-ss`, where
-    ///  - `ddd` is zero padded number of current day in year
-    ///  - `hh` is zero padded hour
-    ///  - `mm` is zero padded minute
-    ///  - `ss` is zero padded second
+    ///
+    /// - `ddd` is zero padded number of current day in year
+    /// - `hh` is zero padded hour
+    /// - `mm` is zero padded minute
+    /// - `ss` is zero padded second
     fn get_time_representation() -> String {
         let tm = time::now().to_local();
-        format!("{:03}-{:02}-{:02}-{:02}", tm.tm_yday, tm.tm_hour, tm.tm_min, tm.tm_sec)
+        format!("{:03}-{:02}-{:02}-{:02}",
+                tm.tm_yday,
+                tm.tm_hour,
+                tm.tm_min,
+                tm.tm_sec)
     }
 }
 
@@ -227,13 +233,17 @@ impl Drop for Env {
 // -------------------------------------------------------------------------------------------------
 
 /// System signal handler. Handle `SIGINT`, `SIGTERM`, `SIGSEGV` and `SIGABRT` by exiting.
+///
+/// Normally these signals should be blocked and be handled by `Dispatcher` and this function
+/// should be only able to catch signals after `Dispatcher` exited.
+#[cfg_attr(rustfmt, rustfmt_skip)]
 extern fn signal_handler(signum: libc::c_int) {
-    if (signum == signal::SIGINT)
-    || (signum == signal::SIGTERM)
-    || (signum == signal::SIGSEGV)
-    || (signum == signal::SIGABRT) {
-        log_info1!("Signal {} received asynchronously: exit", signum);
-        panic!("Received terminating signal");
+    if (signum == signal::SIGINT as libc::c_int)
+    || (signum == signal::SIGTERM as libc::c_int)
+    || (signum == signal::SIGSEGV as libc::c_int)
+    || (signum == signal::SIGABRT as libc::c_int) {
+        log_info1!("Signal {} received asynchronously", signum);
+        log::backtrace();
     } else {
         log_info2!("Signal {} received asynchronously: ignore", signum);
     }

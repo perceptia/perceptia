@@ -142,10 +142,10 @@ pub fn prepare_shader_program(vertex_source: String,
                               fragment_source: String)
                               -> Result<gl::types::GLuint, Illusion> {
     // Create vertex shader
-    let vertex_shader = try!(create_shader(vertex_source, gl::VERTEX_SHADER));
+    let vertex_shader = create_shader(vertex_source, gl::VERTEX_SHADER)?;
 
     // Create fragment shader
-    let fragment_shader = try!(create_shader(fragment_source, gl::FRAGMENT_SHADER));
+    let fragment_shader = create_shader(fragment_source, gl::FRAGMENT_SHADER)?;
 
     // Create and link shader program
     create_program(vertex_shader, fragment_shader)

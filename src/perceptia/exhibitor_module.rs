@@ -20,8 +20,8 @@ pub struct ExhibitorModule {
 
 impl ExhibitorModule {
     /// `ExhibitorModule` constructor.
-    pub fn new() -> Self {
-        ExhibitorModule { exhibitor: None }
+    pub fn new() -> Box<Module<T = Perceptron, C = Context>> {
+        Box::new(ExhibitorModule { exhibitor: None })
     }
 }
 
@@ -31,7 +31,7 @@ impl Module for ExhibitorModule {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self, mut context: Self::C) -> InitResult {
+    fn initialize(&mut self, context: &mut Self::C) -> InitResult {
         log_info1!("Starting Exhibitor module");
         self.exhibitor = Some(Exhibitor::new(context.get_signaler().clone(),
                                              context.get_coordinator().clone()));
@@ -64,7 +64,9 @@ impl Module for ExhibitorModule {
                 Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
                 Perceptron::SurfaceDestroyed(sid) => exhibitor.on_surface_destroyed(sid),
 
-                Perceptron::KeyboardFocusChanged(_, sid) => exhibitor.on_keyboard_focus_changed(sid),
+                Perceptron::KeyboardFocusChanged(_, sid) => {
+                    exhibitor.on_keyboard_focus_changed(sid)
+                }
                 _ => {}
             }
         }

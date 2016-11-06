@@ -30,11 +30,7 @@ pub struct Settings {
 impl Settings {
     /// `Settings` constructor.
     pub fn new(keymap: keymap::Settings) -> Self {
-        Settings {
-            inner: Arc::new(Mutex::new(InnerSettings {
-                keymap: keymap,
-            })),
-        }
+        Settings { inner: Arc::new(Mutex::new(InnerSettings { keymap: keymap })) }
     }
 
     /// Get key map related settings.

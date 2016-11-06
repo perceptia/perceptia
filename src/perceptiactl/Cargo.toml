@@ -4,10 +4,10 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-clap = "2.11.3"
+clap = "2.19.3"
 egl = "0.2.6"
 gl = "0.6.0"
-nix = "0.6.0"
+nix = "0.7.0"
 libudev = "0.2.0"
 drm-rs = "0.1.2"
 timber         = { path = "../timber" }

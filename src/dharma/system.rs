@@ -8,8 +8,7 @@
 use std::os::unix::io::{RawFd, AsRawFd};
 use nix::sys::{signal, signalfd};
 
-use bridge;
-use dispatcher::{Dispatcher, EventHandler};
+use dispatcher::{Dispatcher, EventHandler, EventKind};
 use signaler::Signaler;
 
 // -------------------------------------------------------------------------------------------------
@@ -38,7 +37,7 @@ pub fn unblock_signals() {
 /// work receiving of signals `SIGINT` and `SIGTERM` must be blocked in all threads in application.
 /// Otherwise non-blocking threads will catch all signals.
 pub struct SignalEventHandler<P>
-    where P: bridge::Transportable + 'static
+    where P: Clone + Send + 'static
 {
     fd: signalfd::SignalFd,
     dispatcher: Dispatcher,
@@ -48,7 +47,7 @@ pub struct SignalEventHandler<P>
 // -------------------------------------------------------------------------------------------------
 
 impl<P> SignalEventHandler<P>
-    where P: bridge::Transportable + 'static
+    where P: Clone + Send + 'static
 {
     /// `SignalEventHandler` constructor. Creates `SignalEventHandler` ready for handling `SIGINT`
     /// and `SIGTERM` signals.
@@ -67,13 +66,13 @@ impl<P> SignalEventHandler<P>
 // -------------------------------------------------------------------------------------------------
 
 impl<P> EventHandler for SignalEventHandler<P>
-    where P: bridge::Transportable + 'static
+    where P: Clone + Send + 'static
 {
     fn get_fd(&self) -> RawFd {
         self.fd.as_raw_fd()
     }
 
-    fn process_event(&mut self) {
+    fn process_event(&mut self, _: EventKind) {
         match self.fd.read_signal() {
             Ok(ossi) => {
                 match ossi {

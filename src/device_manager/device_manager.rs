@@ -11,6 +11,7 @@ use nix::{self, Errno};
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::{Mode, stat};
 
+use dharma;
 use qualia::{Context, Illusion, Ipc};
 
 use evdev;
@@ -56,7 +57,11 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Try to open device. If we have insufficient permissions ask `logind` to do it for us.
-    fn open_restricted(&self, path: &Path, oflag: OFlag, mode: Mode) -> Result<io::RawFd, Illusion> {
+    fn open_restricted(&self,
+                       path: &Path,
+                       oflag: OFlag,
+                       mode: Mode)
+                       -> Result<io::RawFd, Illusion> {
         match open(path, oflag, mode) {
             Ok(fd) => Ok(fd),
             Err(nix::Error::Sys(errno)) => {
@@ -103,7 +108,7 @@ impl<'a> DeviceManager<'a> {
                                                     });
             match r {
                 Ok(driver) => {
-                    context.add_event_handler(driver);
+                    context.add_event_handler(driver, dharma::event_kind::READ);
                 }
                 Err(err) => {
                     log_error!("Could not initialize input devices: {}", err);
@@ -128,8 +133,12 @@ impl<'a> DeviceManager<'a> {
     /// Initialize device monitoring.
     fn initialize_device_monitor(&mut self, context: &mut Context) {
         match self.udev.start_device_monitor() {
-            Ok(device_monitor) => context.add_event_handler(Box::new(device_monitor)),
-            Err(err) => log_warn1!("Device Manager: {}", err),
+            Ok(device_monitor) => {
+                context.add_event_handler(Box::new(device_monitor), dharma::event_kind::READ);
+            }
+            Err(err) => {
+                log_warn1!("Device Manager: {}", err);
+            }
         }
     }
 }

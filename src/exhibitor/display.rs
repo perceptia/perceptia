@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use dharma::Signaler;
-use qualia::{Area, Coordinator, Illusion, SurfaceContext, perceptron, Perceptron};
+use qualia::{Area, Coordinator, Illusion, Milliseconds, SurfaceContext, perceptron, Perceptron};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -90,9 +90,10 @@ impl Display {
     /// Draw the scene and then schedule page flip.
     pub fn redraw_all(&mut self) {
         if self.redraw_needed {
-            let surfaces = self.frame.get_first_time()
-                                     .expect("display must have at least one workspace")
-                                     .to_array(&self.coordinator);
+            let surfaces = self.frame
+                .get_first_time()
+                .expect("display must have at least one workspace")
+                .to_array(&self.coordinator);
             let pointer = self.prepare_layover_context();
 
             self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
@@ -107,7 +108,8 @@ impl Display {
 
             // Send frame notifications
             for context in surfaces {
-                self.signaler.emit(perceptron::SURFACE_FRAME, Perceptron::SurfaceFrame(context.id));
+                let frame = Perceptron::SurfaceFrame(context.id, Milliseconds::now());
+                self.signaler.emit(perceptron::SURFACE_FRAME, frame);
             }
 
             self.redraw_needed = false;

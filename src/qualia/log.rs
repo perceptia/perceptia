@@ -26,40 +26,56 @@
 //!  - `*3` - mildly important, frequent log
 //!  - `*4` - not important, very frequent log
 
+use backtrace;
+
+use timber;
+
 // -------------------------------------------------------------------------------------------------
 
 #[cfg(debug_assertions)]
 pub mod level {
-    pub const ERROR: i32 = 1;
-    pub const DEBUG: i32 = 2;
-    pub const NYIMP: i32 = 3;
-    pub const WARN1: i32 = 4;
-    pub const INFO1: i32 = 5;
-    pub const WARN2: i32 = 6;
-    pub const INFO2: i32 = 7;
-    pub const WARN3: i32 = 0;
-    pub const INFO3: i32 = 0;
-    pub const WARN4: i32 = 0;
-    pub const INFO4: i32 = 0;
+    pub const FATAL: i32 = 1;
+    pub const ERROR: i32 = 2;
+    pub const DEBUG: i32 = 3;
+    pub const NYIMP: i32 = 4;
+    pub const WARN1: i32 = 5;
+    pub const INFO1: i32 = 6;
+    pub const WAYL1: i32 = 7;
+    pub const WARN2: i32 = 8;
+    pub const INFO2: i32 = 9;
+    pub const WAYL2: i32 = 10;
+    pub const WARN3: i32 = 11;
+    pub const INFO3: i32 = 12;
+    pub const WAYL3: i32 = 13;
+    pub const WARN4: i32 = 14;
+    pub const INFO4: i32 = 15;
+    pub const WAYL4: i32 = 16;
 }
 
 #[cfg(not(debug_assertions))]
 pub mod level {
-    pub const ERROR: i32 = 1;
-    pub const DEBUG: i32 = 2;
-    pub const NYIMP: i32 = 3;
-    pub const WARN1: i32 = 4;
-    pub const INFO1: i32 = 5;
-    pub const WARN2: i32 = 6;
-    pub const INFO2: i32 = 7;
-    pub const WARN3: i32 = 0;
-    pub const INFO3: i32 = 0;
-    pub const WARN4: i32 = 0;
-    pub const INFO4: i32 = 0;
+    pub const FATAL: i32 = 1;
+    pub const ERROR: i32 = 2;
+    pub const DEBUG: i32 = 3;
+    pub const NYIMP: i32 = 4;
+    pub const WARN1: i32 = 5;
+    pub const INFO1: i32 = 6;
+    pub const WAYL1: i32 = 7;
+    pub const WARN2: i32 = 8;
+    pub const INFO2: i32 = 9;
+    pub const WAYL2: i32 = 10;
+    pub const WARN3: i32 = 11;
+    pub const INFO3: i32 = 12;
+    pub const WAYL3: i32 = 13;
+    pub const WARN4: i32 = 14;
+    pub const INFO4: i32 = 15;
+    pub const WAYL4: i32 = 16;
 }
 
 // -------------------------------------------------------------------------------------------------
 
+#[macro_export]
+macro_rules! log_fatal{($($arg:tt)*) => {timber!($crate::level::FATAL, "FATAL", $($arg)*)}}
 #[macro_export]
 macro_rules! log_error{($($arg:tt)*) => {timber!($crate::level::ERROR, "ERROR", $($arg)*)}}
 #[macro_export]
@@ -71,17 +87,25 @@ macro_rules! log_warn1{($($arg:tt)*) => {timber!($crate::level::WARN1, "WARN1", 
 #[macro_export]
 macro_rules! log_info1{($($arg:tt)*) => {timber!($crate::level::INFO1, "INFO1", $($arg)*)}}
 #[macro_export]
+macro_rules! log_wayl1{($($arg:tt)*) => {timber!($crate::level::WAYL1, "WAYL1", $($arg)*)}}
+#[macro_export]
 macro_rules! log_warn2{($($arg:tt)*) => {timber!($crate::level::WARN2, "WARN2", $($arg)*)}}
 #[macro_export]
 macro_rules! log_info2{($($arg:tt)*) => {timber!($crate::level::INFO2, "INFO2", $($arg)*)}}
+#[macro_export]
+macro_rules! log_wayl2{($($arg:tt)*) => {timber!($crate::level::WAYL2, "WAYL2", $($arg)*)}}
 #[macro_export]
 macro_rules! log_warn3{($($arg:tt)*) => {timber!($crate::level::WARN3, "WARN3", $($arg)*)}}
 #[macro_export]
 macro_rules! log_info3{($($arg:tt)*) => {timber!($crate::level::INFO3, "INFO3", $($arg)*)}}
 #[macro_export]
+macro_rules! log_wayl3{($($arg:tt)*) => {timber!($crate::level::WAYL3, "WAYL3", $($arg)*)}}
+#[macro_export]
 macro_rules! log_warn4{($($arg:tt)*) => {timber!($crate::level::WARN4, "WARN4", $($arg)*)}}
 #[macro_export]
 macro_rules! log_info4{($($arg:tt)*) => {timber!($crate::level::INFO4, "INFO4", $($arg)*)}}
+#[macro_export]
+macro_rules! log_wayl4{($($arg:tt)*) => {timber!($crate::level::WAYL4, "WAYL4", $($arg)*)}}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -97,6 +121,29 @@ macro_rules! ensure {
             }
         }
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub fn backtrace() {
+    let mut timber = timber::lock().unwrap();
+    timber.log(format_args!("===============================================\
+                             ===============================================\n"));
+    backtrace::trace(|frame| {
+        let ip = frame.ip();
+        backtrace::resolve(ip, |symbol| {
+            let name = if let Some(name) = symbol.name() {
+                name
+            } else {
+                backtrace::SymbolName::new("<unknown>".as_bytes())
+            };
+            timber.log(format_args!("> {:?}\n", name));
+        });
+        true
+    });
+
+    timber.log(format_args!("===============================================\
+                             ===============================================\n"));
 }
 
 // -------------------------------------------------------------------------------------------------

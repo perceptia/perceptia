@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-libc = "0.2.16"
+libc = "0.2.18"
 drm-rs = "0.1.2"
 gbm-rs = "0.2.0"
 egl = "0.2.6"

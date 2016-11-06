@@ -139,7 +139,7 @@ impl Timber {
     /// Initialize logger by providing output log file. Before call to this method logs will be
     /// printed to standard output.
     pub fn init(&mut self, path: &std::path::Path) -> Result<(), std::io::Error> {
-        self.log_file = Some(try!(std::fs::File::create(path)));
+        self.log_file = Some(std::fs::File::create(path)?);
         Ok(())
     }
 }
@@ -165,7 +165,7 @@ fn get_instance() -> &'static Wrapper {
 // -------------------------------------------------------------------------------------------------
 
 /// Get locked instance of `Timber` for guarded loging.
-pub fn lock<'a>() -> Result<MutexGuard<'a, Timber>, PoisonError<std::sync::MutexGuard<'a, Timber>>>{
+pub fn lock<'a>() -> Result<MutexGuard<'a, Timber>, PoisonError<MutexGuard<'a, Timber>>> {
     get_instance().inner.lock()
 }
 

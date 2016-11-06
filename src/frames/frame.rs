@@ -385,40 +385,53 @@ impl Frame {
     /// Sets surface id without informing other parts of application.
     #[inline]
     pub fn set_plumbing_sid(&mut self, sid: SurfaceId) {
-        unsafe { (*self.inner).params.sid = sid; }
+        unsafe {
+            (*self.inner).params.sid = sid;
+        }
     }
 
     /// Sets size without informing other parts of application.
     #[inline]
     pub fn set_plumbing_position(&mut self, pos: Position) {
-        unsafe { (*self.inner).params.pos = pos; }
+        unsafe {
+            (*self.inner).params.pos = pos;
+        }
     }
 
     /// Sets size without informing other parts of application.
     #[inline]
     pub fn set_plumbing_size(&mut self, size: Size) {
-        unsafe { (*self.inner).params.size = size; }
+        unsafe {
+            (*self.inner).params.size = size;
+        }
     }
 
     /// Sets geometry without adjusting any sizes an positions.
     #[inline]
     pub fn set_plumbing_geometry(&mut self, geometry: Geometry) {
-        unsafe { (*self.inner).params.geometry = geometry; }
+        unsafe {
+            (*self.inner).params.geometry = geometry;
+        }
     }
 
     /// Sets mode without any checks.
     #[inline]
     pub fn set_plumbing_mode(&mut self, mode: Mode) {
-        unsafe { (*self.inner).params.mode = mode; }
+        unsafe {
+            (*self.inner).params.mode = mode;
+        }
     }
 
     /// Sets position and size without informing other parts of application.
     #[inline]
     pub fn set_plumbing_position_and_size(&mut self, pos: Position, size: Size) {
-        unsafe { (*self.inner).params.pos = pos; }
-        unsafe { (*self.inner).params.size = size; }
+        unsafe {
+            (*self.inner).params.pos = pos;
+        }
+        unsafe {
+            (*self.inner).params.size = size;
+        }
     }
-
 }
 
 // -------------------------------------------------------------------------------------------------

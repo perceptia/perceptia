@@ -52,8 +52,8 @@ impl Keymap {
         let file_name = "keymap".to_owned();
 
         let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
-        let keymap = if let Some(keymap) =
-            xkb::Keymap::new_from_names(&context, &rules, &model, &layout, &variant, None, 0x0) {
+        let k = xkb::Keymap::new_from_names(&context, &rules, &model, &layout, &variant, None, 0x0);
+        let keymap = if let Some(keymap) = k {
             keymap
         } else {
             return Err(Illusion::General(format!("Failed to create key map")));
@@ -61,14 +61,17 @@ impl Keymap {
 
         // Save keymap to file
         let keymap_str = keymap.get_as_string(format);
-        let mut file = try!(env.open_file(file_name, env::Directory::Runtime));
-        try!(file.write_all(keymap_str.as_bytes()));
-        try!(file.write_all("\0".as_bytes()));
+        let mut file = env.open_file(file_name, env::Directory::Runtime)?;
+        file.write_all(keymap_str.as_bytes())?;
+        file.write_all("\0".as_bytes())?;
 
         // TODO: Unmap the memory.
-        match mman::mmap(std::ptr::null_mut(), keymap_str.len() + 1,
+        match mman::mmap(std::ptr::null_mut(),
+                         keymap_str.len() + 1,
                          mman::PROT_READ | mman::PROT_WRITE,
-                         mman::MAP_SHARED, file.as_raw_fd(), 0) {
+                         mman::MAP_SHARED,
+                         file.as_raw_fd(),
+                         0) {
             Ok(memory) => {
                 Ok(Keymap {
                     settings: Settings {
@@ -80,7 +83,8 @@ impl Keymap {
                     context: context,
                     keymap: keymap,
                     memory: memory,
-                })}
+                })
+            }
             Err(_) => Err(Illusion::General(format!("mmap error"))),
         }
     }

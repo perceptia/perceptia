@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{Dispatcher, EventHandler, Signaler, SignalId};
+use dharma::{Dispatcher, EventHandler, EventKind, Signaler, SignalId};
 
 use config::Config;
 use settings::Settings;
@@ -53,8 +53,10 @@ impl Context {
     }
 
     /// Add new event handler.
-    pub fn add_event_handler(&mut self, event_handler: Box<EventHandler>) {
-        self.dispatcher.add_source(event_handler);
+    pub fn add_event_handler(&mut self,
+                             event_handler: Box<EventHandler + Send>,
+                             event_kind: EventKind) {
+        self.dispatcher.add_source(event_handler, event_kind);
     }
 
     /// Get global configuration.

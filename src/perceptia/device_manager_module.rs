@@ -19,8 +19,8 @@ pub struct DeviceManagerModule<'a> {
 
 impl<'a> DeviceManagerModule<'a> {
     /// `DeviceManagerModule` constructor.
-    pub fn new() -> Self {
-        DeviceManagerModule { manager: None }
+    pub fn new() -> Box<Module<T = Perceptron, C = Context>> {
+        Box::new(DeviceManagerModule { manager: None })
     }
 }
 
@@ -30,8 +30,8 @@ impl<'a> Module for DeviceManagerModule<'a> {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self, context: Self::C) -> InitResult {
-        self.manager = Some(DeviceManager::new(context));
+    fn initialize(&mut self, context: &mut Self::C) -> InitResult {
+        self.manager = Some(DeviceManager::new(context.clone()));
         Vec::new()
     }
 

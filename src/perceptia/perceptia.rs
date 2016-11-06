@@ -16,23 +16,24 @@ extern crate wayland_frontend;
 
 mod device_manager_module;
 mod exhibitor_module;
-mod wayland_module;
+mod wayland_service;
 
 use std::boxed::FnBox;
 
-use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module};
+use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module, Service};
 use qualia::{Context, Coordinator, InputManager, Perceptron};
 
 use device_manager_module::DeviceManagerModule;
 use exhibitor_module::ExhibitorModule;
-use wayland_module::WaylandModule;
+use wayland_service::WaylandService;
 
-type Mod = Box<Module<T = Perceptron, C = Context>>;
-type Constructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
+type ModuleConstructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
+type ServiceConstructor = Box<FnBox(Context) -> Box<Service> + Send>;
 
 fn main() {
-    // Set panic hook: log the panic and quit application
-    std::panic::set_hook(Box::new(|info| { qualia::functions::panic_hook(info) }));
+    // Set panic hook: log the panic and quit application - we want to exit when one of threads
+    // panics.
+    std::panic::set_hook(Box::new(|info| qualia::functions::panic_hook(info)));
 
     // Prepare tools
     let env = qualia::Env::create();
@@ -53,7 +54,7 @@ fn main() {
                                input_manager.clone());
 
     let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
-    dispatcher.add_source(signal_source);
+    dispatcher.add_source(signal_source, dharma::event_kind::READ);
 
     // Create loops
     let mut utils_info: EventLoopInfo<_, _> =
@@ -62,25 +63,27 @@ fn main() {
     let mut exhibitor_info: EventLoopInfo<_, _> =
         EventLoopInfo::new("p:exhibitor".to_owned(), signaler.clone(), context.clone());
 
-    // Create modules
-    let device_manager_module: Constructor =
-        Box::new(|| Box::new(DeviceManagerModule::new()) as Mod);
-    let wayland_module: Constructor = Box::new(|| Box::new(WaylandModule::new()) as Mod);
-    let exhibitor_module: Constructor = Box::new(|| Box::new(ExhibitorModule::new()) as Mod);
+    let wayland_info: EventLoopInfo<_, _> =
+        EventLoopInfo::new("p:wayland".to_owned(), signaler.clone(), context.clone());
+
+    // Create modules and services
+    let device_manager_module: ModuleConstructor = Box::new(DeviceManagerModule::new);
+    let exhibitor_module: ModuleConstructor = Box::new(ExhibitorModule::new);
+    let wayland_service: ServiceConstructor = Box::new(WaylandService::new);
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);
-    utils_info.add_module(wayland_module);
     exhibitor_info.add_module(exhibitor_module);
 
     // Start threads
     let mut join_handles = std::collections::VecDeque::new();
     join_handles.push_back(utils_info.start_event_loop().unwrap());
     join_handles.push_back(exhibitor_info.start_event_loop().unwrap());
+    join_handles.push_back(wayland_info.start_service(wayland_service).unwrap());
 
     // Start main loop
     dispatcher.start();
-    log_info1!("Stoped dispatcher!");
+    log_info1!("Stopped dispatcher!");
 
     // Join threads
     for jh in join_handles.pop_front() {

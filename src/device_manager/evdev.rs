@@ -15,7 +15,7 @@ use nix::sys::stat::Mode;
 use nix::unistd::read;
 
 use qualia::{DeviceKind, Illusion, InputConfig};
-use dharma::EventHandler;
+use dharma::{EventHandler, EventKind, event_kind};
 
 use drivers;
 use input_gateway::InputGateway;
@@ -57,19 +57,11 @@ impl EventHandler for Evdev {
         self.fd
     }
 
-    fn process_event(&mut self) {
-        let mut ev: input_event = unsafe { mem::uninitialized() };
-        match read(self.fd,
-                   unsafe { mem::transmute::<&mut input_event, &mut [u8; 3 * 8]>(&mut ev) }) {
-            Ok(_) => {
-                match self.device_kind {
-                    DeviceKind::Keyboard => self.process_keyboard_event(&ev),
-                    DeviceKind::Mouse => self.process_mouse_event(&ev),
-                    DeviceKind::Touchpad => self.process_touchpad_event(&ev),
-                    DeviceKind::Unknown => panic!("Received event from device of unknown type"),
-                }
-            }
-            Err(err) => log_warn2!("Error during reading imput: {:?}", err),
+    fn process_event(&mut self, event_kind: EventKind) {
+        if event_kind.intersects(event_kind::HANGUP) {
+            // TODO: Implement handling hangup of event device.
+        } else if event_kind.intersects(event_kind::READ) {
+            self.read_events();
         }
     }
 }
@@ -89,6 +81,23 @@ impl Evdev {
             config: config,
             gateway: gateway,
             pressure: 0,
+        }
+    }
+
+    /// Reads events.
+    fn read_events(&mut self) {
+        let mut ev: input_event = unsafe { mem::uninitialized() };
+        let data = unsafe { mem::transmute::<&mut input_event, &mut [u8; 3 * 8]>(&mut ev) };
+        match read(self.fd, &mut data[..]) {
+            Ok(_) => {
+                match self.device_kind {
+                    DeviceKind::Keyboard => self.process_keyboard_event(&ev),
+                    DeviceKind::Mouse => self.process_mouse_event(&ev),
+                    DeviceKind::Touchpad => self.process_touchpad_event(&ev),
+                    DeviceKind::Unknown => panic!("Received event from device of unknown type"),
+                }
+            }
+            Err(err) => log_warn2!("Error during reading input: {:?}", err),
         }
     }
 

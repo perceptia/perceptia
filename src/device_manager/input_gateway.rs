@@ -27,7 +27,8 @@ impl InputGateway {
     /// `InputGateway` constructor.
     pub fn new(config: InputConfig,
                input_manager: InputManager,
-               signaler: Signaler<Perceptron>) -> Self {
+               signaler: Signaler<Perceptron>)
+               -> Self {
         InputGateway {
             modifiers: modifier::NONE,
             config: config,

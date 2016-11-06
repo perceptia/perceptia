@@ -33,28 +33,32 @@
 //! Last module contains helper code for and handling system signals.
 
 #![feature(fnbox)]
+#![warn(missing_docs)]
 
+#[macro_use]
+extern crate bitflags;
 extern crate nix;
 
 /// Communication between two endpoints in different threads.
 ///
 pub mod bridge;
-pub use bridge::{connect, Sender, Receiver, ReceiveResult, Transportable};
+pub use bridge::{connect, direct_connect};
+pub use bridge::{DirectSender, Sender, Receiver, ReceiveResult, SignalId, SpecialCommand};
 
 /// Notification sender.
 ///
 pub mod signaler;
-pub use signaler::{Event, Signaler, SignalId};
+pub use signaler::Signaler;
 
 /// Implementation of main thread loop with notification listening.
 ///
 pub mod event_loop;
-pub use event_loop::{EventLoop, EventLoopInfo, InitResult, Module};
+pub use event_loop::{EventLoop, EventLoopInfo, InitResult, Module, Service};
 
 /// Handling system events (`epoll` wrapper).
 ///
 pub mod dispatcher;
-pub use dispatcher::{EventHandler, Dispatcher};
+pub use dispatcher::{Dispatcher, EventHandler, EventHandlerId, EventKind, event_kind};
 
 /// System signal handling.
 ///

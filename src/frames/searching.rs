@@ -82,7 +82,7 @@ impl Searching for Frame {
                     frame.clone()
                 } else {
                     frame.find_pointed(point)
-                }
+                };
             }
         }
         self.clone()

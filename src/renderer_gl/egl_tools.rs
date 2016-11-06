@@ -12,6 +12,7 @@ use qualia::Illusion;
 // -------------------------------------------------------------------------------------------------
 
 /// List of attributes for create of configuration.
+#[cfg_attr(rustfmt, rustfmt_skip)]
 static CONFIG_ATTRIB_LIST: [egl::EGLint; 13] = [
         egl::EGL_RENDERABLE_TYPE, egl::EGL_OPENGL_ES2_BIT,
         egl::EGL_SURFACE_TYPE,    egl::EGL_WINDOW_BIT,
@@ -25,14 +26,11 @@ static CONFIG_ATTRIB_LIST: [egl::EGLint; 13] = [
 // -------------------------------------------------------------------------------------------------
 
 /// List of attributes for create of context.
-static CONTEXT_ATTRIB_LIST: [egl::EGLint; 3] = [
-        egl::EGL_CONTEXT_CLIENT_VERSION, 2,
-        egl::EGL_NONE
-    ];
+static CONTEXT_ATTRIB_LIST: [egl::EGLint; 3] = [egl::EGL_CONTEXT_CLIENT_VERSION, 2, egl::EGL_NONE];
 
 // -------------------------------------------------------------------------------------------------
 
-/// List of attributes for create of surface. 
+/// List of attributes for create of surface.
 static SURFACE_ATTRIB_LIST: [egl::EGLint; 0] = [];
 
 // -------------------------------------------------------------------------------------------------
@@ -76,47 +74,48 @@ pub struct EglContext {
 
 impl EglBucket {
     /// `EglBucket` constructor.
-    pub fn new(display_type: egl::EGLNativeDisplayType, window_type: egl::EGLNativeWindowType)
-    -> Result<Self, Illusion> {
+    pub fn new(display_type: egl::EGLNativeDisplayType,
+               window_type: egl::EGLNativeWindowType)
+               -> Result<Self, Illusion> {
         // Get display
         let display = if let Some(display) = egl::get_display(display_type) {
             display
         } else {
-            return Err(Illusion::General(format!("Failed to get EGL display")))
+            return Err(Illusion::General(format!("Failed to get EGL display")));
         };
 
         // Initialize EGL
         let mut major = 0;
         let mut minor = 0;
         if !egl::initialize(display, &mut major, &mut minor) {
-            return Err(Illusion::General(format!("Failed to initialize EGL")))
+            return Err(Illusion::General(format!("Failed to initialize EGL")));
         };
 
         if !egl::bind_api(egl::EGL_OPENGL_ES_API) {
-            return Err(Illusion::General(format!("Failed to bind EGL API")))
+            return Err(Illusion::General(format!("Failed to bind EGL API")));
         };
 
         // Choose config
         let config = if let Some(config) = egl::choose_config(display, &CONFIG_ATTRIB_LIST, 1) {
             config
         } else {
-            return Err(Illusion::General(format!("Failed to choose EGL config")))
+            return Err(Illusion::General(format!("Failed to choose EGL config")));
         };
 
         // Create context
-        let context = if let Some(context)
-                 = egl::create_context(display, config, egl::EGL_NO_CONTEXT, &CONTEXT_ATTRIB_LIST) {
+        let c = egl::create_context(display, config, egl::EGL_NO_CONTEXT, &CONTEXT_ATTRIB_LIST);
+        let context = if let Some(context) = c {
             context
         } else {
-            return Err(Illusion::General(format!("Failed to create EGL context")))
+            return Err(Illusion::General(format!("Failed to create EGL context")));
         };
 
         // Create window surface
-        let surface = if let Some(surface)
-                  = egl::create_window_surface(display, config, window_type, &SURFACE_ATTRIB_LIST) {
+        let s = egl::create_window_surface(display, config, window_type, &SURFACE_ATTRIB_LIST);
+        let surface = if let Some(surface) = s {
             surface
         } else {
-            return Err(Illusion::General(format!("Failed to create EGL window surface")))
+            return Err(Illusion::General(format!("Failed to create EGL window surface")));
         };
 
         // Return bundle
@@ -145,9 +144,7 @@ impl EglBucket {
 impl EglContext {
     /// `EglContext` constructor.
     fn new(egl: EglBucket) -> Self {
-        EglContext {
-            egl: egl,
-        }
+        EglContext { egl: egl }
     }
 }
 

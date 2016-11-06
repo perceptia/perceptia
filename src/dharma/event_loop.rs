@@ -8,6 +8,8 @@
 //!
 //! `Module`s are created inside new thread so do not have to implement Send. User passes only
 //! their constructors to `EventLoopInfo` structure which is context for creation on `EventLoop`.
+//!
+//! If `EventLoop` is not enough or too much, one can make new loop by implementing `Service` trait.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -15,7 +17,7 @@ use std;
 use std::collections::btree_map::BTreeMap as Map;
 use std::boxed::FnBox;
 
-use bridge::{self, ReceiveResult};
+use bridge::{self, ReceiveResult, SpecialCommand};
 use signaler;
 use system;
 
@@ -23,7 +25,7 @@ use system;
 
 /// Result of initialization of module. Module should return vector of signal identifiers it wants
 /// to be subscribed for.
-pub type InitResult = Vec<signaler::SignalId>;
+pub type InitResult = Vec<bridge::SignalId>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -31,19 +33,36 @@ pub type InitResult = Vec<signaler::SignalId>;
 /// More modules may be run in the same thread. Modules do not share memory, communicate with
 /// signals.
 pub trait Module {
-    type T: bridge::Transportable;
-    type C: Send + Sync + Clone;
-    fn initialize(&mut self, mut context: Self::C) -> InitResult;
+    /// Type for transported packages.
+    type T: Clone + Send;
+
+    /// Type for context that will be passed to `Module` at initialization.
+    type C: Clone + Send + Sync;
+
+    /// Callback run just after start of `Module`.
+    fn initialize(&mut self, context: &mut Self::C) -> InitResult;
+
+    /// Callback run on every message `Module` subscribed for.
     fn execute(&mut self, package: &Self::T);
+
+    /// Callback run just before termination of `Module`.
     fn finalize(&mut self);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Trait for all `Service`s.
+pub trait Service {
+    /// Main loop for `Service`.
+    fn run(&mut self);
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Context for creation of `EventLoop`.
 pub struct EventLoopInfo<P, C>
-    where P: bridge::Transportable + 'static,
-          C: Send + Sync + Clone + 'static
+    where P: Clone + Send + 'static,
+          C: Clone + Send + Sync + 'static
 {
     name: String,
     signaler: signaler::Signaler<P>,
@@ -54,8 +73,8 @@ pub struct EventLoopInfo<P, C>
 // -------------------------------------------------------------------------------------------------
 
 impl<P, C> EventLoopInfo<P, C>
-    where P: bridge::Transportable + std::fmt::Display,
-          C: Send + Sync + Clone
+    where P: Clone + Send + std::fmt::Display,
+          C: Clone + Send + Sync
 {
     /// `EventLoop` constructor.
     pub fn new(name: String, signaler: signaler::Signaler<P>, context: C) -> Self {
@@ -79,27 +98,36 @@ impl<P, C> EventLoopInfo<P, C>
             .name(self.name.clone())
             .spawn(move || EventLoop::new(self).run())
     }
+
+    /// Consume `EventLoopInfo` to start custom event loop in new thread.
+    pub fn start_service(self,
+                         contructor: Box<FnBox(C) -> Box<Service> + Send>)
+                         -> std::io::Result<std::thread::JoinHandle<()>> {
+        std::thread::Builder::new()
+            .name(self.name.clone())
+            .spawn(move || contructor.call_box((self.context.clone(),)).run())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Thread loop with event queue with communication over `bridge`s.
 pub struct EventLoop<P, C>
-    where P: bridge::Transportable + 'static,
-          C: Send + Sync + Clone
+    where P: Clone + Send + 'static,
+          C: Clone + Send + Sync
 {
     signaler: signaler::Signaler<P>,
     modules: Vec<Box<Module<T = P, C = C>>>,
-    receiver: bridge::Receiver<signaler::Event<P>>,
-    subscriptions: Map<signaler::SignalId, Vec<usize>>,
+    receiver: bridge::Receiver<P>,
+    subscriptions: Map<bridge::SignalId, Vec<usize>>,
     context: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl<P, C> EventLoop<P, C>
-    where P: bridge::Transportable + std::fmt::Display,
-          C: Send + Sync + Clone
+    where P: Clone + Send + std::fmt::Display,
+          C: Clone + Send + Sync
 {
     /// `EventLoop` constructor. Constructs `EventLoop` and all assigned modules.
     pub fn new(mut info: EventLoopInfo<P, C>) -> Self {
@@ -138,7 +166,7 @@ impl<P, C> EventLoop<P, C>
         self.signaler.register(&self.receiver);
         let mut i = 0;
         for mut m in self.modules.iter_mut() {
-            let signals = m.initialize(self.context.clone());
+            let signals = m.initialize(&mut self.context);
             for s in signals {
                 if self.subscriptions.contains_key(&s) {
                     match self.subscriptions.get_mut(&s) {
@@ -160,26 +188,36 @@ impl<P, C> EventLoop<P, C>
     fn do_run(&mut self) {
         loop {
             match self.receiver.recv() {
-                ReceiveResult::Ok(event) => {
-                    match event {
-                        signaler::Event::Package { id, package } => {
-                            match self.subscriptions.get_mut(&id) {
-                                Some(ref mut subscribers) => {
-                                    // Inform all subscriber about notification.
-                                    for i in subscribers.iter() {
-                                        self.modules[*i].execute(&package);
-                                    }
-                                }
-                                None => {
-                                    // Received signal we did not subscribe for.
-                                    // Ignore it.
-                                }
+                // Enum value used by `Signaler` to emit events.
+                ReceiveResult::Defined(id, package) => {
+                    match self.subscriptions.get_mut(&id) {
+                        Some(ref mut subscribers) => {
+                            // Inform all subscriber about notification.
+                            for i in subscribers.iter() {
+                                self.modules[*i].execute(&package);
                             }
                         }
-                        signaler::Event::Terminate => break,
+                        None => {
+                            // Received signal we did not subscribe for.
+                            // Ignore it.
+                        }
                     }
                 }
-                ReceiveResult::Timeout => {}
+
+                // Special command from `Signaler`.
+                ReceiveResult::Special(command) => {
+                    match command {
+                        SpecialCommand::Terminate => break,
+                    }
+                }
+
+                // Ignore, `Signaler` should never emit these.
+                ReceiveResult::Plain(_) => {}
+                ReceiveResult::Custom(_, _) => {}
+                ReceiveResult::Any(_, _) => break,
+
+                // Break in case of errors.
+                ReceiveResult::Timeout => break,
                 ReceiveResult::Empty => break,
                 ReceiveResult::Err => break,
             }

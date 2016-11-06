@@ -9,12 +9,12 @@ use std;
 use gl;
 use egl;
 
-use qualia::{Coordinator, SurfaceContext, Illusion, Size};
+use qualia::{Coordinator, SurfaceContext, Illusion, Size, Pixmap};
 
 use gl_tools;
 use egl_tools;
 
-//------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 const MAX_TEXTURES: u32 = 32;
 
@@ -75,7 +75,7 @@ impl RendererGl {
     pub fn initialize(&mut self) -> Result<(), Illusion> {
         gl::load_with(|s| egl::get_proc_address(s) as *const std::os::raw::c_void);
 
-        let context = try!(self.egl.make_current());
+        let _context = self.egl.make_current()?;
 
         // Get GLSL version
         let (vshader_src, fshader_src) = match gl_tools::get_shading_lang_version() {
@@ -91,11 +91,12 @@ impl RendererGl {
         };
 
         // Compile shades, link program and get locations
-        self.program = try!(gl_tools::prepare_shader_program(vshader_src, fshader_src));
-        self.loc_vertices = try!(gl_tools::get_attrib_location(self.program, "vertices".to_owned()));
-        self.loc_texcoords = try!(gl_tools::get_attrib_location(self.program, "texcoords".to_owned()));
-        self.loc_texture = try!(gl_tools::get_uniform_location(self.program, "texture".to_owned()));
-        self.loc_screen_size = try!(gl_tools::get_uniform_location(self.program, "screen_size".to_owned()));
+        self.program = gl_tools::prepare_shader_program(vshader_src, fshader_src)?;
+        self.loc_vertices = gl_tools::get_attrib_location(self.program, "vertices".to_owned())?;
+        self.loc_texcoords = gl_tools::get_attrib_location(self.program, "texcoords".to_owned())?;
+        self.loc_texture = gl_tools::get_uniform_location(self.program, "texture".to_owned())?;
+        self.loc_screen_size = gl_tools::get_uniform_location(self.program,
+                                                              "screen_size".to_owned())?;
 
         // Generate vertex buffer object
         unsafe {
@@ -123,8 +124,8 @@ impl RendererGl {
                 surfaces: &Vec<SurfaceContext>,
                 pointer: SurfaceContext,
                 coordinator: &Coordinator)
-    -> Result<(), Illusion> {
-        let context = try!(self.egl.make_current());
+                -> Result<(), Illusion> {
+        let _context = self.egl.make_current()?;
         self.prepare_view();
         self.draw_bg_image();
         self.draw_surfaces(surfaces, coordinator);
@@ -135,7 +136,7 @@ impl RendererGl {
 
     /// Swap buffers.
     pub fn swap_buffers(&mut self) -> Result<(), Illusion> {
-        let context = try!(self.egl.make_current());
+        let context = self.egl.make_current()?;
         context.swap_buffers()
     }
 }
@@ -154,13 +155,14 @@ impl RendererGl {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             gl::UseProgram(self.program);
-            gl::Uniform2i(self.loc_screen_size, self.size.width as i32, self.size.height as i32);
+            gl::Uniform2i(self.loc_screen_size,
+                          self.size.width as i32,
+                          self.size.height as i32);
         }
     }
 
     /// Draw background image.
-    fn draw_bg_image(&self) {
-    }
+    fn draw_bg_image(&self) {}
 
     /// Load textures and prepare vertices.
     fn load_texture_and_prepare_vertices(&self,
@@ -173,35 +175,49 @@ impl RendererGl {
             unsafe {
                 gl::ActiveTexture(gl::TEXTURE0 + index as u32);
                 gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
-                gl::TexImage2D(gl::TEXTURE_2D,                          // target
-                               0,                                       // level, 0 = no mipmap
-                               gl::RGBA as gl::types::GLint,            // internal format
-                               (*buffer).get_width() as gl::types::GLint,  // width
+                gl::TexImage2D(gl::TEXTURE_2D, // target
+                               0, // level, 0 = no mipmap
+                               gl::RGBA as gl::types::GLint, // internal format
+                               (*buffer).get_width() as gl::types::GLint, // width
                                (*buffer).get_height() as gl::types::GLint, // height
-                               0,                                       // always 0 in OpenGL ES
-                               gl::RGBA,                                // format
-                               gl::UNSIGNED_BYTE,                       // type
-                               (*buffer).get_data().as_ptr() as *const _);
+                               0, // always 0 in OpenGL ES
+                               gl::RGBA, // format
+                               gl::UNSIGNED_BYTE, // type
+                               (*buffer).as_ptr() as *const _);
             }
 
-            let left   = context.pos.x as gl::types::GLfloat;
-            let top    = context.pos.y as gl::types::GLfloat;
-            let right  = left + (*buffer).get_width() as gl::types::GLfloat;
+            let left = context.pos.x as gl::types::GLfloat;
+            let top = context.pos.y as gl::types::GLfloat;
+            let right = left + (*buffer).get_width() as gl::types::GLfloat;
             let bottom = top + (*buffer).get_height() as gl::types::GLfloat;
 
-            vertices[ 0] = left;  vertices[ 1] = top;
-            vertices[ 2] = right; vertices[ 3] = top;
-            vertices[ 4] = left;  vertices[ 5] = bottom;
-            vertices[ 6] = right; vertices[ 7] = top;
-            vertices[ 8] = right; vertices[ 9] = bottom;
-            vertices[10] = left;  vertices[11] = bottom;
+            vertices[0] = left;
+            vertices[1] = top;
+            vertices[2] = right;
+            vertices[3] = top;
+            vertices[4] = left;
+            vertices[5] = bottom;
+            vertices[6] = right;
+            vertices[7] = top;
+            vertices[8] = right;
+            vertices[9] = bottom;
+            vertices[10] = left;
+            vertices[11] = bottom;
 
-            texcoords[ 0] = 0.0; texcoords[ 1] = 0.0;
-            texcoords[ 2] = 1.0; texcoords[ 3] = 0.0;
-            texcoords[ 4] = 0.0; texcoords[ 5] = 1.0;
-            texcoords[ 6] = 1.0; texcoords[ 7] = 0.0;
-            texcoords[ 8] = 1.0; texcoords[ 9] = 1.0;
-            texcoords[10] = 0.0; texcoords[11] = 1.0;
+            texcoords[0] = 0.0;
+            texcoords[1] = 0.0;
+            texcoords[2] = 1.0;
+            texcoords[3] = 0.0;
+            texcoords[4] = 0.0;
+            texcoords[5] = 1.0;
+            texcoords[6] = 1.0;
+            texcoords[7] = 0.0;
+            texcoords[8] = 1.0;
+            texcoords[9] = 1.0;
+            texcoords[10] = 0.0;
+            texcoords[11] = 1.0;
+        } else {
+            log_error!("Renderer: No buffer for surface {}", context.id);
         }
     }
 
@@ -220,8 +236,8 @@ impl RendererGl {
         for i in 0..surfaces.len() {
             self.load_texture_and_prepare_vertices(coordinator,
                                                    &surfaces[i],
-                                                   &mut vertices[12*i..12*i+12],
-                                                   &mut texcoords[12*i..12*i+12],
+                                                   &mut vertices[12 * i..12 * i + 12],
+                                                   &mut texcoords[12 * i..12 * i + 12],
                                                    i);
         }
 
@@ -229,9 +245,12 @@ impl RendererGl {
             // Upload positions to vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_vertices);
             gl::EnableVertexAttribArray(self.loc_vertices as gl::types::GLuint);
-            gl::VertexAttribPointer(self.loc_vertices as gl::types::GLuint, 2,
-                                    gl::FLOAT, gl::FALSE,
-                                    2*std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLint,
+            gl::VertexAttribPointer(self.loc_vertices as gl::types::GLuint,
+                                    2,
+                                    gl::FLOAT,
+                                    gl::FALSE,
+                                    2 *
+                                    std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLint,
                                     std::ptr::null());
             gl::BufferData(gl::ARRAY_BUFFER,
                            vertices_size as isize,
@@ -241,9 +260,12 @@ impl RendererGl {
             // Upload positions to vertex buffer object
             gl::BindBuffer(gl::ARRAY_BUFFER, self.vbo_texcoords);
             gl::EnableVertexAttribArray(self.loc_texcoords as gl::types::GLuint);
-            gl::VertexAttribPointer(self.loc_texcoords as gl::types::GLuint, 2,
-                                    gl::FLOAT, gl::FALSE,
-                                    2*std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLint,
+            gl::VertexAttribPointer(self.loc_texcoords as gl::types::GLuint,
+                                    2,
+                                    gl::FLOAT,
+                                    gl::FALSE,
+                                    2 *
+                                    std::mem::size_of::<gl::types::GLfloat>() as gl::types::GLint,
                                     std::ptr::null());
             gl::BufferData(gl::ARRAY_BUFFER,
                            vertices_size as isize,
@@ -253,7 +275,7 @@ impl RendererGl {
             // Redraw everything
             for i in 0..surfaces.len() as i32 {
                 gl::Uniform1i(self.loc_texture, i);
-                gl::DrawArrays(gl::TRIANGLES, 6*i, 6);
+                gl::DrawArrays(gl::TRIANGLES, 6 * i, 6);
             }
 
             // Release resources

@@ -87,7 +87,7 @@ impl<'a> Udev<'a> {
     /// handle situations when the file descriptor becomes invalid.
     pub fn start_device_monitor(&mut self) -> Result<DeviceMonitor, qualia::Illusion> {
         if self.monitor_socket.is_none() {
-            let mut monitor = try!(libudev::Monitor::new(&self.context));
+            let mut monitor = libudev::Monitor::new(&self.context)?;
             ensure!(monitor.match_subsystem("input"));
             ensure!(monitor.match_subsystem("drm"));
             // self.monitor_socket = Some(try!(monitor.listen()));

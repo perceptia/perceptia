@@ -46,9 +46,6 @@ enum CommandResult {
 
     /// Wrong frame was used for operation. This indicates error in compositor logic.
     WrongFrame,
-
-    //// Command was invalid. This value probably should not be needed.
-    //InvalidArgument,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -106,7 +103,7 @@ impl Compositor {
     pub fn create_display(&mut self, area: Area, name: String) -> Frame {
         let mut display = Frame::new_display(area, name);
         let mut workspace = self.create_next_workspace()
-           .expect("Could not create workspace. This probably indicated error in compositor logic");
+            .expect("Could not create workspace. This probably indicates compositor logic error");
         self.root.append(&mut display);
         workspace.settle(&mut display, &mut self.coordinator);
         self.select(workspace);
@@ -119,35 +116,41 @@ impl Compositor {
         let mut frame = self.selection.clone();
         let result = match command.action {
             Action::Configure => self.configure(&mut frame, command.direction),
-            Action::Focus => match command.direction {
-                Direction::Workspace => {
-                    self.focus_workspace(&command.string);
-                    CommandResult::Ok
+            Action::Focus => {
+                match command.direction {
+                    Direction::Workspace => {
+                        self.focus_workspace(&command.string);
+                        CommandResult::Ok
+                    }
+                    _ => self.focus(&mut frame, command.direction, command.magnitude),
                 }
-                _ => self.focus(&mut frame, command.direction, command.magnitude),
-            },
-            Action::Jump => match command.direction {
-                Direction::Workspace => {
-                    self.jump_to_workspace(&mut frame, &command.string);
-                    CommandResult::Ok
+            }
+            Action::Jump => {
+                match command.direction {
+                    Direction::Workspace => {
+                        self.jump_to_workspace(&mut frame, &command.string);
+                        CommandResult::Ok
+                    }
+                    Direction::End => {
+                        self.ramify(frame);
+                        CommandResult::Ok
+                    }
+                    Direction::Begin => {
+                        self.exalt(&mut frame);
+                        CommandResult::Ok
+                    }
+                    _ => self.jump(&mut frame, command.direction, command.magnitude),
                 }
-                Direction::End => {
-                    self.ramify(frame);
-                    CommandResult::Ok
+            }
+            Action::Dive => {
+                match command.direction {
+                    Direction::Workspace => {
+                        self.dive_to_workspace(frame, &command.string);
+                        CommandResult::Ok
+                    }
+                    _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
-                Direction::Begin => {
-                    self.exalt(&mut frame);
-                    CommandResult::Ok
-                }
-                _ => self.jump(&mut frame, command.direction, command.magnitude),
-            },
-            Action::Dive => match command.direction {
-                Direction::Workspace => {
-                    self.dive_to_workspace(frame, &command.string);
-                    CommandResult::Ok
-                }
-                _ => self.dive(&mut frame, command.direction, command.magnitude),
-            },
+            }
             _ => CommandResult::NotHandled,
         };
 
@@ -266,9 +269,7 @@ impl Compositor {
              mut position: i32)
              -> CommandResult {
         match direction {
-            Direction::Workspace => {
-                CommandResult::NotHandled
-            }
+            Direction::Workspace => CommandResult::NotHandled,
             Direction::Backward | Direction::Forward => {
                 if direction == Direction::Forward {
                     position = -1 * position;
@@ -499,8 +500,9 @@ impl Compositor {
         } else {
             // TODO: For many output setup this should be configurable on which output the
             // workspace will be created.
-            let mut display_frame = self.find_current_workspace().get_parent()
-                                        .expect("workspace must be contained in display frame");
+            let mut display_frame = self.find_current_workspace()
+                .get_parent()
+                .expect("workspace must be contained in display frame");
 
             self.create_new_workspace(&mut display_frame, title, focus)
         }

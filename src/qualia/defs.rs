@@ -30,8 +30,12 @@ pub const INVALID_SURFACE_ID: SurfaceIdType = 0;
 // -------------------------------------------------------------------------------------------------
 
 /// Structure representing surface ID.
+/// TODO: Define `SurfaceId` using `define_id` macro.
 #[derive(Clone, Copy, Eq, PartialEq, Hash)]
 pub struct SurfaceId(SurfaceIdType);
+
+define_id!(pub MemoryPoolId: usize);
+define_id!(pub MemoryViewId: usize);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -75,7 +79,7 @@ impl std::fmt::Debug for SurfaceId {
 impl std::fmt::Display for SurfaceId {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         if self.is_valid() {
-            write!(f, "SID({})", self)
+            write!(f, "SID({})", self.0)
         } else {
             write!(f, "<invalid>")
         }
@@ -114,7 +118,7 @@ pub mod mode_name {
 
 /// Type defining position, point coordinates or 2D vector.
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
     pub x: i32,
     pub y: i32,
@@ -204,7 +208,7 @@ impl std::ops::Sub for Position {
 // -------------------------------------------------------------------------------------------------
 
 /// Type defining position, point coordinates or 2D vector.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct OptionalPosition {
     pub x: Option<i32>,
     pub y: Option<i32>,
@@ -246,7 +250,7 @@ impl std::default::Default for OptionalPosition {
 // -------------------------------------------------------------------------------------------------
 
 /// This structure combines information about surface ID with position.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct SurfacePosition {
     pub sid: SurfaceId,
     pub pos: Position,
@@ -268,17 +272,17 @@ impl SurfacePosition {
 
 /// Type defining 2D size, dimensions or resolution.
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Size {
-    pub width: u32,
-    pub height: u32,
+    pub width: usize,
+    pub height: usize,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Size {
     /// `Size` constructor.
-    pub fn new(width: u32, height: u32) -> Self {
+    pub fn new(width: usize, height: usize) -> Self {
         Size {
             width: width,
             height: height,
@@ -350,7 +354,7 @@ impl std::default::Default for Area {
 // -------------------------------------------------------------------------------------------------
 
 /// Data for button event.
-#[derive(Clone, Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct Button {
     pub code: u16,
     pub value: i32,

@@ -7,8 +7,9 @@
 
 use std;
 
-use dharma::{SignalId, Transportable};
+use dharma::SignalId;
 
+use timing::Milliseconds;
 use defs::{Command, DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
@@ -41,6 +42,8 @@ pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
 #[derive(Clone)]
 pub enum Perceptron {
     Notify,
+    CustomEmpty,
+    CustomId(u64),
     VerticalBlank(i32),
     PageFlip(i32),
     OutputFound(DrmBundle),
@@ -55,7 +58,7 @@ pub enum Perceptron {
     SurfaceDestroyed(SurfaceId),
     SurfaceReconfigured(SurfaceId),
     CursorSurfaceChange(SurfaceId),
-    SurfaceFrame(SurfaceId),
+    SurfaceFrame(SurfaceId, Milliseconds),
     PointerFocusChanged(SurfacePosition),
     PointerRelativeMotion(SurfacePosition),
     KeyboardFocusChanged(SurfaceId, SurfaceId),
@@ -63,14 +66,12 @@ pub enum Perceptron {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Transportable for Perceptron {}
-
-// -------------------------------------------------------------------------------------------------
-
 impl std::fmt::Display for Perceptron {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             Perceptron::Notify => write!(f, "Notify"),
+            Perceptron::CustomEmpty => write!(f, "CustomEmpty"),
+            Perceptron::CustomId(ref id) => write!(f, "CustomId({:?})", id),
             Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
@@ -92,7 +93,9 @@ impl std::fmt::Display for Perceptron {
             Perceptron::SurfaceReconfigured(ref sid) => write!(f, "SurfaceReconfigured({})", sid),
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
 
-            Perceptron::SurfaceFrame(ref sid) => write!(f, "SurfaceFrame({})", sid),
+            Perceptron::SurfaceFrame(sid, milliseconds) => {
+                write!(f, "SurfaceFrame(sid: {}, milliseconds: {})", sid, milliseconds.get_value())
+            }
             Perceptron::PointerFocusChanged(ref pos) => write!(f, "PointerFocusChanged({:?})", pos),
             Perceptron::PointerRelativeMotion(ref pos) => {
                 write!(f, "PointerRelativeMotion({:?})", pos)

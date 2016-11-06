@@ -49,8 +49,9 @@ pub struct Output {
     renderer: RendererGl,
 
     /// Container for Buffer Objects.
-    // This does not have to be vector. We only need one buffer at a time. Container was introduced
-    // to satisfy borrow checker.
+    ///
+    /// NOTE: This does not have to be vector. We only need one buffer at a time. Container was
+    /// introduced to satisfy borrow checker.
     bo: VecDeque<libgbm::BufferObject>,
 
     /// Current framebuffer id.
@@ -69,17 +70,17 @@ impl Output {
         if let Some(connector) = drm_mode::get_connector(drm.fd, drm.connector_id) {
             modes = connector.get_modes();
             mode = modes.get(0).unwrap().clone();
-            size = Size::new(mode.get_hdisplay() as u32, mode.get_vdisplay() as u32);
+            size = Size::new(mode.get_hdisplay() as usize, mode.get_vdisplay() as usize);
         } else {
             return Err(Illusion::General(format!("Failed to get mode for connector")));
         }
 
         // GBM
-        let gbm = try!(GbmBucket::new(drm.fd, size.clone()));
+        let gbm = GbmBucket::new(drm.fd, size.clone())?;
 
         // EGL
-        let egl = try!(egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
-                                                 gbm.surface.c_struct() as *mut _));
+        let egl = egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
+                                            gbm.surface.c_struct() as *mut _)?;
 
         // Create renderer
         let renderer = RendererGl::new(egl, size.clone());
@@ -99,8 +100,8 @@ impl Output {
         };
 
         // Initialize renderer
-        try!(mine.renderer.initialize());
-        try!(mine.swap_buffers());
+        mine.renderer.initialize()?;
+        mine.swap_buffers()?;
 
         Ok(mine)
     }
@@ -189,7 +190,7 @@ impl Output {
 
     /// Swap renderers and devices buffers.
     pub fn swap_buffers(&mut self) -> Result<u32, Illusion> {
-        try!(self.renderer.swap_buffers());
+        self.renderer.swap_buffers()?;
         self.swap_gbm_buffers()
     }
 
@@ -202,9 +203,10 @@ impl Output {
                                   self.id) {
             Ok(_) => Ok(()),
             Err(_) => {
-                Err(Illusion::General(format!("Failed to page flip (crtc_id: {}, connector_id: {})",
-                                              self.drm.crtc_id,
-                                              self.drm.connector_id)))
+                let text = format!("Failed to page flip (crtc_id: {}, connector_id: {})",
+                                   self.drm.crtc_id,
+                                   self.drm.connector_id);
+                Err(Illusion::General(text))
             }
         }
     }

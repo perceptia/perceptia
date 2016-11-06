@@ -9,23 +9,17 @@ extern crate dharma;
 
 use std::{thread, time};
 
-use self::dharma::bridge::ReceiveResult;
-
 // -------------------------------------------------------------------------------------------------
 
 /// Helper macro producing `ReceiveResult` for assertions.
 macro_rules! make_resp {
-    ($num:expr, $str:expr) => { ReceiveResult::Ok(dharma::Event::Package{
-                id:      $num,
-                package: String::from($str),
-            })
-        };
+    ($num:expr, $str:expr) => { ReceiveResult::Defined($num, String::from($str)) }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Type of receiver used in tests.
-type EventReceiver = dharma::Receiver<dharma::Event<String>>;
+type EventReceiver = dharma::Receiver<String>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -48,9 +42,9 @@ fn test_subscribe_one_recever_on_one_singnal() {
     s.subscribe(0, &r);
     s.emit(0, String::from(T));
 
-    assert_eq!(r.recv_timeout(d1), make_resp!(0, T));
-    assert_eq!(r.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r.recv_timeout(d2), ReceiveResult::Timeout);
+    assert!(r.recv_timeout(d1).is_defined(0, String::from(T)));
+    assert!(r.try_recv().is_empty());
+    assert!(r.recv_timeout(d2).is_timeout());
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -67,15 +61,15 @@ fn test_subscribe_one_recever_on_two_singnals() {
     s.subscribe(0, &r);
     s.subscribe(1, &r);
 
-    s.emit(0, String::from(H1));
-    s.emit(1, String::from(H2));
-    s.emit(2, String::from(H3));
-    assert_eq!(r.recv_timeout(d), make_resp!(0, H1));
-    assert_eq!(r.recv_timeout(d), make_resp!(1, H2));
-    assert_eq!(r.try_recv(), ReceiveResult::Empty);
+    s.emit(0, String::from(String::from(H1)));
+    s.emit(1, String::from(String::from(H2)));
+    s.emit(2, String::from(String::from(H3)));
+    assert!(r.recv_timeout(d).is_defined(0, String::from(H1)));
+    assert!(r.recv_timeout(d).is_defined(1, String::from(H2)));
+    assert!(r.try_recv().is_empty());
     s.emit(1, String::from(T));
-    assert_eq!(r.recv_timeout(d), make_resp!(1, T));
-    assert_eq!(r.try_recv(), ReceiveResult::Empty);
+    assert!(r.recv_timeout(d).is_defined(1, String::from(T)));
+    assert!(r.try_recv().is_empty());
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -93,17 +87,17 @@ fn test_subscribe_two_recevers_on_same_signal() {
     s.subscribe(0, &r1);
     s.subscribe(0, &r2);
 
-    s.emit(0, String::from(H1));
-    s.emit(1, String::from(H2));
-    assert_eq!(r1.recv_timeout(d), make_resp!(0, H1));
-    assert_eq!(r2.recv_timeout(d), make_resp!(0, H1));
-    assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+    s.emit(0, String::from(String::from(H1)));
+    s.emit(1, String::from(String::from(H2)));
+    assert!(r1.recv_timeout(d).is_defined(0, String::from(H1)));
+    assert!(r2.recv_timeout(d).is_defined(0, String::from(H1)));
+    assert!(r1.try_recv().is_empty());
+    assert!(r2.try_recv().is_empty());
     s.emit(0, String::from(T));
-    assert_eq!(r1.recv_timeout(d), make_resp!(0, T));
-    assert_eq!(r2.recv_timeout(d), make_resp!(0, T));
-    assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+    assert!(r1.recv_timeout(d).is_defined(0, String::from(T)));
+    assert!(r2.recv_timeout(d).is_defined(0, String::from(T)));
+    assert!(r1.try_recv().is_empty());
+    assert!(r2.try_recv().is_empty());
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -122,20 +116,20 @@ fn test_subscribe_two_recevers_on_different_signals() {
     s.subscribe(2, &r2);
 
     s.emit(1, String::from(H1));
-    s.emit(2, String::from(H2));
-    assert_eq!(r1.recv_timeout(d), make_resp!(1, H1));
-    assert_eq!(r2.recv_timeout(d), make_resp!(2, H2));
-    assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+    s.emit(2, String::from(String::from(H2)));
+    assert!(r1.recv_timeout(d).is_defined(1, String::from(H1)));
+    assert!(r2.recv_timeout(d).is_defined(2, String::from(H2)));
+    assert!(r1.try_recv().is_empty());
+    assert!(r2.try_recv().is_empty());
     s.emit(0, String::from(T));
-    assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+    assert!(r1.try_recv().is_empty());
+    assert!(r2.try_recv().is_empty());
     s.emit(2, String::from(H1));
     s.emit(1, String::from(H2));
-    assert_eq!(r1.recv_timeout(d), make_resp!(1, H2));
-    assert_eq!(r2.recv_timeout(d), make_resp!(2, H1));
-    assert_eq!(r1.try_recv(), ReceiveResult::Empty);
-    assert_eq!(r2.try_recv(), ReceiveResult::Empty);
+    assert!(r1.recv_timeout(d).is_defined(1, String::from(H2)));
+    assert!(r2.recv_timeout(d).is_defined(2, String::from(H1)));
+    assert!(r1.try_recv().is_empty());
+    assert!(r2.try_recv().is_empty());
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -154,8 +148,8 @@ fn test_subscribe_one_recever_threaded() {
         s.emit(0, String::from(T));
     });
 
-    assert_eq!(r.recv_timeout(d), make_resp!(0, T));
-    assert_eq!(r.try_recv(), ReceiveResult::Empty);
+    assert!(r.recv_timeout(d).is_defined(0, String::from(T)));
+    assert!(r.try_recv().is_empty());
     assert!(join_handle.join().is_ok());
 }
 

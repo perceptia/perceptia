@@ -4,6 +4,9 @@
 //! `qualia` is crate containing enumerations and simple tools common to all the crates of
 //! `perceptia`.
 
+#![feature(unique)]
+
+extern crate backtrace;
 extern crate dbus;
 extern crate libc;
 extern crate libudev; // for implementation of `From` in `errors`.
@@ -11,6 +14,8 @@ extern crate nix;
 extern crate time;
 extern crate xkbcommon;
 extern crate uinput_sys;
+#[macro_use]
+extern crate bitflags;
 
 #[macro_use(timber)]
 extern crate timber;
@@ -25,14 +30,22 @@ pub use perceptron::Perceptron;
 pub mod errors;
 pub use errors::Illusion;
 
+#[macro_use]
+pub mod macros;
+
 pub mod defs;
-pub use defs::{Area, Point, Button, Key, Position, OptionalPosition, SurfacePosition, Size, Vector, DrmBundle, Command, modifier, KeyCode, KeyValue};
+pub use defs::{Area, Point, Position, OptionalPosition, SurfacePosition, Size, Vector};
+pub use defs::{Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValue};
+pub use defs::{MemoryPoolId, MemoryViewId};
 
 pub mod config;
 pub use config::{Config, InputConfig};
 
-pub mod buffer;
-pub use buffer::Buffer;
+pub mod timing;
+pub use timing::Milliseconds;
+
+pub mod memory;
+pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
 
 #[macro_use]
 pub mod log;
@@ -50,7 +63,8 @@ pub mod settings;
 pub use settings::Settings;
 
 pub mod surface;
-pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, show_reason, surface_state};
+pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo};
+pub use surface::{show_reason, surface_state};
 
 pub mod coordinator;
 pub use coordinator::Coordinator;

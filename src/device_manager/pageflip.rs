@@ -8,7 +8,7 @@
 use std::os::unix::io;
 use libdrm::drm;
 
-use dharma::{EventHandler, Signaler};
+use dharma::{EventHandler, EventKind, Signaler, event_kind};
 use qualia::{perceptron, Perceptron};
 
 // -------------------------------------------------------------------------------------------------
@@ -69,9 +69,13 @@ impl EventHandler for PageFlipEventHandler {
         self.drm_fd
     }
 
-    fn process_event(&mut self) {
-        drm::handle_event(self.drm_fd,
-                          Box::new(PageFlipContext::new(self.signaler.clone())));
+    fn process_event(&mut self, event_kind: EventKind) {
+        if event_kind.intersects(event_kind::HANGUP) {
+            // FIXME: Implement handup from DRM device if needed.
+        } else if event_kind.intersects(event_kind::READ) {
+            let ctx = Box::new(PageFlipContext::new(self.signaler.clone()));
+            drm::handle_event(self.drm_fd, ctx);
+        }
     }
 }
 

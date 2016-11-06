@@ -12,14 +12,17 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
-use defs::{Size, Vector};
-use buffer::Buffer;
+use defs::{Size, Vector, MemoryPoolId, MemoryViewId};
+use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
 use perceptron::{self, Perceptron};
-use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
+use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo};
+use surface::{show_reason, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 
-type Map = std::collections::HashMap<SurfaceId, Surface>;
+type SurfaceMap = std::collections::HashMap<SurfaceId, Surface>;
+type MemoryViewMap = std::collections::HashMap<MemoryViewId, MemoryView>;
+type MemoryPoolMap = std::collections::HashMap<MemoryPoolId, MemoryPool>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,6 +32,20 @@ macro_rules! try_get_surface {
             Some(surface) => surface,
             None => {
                 log_warn2!("Surface {} not found!", $sid);
+                return
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+macro_rules! try_get_memory_view {
+    ($coordinator:expr, $bid:ident) => {
+        match $coordinator.memory_views.get_mut(&$bid) {
+            Some(buffer) => buffer,
+            None => {
+                log_warn2!("Buffer {:?} not found!", $bid);
                 return
             }
         }
@@ -54,9 +71,28 @@ macro_rules! try_get_surface_or_none {
 /// This structure contains logic related to maintaining shared application state about surfaces.
 /// For thread-safe public version see `Coordinator`.
 struct InnerCoordinator {
+    /// Global signaler
     signaler: dharma::Signaler<Perceptron>,
-    surfaces: Map,
-    last_id: SurfaceId,
+
+    /// Storage of all surfaces
+    surfaces: SurfaceMap,
+
+    /// Storage for all memory views.
+    memory_views: MemoryViewMap,
+
+    /// Storage for all memory pools.
+    memory_pools: MemoryPoolMap,
+
+    /// Counter of surface IDs
+    last_surface_id: SurfaceId,
+
+    /// Counter of memory view IDs
+    last_memory_view_id: MemoryViewId,
+
+    /// Counter of memory pool IDs
+    last_memory_pool_id: MemoryPoolId,
+
+    /// Currently keyboard-focused surface ID
     kfsid: SurfaceId,
 }
 
@@ -67,8 +103,12 @@ impl InnerCoordinator {
     pub fn new(signaler: dharma::Signaler<Perceptron>) -> Self {
         InnerCoordinator {
             signaler: signaler,
-            surfaces: Map::new(),
-            last_id: SurfaceId::invalid(),
+            surfaces: SurfaceMap::new(),
+            memory_views: MemoryViewMap::new(),
+            memory_pools: MemoryPoolMap::new(),
+            last_surface_id: SurfaceId::invalid(),
+            last_memory_view_id: MemoryViewId::initial(),
+            last_memory_pool_id: MemoryPoolId::initial(),
             kfsid: SurfaceId::invalid(),
         }
     }
@@ -85,9 +125,9 @@ impl InnerCoordinator {
     }
 
     /// Returns buffer of the surface.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Arc<Buffer>> {
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
         let surface = try_get_surface_or_none!(self, sid);
-        Some(surface.get_buffer())
+        surface.get_buffer()
     }
 
     /// Returns surface context.
@@ -98,12 +138,56 @@ impl InnerCoordinator {
         Some(result)
     }
 
+    /// Returns ID of currently keyboard-focussed surface.
+    pub fn get_keyboard_focused_sid(&self) -> SurfaceId {
+        self.kfsid
+    }
+
     /// Informs rest of the application exhibitor set focus to given surface.
     pub fn set_focus(&mut self, sid: SurfaceId) {
         if self.kfsid != sid {
             self.signaler.emit(perceptron::KEYBOARD_FOCUS_CHANGED,
                                Perceptron::KeyboardFocusChanged(self.kfsid, sid));
             self.kfsid = sid;
+        }
+    }
+
+    /// Creates new memory pool from mapped memory. Returns ID of newly created pool.
+    pub fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
+        let id = self.generate_next_memory_pool_id();
+        self.memory_pools.insert(id, MemoryPool::new_from_mapped_memory(memory));
+        id
+    }
+
+    /// Creates new memory pool from buffer. Returns ID of newly created pool.
+    pub fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
+        let id = self.generate_next_memory_pool_id();
+        self.memory_pools.insert(id, MemoryPool::new_from_buffer(buffer));
+        id
+    }
+
+    /// Schedules destruction of memory pool identified by given ID. The pool will be destructed
+    /// when all its views go out of the scope.
+    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
+        self.memory_pools.remove(&mpid);
+    }
+
+    /// Creates new memory view from mapped memory.
+    pub fn create_memory_view(&mut self,
+                              mpid: MemoryPoolId,
+                              offset: usize,
+                              width: usize,
+                              height: usize,
+                              stride: usize)
+                              -> Option<MemoryViewId> {
+        let id = self.generate_next_memory_view_id();
+        if let Some(memory_pool) = self.memory_pools.get(&mpid) {
+            let memory_view = memory_pool.get_memory_view(offset, width, height, stride);
+            self.memory_views.insert(id, memory_view);
+            Some(id)
+        } else {
+            log_error!("No memory pool with ID {:?}", mpid);
+            None
         }
     }
 
@@ -116,13 +200,15 @@ impl InnerCoordinator {
 
     /// Informs other parts of application about request from client to destroy surface.
     pub fn destroy_surface(&mut self, sid: SurfaceId) {
-        self.signaler.emit(perceptron::SURFACE_DESTROYED, Perceptron::SurfaceDestroyed(sid));
+        self.signaler.emit(perceptron::SURFACE_DESTROYED,
+                           Perceptron::SurfaceDestroyed(sid));
     }
 
     /// Sets given buffer as pending for given surface.
-    pub fn attach(&mut self, sid: SurfaceId, buffer: Buffer) {
+    pub fn attach(&mut self, mvid: MemoryViewId, sid: SurfaceId) {
         let surface = try_get_surface!(self, sid);
-        surface.attach(buffer)
+        let view = try_get_memory_view!(self, mvid);
+        surface.attach(view.clone());
     }
 
     /// Sets pending buffer of given surface as current. Corrects sizes adds `drawable` show reason.
@@ -137,7 +223,7 @@ impl InnerCoordinator {
 
     /// Adds given show reason flag to set of surfaces show reason. If all reasons needed for
     /// surface to be drawn are meet, emit signal `surface ready`.
-    pub fn show_surface(&mut self, sid: SurfaceId, reason: i32) {
+    pub fn show_surface(&mut self, sid: SurfaceId, reason: show_reason::ShowReason) {
         let surface = try_get_surface!(self, sid);
         if surface.show(reason) == show_reason::READY {
             self.signaler.emit(perceptron::SURFACE_READY, Perceptron::SurfaceReady(sid));
@@ -157,22 +243,26 @@ impl InnerCoordinator {
     }
 
     // FIXME: Finish implementation of Coordinator
-    pub fn set_surface_relative_position(&self, sid: SurfaceId, offset: Vector) {
+    pub fn set_surface_relative_position(&self, _sid: SurfaceId, _offset: Vector) {
         unimplemented!()
     }
 
     // FIXME: Finish implementation of Coordinator
-    pub fn relate_surfaces(&self, sid: SurfaceId, parent_sid: SurfaceId) {
+    pub fn relate_surfaces(&self, _sid: SurfaceId, _parent_sid: SurfaceId) {
         unimplemented!()
     }
 
     /// Informs other parts of application about request from client to change cursor surface.
     pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
-        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
+        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE,
+                           Perceptron::CursorSurfaceChange(sid));
     }
 
     /// Reconfigure surface and send notification about this event.
-    pub fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState) {
+    pub fn reconfigure(&mut self,
+                       sid: SurfaceId,
+                       size: Size,
+                       state_flags: surface_state::SurfaceState) {
         let surface = try_get_surface!(self, sid);
         if (surface.get_desired_size() != size) || (surface.get_state_flags() != state_flags) {
             surface.set_desired_size(size);
@@ -187,10 +277,18 @@ impl InnerCoordinator {
 
 // Helper functions
 impl InnerCoordinator {
-    // FIXME: Finish implementation of Coordinator
+    // FIXME: Finish implementation of Coordinator (counter)
     fn generate_next_surface_id(&mut self) -> SurfaceId {
-        self.last_id = SurfaceId::new(self.last_id.as_number() as u64 + 1);
-        self.last_id
+        self.last_surface_id = SurfaceId::new(self.last_surface_id.as_number() as u64 + 1);
+        self.last_surface_id
+    }
+    // FIXME: Finish implementation of Coordinator
+    fn generate_next_memory_pool_id(&mut self) -> MemoryPoolId {
+        self.last_memory_pool_id.increment()
+    }
+    // FIXME: Finish implementation of Coordinator
+    fn generate_next_memory_view_id(&mut self) -> MemoryViewId {
+        self.last_memory_view_id.increment()
     }
 }
 
@@ -223,7 +321,7 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<Arc<Buffer>> {
+    pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
         let mine = self.inner.lock().unwrap();
         mine.get_buffer(sid)
     }
@@ -235,9 +333,45 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn get_keyboard_focused_sid(&self) -> SurfaceId {
+        let mine = self.inner.lock().unwrap();
+        mine.get_keyboard_focused_sid()
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn set_focus(&mut self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
         mine.set_focus(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
+        let mut mine = self.inner.lock().unwrap();
+        mine.create_pool_from_memory(memory)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
+        let mut mine = self.inner.lock().unwrap();
+        mine.create_pool_from_buffer(buffer)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.destroy_memory_pool(mpid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn create_memory_view(&mut self,
+                              mpid: MemoryPoolId,
+                              offset: usize,
+                              width: usize,
+                              height: usize,
+                              stride: usize)
+                              -> Option<MemoryViewId> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.create_memory_view(mpid, offset, width, height, stride)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
@@ -253,9 +387,9 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn attach(&self, sid: SurfaceId, buffer: Buffer) {
+    pub fn attach(&self, mvid: MemoryViewId, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.attach(sid, buffer);
+        mine.attach(mvid, sid);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
@@ -298,14 +432,17 @@ impl Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.set_surface_as_cursor(sid)
+        mine.set_surface_as_cursor(sid);
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl SurfaceAccess for Coordinator {
-    fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState) {
+    fn reconfigure(&mut self,
+                   sid: SurfaceId,
+                   size: Size,
+                   state_flags: surface_state::SurfaceState) {
         let mut mine = self.inner.lock().unwrap();
         mine.reconfigure(sid, size, state_flags);
     }

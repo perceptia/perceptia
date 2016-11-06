@@ -8,7 +8,7 @@
 
 use std::os::unix::io;
 
-use dharma::EventHandler;
+use dharma::{EventHandler, EventKind};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ impl EventHandler for DeviceMonitor {
         self.monitor_fd
     }
 
-    fn process_event(&mut self) {
+    fn process_event(&mut self, _: EventKind) {
         // FIXME: Implement handling of device adding and removing.
     }
 }

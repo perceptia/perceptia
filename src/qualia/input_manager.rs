@@ -155,7 +155,7 @@ impl InnerInputManager {
         for ref mode in self.modes.iter() {
             if mode.is_active() {
                 if let Some(executor) = mode.get_executor(binding) {
-                    return Some(*executor)
+                    return Some(*executor);
                 }
             }
         }
@@ -292,7 +292,8 @@ impl binding_functions::InputContext for InnerInputManager {
     }
 
     fn execute_command(&mut self) {
-        self.signaler.emit(perceptron::COMMAND, Perceptron::Command(self.command.clone()));
+        self.signaler.emit(perceptron::COMMAND,
+                           Perceptron::Command(self.command.clone()));
     }
 
     fn clean_command(&mut self) {
@@ -310,17 +311,27 @@ impl binding_functions::InputContext for InnerInputManager {
     fn get_code_as_number(&self) -> Option<i32> {
         match self.code as i32 {
             uinput_sys::KEY_MINUS => Some(-1),
-            uinput_sys::KEY_10 | uinput_sys::KEY_NUMERIC_0 => Some(0),
-            uinput_sys::KEY_1 | uinput_sys::KEY_NUMERIC_1 => Some(1),
-            uinput_sys::KEY_2 | uinput_sys::KEY_NUMERIC_2 => Some(2),
-            uinput_sys::KEY_3 | uinput_sys::KEY_NUMERIC_3 => Some(3),
-            uinput_sys::KEY_4 | uinput_sys::KEY_NUMERIC_4 => Some(4),
-            uinput_sys::KEY_5 | uinput_sys::KEY_NUMERIC_5 => Some(5),
-            uinput_sys::KEY_6 | uinput_sys::KEY_NUMERIC_6 => Some(6),
-            uinput_sys::KEY_7 | uinput_sys::KEY_NUMERIC_7 => Some(7),
-            uinput_sys::KEY_8 | uinput_sys::KEY_NUMERIC_8 => Some(8),
-            uinput_sys::KEY_9 | uinput_sys::KEY_NUMERIC_9 => Some(9),
-            _ => None
+            uinput_sys::KEY_10 |
+            uinput_sys::KEY_NUMERIC_0 => Some(0),
+            uinput_sys::KEY_1 |
+            uinput_sys::KEY_NUMERIC_1 => Some(1),
+            uinput_sys::KEY_2 |
+            uinput_sys::KEY_NUMERIC_2 => Some(2),
+            uinput_sys::KEY_3 |
+            uinput_sys::KEY_NUMERIC_3 => Some(3),
+            uinput_sys::KEY_4 |
+            uinput_sys::KEY_NUMERIC_4 => Some(4),
+            uinput_sys::KEY_5 |
+            uinput_sys::KEY_NUMERIC_5 => Some(5),
+            uinput_sys::KEY_6 |
+            uinput_sys::KEY_NUMERIC_6 => Some(6),
+            uinput_sys::KEY_7 |
+            uinput_sys::KEY_NUMERIC_7 => Some(7),
+            uinput_sys::KEY_8 |
+            uinput_sys::KEY_NUMERIC_8 => Some(8),
+            uinput_sys::KEY_9 |
+            uinput_sys::KEY_NUMERIC_9 => Some(9),
+            _ => None,
         }
     }
 }

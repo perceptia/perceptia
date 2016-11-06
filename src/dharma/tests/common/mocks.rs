@@ -7,11 +7,10 @@
 
 extern crate dharma;
 
-use std::clone::Clone;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use self::dharma::{InitResult, Module};
+use dharma::{InitResult, Module};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -168,7 +167,7 @@ impl Module for ModuleMock {
 
     /// Handle `initialize` invocation.
     #[allow(unused_variables)]
-    fn initialize(&mut self, context: ContextStub) -> InitResult {
+    fn initialize(&mut self, context: &mut ContextStub) -> InitResult {
         let mut mine = self.inner.lock().unwrap();
         mine.times_initialized += 1;
         match mine.signals {

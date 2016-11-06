@@ -1,0 +1,5 @@
+verbose = true
+fn_args_density "Compressed"
+where_density = "Tall"
+use_try_shorthand = true
+write_mode = "Overwrite"

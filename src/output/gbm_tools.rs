@@ -35,8 +35,8 @@ impl GbmBucket {
 
         // Create surface
         let surface = if let Some(surface) = libgbm::Surface::new(&device,
-                                                                  size.width,
-                                                                  size.height,
+                                                                  size.width as u32,
+                                                                  size.height as u32,
                                                                   libgbm::format::XRGB8888,
                                                                   libgbm::USE_SCANOUT |
                                                                   libgbm::USE_RENDERING) {

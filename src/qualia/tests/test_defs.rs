@@ -47,8 +47,7 @@ fn should_correctly_check_if_point_is_inside_area() {
 
 /// Check if casting point into area works correctly.
 #[test]
-fn should_correctly_cast_point_into_area()
-{
+fn should_correctly_cast_point_into_area() {
     let area = Area::new(Position::new(10, 10), Size::new(10, 10));
 
     let positions: [(Position, Position); 9] = [
@@ -74,7 +73,7 @@ fn should_correctly_cast_point_into_area()
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check if point casted into area is realy in area.
+/// Check if point casted into area is really in area.
 #[test]
 fn should_casted_be_inside_area()
 {
@@ -92,6 +91,35 @@ fn should_casted_be_inside_area()
                 "Casted position should be inside area (area is {:?}, while point is {:?})",
                 area,
                 pos.casted(&area));
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Check if inflated area has correct size.
+#[test]
+fn should_inflate_area() {
+    let tests: [(Area, Area); 10] = [
+            (Area::create( 0,  0, 20, 20), Area::create( 0,  0, 40, 40)),
+            (Area::create(20,  0, 10, 20), Area::create(10,  0, 30, 40)),
+            (Area::create(30,  0, 20, 20), Area::create(10,  0, 40, 40)),
+            (Area::create( 0, 20, 20, 10), Area::create( 0, 10, 40, 30)),
+            (Area::create(20, 20, 10, 10), Area::create(10, 10, 30, 30)),
+            (Area::create(30, 20, 20, 10), Area::create(10, 10, 40, 30)),
+            (Area::create( 0, 30, 20, 20), Area::create( 0, 10, 40, 40)),
+            (Area::create(20, 30, 10, 20), Area::create(10, 10, 30, 40)),
+            (Area::create(30, 30, 20, 20), Area::create(10, 10, 40, 40)),
+            (Area::create( 0,  0, 50, 50), Area::create( 0,  0, 50, 50)),
+        ];
+
+    for test in &tests {
+        let mut area = Area::create(10, 10, 30, 30);
+        area.inflate(&test.0);
+        assert!(area == test.1,
+                "Area inflated by {:?} should be {:?}, is {:?}",
+                test.0,
+                test.1,
+                area);
     }
 }
 

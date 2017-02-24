@@ -120,15 +120,15 @@ pub mod mode_name {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Position {
-    pub x: i32,
-    pub y: i32,
+    pub x: isize,
+    pub y: isize,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Position {
     /// `Position` constructor.
-    pub fn new(x: i32, y: i32) -> Self {
+    pub fn new(x: isize, y: isize) -> Self {
         Position { x: x, y: y }
     }
 
@@ -155,16 +155,16 @@ impl Position {
             position.x = area.pos.x;
         }
 
-        if position.x > (area.pos.x + area.size.width as i32 - 1) {
-            position.x = area.pos.x + area.size.width as i32 - 1;
+        if position.x > (area.pos.x + area.size.width as isize - 1) {
+            position.x = area.pos.x + area.size.width as isize - 1;
         }
 
         if position.y < area.pos.y {
             position.y = area.pos.y;
         }
 
-        if position.y > (area.pos.y + area.size.height as i32 - 1) {
-            position.y = area.pos.y + area.size.height as i32 - 1;
+        if position.y > (area.pos.y + area.size.height as isize - 1) {
+            position.y = area.pos.y + area.size.height as isize - 1;
         }
 
         position
@@ -210,15 +210,15 @@ impl std::ops::Sub for Position {
 /// Type defining position, point coordinates or 2D vector.
 #[derive(Clone, Copy, Debug)]
 pub struct OptionalPosition {
-    pub x: Option<i32>,
-    pub y: Option<i32>,
+    pub x: Option<isize>,
+    pub y: Option<isize>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl OptionalPosition {
     /// `OptionalPosition` constructor.
-    pub fn new(x: Option<i32>, y: Option<i32>) -> Self {
+    pub fn new(x: Option<isize>, y: Option<isize>) -> Self {
         OptionalPosition { x: x, y: y }
     }
 
@@ -226,12 +226,12 @@ impl OptionalPosition {
     pub fn scaled(&self, scale: f32) -> Self {
         OptionalPosition {
             x: if let Some(v) = self.x {
-                Some((scale * v as f32) as i32)
+                Some((scale * v as f32) as isize)
             } else {
                 None
             },
             y: if let Some(v) = self.y {
-                Some((scale * v as f32) as i32)
+                Some((scale * v as f32) as isize)
             } else {
                 None
             },
@@ -305,7 +305,7 @@ impl std::default::Default for Size {
 
 /// Type defining 2D area.
 #[repr(C)]
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Area {
     pub pos: Position,
     pub size: Size,
@@ -314,7 +314,7 @@ pub struct Area {
 // -------------------------------------------------------------------------------------------------
 
 impl Area {
-    /// `Area` constructor.
+    /// Constructs `Area` from `Position` and `Size`.
     pub fn new(pos: Position, size: Size) -> Self {
         Area {
             pos: pos,
@@ -322,12 +322,20 @@ impl Area {
         }
     }
 
+    /// Constructs `Area` from coordinates and dimensions.
+    pub fn create(x: isize, y: isize, width: usize, height: usize) -> Self {
+        Area {
+            pos: Position::new(x, y),
+            size: Size::new(width, height),
+        }
+    }
+
     /// Check if area contains given position.
     pub fn contains(&self, pos: &Position) -> bool {
         let margin_top = self.pos.y;
-        let margin_bottom = self.size.height as i32 + margin_top;
+        let margin_bottom = self.size.height as isize + margin_top;
         let margin_left = self.pos.x;
-        let margin_right = self.size.width as i32 + margin_left;
+        let margin_right = self.size.width as isize + margin_left;
 
         (margin_top <= pos.y) && (pos.y < margin_bottom) && (margin_left <= pos.x) &&
         (pos.x < margin_right)
@@ -335,8 +343,35 @@ impl Area {
 
     /// Calculate position in center of the area.
     pub fn calculate_center(&self) -> Position {
-        Position::new((self.pos.x + self.size.width as i32) / 2,
-                      (self.pos.y + self.size.height as i32) / 2)
+        Position::new((self.pos.x + self.size.width as isize) / 2,
+                      (self.pos.y + self.size.height as isize) / 2)
+    }
+
+    /// Inflates this `Area` so that it contains passed `area`.
+    pub fn inflate(&mut self, area: &Area) {
+        let old = self.clone();
+
+        let mut diff: isize = old.pos.x - area.pos.x;
+        if diff > 0 {
+            self.size.width += diff as usize;
+            self.pos.x = area.pos.x;
+        }
+
+        diff = old.pos.y - area.pos.y;
+        if diff > 0 {
+            self.size.height += diff as usize;
+            self.pos.y = area.pos.y;
+        }
+
+        diff = area.size.width as isize - old.size.width as isize + area.pos.x - old.pos.x;
+        if diff > 0 {
+            self.size.width += diff as usize;
+        }
+
+        diff = area.size.height as isize - old.size.height as isize + area.pos.y - old.pos.y;
+        if diff > 0 {
+            self.size.height += diff as usize;
+        }
     }
 }
 

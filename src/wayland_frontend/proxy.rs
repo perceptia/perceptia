@@ -6,14 +6,15 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use dharma;
 use skylane as wl;
 use skylane_protocols::server::wayland::{wl_display, wl_callback, wl_buffer};
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 
-use qualia::{Button, Coordinator, Key, MappedMemory, Milliseconds, Size, SurfacePosition, Vector};
+use qualia::{Coordinator, MappedMemory, Milliseconds};
+use qualia::{Area, Button, Key, Size, SurfacePosition, Vector};
 use qualia::{MemoryPoolId, MemoryViewId, SurfaceId};
 use qualia::{show_reason, surface_state};
 
@@ -100,6 +101,8 @@ pub struct Proxy {
     mediator: MediatorRef,
     socket: wl::server::ClientSocket,
     globals: HashMap<u32, Global>,
+    regions: HashMap<wl::common::ObjectId, Area>,
+    memory_pools: HashSet<MemoryPoolId>,
     surface_oid_to_sid_dictionary: HashMap<wl::common::ObjectId, SurfaceId>,
     sid_to_surface_info_dictionary: HashMap<SurfaceId, SurfaceInfo>,
     buffer_oid_to_buffer_info_dictionary: HashMap<wl::common::ObjectId, BufferInfo>,
@@ -123,6 +126,8 @@ impl Proxy {
             mediator: mediator,
             socket: socket,
             globals: HashMap::new(),
+            regions: HashMap::new(),
+            memory_pools: HashSet::new(),
             surface_oid_to_sid_dictionary: HashMap::new(),
             sid_to_surface_info_dictionary: HashMap::new(),
             buffer_oid_to_buffer_info_dictionary: HashMap::new(),
@@ -145,6 +150,18 @@ impl Proxy {
         self.last_global_id += 1;
         global.name = self.last_global_id;
         self.globals.insert(self.last_global_id, global);
+    }
+
+    /// Handles termination of client by destroing its resources.
+    pub fn terminate(&mut self) {
+        for mpid in self.memory_pools.iter() {
+            self.coordinator.destroy_memory_pool(*mpid);
+        }
+
+        for (_, sid) in self.surface_oid_to_sid_dictionary.iter() {
+            self.mediator.borrow_mut().remove(*sid);
+            self.coordinator.destroy_surface(*sid);
+        }
     }
 }
 
@@ -175,10 +192,13 @@ impl Proxy {
 #[allow(unused_variables)]
 impl Facade for Proxy {
     fn create_memory_pool(&mut self, memory: MappedMemory) -> MemoryPoolId {
-        self.coordinator.create_pool_from_memory(memory)
+        let mpid = self.coordinator.create_pool_from_memory(memory);
+        self.memory_pools.insert(mpid);
+        mpid
     }
 
     fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
+        self.memory_pools.remove(&mpid);
         self.coordinator.destroy_memory_pool(mpid);
     }
 
@@ -195,6 +215,23 @@ impl Facade for Proxy {
             self.buffer_oid_to_buffer_info_dictionary.insert(buffer_oid, BufferInfo::new(mvid));
         }
         result
+    }
+
+    fn define_region(&mut self, region_id: wl::common::ObjectId, region: Area) {
+        self.regions.insert(region_id, region);
+    }
+
+    fn undefine_region(&mut self, region_id: wl::common::ObjectId) {
+        self.regions.remove(&region_id);
+    }
+
+    fn set_input_region(&self, sid: SurfaceId, region_id: wl::common::ObjectId) {
+        if let Some(region) = self.regions.get(&region_id) {
+            self.coordinator.set_surface_offset(sid, region.pos);
+            self.coordinator.set_surface_requested_size(sid, region.size);
+        } else {
+            // TODO: Implement reseting input region.
+        }
     }
 
     fn create_surface(&mut self, oid: wl::common::ObjectId) -> SurfaceId {
@@ -334,6 +371,14 @@ impl Gateway for Proxy {
                            sid);
             }
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Drop for Proxy {
+    fn drop(&mut self) {
+        self.terminate();
     }
 }
 

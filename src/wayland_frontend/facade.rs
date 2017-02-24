@@ -7,7 +7,7 @@
 
 use skylane as wl;
 
-use qualia::{MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryViewId, show_reason};
+use qualia::{Area, MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryViewId, show_reason};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -36,6 +36,15 @@ pub trait Facade {
                           height: usize,
                           stride: usize)
                           -> Option<MemoryViewId>;
+
+    /// Defines region. Regions may be used to define input area of surface.
+    fn define_region(&mut self, region_id: wl::common::ObjectId, region: Area);
+
+    /// Undefines region.
+    fn undefine_region(&mut self, region_id: wl::common::ObjectId);
+
+    /// Sets given region as input region of surface.
+    fn set_input_region(&self, sid: SurfaceId, region_id: wl::common::ObjectId);
 
     /// Requests creation of surface. Return ID of newly created surface.
     fn create_surface(&mut self, surface_oid: wl::common::ObjectId) -> SurfaceId;

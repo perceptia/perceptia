@@ -108,10 +108,22 @@ impl Engine {
 
     /// Handles termination (socket hung up) of client.
     pub fn terminate_client(&mut self, id: dharma::EventHandlerId) {
-        if let Some(_handler) = self.dispatcher.delete_source(id) {
-            log_wayl3!("Client {} terminated successfully", id);
+        let result1 = if let Some(_handler) = self.dispatcher.delete_source(id) {
+            true
         } else {
-            log_warn2!("Client {} terminated unsuccessfully", id);
+            log_warn2!("Dispatching handler not found for client {} on termination", id);
+            false
+        };
+
+        let result2 = if let Some(_package) = self.clients.remove(&id) {
+            true
+        } else {
+            log_warn2!("Proxy not found for client {} on termination", id);
+            false
+        };
+
+        if result1 && result2 {
+            log_wayl3!("Client {} terminated successfully", id);
         }
     }
 

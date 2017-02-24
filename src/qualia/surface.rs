@@ -70,6 +70,7 @@ pub struct SurfaceInfo {
     pub desired_size: Size,
     pub requested_size: Size,
     pub state_flags: surface_state::SurfaceState,
+    pub buffer: Option<MemoryView>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -204,6 +205,7 @@ impl Surface {
             desired_size: self.desired_size,
             requested_size: self.requested_size,
             state_flags: self.state_flags,
+            buffer: self.buffer.clone(),
         }
     }
 

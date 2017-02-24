@@ -40,6 +40,10 @@ impl Mediator {
     pub fn get_client_for_sid(&self, sid: SurfaceId) -> Option<&dharma::EventHandlerId> {
         self.sid_to_cid_dictionary.get(&sid)
     }
+
+    pub fn remove(&mut self, sid: SurfaceId) {
+        self.sid_to_cid_dictionary.remove(&sid);
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

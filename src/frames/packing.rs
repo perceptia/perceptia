@@ -57,12 +57,12 @@ impl Packing for Frame {
             Geometry::Vertical => {
                 size.width = self.get_size().width;
                 size.height = self.get_size().height / len;
-                increment.y = size.height as i32;
+                increment.y = size.height as isize;
             }
             Geometry::Horizontal => {
                 size.height = self.get_size().height;
                 size.width = self.get_size().width / len;
-                increment.x = size.width as i32;
+                increment.x = size.width as isize;
             }
             Geometry::Floating => {
                 // Nothing to do for not-directed frames

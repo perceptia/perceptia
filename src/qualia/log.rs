@@ -49,7 +49,7 @@ pub mod level {
     pub const WAYL3: i32 = 13;
     pub const WARN4: i32 = 14;
     pub const INFO4: i32 = 15;
-    pub const WAYL4: i32 = 16;
+    pub const WAYL4: i32 = 0;
 }
 
 #[cfg(not(debug_assertions))]
@@ -64,12 +64,12 @@ pub mod level {
     pub const WARN2: i32 = 8;
     pub const INFO2: i32 = 9;
     pub const WAYL2: i32 = 10;
-    pub const WARN3: i32 = 11;
-    pub const INFO3: i32 = 12;
+    pub const WARN3: i32 = 0;
+    pub const INFO3: i32 = 0;
     pub const WAYL3: i32 = 13;
-    pub const WARN4: i32 = 14;
-    pub const INFO4: i32 = 15;
-    pub const WAYL4: i32 = 16;
+    pub const WARN4: i32 = 0;
+    pub const INFO4: i32 = 0;
+    pub const WAYL4: i32 = 0;
 }
 
 // -------------------------------------------------------------------------------------------------

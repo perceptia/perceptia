@@ -70,7 +70,7 @@ impl InputGateway {
     }
 
     /// Scale displacements and emit pointer motion event.
-    pub fn emit_motion(&mut self, x: i32, y: i32) {
+    pub fn emit_motion(&mut self, x: isize, y: isize) {
         // Scale event values
         let vector = Vector::new(x, y).scaled(self.config.mouse_scale);
 
@@ -80,7 +80,7 @@ impl InputGateway {
     }
 
     /// Scale position and emit pointer position event.
-    pub fn emit_position(&mut self, x: Option<i32>, y: Option<i32>) {
+    pub fn emit_position(&mut self, x: Option<isize>, y: Option<isize>) {
         // Scale event values. Skip scaling invalid values
         let pos = OptionalPosition::new(x, y).scaled(self.config.touchpad_scale);
 
@@ -99,7 +99,7 @@ impl InputGateway {
     }
 
     /// Emit exist event.
-    pub fn emit_axis(&mut self, horizontal: i32, vertical: i32) {
+    pub fn emit_axis(&mut self, horizontal: isize, vertical: isize) {
         let axis = Vector::new(horizontal, vertical);
 
         // Signal event

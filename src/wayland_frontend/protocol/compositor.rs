@@ -9,7 +9,7 @@ use skylane_protocols::server::wayland::wl_compositor;
 use skylane_protocols::server::wayland::wl_surface;
 use skylane_protocols::server::wayland::wl_region;
 
-use qualia::SurfaceId;
+use qualia::{Area, SurfaceId};
 
 use global::Global;
 use facade::Facade;
@@ -20,7 +20,6 @@ use proxy::ProxyRef;
 /// Wayland `wl_compositor` object.
 #[allow(dead_code)]
 struct Compositor {
-    oid: wl::common::ObjectId,
     proxy: ProxyRef,
 }
 
@@ -35,25 +34,21 @@ pub fn get_global() -> Global {
 // -------------------------------------------------------------------------------------------------
 
 impl Compositor {
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
-        Compositor {
-            oid: oid,
-            proxy: proxy_ref,
-        }
+    fn new(proxy_ref: ProxyRef) -> Self {
+        Compositor { proxy: proxy_ref }
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
-        Box::new(Handler::<_, wl_compositor::Dispatcher>::new(Self::new(oid, proxy_ref)))
+    fn new_object(_oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+        Box::new(Handler::<_, wl_compositor::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-#[allow(unused_variables)]
 impl wl_compositor::Interface for Compositor {
     fn create_surface(&mut self,
-                      this_object_id: wl::common::ObjectId,
-                      socket: &mut wl::server::ClientSocket,
+                      _this_object_id: wl::common::ObjectId,
+                      _socket: &mut wl::server::ClientSocket,
                       new_surface_id: wl::common::ObjectId)
                       -> wl::server::Task {
         let surface = Surface::new_object(new_surface_id, self.proxy.clone());
@@ -64,8 +59,8 @@ impl wl_compositor::Interface for Compositor {
     }
 
     fn create_region(&mut self,
-                     this_object_id: wl::common::ObjectId,
-                     socket: &mut wl::server::ClientSocket,
+                     _this_object_id: wl::common::ObjectId,
+                     _socket: &mut wl::server::ClientSocket,
                      new_region_id: wl::common::ObjectId)
                      -> wl::server::Task {
         let region = Region::new_object(self.proxy.clone());
@@ -159,8 +154,10 @@ impl wl_surface::Interface for Surface {
     fn set_input_region(&mut self,
                         this_object_id: wl::common::ObjectId,
                         socket: &mut wl::server::ClientSocket,
-                        region: wl::common::ObjectId)
+                        region_oid: wl::common::ObjectId)
                         -> wl::server::Task {
+        let proxy = self.proxy.borrow_mut();
+        proxy.set_input_region(self.sid, region_oid);
         wl::server::Task::None
     }
 
@@ -207,13 +204,17 @@ impl wl_surface::Interface for Surface {
 #[allow(dead_code)]
 struct Region {
     proxy: ProxyRef,
+    area: Option<Area>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Region {
     fn new(proxy_ref: ProxyRef) -> Self {
-        Region { proxy: proxy_ref }
+        Region {
+            proxy: proxy_ref,
+            area: None,
+        }
     }
 
     fn new_object(proxy_ref: ProxyRef) -> Box<wl::server::Object> {
@@ -223,35 +224,53 @@ impl Region {
 
 // -------------------------------------------------------------------------------------------------
 
-#[allow(unused_variables)]
 impl wl_region::Interface for Region {
     fn destroy(&mut self,
                this_object_id: wl::common::ObjectId,
-               socket: &mut wl::server::ClientSocket)
+               _socket: &mut wl::server::ClientSocket)
                -> wl::server::Task {
+        let mut proxy = self.proxy.borrow_mut();
+        proxy.undefine_region(this_object_id);
         wl::server::Task::None
     }
 
     fn add(&mut self,
            this_object_id: wl::common::ObjectId,
-           socket: &mut wl::server::ClientSocket,
+           _socket: &mut wl::server::ClientSocket,
            x: i32,
            y: i32,
            width: i32,
            height: i32)
            -> wl::server::Task {
+        if width > 0 && height > 0 {
+            let area = Area::create(x as isize, y as isize, width as usize, height as usize);
+            if let Some(ref mut region) = self.area {
+                region.inflate(&area);
+            } else {
+                self.area = Some(area);
+            }
+
+            if let Some(region) = self.area {
+                let mut proxy = self.proxy.borrow_mut();
+                proxy.define_region(this_object_id, region);
+            }
+        } else {
+            log_wayl3!("Received region with non-positive width or height");
+        }
         wl::server::Task::None
     }
 
     fn subtract(&mut self,
-                this_object_id: wl::common::ObjectId,
-                socket: &mut wl::server::ClientSocket,
-                x: i32,
-                y: i32,
-                width: i32,
-                height: i32)
+                _this_object_id: wl::common::ObjectId,
+                _socket: &mut wl::server::ClientSocket,
+                _x: i32,
+                _y: i32,
+                _width: i32,
+                _height: i32)
                 -> wl::server::Task {
+        // Not supported yet
         wl::server::Task::None
     }
 }
+
 // -------------------------------------------------------------------------------------------------

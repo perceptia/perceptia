@@ -123,11 +123,11 @@ impl Evdev {
             }
         } else if ev.kind == uinput_sys::EV_REL as _ {
             if ev.code == uinput_sys::ABS_X as _ {
-                self.gateway.emit_motion(ev.value, 0);
+                self.gateway.emit_motion(ev.value as isize, 0);
             } else if ev.code == uinput_sys::ABS_Y as _ {
-                self.gateway.emit_motion(0, ev.value);
+                self.gateway.emit_motion(0, ev.value as isize);
             } else if ev.code == uinput_sys::REL_WHEEL as _ {
-                self.gateway.emit_axis(0, ev.value);
+                self.gateway.emit_axis(0, ev.value as isize);
             } else {
                 log_nyimp!("Unhandled mouse relative event (code: {}, value: {})",
                            ev.code,
@@ -174,10 +174,10 @@ impl Evdev {
             } else if self.pressure > self.config.touchpad_pressure_threshold {
                 if (ev.code == uinput_sys::ABS_MT_POSITION_X as _) ||
                    (ev.code == uinput_sys::ABS_X as _) {
-                    self.gateway.emit_position(Some(ev.value), None);
+                    self.gateway.emit_position(Some(ev.value as isize), None);
                 } else if (ev.code == uinput_sys::ABS_MT_POSITION_Y as _) ||
                           (ev.code == uinput_sys::ABS_Y as _) {
-                    self.gateway.emit_position(None, Some(ev.value));
+                    self.gateway.emit_position(None, Some(ev.value as isize));
                 }
             }
         } else {

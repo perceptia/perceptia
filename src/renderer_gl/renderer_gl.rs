@@ -171,53 +171,57 @@ impl RendererGl {
                                          vertices: &mut [gl::types::GLfloat],
                                          texcoords: &mut [gl::types::GLfloat],
                                          index: usize) {
-        if let Some(ref buffer) = coordinator.get_buffer(context.id) {
-            unsafe {
-                gl::ActiveTexture(gl::TEXTURE0 + index as u32);
-                gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
-                gl::TexImage2D(gl::TEXTURE_2D, // target
-                               0, // level, 0 = no mipmap
-                               gl::RGBA as gl::types::GLint, // internal format
-                               (*buffer).get_width() as gl::types::GLint, // width
-                               (*buffer).get_height() as gl::types::GLint, // height
-                               0, // always 0 in OpenGL ES
-                               gl::RGBA, // format
-                               gl::UNSIGNED_BYTE, // type
-                               (*buffer).as_ptr() as *const _);
+        if let Some(ref surface) = coordinator.get_surface(context.id) {
+            if let Some(ref buffer) = surface.buffer {
+                unsafe {
+                    gl::ActiveTexture(gl::TEXTURE0 + index as u32);
+                    gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
+                    gl::TexImage2D(gl::TEXTURE_2D, // target
+                                   0, // level, 0 = no mipmap
+                                   gl::RGBA as gl::types::GLint, // internal format
+                                   (*buffer).get_width() as gl::types::GLint, // width
+                                   (*buffer).get_height() as gl::types::GLint, // height
+                                   0, // always 0 in OpenGL ES
+                                   gl::RGBA, // format
+                                   gl::UNSIGNED_BYTE, // type
+                                   (*buffer).as_ptr() as *const _);
+                }
+
+                let left = (context.pos.x - surface.offset.x) as gl::types::GLfloat;
+                let top = (context.pos.y - surface.offset.y) as gl::types::GLfloat;
+                let right = left + (*buffer).get_width() as gl::types::GLfloat;
+                let bottom = top + (*buffer).get_height() as gl::types::GLfloat;
+
+                vertices[0] = left;
+                vertices[1] = top;
+                vertices[2] = right;
+                vertices[3] = top;
+                vertices[4] = left;
+                vertices[5] = bottom;
+                vertices[6] = right;
+                vertices[7] = top;
+                vertices[8] = right;
+                vertices[9] = bottom;
+                vertices[10] = left;
+                vertices[11] = bottom;
+
+                texcoords[0] = 0.0;
+                texcoords[1] = 0.0;
+                texcoords[2] = 1.0;
+                texcoords[3] = 0.0;
+                texcoords[4] = 0.0;
+                texcoords[5] = 1.0;
+                texcoords[6] = 1.0;
+                texcoords[7] = 0.0;
+                texcoords[8] = 1.0;
+                texcoords[9] = 1.0;
+                texcoords[10] = 0.0;
+                texcoords[11] = 1.0;
+            } else {
+                log_error!("Renderer: No buffer for surface {}", context.id);
             }
-
-            let left = context.pos.x as gl::types::GLfloat;
-            let top = context.pos.y as gl::types::GLfloat;
-            let right = left + (*buffer).get_width() as gl::types::GLfloat;
-            let bottom = top + (*buffer).get_height() as gl::types::GLfloat;
-
-            vertices[0] = left;
-            vertices[1] = top;
-            vertices[2] = right;
-            vertices[3] = top;
-            vertices[4] = left;
-            vertices[5] = bottom;
-            vertices[6] = right;
-            vertices[7] = top;
-            vertices[8] = right;
-            vertices[9] = bottom;
-            vertices[10] = left;
-            vertices[11] = bottom;
-
-            texcoords[0] = 0.0;
-            texcoords[1] = 0.0;
-            texcoords[2] = 1.0;
-            texcoords[3] = 0.0;
-            texcoords[4] = 0.0;
-            texcoords[5] = 1.0;
-            texcoords[6] = 1.0;
-            texcoords[7] = 0.0;
-            texcoords[8] = 1.0;
-            texcoords[9] = 1.0;
-            texcoords[10] = 0.0;
-            texcoords[11] = 1.0;
         } else {
-            log_error!("Renderer: No buffer for surface {}", context.id);
+            log_error!("Renderer: No info for surface {}", context.id);
         }
     }
 

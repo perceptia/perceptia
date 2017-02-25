@@ -52,9 +52,6 @@
 extern crate alloc;
 extern crate alloc_system;
 
-#[macro_use]
-extern crate timber;
-#[macro_use]
 extern crate qualia;
 
 mod frame;

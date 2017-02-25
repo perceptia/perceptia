@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
-use defs::{Size, Vector, MemoryPoolId, MemoryViewId};
+use defs::{Position, Size, Vector, MemoryPoolId, MemoryViewId};
 use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
 use perceptron::{self, Perceptron};
 use surface::{Surface, SurfaceAccess, SurfaceContext, SurfaceId, SurfaceInfo};
@@ -94,6 +94,9 @@ struct InnerCoordinator {
 
     /// Currently keyboard-focused surface ID
     kfsid: SurfaceId,
+
+    /// Currently pointer-focused surface ID
+    pfsid: SurfaceId,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -110,6 +113,7 @@ impl InnerCoordinator {
             last_memory_view_id: MemoryViewId::initial(),
             last_memory_pool_id: MemoryPoolId::initial(),
             kfsid: SurfaceId::invalid(),
+            pfsid: SurfaceId::invalid(),
         }
     }
 
@@ -143,12 +147,26 @@ impl InnerCoordinator {
         self.kfsid
     }
 
-    /// Informs rest of the application exhibitor set focus to given surface.
-    pub fn set_focus(&mut self, sid: SurfaceId) {
+    /// Informs rest of the application exhibitor set keyboard focus to given surface.
+    pub fn set_keyboard_focus(&mut self, sid: SurfaceId) {
         if self.kfsid != sid {
             self.signaler.emit(perceptron::KEYBOARD_FOCUS_CHANGED,
                                Perceptron::KeyboardFocusChanged(self.kfsid, sid));
             self.kfsid = sid;
+        }
+    }
+
+    /// Returns ID of currently pointer-focussed surface.
+    pub fn get_pointer_focused_sid(&self) -> SurfaceId {
+        self.pfsid
+    }
+
+    /// Informs rest of the application exhibitor set pointer focus to given surface.
+    pub fn set_pointer_focus(&mut self, sid: SurfaceId, position: Position) {
+        if self.pfsid != sid {
+            self.signaler.emit(perceptron::POINTER_FOCUS_CHANGED,
+                               Perceptron::PointerFocusChanged(self.pfsid, sid, position));
+            self.pfsid = sid;
         }
     }
 
@@ -339,9 +357,21 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn set_focus(&mut self, sid: SurfaceId) {
+    pub fn set_keyboard_focus(&mut self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.set_focus(sid)
+        mine.set_keyboard_focus(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn get_pointer_focused_sid(&self) -> SurfaceId {
+        let mine = self.inner.lock().unwrap();
+        mine.get_pointer_focused_sid()
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn set_pointer_focus(&mut self, sid: SurfaceId, position: Position) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_pointer_focus(sid, position)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

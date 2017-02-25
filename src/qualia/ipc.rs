@@ -4,6 +4,13 @@
 //! This module provides inter process communication via DBUS. This is used to communicate with
 //! `logind` to take sessions and devices.
 
+// Quick reminder - this command list all available sessions for current user:
+//
+// gdbus call --system \
+//            --dest org.freedesktop.login1 \
+//            --object-path /org/freedesktop/login1 \
+//            --method org.freedesktop.login1.Manager.ListSessions
+
 // -------------------------------------------------------------------------------------------------
 
 use dbus::{BusName, BusType, Connection, Interface, Member, Message, MessageItem, Path};
@@ -144,6 +151,56 @@ impl InnerIpc {
         }
     }
 
+    /// Communicate with `logind` to obtain path to object representing session assigned to given
+    /// seat (e.g. `seat0`).
+    fn get_session_by_seat(&mut self, seat: &str) -> Option<Path<'static>> {
+        let connection = get_connection_or_return!(self.connection, None);
+        let message_name = "ListSessions";
+        let member = Member::new(message_name).expect(message_name);
+
+        // Prepare message
+        let message = Message::method_call(&self.login_destination,
+                                           &self.login_object_path,
+                                           &self.manager_interface,
+                                           &member);
+
+        // Send message and get result
+        let r = assert_reply!(connection.send_with_reply_and_block(message, TIMEOUT), None);
+
+        // TODO: Make unpacking `ListSessions` result look nicer without splitting to more
+        // functions.
+        match r.get1().expect(message_name) {
+            MessageItem::Array(array, _) => {
+                for structure in array {
+                    match structure {
+                        MessageItem::Struct(structure) => {
+                            if structure.len() == 5 {
+                                match structure[3] {
+                                    MessageItem::Str(ref string) => {
+                                        if string == seat {
+                                            return match structure[4] {
+                                                MessageItem::ObjectPath(ref path) => {
+                                                    Some(path.clone())
+                                                }
+                                                _ => None,
+                                            }
+                                        }
+                                    }
+                                    _ => return None,
+                                }
+                            } else {
+                                return None;
+                            }
+                        }
+                        _ => (),
+                    }
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+
     /// Communicate to `logind` to take control over session.
     fn take_control(&mut self) -> Result<(), Illusion> {
         let connection = get_connection_or_return!(self.connection);
@@ -179,10 +236,14 @@ impl Ipc {
         Ipc { inner: Arc::new(Mutex::new(InnerIpc::new())) }
     }
 
-    /// Take control over session.
+    /// Tries to take control over session. First tries session this application belongs to. If no
+    /// session is assigned falls back to session for seat `seat0`.
     pub fn initialize(&mut self) -> Result<(), Illusion> {
         let mut mine = self.inner.lock().unwrap();
         mine.session_object_path = mine.get_session_by_pid();
+        if mine.session_object_path.is_none() {
+            mine.session_object_path = mine.get_session_by_seat("seat0");
+        }
         mine.take_control()
     }
 

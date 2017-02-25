@@ -5,8 +5,6 @@
 
 // -------------------------------------------------------------------------------------------------
 
-#![feature(deque_extras)]
-
 extern crate dharma;
 #[macro_use]
 extern crate timber;

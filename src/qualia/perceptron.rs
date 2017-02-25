@@ -10,7 +10,7 @@ use std;
 use dharma::SignalId;
 
 use timing::Milliseconds;
-use defs::{Command, DrmBundle, SurfaceId, OptionalPosition, SurfacePosition, Vector, Button, Key};
+use defs::{Command, DrmBundle, SurfaceId, Position, OptionalPosition, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -59,8 +59,8 @@ pub enum Perceptron {
     SurfaceReconfigured(SurfaceId),
     CursorSurfaceChange(SurfaceId),
     SurfaceFrame(SurfaceId, Milliseconds),
-    PointerFocusChanged(SurfacePosition),
-    PointerRelativeMotion(SurfacePosition),
+    PointerFocusChanged(SurfaceId, SurfaceId, Position),
+    PointerRelativeMotion(SurfaceId, Position, Milliseconds),
     KeyboardFocusChanged(SurfaceId, SurfaceId),
 }
 
@@ -76,7 +76,6 @@ impl std::fmt::Display for Perceptron {
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
             Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
-
             Perceptron::InputPointerMotion(ref vector) => {
                 write!(f, "InputPointerMotion({:?})", vector)
             }
@@ -93,12 +92,14 @@ impl std::fmt::Display for Perceptron {
             Perceptron::SurfaceReconfigured(ref sid) => write!(f, "SurfaceReconfigured({})", sid),
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
 
-            Perceptron::SurfaceFrame(sid, milliseconds) => {
-                write!(f, "SurfaceFrame(sid: {}, milliseconds: {})", sid, milliseconds.get_value())
+            Perceptron::SurfaceFrame(sid, time) => {
+                write!(f, "SurfaceFrame(sid: {}, milliseconds: {})", sid, time.get_value())
             }
-            Perceptron::PointerFocusChanged(ref pos) => write!(f, "PointerFocusChanged({:?})", pos),
-            Perceptron::PointerRelativeMotion(ref pos) => {
-                write!(f, "PointerRelativeMotion({:?})", pos)
+            Perceptron::PointerFocusChanged(ref old_sid, ref new_sid, ref pos) => {
+                write!(f, "PointerFocusChanged(old: {:?}, new: {:?}, {:?})", old_sid, new_sid, pos)
+            }
+            Perceptron::PointerRelativeMotion(ref sid, ref pos, ref time) => {
+                write!(f, "PointerRelativeMotion({:?}, {:?}, {:?})", sid, pos, time.get_value())
             }
             Perceptron::KeyboardFocusChanged(ref old_sid, ref new_sid) => {
                 write!(f, "KeyboardFocusChanged({:?}, {:?})", old_sid, new_sid)

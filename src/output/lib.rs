@@ -11,9 +11,6 @@ extern crate egl;
 extern crate drm as libdrm;
 extern crate gbm_rs as libgbm;
 
-#[macro_use(timber)]
-extern crate timber;
-#[macro_use]
 extern crate qualia;
 extern crate dharma;
 extern crate renderer_gl;

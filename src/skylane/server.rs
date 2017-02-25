@@ -222,6 +222,14 @@ impl ClientSocket {
         socket::sendmsg(self.fd, &iov[..], &cmsgs[..], socket::MSG_DONTWAIT, None)?;
         Ok(())
     }
+
+    pub fn write_with_control_data(&self, bytes: &[u8], fds: &[RawFd]) -> Result<(), SkylaneError> {
+        let iov: [uio::IoVec<&[u8]>; 1] = [uio::IoVec::from_slice(&bytes[..]); 1];
+        let cmsgs = [socket::ControlMessage::ScmRights(fds)];
+
+        socket::sendmsg(self.fd, &iov[..], &cmsgs[..], socket::MSG_DONTWAIT, None)?;
+        Ok(())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

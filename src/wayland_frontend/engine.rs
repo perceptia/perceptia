@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use dharma;
 use skylane as wl;
 
-use qualia::{Button, Key, Milliseconds, Size, SurfaceId, SurfacePosition, Vector};
-use qualia::{Coordinator, Perceptron, surface_state};
+use qualia::{Button, Key, Milliseconds, Position, Size, SurfaceId, Vector, KeyMods};
+use qualia::{Coordinator, KeyboardState, XkbKeymap, Perceptron, Settings, surface_state};
 
 use protocol;
 use gateway::Gateway;
@@ -37,20 +37,26 @@ pub struct Engine {
     mediator: MediatorRef,
     clients: HashMap<dharma::EventHandlerId, ClientPackage>,
     coordinator: Coordinator,
+    settings: Settings,
     dispatcher: dharma::Dispatcher,
+    keyboard_state: KeyboardState,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Engine {
     /// Creates new `Engine`. Sets display socket up.
-    pub fn new(coordinator: Coordinator) -> Self {
+    pub fn new(coordinator: Coordinator, settings: Settings) -> Self {
+        let xkb_keymap = XkbKeymap::default().expect("Creating XKB map");
+
         Engine {
             display: wl::server::DisplaySocket::new_default().expect("Creating display socket"),
             mediator: MediatorRef::new(Mediator::new()),
             clients: HashMap::new(),
             coordinator: coordinator,
+            settings: settings,
             dispatcher: dharma::Dispatcher::new(),
+            keyboard_state: KeyboardState::new(&xkb_keymap.keymap),
         }
     }
 
@@ -87,12 +93,15 @@ impl Engine {
         // Prepare proxy.
         let mut proxy = Proxy::new(id,
                                    self.coordinator.clone(),
+                                   self.settings.clone(),
                                    self.mediator.clone(),
                                    client_socket.clone());
         proxy.register_global(protocol::shm::get_global());
         proxy.register_global(protocol::compositor::get_global());
         proxy.register_global(protocol::shell::get_global());
         proxy.register_global(protocol::xdg_shell_v6::get_global());
+        proxy.register_global(protocol::seat::get_global());
+        proxy.register_global(protocol::output::get_global());
         let proxy_ref = ProxyRef::new(proxy);
 
         // Prepare client.
@@ -147,7 +156,7 @@ impl Engine {
 /// Private helper methods.
 impl Engine {
     fn logger(s: String) {
-        log_wayl3!("Skylane: {}", s);
+        log_wayl4!("Skylane: {}", s);
     }
 }
 
@@ -156,11 +165,20 @@ impl Engine {
 impl Gateway for Engine {
     fn on_output_found(&self) {}
 
-    fn on_keyboard_input(&self, _key: Key) {}
+    fn on_keyboard_input(&mut self, key: Key, _mods: Option<KeyMods>) {
+        let mods = if self.keyboard_state.update(key.code, key.value) {
+            Some(self.keyboard_state.get_mods())
+        } else {
+            None
+        };
 
-    fn on_pointer_button(&self, _btn: Button) {}
-
-    fn on_pointer_axis(&self, _axis: Vector) {}
+        let sid = self.coordinator.get_keyboard_focused_sid();
+        if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
+            if let Some(package) = self.clients.get(&id) {
+                package.proxy.borrow_mut().on_keyboard_input(key, mods);
+            }
+        }
+    }
 
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds) {
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
@@ -170,35 +188,93 @@ impl Gateway for Engine {
         }
     }
 
-    fn on_pointer_focus_changed(&self, _surface_position: SurfacePosition) {}
+    fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position) {
+        let mediator = self.mediator.borrow();
+        let old_client_id = mediator.get_client_for_sid(old_sid);
+        let new_client_id = mediator.get_client_for_sid(new_sid);
 
-    fn on_pointer_relative_motion(&self, _surface_position: SurfacePosition) {}
-
-    fn on_keyboard_focus_changed(&self, _old_sid: SurfaceId, _new_sid: SurfaceId) {
-        // FIXME: Finish implementation of changing keyboard focus.
-        // let (old_size, old_flags) =
-        // if let Some(info) = self.coordinator.get_surface(old_sid) {
-        // (info.desired_size, info.state_flags as u32)
-        // } else {
-        // (Size::default(), surface_state::REGULAR as u32)
-        // };
-        //
-        // let (new_size, new_flags) =
-        // if let Some(info) = self.coordinator.get_surface(new_sid) {
-        // (info.desired_size, info.state_flags as u32)
-        // } else {
-        // (Size::default(), surface_state::REGULAR as u32)
-        // };
-
+        if new_client_id != old_client_id {
+            if let Some(client_id) = old_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_pointer_focus_changed(old_sid,
+                                                           SurfaceId::invalid(),
+                                                           Position::default());
+                }
+            }
+            if let Some(client_id) = new_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_pointer_focus_changed(SurfaceId::invalid(), new_sid, position);
+                }
+            }
+        } else {
+            if let Some(client_id) = old_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_pointer_focus_changed(old_sid, new_sid, position);
+                }
+            }
+        }
     }
 
-    fn on_surface_reconfigured(&mut self,
+    fn on_pointer_relative_motion(&self,
+                                  sid: SurfaceId,
+                                  position: Position,
+                                  milliseconds: Milliseconds) {
+        if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
+            if let Some(package) = self.clients.get(&id) {
+                package.proxy.borrow_mut().on_pointer_relative_motion(sid, position, milliseconds);
+            }
+        }
+    }
+
+    fn on_pointer_button(&self, btn: Button) {
+        let sid = self.coordinator.get_pointer_focused_sid();
+        if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
+            if let Some(package) = self.clients.get(&id) {
+                package.proxy.borrow_mut().on_pointer_button(btn);
+            }
+        }
+    }
+
+    fn on_pointer_axis(&self, _axis: Vector) {}
+
+    fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId) {
+        let mediator = self.mediator.borrow();
+        let old_client_id = mediator.get_client_for_sid(old_sid);
+        let new_client_id = mediator.get_client_for_sid(new_sid);
+
+        if new_client_id != old_client_id {
+            if let Some(client_id) = old_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_keyboard_focus_changed(old_sid, SurfaceId::invalid());
+                }
+            }
+            if let Some(client_id) = new_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_keyboard_focus_changed(SurfaceId::invalid(), new_sid);
+                }
+            }
+        } else {
+            if let Some(client_id) = old_client_id {
+                if let Some(package) = self.clients.get(&client_id) {
+                    package.proxy.borrow_mut()
+                                 .on_keyboard_focus_changed(old_sid, new_sid);
+                }
+            }
+        }
+    }
+
+    fn on_surface_reconfigured(&self,
                                sid: SurfaceId,
                                size: Size,
                                state_flags: surface_state::SurfaceState) {
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
             if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_surface_reconfigured(sid, size, state_flags);
+                package.proxy.borrow().on_surface_reconfigured(sid, size, state_flags);
             }
         }
     }

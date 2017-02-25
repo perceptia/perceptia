@@ -152,7 +152,6 @@ name = "frames"
 version = "0.0.1"
 dependencies = [
  "qualia 0.0.1",
- "timber 0.0.1",
 ]
 
 [[package]]

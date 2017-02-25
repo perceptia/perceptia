@@ -64,7 +64,7 @@ impl InputGateway {
         // Try to execute key binding
         if self.input_manager.catch_key(code, value, self.modifiers) == KeyCatchResult::Passed {
             // If no binding found inform the rest of the world
-            let key = Key::new(code, value);
+            let key = Key::new_now(code, value);
             self.signaler.emit(perceptron::INPUT_KEYBOARD, Perceptron::InputKeyboard(key));
         }
     }
@@ -91,7 +91,7 @@ impl InputGateway {
 
     /// Emit button event.
     pub fn emit_button(&mut self, code: u16, value: i32) {
-        let btn = Button::new(code, value);
+        let btn = Button::new_now(code, value);
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_BUTTON,

@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use dharma::Signaler;
 
 use qualia::{Buffer, Coordinator, Area, OptionalPosition, Position, Vector, SurfaceId,
-             SurfaceContext, SurfacePosition, perceptron, Perceptron};
+             SurfaceContext, perceptron, Perceptron, Milliseconds};
 
 use display::Display;
 
@@ -184,16 +184,15 @@ impl Pointer {
 
         // Handle focus change if hovered surface is different than current one or handle motion
         // otherwise
-        let surface_position = SurfacePosition::new(sid, surface_relative.clone());
         if sid != self.pfsid {
             self.pfsid = sid;
             self.csid = self.default_csid;
-            self.signaler.emit(perceptron::POINTER_FOCUS_CHANGED,
-                               Perceptron::PointerFocusChanged(surface_position));
+            self.coordinator.set_pointer_focus(sid, surface_relative)
         } else if self.pfsid.is_valid() && (surface_relative != self.last_surface_relative) {
+            let now = Milliseconds::now();
             self.last_surface_relative = surface_relative;
             self.signaler.emit(perceptron::POINTER_RELATIVE_MOTION,
-                               Perceptron::PointerRelativeMotion(surface_position));
+                               Perceptron::PointerRelativeMotion(sid, surface_relative, now));
         }
     }
 

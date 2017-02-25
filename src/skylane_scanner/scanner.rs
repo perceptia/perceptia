@@ -74,12 +74,22 @@ impl std::convert::From<std::string::ParseError> for Error {
 
 // -------------------------------------------------------------------------------------------------
 
+/// This enum represents name and type of variable-sized argument of event.
+#[derive(Debug)]
+enum VariableType {
+    String(String),
+    Array(String),
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// This enum represents memory size of Wayland types. Some may by constant like `uint` (4 bytes)
 /// or variable like string (4 bytes size + contents + padding).
 #[derive(Debug)]
 enum Size {
     Constant(usize),
-    Variable(usize),
+    String(usize),
+    Array(usize),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -89,7 +99,7 @@ enum Size {
 #[derive(Debug)]
 struct MessageSize {
     size: usize,
-    names: Vec<String>,
+    names: Vec<VariableType>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -105,9 +115,13 @@ impl MessageSize {
         for arg in arguments.iter() {
             match arg.rust_type.get_size() {
                 Size::Constant(size) => message_size.size += size,
-                Size::Variable(size) => {
+                Size::String(size) => {
                     message_size.size += size;
-                    message_size.names.push(arg.name.clone());
+                    message_size.names.push(VariableType::String(arg.name.clone()));
+                }
+                Size::Array(size) => {
+                    message_size.size += size;
+                    message_size.names.push(VariableType::Array(arg.name.clone()));
                 }
             }
         }
@@ -118,6 +132,17 @@ impl MessageSize {
     /// Checks if message does not contain variable size arguments.
     pub fn is_constant(&self) -> bool {
         self.names.len() == 0
+    }
+
+    /// Check if message contains string.
+    pub fn contains_string(&self) -> bool {
+        for variable_type in &self.names {
+            match variable_type {
+                &VariableType::String(_) => return true,
+                _ => (),
+            }
+        }
+        false
     }
 }
 
@@ -345,7 +370,7 @@ impl RustType {
             RustType::Int => "i32",
             RustType::Fixed => "f32",
             RustType::String => "&str",
-            RustType::Array => "&[u8]",
+            RustType::Array => "&[u32]",
             RustType::FD => "RawFd",
         }
     }
@@ -359,7 +384,7 @@ impl RustType {
             RustType::Int => "i32",
             RustType::Fixed => "f32",
             RustType::String => "String",
-            RustType::Array => "&[u8]",
+            RustType::Array => "&[u32]",
             RustType::FD => "RawFd",
         }
     }
@@ -372,8 +397,8 @@ impl RustType {
             RustType::UInt => Size::Constant(4),
             RustType::Int => Size::Constant(4),
             RustType::Fixed => Size::Constant(4),
-            RustType::String => Size::Variable(4),
-            RustType::Array => Size::Variable(4),
+            RustType::String => Size::String(4),
+            RustType::Array => Size::Array(4),
             RustType::FD => Size::Constant(4),
         }
     }
@@ -600,7 +625,7 @@ impl ServerGenerator {
             .push_line("use std;");
 
         // Imports needed only on special occasions.
-        if Self::check_if_needs_rew_fd(interface) {
+        if Self::check_if_needs_raw_fd(interface) {
             self.buffer.push_line("use std::os::unix::io::RawFd;");
         }
         if Self::check_if_needs_write(interface) {
@@ -649,6 +674,8 @@ impl ServerGenerator {
     }
 
     fn generate_entry(&mut self, entry: &Entry) {
+        // TODO: Add support for bit fields.
+
         let mut name = entry.name.to_uppercase();
         if let Some(c) = name.chars().nth(0) {
             if !c.is_alphabetic() {
@@ -709,7 +736,7 @@ impl ServerGenerator {
             .push(name)
             .push(" (\n")
             .increase_indent()
-            .push_line("_socket: &mut ClientSocket,")
+            .push_line("_socket: &ClientSocket,")
             .push_line("_id: ObjectId,");
 
     }
@@ -747,6 +774,7 @@ impl ServerGenerator {
     fn generate_event_body(&mut self, event: &Event) {
         // Prepare sizes
         let message_size = MessageSize::from_arguments(&event.arguments);
+
         if message_size.is_constant() {
             self.buffer
                 .push_indent()
@@ -756,34 +784,59 @@ impl ServerGenerator {
                 .push_end_of_line();
         } else {
             let mut sizes = String::new();
-            for ref name in message_size.names.iter() {
-                self.buffer
-                    .push_indent()
-                    .push("let _")
-                    .push(name)
-                    .push("_len = ")
-                    .push(name)
-                    .push(".len();")
-                    .push_end_of_line()
-                    .push_indent()
-                    .push("let _")
-                    .push(name)
-                    .push("_size = (_")
-                    .push(name)
-                    .push("_len / 4) * 4 + 4;")
-                    .push_end_of_line()
-                    .push_indent()
-                    .push("let _")
-                    .push(name)
-                    .push("_padding = _")
-                    .push(name)
-                    .push("_size - _")
-                    .push(name)
-                    .push("_len;")
-                    .push_end_of_line();
-                sizes.push_str(" + _");
-                sizes.push_str(name);
-                sizes.push_str("_size");
+            for variable_type in message_size.names.iter() {
+                match *variable_type {
+                    VariableType::String(ref name) => {
+                        self.buffer
+                            .push_indent()
+                            .push("let _")
+                            .push(name)
+                            .push("_len = ")
+                            .push(name)
+                            .push(".len();")
+                            .push_end_of_line()
+                            .push_indent()
+                            .push("let _")
+                            .push(name)
+                            .push("_size = (_")
+                            .push(name)
+                            .push("_len / 4) * 4 + 4;")
+                            .push_end_of_line()
+                            .push_indent()
+                            .push("let _")
+                            .push(name)
+                            .push("_padding = _")
+                            .push(name)
+                            .push("_size - _")
+                            .push(name)
+                            .push("_len;")
+                            .push_end_of_line();
+                        sizes.push_str(" + _");
+                        sizes.push_str(name);
+                        sizes.push_str("_size");
+                    }
+                    VariableType::Array(ref name) => {
+                        self.buffer
+                            .push_indent()
+                            .push("let _")
+                            .push(name)
+                            .push("_len = ")
+                            .push(name)
+                            .push(".len();")
+                            .push_end_of_line()
+                            .push_indent()
+                            .push("let _")
+                            .push(name)
+                            .push("_size = 4 * _")
+                            .push(name)
+                            .push("_len;")
+                            .push_end_of_line()
+                            .push_indent();
+                        sizes.push_str(" + _");
+                        sizes.push_str(name);
+                        sizes.push_str("_size");
+                    }
+                }
             }
             self.buffer
                 .push_indent()
@@ -796,31 +849,43 @@ impl ServerGenerator {
                 .push_line("unsafe { _bytes.set_len(_msg_len); }");
         }
 
+        // Prepare fds
+        let fd_count = Self::count_raw_fds(&event);
+        if fd_count > 0 {
+            self.buffer
+                .push_line("let mut _fds_pos = 0;")
+                .push_indent()
+                .push("let mut _fds: [RawFd; ")
+                .push(&fd_count.to_string())
+                .push("] = unsafe { std::mem::uninitialized() };")
+                .push_end_of_line();
+        }
+
         // Create cursor
         self.buffer.push_line("{").increase_indent();
         if message_size.is_constant() {
-            self.buffer.push_line("let mut _buf = std::io::Cursor::new(&mut _bytes[..]);");
+            self.buffer.push_line("let mut _bytes_buf = std::io::Cursor::new(&mut _bytes[..]);");
         } else {
-            self.buffer.push_line("let mut _buf = std::io::Cursor::new(_bytes.as_mut_slice());");
+            self.buffer.push_line("let mut _bytes_buf = std::io::Cursor::new(_bytes.as_mut_slice());");
         }
 
         // Header
         self.buffer
-            .push_line("_buf.write_u32::<NativeEndian>(_id.get_value())?;")
+            .push_line("_bytes_buf.write_u32::<NativeEndian>(_id.get_value())?;")
             .push_indent()
-            .push("_buf.write_u16::<NativeEndian>(")
+            .push("_bytes_buf.write_u16::<NativeEndian>(")
             .push(&event.opcode.to_string())
             .push(")?;")
             .push_end_of_line();
         if message_size.is_constant() {
             self.buffer
                 .push_indent()
-                .push("_buf.write_u16::<NativeEndian>(")
+                .push("_bytes_buf.write_u16::<NativeEndian>(")
                 .push(&message_size.size.to_string())
                 .push(")?;")
                 .push_end_of_line();
         } else {
-            self.buffer.push_line("_buf.write_u16::<NativeEndian>(_msg_len as u16)?;");
+            self.buffer.push_line("_bytes_buf.write_u16::<NativeEndian>(_msg_len as u16)?;");
         }
 
         // Arguments
@@ -829,7 +894,7 @@ impl ServerGenerator {
                 RustType::Object => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_u32::<NativeEndian>(")
+                        .push("_bytes_buf.write_u32::<NativeEndian>(")
                         .push(&arg.name)
                         .push(".get_value())?;")
                         .push_end_of_line();
@@ -837,7 +902,7 @@ impl ServerGenerator {
                 RustType::NewId => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_u32::<NativeEndian>(")
+                        .push("_bytes_buf.write_u32::<NativeEndian>(")
                         .push(&arg.name)
                         .push(".get_value())?;")
                         .push_end_of_line();
@@ -845,7 +910,7 @@ impl ServerGenerator {
                 RustType::UInt => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_u32::<NativeEndian>(")
+                        .push("_bytes_buf.write_u32::<NativeEndian>(")
                         .push(&arg.name)
                         .push(")?;")
                         .push_end_of_line();
@@ -853,7 +918,7 @@ impl ServerGenerator {
                 RustType::Int => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_i32::<NativeEndian>(")
+                        .push("_bytes_buf.write_i32::<NativeEndian>(")
                         .push(&arg.name)
                         .push(")?;")
                         .push_end_of_line();
@@ -861,7 +926,7 @@ impl ServerGenerator {
                 RustType::Fixed => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_i32::<NativeEndian>(((")
+                        .push("_bytes_buf.write_i32::<NativeEndian>(((")
                         .push(&arg.name)
                         .push(" as f64) * 256.0) as i32")
                         .push(")?;")
@@ -870,12 +935,12 @@ impl ServerGenerator {
                 RustType::String => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_u32::<NativeEndian>(_")
+                        .push("_bytes_buf.write_u32::<NativeEndian>(_")
                         .push(&arg.name)
-                        .push("_size as u32)?;")
+                        .push("_len as u32 + 1)?;")
                         .push_end_of_line()
                         .push_indent()
-                        .push("_buf.write(")
+                        .push("_bytes_buf.write(")
                         .push(&arg.name)
                         .push(".as_bytes())?;")
                         .push_end_of_line()
@@ -885,49 +950,47 @@ impl ServerGenerator {
                         .push("_padding) {")
                         .push_end_of_line()
                         .increase_indent()
-                        .push_line("_buf.write_u8(0)?;")
+                        .push_line("_bytes_buf.write_u8(0)?;")
                         .decrease_indent()
                         .push_line("}");
                 }
                 RustType::Array => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_u32::<NativeEndian>(_")
+                        .push("_bytes_buf.write_u32::<NativeEndian>(_")
                         .push(&arg.name)
                         .push("_size as u32)?;")
                         .push_end_of_line()
                         .push_indent()
-                        .push("_buf.write(")
+                        .push("for &_e in ")
                         .push(&arg.name)
-                        .push(")?;")
-                        .push_end_of_line()
-                        .push_indent()
-                        .push("for _ in 0..(_")
-                        .push(&arg.name)
-                        .push("_padding) {")
+                        .push(" {")
                         .push_end_of_line()
                         .increase_indent()
-                        .push_line("_buf.write_u8(0)?;")
+                        .push_line("_bytes_buf.write_u32::<NativeEndian>(_e)?;")
                         .decrease_indent()
                         .push_line("}");
                 }
                 RustType::FD => {
                     self.buffer
                         .push_indent()
-                        .push("_buf.write_i32::<NativeEndian>(")
+                        .push("_fds[_fds_pos] = ")
                         .push(&arg.name)
-                        .push(")?;")
-                        .push_end_of_line();
+                        .push(";")
+                        .push_end_of_line()
+                        .push_line("_fds_pos += 1;");
                 }
             }
         }
 
         // Write
-        self.buffer
-            .decrease_indent()
-            .push_line("}")
-            .push_line("_socket.write(&_bytes[..])?;")
-            .push_line("Ok(())");
+        self.buffer.decrease_indent().push_line("}");
+        if fd_count > 0 {
+            self.buffer.push_line("_socket.write_with_control_data(&_bytes[..], &_fds[..])?;");
+        } else {
+            self.buffer.push_line("_socket.write(&_bytes[..])?;");
+        }
+        self.buffer.push_line("Ok(())");
     }
 
     fn generate_dispatcher(&mut self, protocol_name: &str, interface: &Interface) {
@@ -1009,7 +1072,21 @@ impl ServerGenerator {
                             .push_indent()
                             .push("let _")
                             .push(&arg.name)
-                            .push("_len = _bytes_buf.read_u32::<NativeEndian>()?;\n")
+                            .push("_len = _bytes_buf.read_u32::<NativeEndian>()? - 1;\n")
+                            .push_indent()
+                            .push("let _")
+                            .push(&arg.name)
+                            .push("_size = (_")
+                            .push(&arg.name)
+                            .push("_len / 4) * 4 + 4;\n")
+                            .push_indent()
+                            .push("let _")
+                            .push(&arg.name)
+                            .push("_padding = _")
+                            .push(&arg.name)
+                            .push("_size - _")
+                            .push(&arg.name)
+                            .push("_len;\n")
                             .push_indent()
                             .push("let mut ")
                             .push(&arg.name)
@@ -1017,15 +1094,24 @@ impl ServerGenerator {
                             .push(&arg.name)
                             .push("_len as usize);\n")
                             .push_indent()
-                            .push("for _ in 0 .. ((_")
+                            .push("for _ in 0 .. _")
                             .push(&arg.name)
-                            .push("_len / 4) * 4 + 4) {\n")
+                            .push("_len {\n")
                             .increase_indent()
                             .push_line("let c = _bytes_buf.read_u8()?;")
                             .push_indent()
                             .push("if c != 0 { ")
                             .push(&arg.name)
                             .push(".push(c as char) }\n")
+                            .decrease_indent()
+                            .push_indent()
+                            .push("}\n")
+                            .push_indent()
+                            .push("for _ in 0 .. _")
+                            .push(&arg.name)
+                            .push("_padding {\n")
+                            .increase_indent()
+                            .push_line("let _ = _bytes_buf.read_u8()?;")
                             .decrease_indent()
                             .push_indent()
                             .push("}\n");
@@ -1102,7 +1188,7 @@ impl ServerGenerator {
             .increase_indent()
             .push_indent()
             .push("_logger(format!(\"")
-            .push(if incoming { " --> " } else { "<-- " })
+            .push(if incoming { "--> " } else { " <-- " })
             .push(protocol_name)
             .push("::")
             .push(interface_name)
@@ -1153,7 +1239,7 @@ impl ServerGenerator {
     fn check_if_needs_write(interface: &Interface) -> bool {
         for event in interface.events.iter() {
             let message_size = MessageSize::from_arguments(&event.arguments);
-            if !message_size.is_constant() {
+            if message_size.contains_string() {
                 return true;
             }
         }
@@ -1172,7 +1258,7 @@ impl ServerGenerator {
         arg_count > 0
     }
 
-    fn check_if_needs_rew_fd(interface: &Interface) -> bool {
+    fn check_if_needs_raw_fd(interface: &Interface) -> bool {
         for request in interface.requests.iter() {
             for arg in request.arguments.iter() {
                 if arg.rust_type == RustType::FD {
@@ -1188,6 +1274,16 @@ impl ServerGenerator {
             }
         }
         false
+    }
+
+    fn count_raw_fds(event: &Event) -> usize {
+        let mut count = 0;
+        for arg in event.arguments.iter() {
+            if arg.rust_type == RustType::FD {
+                count += 1;
+            }
+        }
+        count
     }
 }
 

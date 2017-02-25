@@ -24,9 +24,9 @@ impl Registry {
     fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             let proxy = proxy_ref.borrow();
-            let mut socket = proxy.get_socket();
+            let socket = proxy.get_socket();
             for (name, global) in proxy.get_globals() {
-                send!(wl_registry::global(&mut socket,
+                send!(wl_registry::global(&socket,
                                           oid,
                                           *name,
                                           global.interface,
@@ -64,7 +64,7 @@ impl wl_registry::Interface for Registry {
                     Err(format!("Invalid version for global '{}': 0 is not valid version.",
                                 interface))
                 } else if global.version < version {
-                    Err(format!("Invalid version for global '{}': have: {}, wanted: {}.",
+                    Err(format!("Invalid version for global '{}': server has: {}, client wanted: {}.",
                                 interface,
                                 global.version,
                                 version))

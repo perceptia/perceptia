@@ -6,17 +6,19 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use dharma;
 use skylane as wl;
 use skylane_protocols::server::wayland::{wl_display, wl_callback, wl_buffer};
+use skylane_protocols::server::wayland::{wl_keyboard, wl_pointer};
+use skylane_protocols::server::wayland::{wl_shell_surface};
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 
-use qualia::{Coordinator, MappedMemory, Milliseconds};
-use qualia::{Area, Button, Key, Size, SurfacePosition, Vector};
-use qualia::{MemoryPoolId, MemoryViewId, SurfaceId};
-use qualia::{show_reason, surface_state};
+use qualia::{Coordinator, Settings};
+use qualia::{Area, Button, Key, KeyMods, Milliseconds, Position, Size, Vector};
+use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{show_reason, surface_state, SurfaceId};
 
 use facade::{Facade, ShellSurfaceOid};
 use gateway::Gateway;
@@ -51,6 +53,9 @@ macro_rules! relate_sid_with {
 
 /// Helper structure for aggregating information about surface.
 struct SurfaceInfo {
+    // For sending keyboard `enter` and `leave`.
+    surface_oid: Option<wl::common::ObjectId>,
+
     // For releasing buffer in `on_surface_frame`
     buffer_oid: Option<wl::common::ObjectId>,
 
@@ -66,6 +71,7 @@ struct SurfaceInfo {
 impl SurfaceInfo {
     pub fn new() -> Self {
         SurfaceInfo {
+            surface_oid: None,
             shell_surface_oid: None,
             buffer_oid: None,
             frame_oid: None,
@@ -98,10 +104,19 @@ impl BufferInfo {
 pub struct Proxy {
     id: dharma::EventHandlerId,
     coordinator: Coordinator,
+    settings: Settings,
+
     mediator: MediatorRef,
     socket: wl::server::ClientSocket,
-    globals: HashMap<u32, Global>,
+
+    /// Map from global name to global info structure.
+    ///
+    /// NOTE: It must be possible to iterate globals in order of registering because advertising
+    /// globals in wrong order may crash clients
+    globals: BTreeMap<u32, Global>,
     regions: HashMap<wl::common::ObjectId, Area>,
+    pointer_oids: HashSet<wl::common::ObjectId>,
+    keyboard_oids: HashSet<wl::common::ObjectId>,
     memory_pools: HashSet<MemoryPoolId>,
     surface_oid_to_sid_dictionary: HashMap<wl::common::ObjectId, SurfaceId>,
     sid_to_surface_info_dictionary: HashMap<SurfaceId, SurfaceInfo>,
@@ -117,6 +132,7 @@ impl Proxy {
     /// Creates new `Proxy`.
     pub fn new(id: dharma::EventHandlerId,
                coordinator: Coordinator,
+               settings: Settings,
                mediator: MediatorRef,
                socket: wl::server::ClientSocket)
                -> Self {
@@ -124,9 +140,12 @@ impl Proxy {
             id: id,
             coordinator: coordinator,
             mediator: mediator,
+            settings: settings,
             socket: socket,
-            globals: HashMap::new(),
+            globals: BTreeMap::new(),
             regions: HashMap::new(),
+            pointer_oids: HashSet::new(),
+            keyboard_oids: HashSet::new(),
             memory_pools: HashSet::new(),
             surface_oid_to_sid_dictionary: HashMap::new(),
             sid_to_surface_info_dictionary: HashMap::new(),
@@ -135,13 +154,18 @@ impl Proxy {
         }
     }
 
+    /// Returns copy of application settings.
+    pub fn get_settings(&self) -> Settings {
+        self.settings.clone()
+    }
+
     /// Returns client connection socket.
     pub fn get_socket(&self) -> wl::server::ClientSocket {
         self.socket.clone()
     }
 
     /// Return list of current globals.
-    pub fn get_globals(&self) -> &HashMap<u32, Global> {
+    pub fn get_globals(&self) -> &BTreeMap<u32, Global> {
         &self.globals
     }
 
@@ -152,7 +176,7 @@ impl Proxy {
         self.globals.insert(self.last_global_id, global);
     }
 
-    /// Handles termination of client by destroing its resources.
+    /// Handles termination of client by destroying its resources.
     pub fn terminate(&mut self) {
         for mpid in self.memory_pools.iter() {
             self.coordinator.destroy_memory_pool(*mpid);
@@ -168,12 +192,15 @@ impl Proxy {
 // -------------------------------------------------------------------------------------------------
 
 impl Proxy {
+    /// Helper method for setting surface information for surface.
+    fn relate_sid_with_surface(&mut self, sid: SurfaceId, oid: wl::common::ObjectId) {
+        self.surface_oid_to_sid_dictionary.insert(oid, sid);
+        relate_sid_with!(surface_oid, self.sid_to_surface_info_dictionary, sid, oid);
+    }
+
     /// Helper method for setting shell information for surface.
     fn relate_sid_with_shell_surface(&mut self, sid: SurfaceId, oid: ShellSurfaceOid) {
-        relate_sid_with!(shell_surface_oid,
-                         self.sid_to_surface_info_dictionary,
-                         sid,
-                         oid);
+        relate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dictionary, sid, oid);
     }
 
     /// Helper method for setting buffer information for surface.
@@ -217,16 +244,32 @@ impl Facade for Proxy {
         result
     }
 
-    fn define_region(&mut self, region_id: wl::common::ObjectId, region: Area) {
-        self.regions.insert(region_id, region);
+    fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area) {
+        self.regions.insert(region_oid, region);
     }
 
-    fn undefine_region(&mut self, region_id: wl::common::ObjectId) {
-        self.regions.remove(&region_id);
+    fn undefine_region(&mut self, region_oid: wl::common::ObjectId) {
+        self.regions.remove(&region_oid);
     }
 
-    fn set_input_region(&self, sid: SurfaceId, region_id: wl::common::ObjectId) {
-        if let Some(region) = self.regions.get(&region_id) {
+    fn add_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId) {
+        self.pointer_oids.insert(pointer_oid);
+    }
+
+    fn remove_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId) {
+        self.pointer_oids.remove(&pointer_oid);
+    }
+
+    fn add_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId) {
+        self.keyboard_oids.insert(keyboard_oid);
+    }
+
+    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId) {
+        self.keyboard_oids.remove(&keyboard_oid);
+    }
+
+    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId) {
+        if let Some(region) = self.regions.get(&region_oid) {
             self.coordinator.set_surface_offset(sid, region.pos);
             self.coordinator.set_surface_requested_size(sid, region.size);
         } else {
@@ -236,7 +279,7 @@ impl Facade for Proxy {
 
     fn create_surface(&mut self, oid: wl::common::ObjectId) -> SurfaceId {
         let sid = self.coordinator.create_surface();
-        self.surface_oid_to_sid_dictionary.insert(oid, sid);
+        self.relate_sid_with_surface(sid, oid);
         self.mediator.borrow_mut().relate_sid_to_client(sid, self.id);
         sid
     }
@@ -290,8 +333,11 @@ impl Facade for Proxy {
         self.coordinator.relate_surfaces(sid, parent_sid);
     }
 
-    fn set_as_cursor(&self, sid: SurfaceId) {
-        self.coordinator.set_surface_as_cursor(sid);
+    fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_y: isize) {
+        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+            self.coordinator.set_surface_offset(sid, Position { x: hotspot_x, y: hotspot_y });
+            self.coordinator.set_surface_as_cursor(sid);
+        }
     }
 }
 
@@ -301,66 +347,191 @@ impl Facade for Proxy {
 impl Gateway for Proxy {
     fn on_output_found(&self) {}
 
-    fn on_keyboard_input(&self, key: Key) {}
+    fn on_keyboard_input(&mut self, key: Key, mods: Option<KeyMods>) {
+        for &keyboard_oid in self.keyboard_oids.iter() {
+            let mut serial = self.socket.get_next_serial();
+            send!(wl_keyboard::key(&self.socket,
+                                   keyboard_oid,
+                                   serial,
+                                   key.time.get_value() as u32,
+                                   key.code as u32,
+                                   key.value as u32));
 
-    fn on_pointer_button(&self, btn: Button) {}
-
-    fn on_pointer_axis(&self, axis: Vector) {}
+            if let Some(mods) = mods {
+                serial = self.socket.get_next_serial();
+                send!(wl_keyboard::modifiers(&self.socket,
+                                             keyboard_oid,
+                                             serial,
+                                             mods.depressed,
+                                             mods.latched,
+                                             mods.locked,
+                                             mods.effective));
+            }
+        }
+    }
 
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds) {
         if let Some(info) = self.sid_to_surface_info_dictionary.get_mut(&sid) {
             if let Some(frame_oid) = info.frame_oid {
-                send!(wl_callback::done(&mut self.socket,
+                send!(wl_callback::done(&self.socket,
                                         frame_oid,
                                         milliseconds.get_value() as u32));
-                send!(wl_display::delete_id(&mut self.socket,
+                send!(wl_display::delete_id(&self.socket,
                                             wl::common::DISPLAY_ID,
                                             frame_oid.get_value()));
             }
             info.frame_oid = None;
 
             if let Some(buffer_oid) = info.buffer_oid {
-                send!(wl_buffer::release(&mut self.socket, buffer_oid));
+                send!(wl_buffer::release(&self.socket, buffer_oid));
             }
             info.buffer_oid = None;
         }
     }
 
-    fn on_pointer_focus_changed(&self, surface_position: SurfacePosition) {}
+    fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position) {
+        if old_sid != SurfaceId::invalid() {
+            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&old_sid) {
+                if let Some(surface_oid) = surface_info.surface_oid {
+                    for pointer_oid in self.pointer_oids.iter() {
+                        let serial = self.socket.get_next_serial();
+                        send!(wl_pointer::leave(&self.socket,
+                                                *pointer_oid,
+                                                serial,
+                                                surface_oid));
+                    }
+                }
+            }
+        }
 
-    fn on_pointer_relative_motion(&self, surface_position: SurfacePosition) {}
+        if new_sid != SurfaceId::invalid() {
+            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&new_sid) {
+                if let Some(surface_oid) = surface_info.surface_oid {
+                    for pointer_oid in self.pointer_oids.iter() {
+                        let serial = self.socket.get_next_serial();
+                        send!(wl_pointer::enter(&self.socket,
+                                                *pointer_oid,
+                                                serial,
+                                                surface_oid,
+                                                position.x as f32,
+                                                position.y as f32));
+                    }
+                }
+            }
+        }
+    }
 
-    fn on_keyboard_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId) {}
+    fn on_pointer_relative_motion(&self, sid: SurfaceId,
+                                  position: Position,
+                                  milliseconds: Milliseconds) {
+        for pointer_oid in self.pointer_oids.iter() {
+            send!(wl_pointer::motion(&self.socket,
+                                     *pointer_oid,
+                                     milliseconds.get_value() as u32,
+                                     position.x as f32,
+                                     position.y as f32));
+        }
+    }
 
-    fn on_surface_reconfigured(&mut self,
+    fn on_pointer_button(&self, btn: Button) {
+        let serial = self.socket.get_next_serial();
+        let state = if btn.value == 0 {
+            wl_pointer::button_state::RELEASED
+        } else {
+            wl_pointer::button_state::PRESSED
+        };
+
+        for pointer_oid in self.pointer_oids.iter() {
+            send!(wl_pointer::button(&self.socket,
+                                     *pointer_oid,
+                                     serial,
+                                     btn.time.get_value() as u32,
+                                     btn.code as u32,
+                                     state));
+        }
+    }
+
+    fn on_pointer_axis(&self, axis: Vector) {}
+
+    fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId) {
+        if old_sid != SurfaceId::invalid() {
+            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&old_sid) {
+                if let Some(surface_oid) = surface_info.surface_oid {
+                    for keyboard_oid in self.keyboard_oids.iter() {
+                        let serial = self.socket.get_next_serial();
+                        send!(wl_keyboard::leave(&self.socket,
+                                                 *keyboard_oid,
+                                                 serial,
+                                                 surface_oid));
+
+                        if let Some(window_info) = self.coordinator.get_surface(old_sid) {
+                            self.on_surface_reconfigured(old_sid,
+                                                         window_info.desired_size,
+                                                         window_info.state_flags);
+                        }
+                    }
+                }
+            }
+        }
+
+        if new_sid != SurfaceId::invalid() {
+            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&new_sid) {
+                if let Some(surface_oid) = surface_info.surface_oid {
+                    for keyboard_oid in self.keyboard_oids.iter() {
+                        let serial = self.socket.get_next_serial();
+
+                        // TODO: Pass correct keys on keyboard enter.
+                        let keys: [u32; 0] = [0; 0];
+
+                        send!(wl_keyboard::enter(&self.socket,
+                                                 *keyboard_oid,
+                                                 serial,
+                                                 surface_oid,
+                                                 &keys[..]));
+
+                        if let Some(window_info) = self.coordinator.get_surface(new_sid) {
+                            self.on_surface_reconfigured(new_sid,
+                                                         window_info.desired_size,
+                                                         window_info.state_flags);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fn on_surface_reconfigured(&self,
                                sid: SurfaceId,
                                size: Size,
                                state_flags: surface_state::SurfaceState) {
         if let Some(info) = self.sid_to_surface_info_dictionary.get(&sid) {
-            if let Some(surface) = info.shell_surface_oid {
-                match surface {
-                    ShellSurfaceOid::Shell(oid) => {
-                        // TODO: Finish implementation of Wayland shell protocol.
-                        log_nyimp!("Wayland shell protocol is not implemented yet");
+            if let Some(shell_surface) = info.shell_surface_oid {
+                match shell_surface {
+                    ShellSurfaceOid::Shell(shell_surface_oid) => {
+                        send!(wl_shell_surface::configure(&self.socket,
+                                                          shell_surface_oid,
+                                                          wl_shell_surface::resize::NONE,
+                                                          size.width as i32,
+                                                          size.height as i32));
                     }
                     ShellSurfaceOid::ZxdgToplevelV6(shell_surface_oid, shell_toplevel_oid) => {
                         let mut pos = 0;
-                        let mut states: [u8; 2] = [0; 2];
+                        let mut states: [u32; 2] = [0; 2];
                         if state_flags.intersects(surface_state::MAXIMIZED) {
-                            states[pos] = zxdg_toplevel_v6::state::MAXIMIZED as u8;
+                            states[pos] = zxdg_toplevel_v6::state::MAXIMIZED;
                             pos += 1;
                         }
                         if sid == self.coordinator.get_keyboard_focused_sid() {
-                            states[pos] = zxdg_toplevel_v6::state::ACTIVATED as u8;
+                            states[pos] = zxdg_toplevel_v6::state::ACTIVATED;
                             pos += 1;
                         }
-                        send!(zxdg_toplevel_v6::configure(&mut self.socket,
+                        send!(zxdg_toplevel_v6::configure(&self.socket,
                                                           shell_toplevel_oid,
                                                           size.width as i32,
                                                           size.height as i32,
-                                                          &states[..pos]));
+                                                          &states[0..pos]));
                         let serial = self.socket.get_next_serial();
-                        send!(zxdg_surface_v6::configure(&mut self.socket,
+                        send!(zxdg_surface_v6::configure(&self.socket,
                                                          shell_surface_oid,
                                                          serial));
                     }

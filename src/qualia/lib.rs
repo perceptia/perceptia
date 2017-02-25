@@ -33,16 +33,16 @@ pub use errors::Illusion;
 #[macro_use]
 pub mod macros;
 
+pub mod timing;
+pub use timing::Milliseconds;
+
 pub mod defs;
-pub use defs::{Area, Point, Position, OptionalPosition, SurfacePosition, Size, Vector};
+pub use defs::{Area, Point, Position, OptionalPosition, Size, Vector};
 pub use defs::{Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValue};
 pub use defs::{MemoryPoolId, MemoryViewId};
 
 pub mod config;
 pub use config::{Config, InputConfig};
-
-pub mod timing;
-pub use timing::Milliseconds;
 
 pub mod memory;
 pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
@@ -56,8 +56,11 @@ pub mod functions;
 pub mod env;
 pub use env::Env;
 
+pub mod keyboard_state;
+pub use keyboard_state::{KeyboardState, KeyMods};
+
 pub mod keymap;
-pub use keymap::{Keymap, Settings as KeymapSettings};
+pub use keymap::{Keymap, Settings as KeymapSettings, XkbKeymap};
 
 pub mod settings;
 pub use settings::Settings;

@@ -8,6 +8,7 @@
 use std;
 
 use enums;
+use timing;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -249,27 +250,6 @@ impl std::default::Default for OptionalPosition {
 
 // -------------------------------------------------------------------------------------------------
 
-/// This structure combines information about surface ID with position.
-#[derive(Clone, Copy, Debug)]
-pub struct SurfacePosition {
-    pub sid: SurfaceId,
-    pub pos: Position,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl SurfacePosition {
-    /// `SurfacePosition` constructor.
-    pub fn new(sid: SurfaceId, pos: Position) -> Self {
-        SurfacePosition {
-            sid: sid,
-            pos: pos,
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Type defining 2D size, dimensions or resolution.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -393,16 +373,27 @@ impl std::default::Default for Area {
 pub struct Button {
     pub code: u16,
     pub value: i32,
+    pub time: timing::Milliseconds,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Button {
-    /// `Button` constructor.
-    pub fn new(code: u16, value: i32) -> Self {
+    /// Constructs `Button`.
+    pub fn new(code: u16, value: i32, milliseconds: timing::Milliseconds) -> Self {
         Button {
             code: code,
             value: value,
+            time: milliseconds,
+        }
+    }
+
+    /// Constructs `Button` with current time.
+    pub fn new_now(code: u16, value: i32) -> Self {
+        Button {
+            code: code,
+            value: value,
+            time: timing::Milliseconds::now(),
         }
     }
 }

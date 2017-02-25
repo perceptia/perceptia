@@ -149,7 +149,6 @@ impl InnerInputManager {
         inner
     }
 
-
     /// Helper method for finding executor for given binding in active modes.
     fn find_executor(&self, binding: &Binding) -> Option<Executor> {
         for ref mode in self.modes.iter() {
@@ -170,13 +169,11 @@ impl InnerInputManager {
                      modifiers: modifier::ModifierType)
                      -> KeyCatchResult {
         self.code = code;
-        if value == KeyState::Pressed as KeyValue {
-            if let Some(executor) = self.find_executor(&Binding::create(code, modifiers)) {
+        if let Some(executor) = self.find_executor(&Binding::create(code, modifiers)) {
+            if value == KeyState::Pressed as KeyValue {
                 executor(self);
-                KeyCatchResult::Caught
-            } else {
-                KeyCatchResult::Passed
             }
+            KeyCatchResult::Caught
         } else {
             KeyCatchResult::Passed
         }
@@ -294,6 +291,7 @@ impl binding_functions::InputContext for InnerInputManager {
     fn execute_command(&mut self) {
         self.signaler.emit(perceptron::COMMAND,
                            Perceptron::Command(self.command.clone()));
+        self.clean_command();
     }
 
     fn clean_command(&mut self) {

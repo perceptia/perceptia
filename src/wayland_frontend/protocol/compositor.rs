@@ -18,7 +18,6 @@ use proxy::ProxyRef;
 // -------------------------------------------------------------------------------------------------
 
 /// Wayland `wl_compositor` object.
-#[allow(dead_code)]
 struct Compositor {
     proxy: ProxyRef,
 }
@@ -146,8 +145,10 @@ impl wl_surface::Interface for Surface {
     fn set_opaque_region(&mut self,
                          this_object_id: wl::common::ObjectId,
                          socket: &mut wl::server::ClientSocket,
-                         region: wl::common::ObjectId)
+                         region_oid: wl::common::ObjectId)
                          -> wl::server::Task {
+        let proxy = self.proxy.borrow_mut();
+        proxy.set_input_region(self.sid, region_oid);
         wl::server::Task::None
     }
 
@@ -201,7 +202,6 @@ impl wl_surface::Interface for Surface {
 // -------------------------------------------------------------------------------------------------
 
 /// Wayland `wl_region` object.
-#[allow(dead_code)]
 struct Region {
     proxy: ProxyRef,
     area: Option<Area>,

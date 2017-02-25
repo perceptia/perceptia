@@ -40,7 +40,7 @@ impl WaylandService {
     pub fn new(mut context: Context) -> Box<dharma::Service> {
         dharma::system::block_signals();
         Box::new(WaylandService {
-            engine: Engine::new(context.get_coordinator().clone()),
+            engine: Engine::new(context.get_coordinator().clone(), context.get_settings().clone()),
             context: context,
             receiver: dharma::Receiver::new(),
         })
@@ -133,23 +133,23 @@ impl WaylandService {
             Perceptron::OutputFound(_) => {
                 self.engine.on_output_found();
             }
-            Perceptron::InputKeyboard(ref key) => {
-                self.engine.on_keyboard_input(key.clone());
+            Perceptron::InputKeyboard(key) => {
+                self.engine.on_keyboard_input(key, None);
             }
-            Perceptron::InputPointerButton(ref btn) => {
-                self.engine.on_pointer_button(btn.clone());
+            Perceptron::InputPointerButton(btn) => {
+                self.engine.on_pointer_button(btn);
             }
-            Perceptron::InputPointerAxis(ref axis) => {
-                self.engine.on_pointer_axis(axis.clone());
+            Perceptron::InputPointerAxis(axis) => {
+                self.engine.on_pointer_axis(axis);
             }
             Perceptron::SurfaceFrame(sid, milliseconds) => {
                 self.engine.on_surface_frame(sid, milliseconds);
             }
-            Perceptron::PointerFocusChanged(ref surface_position) => {
-                self.engine.on_pointer_focus_changed(surface_position.clone());
+            Perceptron::PointerFocusChanged(old_sid, new_sid, pos) => {
+                self.engine.on_pointer_focus_changed(old_sid, new_sid, pos);
             }
-            Perceptron::PointerRelativeMotion(ref surface_position) => {
-                self.engine.on_pointer_relative_motion(surface_position.clone());
+            Perceptron::PointerRelativeMotion(sid, pos, time) => {
+                self.engine.on_pointer_relative_motion(sid, pos, time);
             }
             Perceptron::KeyboardFocusChanged(old_sid, new_sid) => {
                 self.engine.on_keyboard_focus_changed(old_sid, new_sid);

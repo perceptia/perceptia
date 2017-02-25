@@ -526,7 +526,7 @@ impl Compositor {
     fn select(&mut self, frame: Frame) {
         self.selection = frame;
         if self.selection.get_sid().is_valid() {
-            self.coordinator.set_focus(self.selection.get_sid());
+            self.coordinator.set_keyboard_focus(self.selection.get_sid());
         }
     }
 

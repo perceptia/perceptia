@@ -204,10 +204,8 @@ impl ZxdgToplevelV6 {
                   shell_surface_oid: wl::common::ObjectId,
                   proxy_ref: ProxyRef)
                   -> Box<wl::server::Object> {
-        Box::new(Handler::<_, zxdg_toplevel_v6::Dispatcher>::new(Self::new(oid,
-                                                                           surface_oid,
-                                                                           shell_surface_oid,
-                                                                           proxy_ref)))
+        let toplevel = Self::new(oid, surface_oid, shell_surface_oid, proxy_ref);
+        Box::new(Handler::<_, zxdg_toplevel_v6::Dispatcher>::new(toplevel))
     }
 }
 

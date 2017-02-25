@@ -8,7 +8,7 @@ use time;
 // -------------------------------------------------------------------------------------------------
 
 /// This structure represents amount of time in milliseconds.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Milliseconds {
     milliseconds: u64,
 }

@@ -38,13 +38,25 @@ pub trait Facade {
                           -> Option<MemoryViewId>;
 
     /// Defines region. Regions may be used to define input area of surface.
-    fn define_region(&mut self, region_id: wl::common::ObjectId, region: Area);
+    fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area);
 
     /// Undefines region.
-    fn undefine_region(&mut self, region_id: wl::common::ObjectId);
+    fn undefine_region(&mut self, region_oid: wl::common::ObjectId);
+
+    /// Adds pointer OID.
+    fn add_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId);
+
+    /// Removes pointer OID.
+    fn remove_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId);
+
+    /// Adds keyboard OID.
+    fn add_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId);
+
+    /// Removes keyboard OID.
+    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId);
 
     /// Sets given region as input region of surface.
-    fn set_input_region(&self, sid: SurfaceId, region_id: wl::common::ObjectId);
+    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId);
 
     /// Requests creation of surface. Return ID of newly created surface.
     fn create_surface(&mut self, surface_oid: wl::common::ObjectId) -> SurfaceId;
@@ -82,7 +94,7 @@ pub trait Facade {
     fn set_relative_position(&self, sid: SurfaceId, offset: Vector);
 
     /// Requests to use given surface for drawing cursor.
-    fn set_as_cursor(&self, sid: SurfaceId);
+    fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_x: isize);
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -43,8 +43,8 @@ pub mod event_kind {
         }
     );
 
-    impl From<epoll::EpollEventKind> for EventKind {
-        fn from(flags: epoll::EpollEventKind) -> Self {
+    impl From<epoll::EpollFlags> for EventKind {
+        fn from(flags: epoll::EpollFlags) -> Self {
             let mut result = EventKind::empty();
             if flags.intersects(epoll::EPOLLIN) {
                 result.insert(READ);
@@ -59,9 +59,9 @@ pub mod event_kind {
         }
     }
 
-    impl Into<epoll::EpollEventKind> for EventKind {
-        fn into(self) -> epoll::EpollEventKind {
-            let mut result = epoll::EpollEventKind::empty();
+    impl Into<epoll::EpollFlags> for EventKind {
+        fn into(self) -> epoll::EpollFlags {
+            let mut result = epoll::EpollFlags::empty();
             if self.intersects(READ) {
                 result.insert(epoll::EPOLLIN);
             }
@@ -173,12 +173,8 @@ impl Dispatcher {
         let fd = source.get_fd();
         mine.handlers.insert(last_id, source);
 
-        let event = epoll::EpollEvent {
-            events: event_kind.into(),
-            data: last_id,
-        };
-
-        epoll::epoll_ctl(mine.epfd, epoll::EpollOp::EpollCtlAdd, fd, &event)
+        let mut event = epoll::EpollEvent::new(event_kind.into(), last_id);
+        epoll::epoll_ctl(mine.epfd, epoll::EpollOp::EpollCtlAdd, fd, &mut event)
             .expect("Failed to perform `epoll_ctl`");
 
         last_id
@@ -190,14 +186,11 @@ impl Dispatcher {
 
         let result = mine.handlers.remove(&id);
         if let Some(ref handler) = result {
-            let event = epoll::EpollEvent {
-                events: epoll::EpollEventKind::empty(),
-                data: 0,
-            };
+            let mut event = epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0);
             epoll::epoll_ctl(mine.epfd,
                              epoll::EpollOp::EpollCtlDel,
                              handler.get_fd(),
-                             &event)
+                             &mut event)
                 .expect("Failed to delete epoll source");
         }
         result
@@ -243,10 +236,9 @@ impl Dispatcher {
     /// Helper method for waiting for events and then processing them.
     fn do_wait_and_process(&self, epfd: RawFd, timeout: isize) {
         // We will process epoll events one by one.
-        let mut events: [epoll::EpollEvent; 1] = [epoll::EpollEvent {
-                                                      events: epoll::EpollEventKind::empty(),
-                                                      data: 0,
-                                                  }];
+        let mut events: [epoll::EpollEvent; 1] = [
+                epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)
+            ];
 
         let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], timeout);
 
@@ -254,8 +246,8 @@ impl Dispatcher {
             Ok(ready) => {
                 if ready > 0 {
                     let mut mine = self.state.inner.lock().unwrap();
-                    if let Some(handler) = mine.handlers.get_mut(&events[0].data) {
-                        handler.process_event(EventKind::from(events[0].events));
+                    if let Some(handler) = mine.handlers.get_mut(&events[0].data()) {
+                        handler.process_event(EventKind::from(events[0].events()));
                     }
                 }
             }

@@ -4,8 +4,8 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-nix = "0.7.0"
-byteorder = "1.0.0"
+nix = "0.8"
+byteorder = "1.0"
 
 [lib]
 name = "skylane"

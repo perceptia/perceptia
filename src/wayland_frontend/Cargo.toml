@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-nix = "0.7.0"
+nix = "0.8.0"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }

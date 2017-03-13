@@ -5,7 +5,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 libudev = "0.2.0"
-nix = "0.7.0"
+nix = "0.8.0"
 drm-rs = "0.1.2"
 uinput-sys = "0.1.5"
 timber = { path = "../timber" }

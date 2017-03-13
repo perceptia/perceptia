@@ -55,7 +55,7 @@ macro_rules! define_ref {
 // -------------------------------------------------------------------------------------------------
 
 /// This macro helps implement ID type.
-#[macro_rules]
+#[macro_export]
 macro_rules! define_id {
     ($name:ident: $ty:ty) => {
         #[derive(Clone, Copy, Eq, PartialEq, Hash, Debug)]

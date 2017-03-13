@@ -4,8 +4,8 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-bitflags = "0.7"
-nix = { version = "0.6.0", features = ["signalfd"] }
+bitflags = "0.8"
+nix = { version = "0.8", features = ["signalfd"] }
 
 [lib]
 name = "dharma"

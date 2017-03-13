@@ -16,8 +16,8 @@ use signaler::Signaler;
 /// Block signals `SIGINT` and `SIGTERM` for current thread.
 pub fn block_signals() {
     let mut mask = signal::SigSet::empty();
-    mask.add(signal::SIGINT).unwrap();
-    mask.add(signal::SIGTERM).unwrap();
+    mask.add(signal::SIGINT);
+    mask.add(signal::SIGTERM);
     mask.thread_block().unwrap();
 }
 
@@ -26,8 +26,8 @@ pub fn block_signals() {
 /// Unblock signals `SIGINT` and `SIGTERM` for current thread.
 pub fn unblock_signals() {
     let mut mask = signal::SigSet::empty();
-    mask.add(signal::SIGINT).unwrap();
-    mask.add(signal::SIGTERM).unwrap();
+    mask.add(signal::SIGINT);
+    mask.add(signal::SIGTERM);
     mask.thread_unblock().unwrap();
 }
 
@@ -53,8 +53,8 @@ impl<P> SignalEventHandler<P>
     /// and `SIGTERM` signals.
     pub fn new(dispatcher: Dispatcher, signaler: Signaler<P>) -> Self {
         let mut mask = signal::SigSet::empty();
-        mask.add(signal::SIGINT).unwrap();
-        mask.add(signal::SIGTERM).unwrap();
+        mask.add(signal::SIGINT);
+        mask.add(signal::SIGTERM);
         SignalEventHandler {
             fd: signalfd::SignalFd::new(&mask).unwrap(),
             dispatcher: dispatcher,
@@ -78,8 +78,8 @@ impl<P> EventHandler for SignalEventHandler<P>
                 match ossi {
                     Some(ssi) => {
                         // FIXME: Do signals have correct type in `nix`?
-                        if (ssi.ssi_signo as i32 == signal::SIGINT) ||
-                           (ssi.ssi_signo as i32 == signal::SIGTERM) {
+                        if (ssi.ssi_signo == signal::SIGINT as u32) ||
+                           (ssi.ssi_signo == signal::SIGTERM as u32) {
                             self.dispatcher.stop();
                             self.signaler.terminate();
                         }

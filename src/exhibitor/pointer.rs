@@ -211,6 +211,16 @@ impl Pointer {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Other requests.
+impl Pointer {
+    /// Handles cursor surface change request.
+    pub fn on_surface_change(&mut self, sid: SurfaceId) {
+        self.csid = sid;
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Helper methods
 impl Pointer {
     /// Cast position to one of available displays:

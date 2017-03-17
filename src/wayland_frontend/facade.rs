@@ -27,6 +27,9 @@ pub trait Facade {
     /// last view goes out of the scope.
     fn destroy_memory_pool(&mut self, mpid: MemoryPoolId);
 
+    /// Requests replacement of mapped memory after resize request afrom client.
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory);
+
     /// Requests creation of memory view.
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,

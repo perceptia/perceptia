@@ -229,6 +229,10 @@ impl Facade for Proxy {
         self.coordinator.destroy_memory_pool(mpid);
     }
 
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+        self.coordinator.replace_memory_pool(mpid, memory);
+    }
+
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
                           buffer_oid: wl::common::ObjectId,

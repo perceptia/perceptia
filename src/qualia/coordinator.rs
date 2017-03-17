@@ -172,22 +172,29 @@ impl InnerCoordinator {
 
     /// Creates new memory pool from mapped memory. Returns ID of newly created pool.
     pub fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
-        let id = self.generate_next_memory_pool_id();
-        self.memory_pools.insert(id, MemoryPool::new_from_mapped_memory(memory));
-        id
+        let mpid = self.generate_next_memory_pool_id();
+        self.memory_pools.insert(mpid, MemoryPool::new_from_mapped_memory(memory));
+        mpid
     }
 
     /// Creates new memory pool from buffer. Returns ID of newly created pool.
     pub fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
-        let id = self.generate_next_memory_pool_id();
-        self.memory_pools.insert(id, MemoryPool::new_from_buffer(buffer));
-        id
+        let mpid = self.generate_next_memory_pool_id();
+        self.memory_pools.insert(mpid, MemoryPool::new_from_buffer(buffer));
+        mpid
     }
 
     /// Schedules destruction of memory pool identified by given ID. The pool will be destructed
     /// when all its views go out of the scope.
     pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
         self.memory_pools.remove(&mpid);
+    }
+
+    /// Replaces mapped memory with other memory reusing its ID. This method may be used when
+    /// client requests memory map resize.
+    pub fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+        self.memory_pools.remove(&mpid);
+        self.memory_pools.insert(mpid, MemoryPool::new_from_mapped_memory(memory));
     }
 
     /// Creates new memory view from mapped memory.
@@ -390,6 +397,12 @@ impl Coordinator {
     pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
         let mut mine = self.inner.lock().unwrap();
         mine.destroy_memory_pool(mpid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.replace_memory_pool(mpid, memory)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

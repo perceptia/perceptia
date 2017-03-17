@@ -111,6 +111,11 @@ impl Exhibitor {
         self.compositor.execute_command(command);
     }
 
+    /// This method is called when changing cursor surface was requested.
+    pub fn on_cursor_surface_change(&mut self, sid: SurfaceId) {
+        self.pointer.borrow_mut().on_surface_change(sid);
+    }
+
     /// This method is called when new surface is ready to be managed.
     pub fn on_surface_ready(&mut self, sid: SurfaceId) {
         self.compositor.manage_surface(sid);
@@ -122,7 +127,7 @@ impl Exhibitor {
         self.pointer.borrow_mut().on_surface_destroyed(sid);
     }
 
-    /// This method is called when keybord focus changed.
+    /// This method is called when keyboard focus changed.
     pub fn on_keyboard_focus_changed(&mut self, sid: SurfaceId) {
         self.pointer.borrow_mut().on_keyboard_focus_changed(sid);
     }
@@ -146,7 +151,7 @@ impl Exhibitor {
 
     /// Handle pointer button event.
     pub fn on_button(&mut self, button: Button) {
-        // TODO: Be more speciffic about button codes and values.
+        // TODO: Be more specific about button codes and values.
         if button.value != 0 {
             let pfsid = self.pointer.borrow_mut().get_pointer_focussed_sid();
             if self.pointer.borrow_mut().get_keyboard_focussed_sid() != pfsid {

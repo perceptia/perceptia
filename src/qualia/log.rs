@@ -108,6 +108,12 @@ pub fn backtrace() {
     let mut timber = timber::lock().unwrap();
     timber.log(format_args!("===============================================\
                              ===============================================\n"));
+    if let Some(name) = ::std::thread::current().name() {
+        timber.log(format_args!("Backtrace for thread '{}':\n", name));
+    } else {
+        timber.log(format_args!("Backtrace:"));
+    }
+
     backtrace::trace(|frame| {
         let ip = frame.ip();
         backtrace::resolve(ip, |symbol| {

@@ -43,6 +43,7 @@ impl Module for ExhibitorModule {
              perceptron::INPUT_POINTER_POSITION,
              perceptron::INPUT_POINTER_BUTTON,
              perceptron::INPUT_POINTER_POSITION_RESET,
+             perceptron::CURSOR_SURFACE_CHANGE,
              perceptron::SURFACE_READY,
              perceptron::SURFACE_DESTROYED,
              perceptron::KEYBOARD_FOCUS_CHANGED]
@@ -60,6 +61,8 @@ impl Module for ExhibitorModule {
                 Perceptron::InputPointerPosition(ref pos) => exhibitor.on_position(pos.clone()),
                 Perceptron::InputPointerButton(ref btn) => exhibitor.on_button(btn.clone()),
                 Perceptron::InputPointerPositionReset => exhibitor.on_position_reset(),
+
+                Perceptron::CursorSurfaceChange(sid) => exhibitor.on_cursor_surface_change(sid),
 
                 Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
                 Perceptron::SurfaceDestroyed(sid) => exhibitor.on_surface_destroyed(sid),

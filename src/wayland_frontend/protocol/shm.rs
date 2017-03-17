@@ -70,7 +70,7 @@ impl wl_shm::Interface for Shm {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
                 let mpid = proxy.create_memory_pool(memory);
-                let pool = ShmPool::new_object(self.proxy.clone(), mpid);
+                let pool = ShmPool::new_object(self.proxy.clone(), mpid, fd, size as usize);
                 wl::server::Task::Create {
                     id: new_pool_id,
                     object: pool,
@@ -90,20 +90,28 @@ impl wl_shm::Interface for Shm {
 struct ShmPool {
     proxy: ProxyRef,
     mpid: MemoryPoolId,
+    fd: i32,
+    size: usize,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl ShmPool {
-    fn new(proxy_ref: ProxyRef, mpid: MemoryPoolId) -> Self {
+    fn new(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: i32, size: usize) -> Self {
         ShmPool {
             proxy: proxy_ref,
             mpid: mpid,
+            fd: fd,
+            size: size,
         }
     }
 
-    fn new_object(proxy_ref: ProxyRef, mpid: MemoryPoolId) -> Box<wl::server::Object> {
-        Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy_ref, mpid)))
+    fn new_object(proxy_ref: ProxyRef,
+                  mpid: MemoryPoolId,
+                  fd: i32,
+                  size: usize)
+                  -> Box<wl::server::Object> {
+        Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy_ref, mpid, fd, size)))
     }
 }
 
@@ -155,6 +163,16 @@ impl wl_shm_pool::Interface for ShmPool {
               socket: &mut wl::server::ClientSocket,
               size: i32)
               -> wl::server::Task {
+        match MappedMemory::new(self.fd, size as usize) {
+            Ok(memory) => {
+                let mut proxy = self.proxy.borrow_mut();
+                proxy.replace_memory_pool(self.mpid, memory);
+                self.size = size as usize;
+            }
+            Err(err) => {
+                log_error!("Failed to map memory! {:?}", err);
+            }
+        }
         wl::server::Task::None
     }
 }

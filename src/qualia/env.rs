@@ -232,16 +232,21 @@ impl Drop for Env {
 
 // -------------------------------------------------------------------------------------------------
 
-/// System signal handler. Handle `SIGINT`, `SIGTERM`, `SIGSEGV` and `SIGABRT` by exiting.
+/// System signal handler.
 ///
-/// Normally these signals should be blocked and be handled by `Dispatcher` and this function
-/// should be only able to catch signals after `Dispatcher` exited.
+/// Normally `SIGINT` and `SIGTERM` signals should be blocked and be handled by `Dispatcher` and
+/// this function should be only able to catch these signals after `Dispatcher` exited.
+///
+/// `SIGSEGV` and `SIGABRT` are handler by exitingg.
 #[cfg_attr(rustfmt, rustfmt_skip)]
 extern fn signal_handler(signum: libc::c_int) {
-    if (signum == signal::SIGINT as libc::c_int)
-    || (signum == signal::SIGTERM as libc::c_int)
-    || (signum == signal::SIGSEGV as libc::c_int)
+    if (signum == signal::SIGSEGV as libc::c_int)
     || (signum == signal::SIGABRT as libc::c_int) {
+        log_info1!("Signal {} received asynchronously", signum);
+        log::backtrace();
+        std::process::exit(1);
+    } else if (signum == signal::SIGINT as libc::c_int)
+    || (signum == signal::SIGTERM as libc::c_int) {
         log_info1!("Signal {} received asynchronously", signum);
         log::backtrace();
     } else {

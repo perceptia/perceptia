@@ -523,7 +523,8 @@ impl Compositor {
 /// Miscellaneous private methods.
 impl Compositor {
     /// Set given frame as selected.
-    fn select(&mut self, frame: Frame) {
+    fn select(&mut self, mut frame: Frame) {
+        self.root.pop_recursively(&mut frame);
         self.selection = frame;
         if self.selection.get_sid().is_valid() {
             self.coordinator.set_keyboard_focus(self.selection.get_sid());

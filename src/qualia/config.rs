@@ -119,8 +119,8 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             inner: Arc::new(Mutex::new(InnerConfig {
-                touchpad_scale: 0.6,
-                touchpad_pressure_threshold: 50,
+                touchpad_scale: 0.5,
+                touchpad_pressure_threshold: 70,
                 mouse_scale: 1.0,
                 bindings: vec![
                     // common

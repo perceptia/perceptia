@@ -106,7 +106,7 @@ impl wl_surface::Interface for Surface {
                this_object_id: wl::common::ObjectId,
                socket: &mut wl::server::ClientSocket)
                -> wl::server::Task {
-        wl::server::Task::None
+        wl::server::Task::Destroy { id: this_object_id }
     }
 
     fn attach(&mut self,

@@ -20,7 +20,7 @@ use qualia::{Area, Button, Key, KeyMods, Milliseconds, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 
-use facade::{Facade, ShellSurfaceOid};
+use facade::{Facade, PositionerInfo, ShellSurfaceOid};
 use gateway::Gateway;
 use global::Global;
 use mediator::MediatorRef;
@@ -45,6 +45,16 @@ macro_rules! relate_sid_with {
             let mut info = SurfaceInfo::new();
             info.$member = Some($obj);
             $dict.insert($sid, info);
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+macro_rules! unrelate_sid_with {
+    ($member:ident, $dict:expr, $sid:ident) => {
+        if let Some(info) = $dict.get_mut(&$sid) {
+            info.$member = None;
         }
     }
 }
@@ -114,7 +124,9 @@ pub struct Proxy {
     /// NOTE: It must be possible to iterate globals in order of registering because advertising
     /// globals in wrong order may crash clients
     globals: BTreeMap<u32, Global>,
+
     regions: HashMap<wl::common::ObjectId, Area>,
+    positioners: HashMap<wl::common::ObjectId, PositionerInfo>,
     pointer_oids: HashSet<wl::common::ObjectId>,
     keyboard_oids: HashSet<wl::common::ObjectId>,
     memory_pools: HashSet<MemoryPoolId>,
@@ -144,6 +156,7 @@ impl Proxy {
             socket: socket,
             globals: BTreeMap::new(),
             regions: HashMap::new(),
+            positioners: HashMap::new(),
             pointer_oids: HashSet::new(),
             keyboard_oids: HashSet::new(),
             memory_pools: HashSet::new(),
@@ -216,6 +229,38 @@ impl Proxy {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Proxy {
+    /// Helper method for unsetting shell information for surface.
+    fn unrelate_sid_with_shell_surface(&mut self, sid: SurfaceId) {
+        unrelate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dictionary, sid);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// Other functions (which should be probably refactored).
+impl Proxy {
+    pub fn get_surface_oid_for_shell(&self,
+                                     parent_shell_surface_oid: wl::common::ObjectId)
+                                     -> Option<wl::common::ObjectId> {
+        for info in self.sid_to_surface_info_dictionary.values() {
+            if let Some(shell_surface_oid) = info.shell_surface_oid {
+                match shell_surface_oid {
+                    ShellSurfaceOid::ZxdgToplevelV6(shell_surface_oid, _) => {
+                        if shell_surface_oid == parent_shell_surface_oid {
+                            return info.surface_oid;
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        None
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 #[allow(unused_variables)]
 impl Facade for Proxy {
     fn create_memory_pool(&mut self, memory: MappedMemory) -> MemoryPoolId {
@@ -272,6 +317,22 @@ impl Facade for Proxy {
         self.keyboard_oids.remove(&keyboard_oid);
     }
 
+    fn set_positioner(&mut self, oid: wl::common::ObjectId, positioner: PositionerInfo) {
+        self.positioners.insert(oid, positioner);
+    }
+
+    fn get_positioner(&mut self, oid: wl::common::ObjectId) -> Option<PositionerInfo> {
+        if let Some(positioner) = self.positioners.get(&oid) {
+            Some(*positioner)
+        } else {
+            None
+        }
+    }
+
+    fn remove_positioner(&mut self, oid: wl::common::ObjectId) {
+        self.positioners.remove(&oid);
+    }
+
     fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId) {
         if let Some(region) = self.regions.get(&region_oid) {
             self.coordinator.set_surface_offset(sid, region.pos);
@@ -293,7 +354,12 @@ impl Facade for Proxy {
     }
 
     fn attach(&mut self, buffer_oid: wl::common::ObjectId, sid: SurfaceId, x: i32, y: i32) {
-        if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
+        if buffer_oid.is_null() {
+            // Client wants to unmap this surface
+            // TODO: This should be done on commit
+            self.coordinator.unrelate_surface(sid);
+            self.coordinator.detach_surface(sid)
+        } else if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
             self.relate_sid_with_buffer(sid, buffer_oid);
             self.coordinator.attach(info.mvid, sid);
         } else {
@@ -321,6 +387,15 @@ impl Facade for Proxy {
         }
     }
 
+    fn hide(&mut self, surface_oid: wl::common::ObjectId, reason: show_reason::ShowReason) {
+        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+            self.coordinator.hide_surface(sid, reason);
+            self.unrelate_sid_with_shell_surface(sid);
+        } else {
+            log_error!("Unknown surface object ID: {}", surface_oid);
+        }
+    }
+
     fn set_offset(&self, sid: SurfaceId, offset: Vector) {
         self.coordinator.set_surface_offset(sid, offset);
     }
@@ -329,12 +404,26 @@ impl Facade for Proxy {
         self.coordinator.set_surface_requested_size(sid, size);
     }
 
-    fn set_relative_position(&self, sid: SurfaceId, offset: Vector) {
-        self.coordinator.set_surface_relative_position(sid, offset);
+    fn set_relative_position(&self, surface_oid: wl::common::ObjectId, x: isize, y: isize) {
+        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+            let position = Position::new(x, y);
+            self.coordinator.set_surface_relative_position(sid, position);
+        }
     }
 
-    fn relate(&self, sid: SurfaceId, parent_sid: SurfaceId) {
-        self.coordinator.relate_surfaces(sid, parent_sid);
+    fn relate(&self, surface_oid: wl::common::ObjectId, parent_surface_oid: wl::common::ObjectId) {
+        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+            if let Some(&parent_sid) = self.surface_oid_to_sid_dictionary.get(&parent_surface_oid) {
+                self.coordinator.relate_surfaces(sid, parent_sid);
+            }
+            self.coordinator.set_surface_relative_position(sid, Position::default());
+        }
+    }
+
+    fn unrelate(&self, surface_oid: wl::common::ObjectId) {
+        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+            self.coordinator.unrelate_surface(sid);
+        }
     }
 
     fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_y: isize) {

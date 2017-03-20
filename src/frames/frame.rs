@@ -381,6 +381,7 @@ impl Frame {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Public setters for frame internals.
 impl Frame {
     /// Sets surface id without informing other parts of application.
     #[inline]

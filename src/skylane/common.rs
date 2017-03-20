@@ -83,8 +83,14 @@ impl ObjectId {
         ObjectId(value)
     }
 
+    /// Returns numerical value of objects ID.
     pub fn get_value(&self) -> u32 {
         self.0
+    }
+
+    /// Checks if object ID is valid.
+    pub fn is_null(&self) -> bool {
+        self.0 == 0
     }
 }
 

@@ -94,8 +94,8 @@ impl Display {
                 .get_first_time()
                 .expect("display must have at least one workspace")
                 .to_array(&self.coordinator);
-            let pointer = self.prepare_layover_context();
 
+            let pointer = self.prepare_layover_context();
             self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
 
             if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {

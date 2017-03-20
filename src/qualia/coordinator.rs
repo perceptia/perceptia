@@ -136,9 +136,17 @@ impl InnerCoordinator {
 
     /// Returns surface context.
     pub fn get_renderer_context(&self, sid: SurfaceId) -> Option<Vec<SurfaceContext>> {
-        let mut result = Vec::new();
         let surface = try_get_surface_or_none!(self, sid);
-        result.push(surface.get_renderer_context());
+        let mut result = Vec::new();
+        for child_sid in surface.get_satellites() {
+            if *child_sid == sid {
+                result.push(surface.get_renderer_context());
+            } else {
+                if let Some(ref mut array) = self.get_renderer_context(*child_sid) {
+                    result.append(array)
+                }
+            }
+        }
         Some(result)
     }
 
@@ -223,10 +231,16 @@ impl InnerCoordinator {
         id
     }
 
-    /// Informs other parts of application about request from client to destroy surface.
-    pub fn destroy_surface(&mut self, sid: SurfaceId) {
+    /// Informs other parts of application the surface is now not visible.
+    pub fn detach_surface(&mut self, sid: SurfaceId) {
         self.signaler.emit(perceptron::SURFACE_DESTROYED,
                            Perceptron::SurfaceDestroyed(sid));
+    }
+
+    /// Detaches and forgets given surface.
+    pub fn destroy_surface(&mut self, sid: SurfaceId) {
+        self.detach_surface(sid);
+        self.surfaces.remove(&sid);
     }
 
     /// Sets given buffer as pending for given surface.
@@ -250,8 +264,19 @@ impl InnerCoordinator {
     /// surface to be drawn are meet, emit signal `surface ready`.
     pub fn show_surface(&mut self, sid: SurfaceId, reason: show_reason::ShowReason) {
         let surface = try_get_surface!(self, sid);
-        if surface.show(reason) == show_reason::READY {
+        let old_reason = surface.get_show_reason();
+        if surface.show(reason) == show_reason::READY && old_reason != show_reason::READY {
             self.signaler.emit(perceptron::SURFACE_READY, Perceptron::SurfaceReady(sid));
+        }
+    }
+
+    /// Subtracts given show reason flag from set of surfaces show reason. If not all reasons
+    /// needed for surface to be drawn are meet, emit signal `surface destroyed`.
+    pub fn hide_surface(&mut self, sid: SurfaceId, reason: show_reason::ShowReason) {
+        let surface = try_get_surface!(self, sid);
+        let old_reason = surface.get_show_reason();
+        if surface.hide(reason) != show_reason::READY && old_reason == show_reason::READY {
+            self.signaler.emit(perceptron::SURFACE_DESTROYED, Perceptron::SurfaceDestroyed(sid));
         }
     }
 
@@ -267,14 +292,35 @@ impl InnerCoordinator {
         surface.set_requested_size(size)
     }
 
-    // FIXME: Finish implementation of Coordinator
-    pub fn set_surface_relative_position(&self, _sid: SurfaceId, _offset: Vector) {
-        unimplemented!()
+    /// Sets satellite surface position relative to its parent.
+    pub fn set_surface_relative_position(&mut self, sid: SurfaceId, position: Position) {
+        let surface = try_get_surface!(self, sid);
+        surface.set_relative_position(position)
     }
 
-    // FIXME: Finish implementation of Coordinator
-    pub fn relate_surfaces(&self, _sid: SurfaceId, _parent_sid: SurfaceId) {
-        unimplemented!()
+    /// Relates two surfaces.
+    pub fn relate_surfaces(&mut self, sid: SurfaceId, parent_sid: SurfaceId) {
+        {
+            let mut surface = try_get_surface!(self, sid);
+            surface.set_parent_sid(parent_sid);
+            surface.set_relative_position(Vector::default());
+            surface.hide(show_reason::IN_SHELL);
+        } {
+            let mut parent_surface = try_get_surface!(self, parent_sid);
+            parent_surface.add_satellite(sid);
+        }
+    }
+
+    /// Relates two surfaces.
+    pub fn unrelate_surface(&mut self, sid: SurfaceId) {
+        let parent_sid = {
+            let mut surface = try_get_surface!(self, sid);
+            let parent_sid = surface.get_parent_sid();
+            surface.set_parent_sid(SurfaceId::invalid());
+            parent_sid
+        };
+        let mut parent_surface = try_get_surface!(self, parent_sid);
+        parent_surface.remove_satellite(sid);
     }
 
     /// Informs other parts of application about request from client to change cursor surface.
@@ -424,6 +470,12 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn detach_surface(&self, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.detach_surface(sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn destroy_surface(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
         mine.destroy_surface(sid)
@@ -449,6 +501,12 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn hide_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.hide_surface(sid, reason)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn set_surface_offset(&self, sid: SurfaceId, offset: Vector) {
         let mut mine = self.inner.lock().unwrap();
         mine.set_surface_offset(sid, offset)
@@ -462,14 +520,20 @@ impl Coordinator {
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn set_surface_relative_position(&self, sid: SurfaceId, offset: Vector) {
-        let mine = self.inner.lock().unwrap();
+        let mut mine = self.inner.lock().unwrap();
         mine.set_surface_relative_position(sid, offset)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
     pub fn relate_surfaces(&self, sid: SurfaceId, parent_sid: SurfaceId) {
-        let mine = self.inner.lock().unwrap();
+        let mut mine = self.inner.lock().unwrap();
         mine.relate_surfaces(sid, parent_sid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn unrelate_surface(&self, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.unrelate_surface(sid)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

@@ -171,9 +171,9 @@ impl Pointer {
                                              self.position.y - display_area.pos.y);
 
         // Find surface pointer hovers
-        for context in surfaces {
+        for context in surfaces.iter().rev() {
             if let Some(info) = self.coordinator.get_surface(context.id) {
-                let surface_area = Area::new(context.pos.clone(), info.requested_size);
+                let surface_area = Area::new(context.pos, info.requested_size);
                 if surface_area.contains(&display_relative) {
                     sid = context.id;
                     surface_relative = display_relative - context.pos.clone() + info.offset;

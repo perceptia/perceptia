@@ -25,9 +25,9 @@ macro_rules! define_ref {
                         obj
                     }
                     Err(err) => {
-                        let msg = format!("Failed to borrow $name! \
+                        let msg = format!("Failed to borrow {}! \
                                           This is fail of programs internal logic. {:?}",
-                                          err);
+                                          stringify!($name), err);
                         log_fatal!("{}", msg);
                         panic!(msg);
                     }
@@ -40,9 +40,9 @@ macro_rules! define_ref {
                         obj
                     }
                     Err(err) => {
-                        let msg = format!("Failed to borrow $name mutably! \
+                        let msg = format!("Failed to borrow {} mutably! \
                                           This is fail of programs internal logic. {:?}",
-                                          err);
+                                          stringify!($name), err);
                         log_fatal!("{}", msg);
                         panic!(msg);
                     }

@@ -16,6 +16,14 @@ use proxy::ProxyRef;
 
 // -------------------------------------------------------------------------------------------------
 
+enum SurfaceType {
+    None,
+    Toplevel,
+    Popup,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Wayland `wl_shell` object.
 struct Shell {
     proxy: ProxyRef,
@@ -62,21 +70,24 @@ impl wl_shell::Interface for Shell {
 // -------------------------------------------------------------------------------------------------
 
 /// Wayland `wl_shell_surface` object.
-struct Surface {}
+struct Surface {
+    surface_oid: wl::common::ObjectId,
+    proxy: ProxyRef,
+    surface_type: SurfaceType,
+}
 
 // -------------------------------------------------------------------------------------------------
 
 impl Surface {
-    fn new(oid: wl::common::ObjectId,
+    fn new(_oid: wl::common::ObjectId,
            surface_oid: wl::common::ObjectId,
            proxy_ref: ProxyRef)
            -> Self {
-        {
-            let mut proxy = proxy_ref.borrow_mut();
-            proxy.show(surface_oid, ShellSurfaceOid::Shell(oid), show_reason::IN_SHELL);
+        Surface {
+            surface_oid: surface_oid,
+            proxy: proxy_ref,
+            surface_type: SurfaceType::None,
         }
-
-        Surface {}
     }
 
     fn new_object(oid: wl::common::ObjectId,
@@ -123,17 +134,41 @@ impl wl_shell_surface::Interface for Surface {
                     this_object_id: wl::common::ObjectId,
                     socket: &mut wl::server::ClientSocket)
                     -> wl::server::Task {
+        let mut proxy = self.proxy.borrow_mut();
+
+        // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
+        //       Here opposite situation added for symmetry.
+        match self.surface_type {
+            SurfaceType::Popup => proxy.unrelate(self.surface_oid),
+            _ => {}
+        }
+        self.surface_type = SurfaceType::Toplevel;
+
+        proxy.show(self.surface_oid, ShellSurfaceOid::Shell(this_object_id), show_reason::IN_SHELL);
         wl::server::Task::None
     }
 
+    // TODO: Currently transient and pop-up are handled the same way.
     fn set_transient(&mut self,
                      this_object_id: wl::common::ObjectId,
                      socket: &mut wl::server::ClientSocket,
-                     parent: wl::common::ObjectId,
+                     parent_surface_oid: wl::common::ObjectId,
                      x: i32,
                      y: i32,
                      flags: u32)
                      -> wl::server::Task {
+        let mut proxy = self.proxy.borrow_mut();
+
+        // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
+        //       Here opposite situation added for symmetry.
+        match self.surface_type {
+            SurfaceType::Toplevel => proxy.hide(self.surface_oid, show_reason::IN_SHELL),
+            _ => {}
+        }
+        self.surface_type = SurfaceType::Popup;
+
+        proxy.relate(self.surface_oid, parent_surface_oid);
+        proxy.set_relative_position(self.surface_oid, x as isize, y as isize);
         wl::server::Task::None
     }
 
@@ -152,11 +187,22 @@ impl wl_shell_surface::Interface for Surface {
                  socket: &mut wl::server::ClientSocket,
                  seat: wl::common::ObjectId,
                  serial: u32,
-                 parent: wl::common::ObjectId,
+                 parent_surface_oid: wl::common::ObjectId,
                  x: i32,
                  y: i32,
                  flags: u32)
                  -> wl::server::Task {
+        let mut proxy = self.proxy.borrow_mut();
+
+        // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
+        match self.surface_type {
+            SurfaceType::Toplevel => proxy.hide(self.surface_oid, show_reason::IN_SHELL),
+            _ => {}
+        }
+        self.surface_type = SurfaceType::Popup;
+
+        proxy.relate(self.surface_oid, parent_surface_oid);
+        proxy.set_relative_position(self.surface_oid, x as isize, y as isize);
         wl::server::Task::None
     }
 

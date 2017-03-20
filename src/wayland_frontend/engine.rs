@@ -100,8 +100,10 @@ impl Engine {
         proxy.register_global(protocol::compositor::get_global());
         proxy.register_global(protocol::shell::get_global());
         proxy.register_global(protocol::xdg_shell_v6::get_global());
+        proxy.register_global(protocol::data_device_manager::get_global());
         proxy.register_global(protocol::seat::get_global());
         proxy.register_global(protocol::output::get_global());
+        proxy.register_global(protocol::subcompositor::get_global());
         let proxy_ref = ProxyRef::new(proxy);
 
         // Prepare client.

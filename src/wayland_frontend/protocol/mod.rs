@@ -10,6 +10,8 @@ pub mod shm;
 pub mod compositor;
 pub mod shell;
 pub mod xdg_shell_v6;
-pub mod seat;
 
+pub mod data_device_manager;
+pub mod seat;
+pub mod subcompositor;
 pub mod output;

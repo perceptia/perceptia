@@ -11,10 +11,37 @@ use qualia::{Area, MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryVi
 
 // -------------------------------------------------------------------------------------------------
 
+/// Enum describing type of shell and related object IDs.
 #[derive(Clone, Copy)]
 pub enum ShellSurfaceOid {
     Shell(wl::common::ObjectId),
     ZxdgToplevelV6(wl::common::ObjectId, wl::common::ObjectId),
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Data realted to positioner object.
+#[derive(Clone, Copy)]
+pub struct PositionerInfo {
+    pub offset: Vector,
+    pub size: Size,
+    pub anchor: Area,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl PositionerInfo {
+    pub fn new() -> Self {
+        PositionerInfo {
+            offset: Vector::default(),
+            size: Size::default(),
+            anchor: Area::default(),
+        }
+    }
+
+    pub fn get_area(&self) -> Area {
+        Area::new(self.offset + self.anchor.pos, self.size)
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -58,6 +85,15 @@ pub trait Facade {
     /// Removes keyboard OID.
     fn remove_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId);
 
+    /// Sets positioner info.
+    fn set_positioner(&mut self, wl::common::ObjectId, positioner: PositionerInfo);
+
+    /// Gets positioner info.
+    fn get_positioner(&mut self, oid: wl::common::ObjectId) -> Option<PositionerInfo>;
+
+    /// Removes positioner info.
+    fn remove_positioner(&mut self, oid: wl::common::ObjectId);
+
     /// Sets given region as input region of surface.
     fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId);
 
@@ -76,11 +112,14 @@ pub trait Facade {
     /// Requests (one-shot) notification about redrawing of given surface.
     fn set_frame(&mut self, sid: SurfaceId, frame_oid: wl::common::ObjectId);
 
-    /// Presents a reason to show given surface on screen.
+    /// Adds a reason to show given surface on screen.
     fn show(&mut self,
             surface_oid: wl::common::ObjectId,
             shell_surface_oid: ShellSurfaceOid,
             reason: show_reason::ShowReason);
+
+    /// Removes a reason to show given surface on screen.
+    fn hide(&mut self, surface_oid: wl::common::ObjectId, reason: show_reason::ShowReason);
 
     /// Defines offset between origin of buffer and real area of surface. Client for example may
     /// want to draw shadow, which should not be threated by compositor as internal part of
@@ -91,10 +130,13 @@ pub trait Facade {
     fn set_requested_size(&self, sid: SurfaceId, size: Size);
 
     /// Requests setting relation (child-parent) between two surfaces.
-    fn relate(&self, sid: SurfaceId, parent_sid: SurfaceId);
+    fn relate(&self, surface_oid: wl::common::ObjectId, parent_surface_oid: wl::common::ObjectId);
+
+    /// Requests cancellation of relation between given surface and its parent.
+    fn unrelate(&self, surface_oid: wl::common::ObjectId);
 
     /// Requests to set offset between related surfaces.
-    fn set_relative_position(&self, sid: SurfaceId, offset: Vector);
+    fn set_relative_position(&self, surface_oid: wl::common::ObjectId, x: isize, y: isize);
 
     /// Requests to use given surface for drawing cursor.
     fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_x: isize);

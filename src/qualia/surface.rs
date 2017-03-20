@@ -124,7 +124,7 @@ impl Surface {
             desired_size: Size::default(),
             requested_size: Size::default(),
             parent_sid: SurfaceId::invalid(),
-            satellites: Vec::new(),
+            satellites: vec![*id],
             relative_position: Position::default(),
             buffer: None,
             pending_buffer: None,
@@ -151,6 +151,47 @@ impl Surface {
         self.desired_size = size
     }
 
+    /// Sets parent SID.
+    #[inline]
+    pub fn set_parent_sid(&mut self, sid: SurfaceId) {
+        self.parent_sid = sid
+    }
+
+    /// Adds satellite.
+    #[inline]
+    pub fn add_satellite(&mut self, sid: SurfaceId) {
+        let mut contains = false;
+        for satellite in self.satellites.iter() {
+            if *satellite == sid {
+                contains = true;
+            }
+        }
+        if !contains {
+            self.satellites.push(sid);
+        }
+    }
+
+    /// Removes satellite.
+    #[inline]
+    pub fn remove_satellite(&mut self, sid: SurfaceId) {
+        let mut index = None;
+        for (i, satellite) in self.satellites.iter().enumerate() {
+            if *satellite == sid {
+                index = Some(i);
+                break;
+            }
+        }
+        if let Some(index) = index {
+            self.satellites.remove(index);
+        }
+    }
+
+    /// Sets relative position.
+    #[inline]
+    pub fn set_relative_position(&mut self, position: Position) {
+        self.relative_position = position
+    }
+
     /// Sets state flags.
     #[inline]
     pub fn set_state_flags(&mut self, state_flags: surface_state::SurfaceState) {
@@ -158,9 +199,28 @@ impl Surface {
     }
 
     /// Adds given reason to show reasons. Returns updates set of reasons.
+    ///
+    /// Satelliting surface can not be shown in shell.
     #[inline]
     pub fn show(&mut self, reason: show_reason::ShowReason) -> show_reason::ShowReason {
-        self.show_reasons |= reason;
+        if !(reason == show_reason::IN_SHELL && self.parent_sid.is_valid()) {
+            self.show_reasons.insert(reason);
+        } else {
+            log_warn2!("Requested to show satelliting surface {} in shell", self.id);
+        }
+        self.show_reasons
+    }
+
+    /// Subtracts given reason from show reasons. Returns updates set of reasons.
+    #[inline]
+    pub fn hide(&mut self, reason: show_reason::ShowReason) -> show_reason::ShowReason {
+        self.show_reasons.remove(reason);
+        self.show_reasons
+    }
+
+    /// Returns reasons to show the surface.
+    #[inline]
+    pub fn get_show_reason(&mut self) -> show_reason::ShowReason {
         self.show_reasons
     }
 
@@ -181,7 +241,7 @@ impl Surface {
             // If surface was just created...
             if is_first_time_committed {
                 // ... size was not yet requested by surface ...
-                if !((self.requested_size.width == 0) || (self.requested_size.height == 0)) {
+                if (self.requested_size.width == 0) || (self.requested_size.height == 0) {
                     // ... use its buffer size as requested size ...
                     self.requested_size = buffer.get_size();
                 }
@@ -222,14 +282,24 @@ impl Surface {
         }
     }
 
-    /// Return size desired by compositor.
+    /// Returns size desired by compositor.
     pub fn get_desired_size(&self) -> Size {
         self.desired_size
     }
 
-    /// Return flags describing state of the surface.
+    /// Returns flags describing state of the surface.
     pub fn get_state_flags(&self) -> surface_state::SurfaceState {
         self.state_flags
+    }
+
+    /// Returns ID of parent surface.
+    pub fn get_parent_sid(&self) -> SurfaceId {
+        self.parent_sid
+    }
+
+    /// Returns vector of IDs of satelliting surfaces (pop-ups, subsurfaces).
+    pub fn get_satellites(&self) -> &Vec<SurfaceId> {
+        &self.satellites
     }
 }
 

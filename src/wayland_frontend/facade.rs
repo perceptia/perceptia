@@ -67,6 +67,9 @@ pub trait Facade {
                           stride: usize)
                           -> Option<MemoryViewId>;
 
+    /// Requests destruction of memory view.
+    fn destroy_memory_view(&mut self, mvid: MemoryViewId);
+
     /// Defines region. Regions may be used to define input area of surface.
     fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area);
 

@@ -106,6 +106,8 @@ impl wl_surface::Interface for Surface {
                this_object_id: wl::common::ObjectId,
                socket: &mut wl::server::ClientSocket)
                -> wl::server::Task {
+        let proxy = self.proxy.borrow();
+        proxy.destroy_surface(self.sid);
         wl::server::Task::Destroy { id: this_object_id }
     }
 
@@ -231,7 +233,7 @@ impl wl_region::Interface for Region {
                -> wl::server::Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.undefine_region(this_object_id);
-        wl::server::Task::None
+        wl::server::Task::Destroy { id: this_object_id }
     }
 
     fn add(&mut self,

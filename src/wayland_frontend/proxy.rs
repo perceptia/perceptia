@@ -293,6 +293,10 @@ impl Facade for Proxy {
         result
     }
 
+    fn destroy_memory_view(&mut self, mvid: MemoryViewId) {
+        self.coordinator.destroy_memory_view(mvid);
+    }
+
     fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area) {
         self.regions.insert(region_oid, region);
     }

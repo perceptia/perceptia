@@ -155,7 +155,7 @@ impl wl_shm_pool::Interface for ShmPool {
         send!(wl_display::delete_id(&mut proxy.get_socket(),
                                     wl::common::DISPLAY_ID,
                                     this_object_id.get_value()));
-        wl::server::Task::None
+        wl::server::Task::Destroy { id: this_object_id }
     }
 
     fn resize(&mut self,
@@ -209,7 +209,9 @@ impl wl_buffer::Interface for ShmBuffer {
                this_object_id: wl::common::ObjectId,
                socket: &mut wl::server::ClientSocket)
                -> wl::server::Task {
-        wl::server::Task::None
+        let mut proxy = self.proxy.borrow_mut();
+        proxy.destroy_memory_view(self.mvid);
+        wl::server::Task::Destroy { id: this_object_id }
     }
 }
 

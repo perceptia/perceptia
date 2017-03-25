@@ -224,6 +224,11 @@ impl InnerCoordinator {
         }
     }
 
+    /// Destroys memory view.
+    pub fn destroy_memory_view(&mut self, mvid: MemoryViewId) {
+        self.memory_views.remove(&mvid);
+    }
+
     /// Creates new surface with newly generated unique ID.
     pub fn create_surface(&mut self) -> SurfaceId {
         let id = self.generate_next_surface_id();
@@ -461,6 +466,12 @@ impl Coordinator {
                               -> Option<MemoryViewId> {
         let mut mine = self.inner.lock().unwrap();
         mine.create_memory_view(mpid, offset, width, height, stride)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn destroy_memory_view(&mut self, mpid: MemoryViewId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.destroy_memory_view(mpid);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

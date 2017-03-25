@@ -7,7 +7,8 @@
 
 use uinput_sys;
 
-use qualia::{perceptron, Perceptron, InputConfig, Button, Key, OptionalPosition, Vector};
+use qualia::{perceptron, Perceptron, InputConfig};
+use qualia::{Axis, Button, Key, OptionalPosition, Slide, Vector};
 use qualia::{modifier, InputManager, KeyCatchResult, KeyCode, KeyValue, KeyState};
 use dharma::Signaler;
 
@@ -100,7 +101,8 @@ impl InputGateway {
 
     /// Emit exist event.
     pub fn emit_axis(&mut self, horizontal: isize, vertical: isize) {
-        let axis = Vector::new(horizontal, vertical);
+        let axis = Axis::new_now(Vector::new(horizontal, vertical),
+                                 Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32));
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_AXIS,

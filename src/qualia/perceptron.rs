@@ -10,7 +10,7 @@ use std;
 use dharma::SignalId;
 
 use timing::Milliseconds;
-use defs::{Command, DrmBundle, SurfaceId, Position, OptionalPosition, Vector, Button, Key};
+use defs::{Command, DrmBundle, SurfaceId, Position, OptionalPosition, Axis, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -51,7 +51,7 @@ pub enum Perceptron {
     InputPointerMotion(Vector),
     InputPointerPosition(OptionalPosition),
     InputPointerButton(Button),
-    InputPointerAxis(Vector),
+    InputPointerAxis(Axis),
     InputPointerPositionReset,
     InputKeyboard(Key),
     SurfaceReady(SurfaceId),

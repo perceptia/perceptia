@@ -99,7 +99,7 @@ impl Pointer {
 impl Pointer {
     /// Returns pointer position in global coordinates.
     pub fn get_global_position(&self) -> Position {
-        self.position.clone()
+        self.position
     }
 
     /// Returns ID of the cursor surface.

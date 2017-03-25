@@ -152,20 +152,24 @@ impl Position {
     pub fn casted(&self, area: &Area) -> Self {
         let mut position = self.clone();
 
-        if position.x < area.pos.x {
-            position.x = area.pos.x;
-        }
+        if !area.is_zero() {
+            if position.x < area.pos.x {
+                position.x = area.pos.x;
+            }
 
-        if position.x > (area.pos.x + area.size.width as isize - 1) {
-            position.x = area.pos.x + area.size.width as isize - 1;
-        }
+            if position.x > (area.pos.x + area.size.width as isize - 1) {
+                position.x = area.pos.x + area.size.width as isize - 1;
+            }
 
-        if position.y < area.pos.y {
-            position.y = area.pos.y;
-        }
+            if position.y < area.pos.y {
+                position.y = area.pos.y;
+            }
 
-        if position.y > (area.pos.y + area.size.height as isize - 1) {
-            position.y = area.pos.y + area.size.height as isize - 1;
+            if position.y > (area.pos.y + area.size.height as isize - 1) {
+                position.y = area.pos.y + area.size.height as isize - 1;
+            }
+        } else {
+            position = area.pos;
         }
 
         position
@@ -250,6 +254,32 @@ impl std::default::Default for OptionalPosition {
 
 // -------------------------------------------------------------------------------------------------
 
+/// `Vector` with continuous coordinates.
+#[derive(Clone, Copy, Debug)]
+pub struct Slide {
+    pub x: f32,
+    pub y: f32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Slide {
+    /// `Slide` constructor.
+    pub fn new(x: f32, y: f32) -> Self {
+        Slide { x: x, y: y }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::default::Default for Slide {
+    fn default() -> Self {
+        Slide { x: 0.0, y: 0.0 }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Type defining 2D size, dimensions or resolution.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -283,6 +313,15 @@ impl std::default::Default for Size {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Size {
+    /// Check if `Size` has zero size.
+    pub fn is_zero(&self) -> bool {
+        self.width == 0 && self.height == 0
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Type defining 2D area.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -310,7 +349,12 @@ impl Area {
         }
     }
 
-    /// Check if area contains given position.
+    /// Check if `Area` has zero area.
+    pub fn is_zero(&self) -> bool {
+        self.size.is_zero()
+    }
+
+    /// Check if `Area` contains given position.
     pub fn contains(&self, pos: &Position) -> bool {
         let margin_top = self.pos.y;
         let margin_bottom = self.size.height as isize + margin_top;
@@ -393,6 +437,36 @@ impl Button {
         Button {
             code: code,
             value: value,
+            time: timing::Milliseconds::now(),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Data for axis event.
+#[derive(Clone, Copy, Debug)]
+pub struct Axis {
+    pub discrete: Vector,
+    pub continuous: Slide,
+    pub time: timing::Milliseconds,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Axis {
+    pub fn new(discrete: Vector, continuous: Slide, time: timing::Milliseconds) -> Self {
+        Axis {
+            discrete: discrete,
+            continuous: continuous,
+            time: time,
+        }
+    }
+
+    pub fn new_now(discrete: Vector, continuous: Slide) -> Self {
+        Axis {
+            discrete: discrete,
+            continuous: continuous,
             time: timing::Milliseconds::now(),
         }
     }

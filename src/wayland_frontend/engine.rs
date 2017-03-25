@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use dharma;
 use skylane as wl;
 
-use qualia::{Button, Key, Milliseconds, Position, Size, SurfaceId, Vector, KeyMods};
+use qualia::{Axis, Button, Key, Milliseconds, Position, Size, SurfaceId, KeyMods};
 use qualia::{Coordinator, KeyboardState, XkbKeymap, Perceptron, Settings, surface_state};
 
 use protocol;
@@ -240,7 +240,14 @@ impl Gateway for Engine {
         }
     }
 
-    fn on_pointer_axis(&self, _axis: Vector) {}
+    fn on_pointer_axis(&self, axis: Axis) {
+        let sid = self.coordinator.get_pointer_focused_sid();
+        if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
+            if let Some(package) = self.clients.get(&id) {
+                package.proxy.borrow_mut().on_pointer_axis(axis);
+            }
+        }
+    }
 
     fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId) {
         let mediator = self.mediator.borrow();

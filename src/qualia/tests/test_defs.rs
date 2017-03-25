@@ -96,6 +96,23 @@ fn should_casted_be_inside_area()
 
 // -------------------------------------------------------------------------------------------------
 
+/// Check if point casted to zero area lays in origin.
+#[test]
+fn should_casted_to_zero_area_be_in_origin()
+{
+    let position = Position::new(5, 5);
+    let origin = Position::new(10, 10);
+    let area = Area::new(origin, Size::new(0, 0));
+
+    let casted = position.casted(&area);
+    assert!(position.casted(&area) == origin,
+            "Casted poition should be in origin (origin is {:?}, while point is {:?})",
+            origin,
+            casted);
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Check if inflated area has correct size.
 #[test]
 fn should_inflate_area() {

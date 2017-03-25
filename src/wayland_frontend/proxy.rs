@@ -16,7 +16,7 @@ use skylane_protocols::server::wayland::{wl_shell_surface};
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 
 use qualia::{Coordinator, Settings};
-use qualia::{Area, Button, Key, KeyMods, Milliseconds, Position, Size, Vector};
+use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 
@@ -548,7 +548,61 @@ impl Gateway for Proxy {
         }
     }
 
-    fn on_pointer_axis(&self, axis: Vector) {}
+    fn on_pointer_axis(&self, mut axis: Axis) {
+        axis.discrete.y = -1 * axis.discrete.y;
+        axis.continuous.y = -1.0 * axis.continuous.y;
+
+        for pointer_oid in self.pointer_oids.iter() {
+            // vertical scroll
+            let axis_type = wl_pointer::axis::VERTICAL_SCROLL;
+
+            if axis.discrete.y != 0 {
+                send!(wl_pointer::axis_discrete(&self.socket,
+                                                *pointer_oid,
+                                                axis_type,
+                                                axis.discrete.y as i32));
+            }
+
+            if axis.continuous.y != 0.0 {
+                send!(wl_pointer::axis(&self.socket,
+                                       *pointer_oid,
+                                       axis.time.get_value() as u32,
+                                       axis_type,
+                                       axis.continuous.y));
+            } else {
+                send!(wl_pointer::axis_stop(&self.socket,
+                                            *pointer_oid,
+                                            axis.time.get_value() as u32,
+                                            axis_type));
+            }
+
+            // horizontal scroll
+            let axis_type = wl_pointer::axis::HORIZONTAL_SCROLL;
+
+            if axis.discrete.x != 0 {
+                send!(wl_pointer::axis_discrete(&self.socket,
+                                                *pointer_oid,
+                                                axis_type,
+                                                axis.discrete.x as i32));
+            }
+
+            if axis.continuous.x != 0.0 {
+                send!(wl_pointer::axis(&self.socket,
+                                       *pointer_oid,
+                                       axis.time.get_value() as u32,
+                                       axis_type,
+                                       axis.continuous.x));
+            } else {
+                send!(wl_pointer::axis_stop(&self.socket,
+                                            *pointer_oid,
+                                            axis.time.get_value() as u32,
+                                            axis_type));
+            }
+
+            // send frame
+            send!(wl_pointer::frame(&self.socket, *pointer_oid));
+        }
+    }
 
     fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId) {
         if old_sid != SurfaceId::invalid() {

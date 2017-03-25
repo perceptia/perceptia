@@ -5,7 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Button, Key, KeyMods, Milliseconds, Position, Size, SurfaceId, Vector, surface_state};
+use qualia::{Axis, Button, Key, KeyMods, Milliseconds, Position, Size, SurfaceId};
+use qualia::surface_state;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -32,7 +33,7 @@ pub trait Gateway {
     fn on_pointer_button(&self, btn: Button);
 
     /// Notifies about pointer move.
-    fn on_pointer_axis(&self, axis: Vector);
+    fn on_pointer_axis(&self, axis: Axis);
 
     /// Notifies about keyboard focus change.
     fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId);

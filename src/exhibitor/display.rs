@@ -65,7 +65,9 @@ impl Display {
     /// Handle page flip: redraw everything.
     pub fn on_pageflip(&mut self) {
         self.page_flip_scheduled = false;
-        self.redraw_all();
+        if self.redraw_needed {
+            self.redraw_all();
+        }
     }
 
     /// Handle notification about needed redraw.
@@ -74,9 +76,10 @@ impl Display {
     /// again after page flip.
     pub fn on_notify(&mut self) {
         if !self.redraw_needed {
-            self.redraw_needed = true;
             if !self.page_flip_scheduled {
                 self.redraw_all();
+            } else {
+                self.redraw_needed = true;
             }
         }
     }
@@ -89,33 +92,31 @@ impl Display {
 
     /// Draw the scene and then schedule page flip.
     pub fn redraw_all(&mut self) {
-        if self.redraw_needed {
-            let surfaces = self.frame
-                .get_first_time()
-                .expect("display must have at least one workspace")
-                .to_array(&self.coordinator);
+        let surfaces = self.frame
+            .get_first_time()
+            .expect("display must have at least one workspace")
+            .to_array(&self.coordinator);
 
-            let pointer = self.prepare_layover_context();
-            self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
+        let pointer = self.prepare_layover_context();
+        self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
 
-            if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
-                log_error!("Display: {}", err);
-            }
+        if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
+            log_error!("Display: {}", err);
+        }
 
-            if let Err(err) = self.output.swap_buffers() {
-                log_error!("Display: {}", err);
-            }
+        if let Err(err) = self.output.swap_buffers() {
+            log_error!("Display: {}", err);
+        }
 
-            // Send frame notifications
-            for context in surfaces {
-                let frame = Perceptron::SurfaceFrame(context.id, Milliseconds::now());
-                self.signaler.emit(perceptron::SURFACE_FRAME, frame);
-            }
+        // Send frame notifications
+        for context in surfaces {
+            let frame = Perceptron::SurfaceFrame(context.id, Milliseconds::now());
+            self.signaler.emit(perceptron::SURFACE_FRAME, frame);
+        }
 
-            self.redraw_needed = false;
-            if let Err(err) = self.schedule_pageflip() {
-                log_error!("Display: {}", err);
-            }
+        self.redraw_needed = false;
+        if let Err(err) = self.schedule_pageflip() {
+            log_error!("Display: {}", err);
         }
     }
 

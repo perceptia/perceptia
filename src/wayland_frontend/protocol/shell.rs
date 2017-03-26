@@ -32,7 +32,7 @@ struct Shell {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_shell::NAME, wl_shell::VERSION, Shell::new_object)
+    Global::new(wl_shell::NAME, wl_shell::VERSION, Box::new(Shell::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

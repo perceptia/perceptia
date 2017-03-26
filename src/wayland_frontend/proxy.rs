@@ -16,10 +16,11 @@ use skylane_protocols::server::wayland::{wl_shell_surface};
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 
 use qualia::{Coordinator, Settings};
-use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, Position, Size, Vector};
+use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 
+use protocol;
 use facade::{Facade, PositionerInfo, ShellSurfaceOid};
 use gateway::Gateway;
 use global::Global;
@@ -442,7 +443,9 @@ impl Facade for Proxy {
 
 #[allow(unused_variables)]
 impl Gateway for Proxy {
-    fn on_output_found(&self) {}
+    fn on_display_created(&mut self,  output_info: OutputInfo) {
+        self.register_global(protocol::output::get_global(output_info));
+    }
 
     fn on_keyboard_input(&mut self, key: Key, mods: Option<KeyMods>) {
         for &keyboard_oid in self.keyboard_oids.iter() {

@@ -9,7 +9,8 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use dharma::Signaler;
-use qualia::{Area, Coordinator, Illusion, Milliseconds, SurfaceContext, perceptron, Perceptron};
+use qualia::{Coordinator, Illusion};
+use qualia::{Milliseconds, OutputInfo, SurfaceContext, perceptron, Perceptron};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -120,9 +121,9 @@ impl Display {
         }
     }
 
-    /// Get area of the output in global coordinates.
-    pub fn get_area(&self) -> Area {
-        self.output.get_area()
+    /// Get information about output (size, position, model name, etc.).
+    pub fn get_info(&self) -> OutputInfo {
+        self.output.get_info()
     }
 }
 

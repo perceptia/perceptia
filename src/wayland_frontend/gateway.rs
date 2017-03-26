@@ -5,14 +5,14 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Axis, Button, Key, KeyMods, Milliseconds, Position, Size, SurfaceId};
+use qualia::{Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, SurfaceId};
 use qualia::surface_state;
 
 // -------------------------------------------------------------------------------------------------
 
 pub trait Gateway {
     /// Notifies output was found.
-    fn on_output_found(&self);
+    fn on_display_created(&mut self, output_info: OutputInfo);
 
     /// Notifies keyboard key was pressed.
     fn on_keyboard_input(&mut self, key: Key, mods: Option<KeyMods>);

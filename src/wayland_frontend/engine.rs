@@ -10,7 +10,7 @@ use std::collections::HashMap;
 use dharma;
 use skylane as wl;
 
-use qualia::{Axis, Button, Key, Milliseconds, Position, Size, SurfaceId, KeyMods};
+use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, SurfaceId, KeyMods};
 use qualia::{Coordinator, KeyboardState, XkbKeymap, Perceptron, Settings, surface_state};
 
 use protocol;
@@ -36,6 +36,7 @@ pub struct Engine {
     display: wl::server::DisplaySocket,
     mediator: MediatorRef,
     clients: HashMap<dharma::EventHandlerId, ClientPackage>,
+    output_infos: Vec<OutputInfo>,
     coordinator: Coordinator,
     settings: Settings,
     dispatcher: dharma::Dispatcher,
@@ -53,6 +54,7 @@ impl Engine {
             display: wl::server::DisplaySocket::new_default().expect("Creating display socket"),
             mediator: MediatorRef::new(Mediator::new()),
             clients: HashMap::new(),
+            output_infos: Vec::new(),
             coordinator: coordinator,
             settings: settings,
             dispatcher: dharma::Dispatcher::new(),
@@ -102,8 +104,10 @@ impl Engine {
         proxy.register_global(protocol::xdg_shell_v6::get_global());
         proxy.register_global(protocol::data_device_manager::get_global());
         proxy.register_global(protocol::seat::get_global());
-        proxy.register_global(protocol::output::get_global());
         proxy.register_global(protocol::subcompositor::get_global());
+        for info in self.output_infos.iter() {
+            proxy.register_global(protocol::output::get_global(info.clone()));
+        }
         let proxy_ref = ProxyRef::new(proxy);
 
         // Prepare client.
@@ -165,7 +169,12 @@ impl Engine {
 // -------------------------------------------------------------------------------------------------
 
 impl Gateway for Engine {
-    fn on_output_found(&self) {}
+    fn on_display_created(&mut self, output_info: OutputInfo) {
+        self.output_infos.push(output_info.clone());
+        for (_, package) in self.clients.iter() {
+            package.proxy.borrow_mut().on_display_created(output_info.clone());
+        }
+    }
 
     fn on_keyboard_input(&mut self, key: Key, _mods: Option<KeyMods>) {
         let mods = if self.keyboard_state.update(key.code, key.value) {

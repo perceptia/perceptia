@@ -64,7 +64,7 @@ impl WaylandService {
     /// Initializes `WaylandService`.
     fn initialize(&mut self) {
         self.context.get_signaler().register(&self.receiver);
-        for s in vec![perceptron::OUTPUT_FOUND,
+        for s in vec![perceptron::DISPLAY_CREATED,
                       perceptron::INPUT_KEYBOARD,
                       perceptron::INPUT_POINTER_BUTTON,
                       perceptron::INPUT_POINTER_AXIS,
@@ -130,8 +130,8 @@ impl WaylandService {
     #[inline]
     fn execute_defined(&mut self, package: Perceptron) {
         match package {
-            Perceptron::OutputFound(_) => {
-                self.engine.on_output_found();
+            Perceptron::DisplayCreated(info) => {
+                self.engine.on_display_created(info);
             }
             Perceptron::InputKeyboard(key) => {
                 self.engine.on_keyboard_input(key, None);

@@ -26,7 +26,7 @@ struct Subcompositor {
 pub fn get_global() -> Global {
     Global::new(wl_subcompositor::NAME,
                 wl_subcompositor::VERSION,
-                Subcompositor::new_object)
+                Box::new(Subcompositor::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

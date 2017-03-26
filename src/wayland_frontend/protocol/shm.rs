@@ -30,7 +30,7 @@ struct Shm {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_shm::NAME, wl_shm::VERSION, Shm::new_object)
+    Global::new(wl_shm::NAME, wl_shm::VERSION, Box::new(Shm::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

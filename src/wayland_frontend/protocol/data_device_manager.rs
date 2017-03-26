@@ -20,7 +20,7 @@ struct DataDeviceManager {}
 pub fn get_global() -> Global {
     Global::new(wl_data_device_manager::NAME,
                 wl_data_device_manager::VERSION,
-                DataDeviceManager::new_object)
+                Box::new(DataDeviceManager::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

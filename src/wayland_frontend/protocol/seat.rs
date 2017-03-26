@@ -26,7 +26,7 @@ struct Seat {
 pub fn get_global() -> Global {
     Global::new(wl_seat::NAME,
                 wl_seat::VERSION,
-                Seat::new_object)
+                Box::new(Seat::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

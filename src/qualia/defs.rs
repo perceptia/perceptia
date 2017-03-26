@@ -474,6 +474,38 @@ impl Axis {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Set of informations about output.
+#[derive(Clone, Debug)]
+pub struct OutputInfo {
+    pub area: Area,
+    pub physical_size: Size,
+    pub refresh_rate: usize,
+    pub make: String,
+    pub model: String,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl OutputInfo {
+    /// Constructs new `OutputInfo`.
+    pub fn new(area: Area,
+               physical_size: Size,
+               refresh_rate: usize,
+               make: String,
+               model: String)
+               -> Self {
+        OutputInfo {
+            area: area,
+            physical_size: physical_size,
+            refresh_rate: refresh_rate,
+            make: make,
+            model: model,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Structure containing all data needed to initialize DRM output.
 #[derive(Clone, Copy, Debug)]
 pub struct DrmBundle {

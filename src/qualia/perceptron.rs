@@ -10,7 +10,8 @@ use std;
 use dharma::SignalId;
 
 use timing::Milliseconds;
-use defs::{Command, DrmBundle, SurfaceId, Position, OptionalPosition, Axis, Vector, Button, Key};
+use defs::{Command, DrmBundle, OutputInfo, SurfaceId};
+use defs::{Axis, Position, OptionalPosition, Vector, Button, Key};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -19,6 +20,7 @@ pub const VERTICAL_BLANK: SignalId = 1;
 pub const PAGE_FLIP: SignalId = 2;
 pub const OUTPUT_FOUND: SignalId = 3;
 pub const COMMAND: SignalId = 5;
+pub const DISPLAY_CREATED: SignalId = 6;
 pub const INPUT_POINTER_MOTION: SignalId = 10;
 pub const INPUT_POINTER_POSITION: SignalId = 11;
 pub const INPUT_POINTER_BUTTON: SignalId = 12;
@@ -48,6 +50,7 @@ pub enum Perceptron {
     PageFlip(i32),
     OutputFound(DrmBundle),
     Command(Command),
+    DisplayCreated(OutputInfo),
     InputPointerMotion(Vector),
     InputPointerPosition(OptionalPosition),
     InputPointerButton(Button),
@@ -76,6 +79,7 @@ impl std::fmt::Display for Perceptron {
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
             Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
+            Perceptron::DisplayCreated(ref info) => write!(f, "DisplayCreated({:?})", info),
             Perceptron::InputPointerMotion(ref vector) => {
                 write!(f, "InputPointerMotion({:?})", vector)
             }

@@ -25,7 +25,8 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 
 use dharma::Signaler;
-use qualia::{Coordinator, SurfaceId, Button, Command, OptionalPosition, Vector, Perceptron};
+use qualia::{Coordinator, SurfaceId, Button, Command, OptionalPosition, Vector};
+use qualia::{perceptron, Perceptron};
 use output::Output;
 
 use compositor::Compositor;
@@ -86,6 +87,12 @@ impl Exhibitor {
                 return;
             }
         };
+
+        let info = output.get_info();
+        if self.displays.len() == 0 {
+            self.pointer.borrow_mut().change_display(info.area);
+        }
+
         log_info1!("Exhibitor: creating display");
         let display_frame = self.compositor.create_display(output.get_area(), output.get_name());
         let display = Display::new(self.coordinator.clone(),
@@ -94,6 +101,9 @@ impl Exhibitor {
                                    output,
                                    display_frame);
         self.displays.insert(id, display);
+
+        self.signaler.emit(perceptron::DISPLAY_CREATED,
+                           Perceptron::DisplayCreated(info));
     }
 
     /// This method is called when pageflip occurred.

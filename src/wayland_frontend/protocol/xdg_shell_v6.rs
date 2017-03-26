@@ -34,7 +34,7 @@ struct ZxdgShellV6 {
 pub fn get_global() -> Global {
     Global::new(zxdg_shell_v6::NAME,
                 zxdg_shell_v6::VERSION,
-                ZxdgShellV6::new_object)
+                Box::new(ZxdgShellV6::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

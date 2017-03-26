@@ -12,24 +12,23 @@ use proxy::ProxyRef;
 // -------------------------------------------------------------------------------------------------
 
 /// Type alias for constructor of Wayland global objects.
-type GlobalContructor = fn(id: wl::common::ObjectId, proxy: ProxyRef) -> Box<wl::server::Object>;
+type GlobalContructor = Fn(wl::common::ObjectId, ProxyRef) -> Box<wl::server::Object>;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Structure representing global Wayland object.
 // TODO: Define new type for name.
-#[derive(Clone, Debug)]
 pub struct Global {
     pub name: u32,
     pub interface: &'static str,
     pub version: u32,
-    constructor: GlobalContructor,
+    constructor: Box<GlobalContructor>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Global {
-    pub fn new(interface: &'static str, version: u32, constructor: GlobalContructor) -> Self {
+    pub fn new(interface: &'static str, version: u32, constructor: Box<GlobalContructor>) -> Self {
         Global {
             name: 0,
             interface: interface,

@@ -11,7 +11,7 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use qualia::{Coordinator, DrmBundle, Illusion, Area, Position, Size, SurfaceContext};
+use qualia::{Coordinator, DrmBundle, Illusion, Area, OutputInfo, Position, Size, SurfaceContext};
 use renderer_gl::{egl_tools, RendererGl};
 
 use gbm_tools::GbmBucket;
@@ -26,6 +26,9 @@ const INVALID_FRAMEBUFFER: u32 = 0;
 pub struct Output {
     /// Size of the output in pixels.
     size: Size,
+
+    /// Size of the output in millimeters.
+    physical_size: Size,
 
     /// Id of the output. Guarantied to be unique in application.
     id: i32,
@@ -67,10 +70,13 @@ impl Output {
         let mode;
         let size;
         let modes;
+        let physical_size;
         if let Some(connector) = drm_mode::get_connector(drm.fd, drm.connector_id) {
             modes = connector.get_modes();
             mode = modes.get(0).unwrap().clone();
             size = Size::new(mode.get_hdisplay() as usize, mode.get_vdisplay() as usize);
+            physical_size = Size::new(connector.get_mm_width() as usize,
+                                      connector.get_mm_height() as usize);
         } else {
             return Err(Illusion::General(format!("Failed to get mode for connector")));
         }
@@ -89,6 +95,7 @@ impl Output {
         let mut mine = Output {
             id: id,
             size: size,
+            physical_size: physical_size,
             name: "".to_owned(),
             renderer: renderer,
             mode: mode,
@@ -139,6 +146,15 @@ impl Output {
     /// Get name of the output. This name should uniquely identify output.
     pub fn get_name(&self) -> String {
         self.name.clone()
+    }
+
+    /// Get info about output.
+    pub fn get_info(&self) -> OutputInfo {
+        OutputInfo::new(self.get_area(),
+                        self.physical_size,
+                        60, // TODO: make output aware of its refresh rate.
+                        self.get_name(),
+                        self.get_name())
     }
 }
 

@@ -91,6 +91,11 @@ impl Pointer {
             coordinator: coordinator,
         }
     }
+
+    pub fn change_display(&mut self, area: Area) {
+        self.position = area.calculate_center();
+        self.display_area = area;
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -231,7 +236,7 @@ impl Pointer {
             let mut found = false;
             // Iterate display to find the one display is in
             for display in displays.values() {
-                let area = display.get_area();
+                let area = display.get_info().area;
                 if area.contains(&position) {
                     // Set new active output and exit
                     self.display_area = area;

@@ -5,6 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std;
 use egl;
 
 use qualia::Illusion;
@@ -78,11 +79,7 @@ impl EglBucket {
                window_type: egl::EGLNativeWindowType)
                -> Result<Self, Illusion> {
         // Get display
-        let display = if let Some(display) = egl::get_display(display_type) {
-            display
-        } else {
-            return Err(Illusion::General(format!("Failed to get EGL display")));
-        };
+        let display = Self::get_gbm_display(display_type)?;
 
         // Initialize EGL
         let mut major = 0;
@@ -120,11 +117,11 @@ impl EglBucket {
 
         // Return bundle
         Ok(EglBucket {
-            display: display,
-            config: config,
-            context: context,
-            surface: surface,
-        })
+               display: display,
+               config: config,
+               context: context,
+               surface: surface,
+           })
     }
 
     /// Make EGL context current.
@@ -135,6 +132,41 @@ impl EglBucket {
             Err(Illusion::General(format!("Failed to make EGL context current")))
         } else {
             Ok(EglContext::new(*self))
+        }
+    }
+
+    /// Gets GBM display.
+    ///
+    /// First tries `eglGetDisplay`. If that fails, tries `eglGetPlatformDisplayEXT`.
+    fn get_gbm_display(display_type: egl::EGLNativeDisplayType)
+                       -> Result<egl::EGLDisplay, Illusion> {
+        if let Some(display) = egl::get_display(display_type) {
+            Ok(display)
+        } else {
+            let get_platform_display_ptr = egl::get_proc_address("eglGetPlatformDisplayEXT") as
+                                           *const ();
+
+            if !get_platform_display_ptr.is_null() {
+                let get_platform_display =
+                    unsafe {
+                        std::mem::transmute::<*const (),
+                                              fn(egl::EGLenum,
+                                                 egl::EGLNativeDisplayType,
+                                                 *const egl::EGLint)
+                                                 -> egl::EGLDisplay>(get_platform_display_ptr)
+                    };
+
+                const EGL_PLATFORM_GBM_KHR: egl::EGLenum = 0x31D7;
+                let display =
+                    get_platform_display(EGL_PLATFORM_GBM_KHR, display_type, std::ptr::null());
+                if !display.is_null() {
+                    Ok(display)
+                } else {
+                    Err(Illusion::General(format!("Failed to get EGL display")))
+                }
+            } else {
+                Err(Illusion::General(format!("GBM platform is not supported")))
+            }
         }
     }
 }

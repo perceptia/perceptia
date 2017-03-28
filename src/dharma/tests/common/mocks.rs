@@ -58,16 +58,16 @@ impl ModuleMock {
     pub fn new(signals: Option<Vec<dharma::SignalId>>) -> Self {
         ModuleMock {
             inner: Arc::new(Mutex::new(InnerModuleMock {
-                times_initialized: 0,
-                times_executed: 0,
-                times_finalized: 0,
-                packages: Vec::new(),
-                expected_times_initialized: None,
-                expected_times_executed: None,
-                expected_times_finalized: None,
-                expected_packages: None,
-                signals: signals,
-            })),
+                                           times_initialized: 0,
+                                           times_executed: 0,
+                                           times_finalized: 0,
+                                           packages: Vec::new(),
+                                           expected_times_initialized: None,
+                                           expected_times_executed: None,
+                                           expected_times_finalized: None,
+                                           expected_packages: None,
+                                           signals: signals,
+                                       })),
         }
     }
 

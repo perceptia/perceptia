@@ -1,4 +1,6 @@
 verbose = true
+fn_call_width = 100
+chain_one_line_max = 100
 where_density = "Tall"
 use_try_shorthand = true
 write_mode = "Overwrite"

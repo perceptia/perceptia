@@ -59,8 +59,7 @@ pub fn get_info_log(object: gl::types::GLuint) -> String {
         }
 
         let cstr = std::ffi::CStr::from_ptr(std::mem::transmute(&buffer));
-        format!("GL: {}",
-                std::str::from_utf8(cstr.to_bytes()).expect("Info log is invalid"))
+        format!("GL: {}", std::str::from_utf8(cstr.to_bytes()).expect("Info log is invalid"))
     }
 }
 

@@ -32,9 +32,7 @@ struct ZxdgShellV6 {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(zxdg_shell_v6::NAME,
-                zxdg_shell_v6::VERSION,
-                Box::new(ZxdgShellV6::new_object))
+    Global::new(zxdg_shell_v6::NAME, zxdg_shell_v6::VERSION, Box::new(ZxdgShellV6::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -326,8 +324,7 @@ impl zxdg_surface_v6::Interface for ZxdgSurfaceV6 {
 // -------------------------------------------------------------------------------------------------
 
 /// Wayland `zxdg_toplevel_v6` object.
-struct ZxdgToplevelV6 {
-}
+struct ZxdgToplevelV6 {}
 
 // -------------------------------------------------------------------------------------------------
 

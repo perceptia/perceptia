@@ -252,56 +252,56 @@ impl Frame {
                title: String)
                -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters {
-                sid: sid,
-                mode: mode,
-                geometry: geometry,
-                pos: pos,
-                size: size,
-                title: title,
-            },
-            node: Node::default(),
-        })
+                           params: Parameters {
+                               sid: sid,
+                               mode: mode,
+                               geometry: geometry,
+                               pos: pos,
+                               size: size,
+                               title: title,
+                           },
+                           node: Node::default(),
+                       })
     }
 
     /// Creates new root frame.
     pub fn new_root() -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_root(),
-            node: Node::default(),
-        })
+                           params: Parameters::new_root(),
+                           node: Node::default(),
+                       })
     }
 
     /// Creates new display frame.
     pub fn new_display(area: Area, title: String) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_display(area, title),
-            node: Node::default(),
-        })
+                           params: Parameters::new_display(area, title),
+                           node: Node::default(),
+                       })
     }
 
     /// Creates new workspace frame.
     pub fn new_workspace(title: String) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_workspace(title),
-            node: Node::default(),
-        })
+                           params: Parameters::new_workspace(title),
+                           node: Node::default(),
+                       })
     }
 
     /// Creates new container frame.
     pub fn new_container(geometry: Geometry) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_container(geometry),
-            node: Node::default(),
-        })
+                           params: Parameters::new_container(geometry),
+                           node: Node::default(),
+                       })
     }
 
     /// Creates new leaf frame.
     pub fn new_leaf(sid: SurfaceId, geometry: Geometry) -> Self {
         Self::allocate(InnerFrame {
-            params: Parameters::new_leaf(sid, geometry),
-            node: Node::default(),
-        })
+                           params: Parameters::new_leaf(sid, geometry),
+                           node: Node::default(),
+                       })
     }
 
     /// Destroys frame recursively and deallocate memory.
@@ -715,9 +715,7 @@ impl Frame {
     fn deallocate(&self) {
         let ptr = self.inner as *mut _;
         unsafe {
-            heap::deallocate(ptr,
-                             mem::size_of::<InnerFrame>(),
-                             mem::align_of::<InnerFrame>());
+            heap::deallocate(ptr, mem::size_of::<InnerFrame>(), mem::align_of::<InnerFrame>());
         }
     }
 }

@@ -199,7 +199,10 @@ impl Gateway for Engine {
         }
     }
 
-    fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position) {
+    fn on_pointer_focus_changed(&self,
+                                old_sid: SurfaceId,
+                                new_sid: SurfaceId,
+                                position: Position) {
         let mediator = self.mediator.borrow();
         let old_client_id = mediator.get_client_for_sid(old_sid);
         let new_client_id = mediator.get_client_for_sid(new_sid);
@@ -207,23 +210,22 @@ impl Gateway for Engine {
         if new_client_id != old_client_id {
             if let Some(client_id) = old_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_pointer_focus_changed(old_sid,
-                                                           SurfaceId::invalid(),
-                                                           Position::default());
+                    package.proxy.borrow_mut().on_pointer_focus_changed(old_sid,
+                                                                        SurfaceId::invalid(),
+                                                                        Position::default());
                 }
             }
             if let Some(client_id) = new_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_pointer_focus_changed(SurfaceId::invalid(), new_sid, position);
+                    package.proxy.borrow_mut().on_pointer_focus_changed(SurfaceId::invalid(),
+                                                                        new_sid,
+                                                                        position);
                 }
             }
         } else {
             if let Some(client_id) = old_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_pointer_focus_changed(old_sid, new_sid, position);
+                    package.proxy.borrow_mut().on_pointer_focus_changed(old_sid, new_sid, position);
                 }
             }
         }
@@ -266,21 +268,20 @@ impl Gateway for Engine {
         if new_client_id != old_client_id {
             if let Some(client_id) = old_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_keyboard_focus_changed(old_sid, SurfaceId::invalid());
+                    package.proxy.borrow_mut().on_keyboard_focus_changed(old_sid,
+                                                                         SurfaceId::invalid());
                 }
             }
             if let Some(client_id) = new_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_keyboard_focus_changed(SurfaceId::invalid(), new_sid);
+                    package.proxy.borrow_mut().on_keyboard_focus_changed(SurfaceId::invalid(),
+                                                                         new_sid);
                 }
             }
         } else {
             if let Some(client_id) = old_client_id {
                 if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut()
-                                 .on_keyboard_focus_changed(old_sid, new_sid);
+                    package.proxy.borrow_mut().on_keyboard_focus_changed(old_sid, new_sid);
                 }
             }
         }

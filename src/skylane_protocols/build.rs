@@ -26,14 +26,15 @@ fn main() {
     let out_dir = env::var("OUT_DIR").expect("Read OUT_DIR variable");
     let src_dir = env::current_dir().expect("Get current directory");
 
-    for protocol in vec!["wayland" , "xdg-shell-unstable-v6"] {
+    for protocol in vec!["wayland", "xdg-shell-unstable-v6"] {
         let mut src_path = src_dir.clone();
         src_path.push("skylane_protocols");
         src_path.set_file_name(protocol);
         src_path.set_extension("xml");
 
-        let mut scanner = skylane_scanner::Scanner::new(&src_path)
-            .expect(format!("Initialize scanner for file {:?}", &src_path).as_str());
+        let mut scanner =
+            skylane_scanner::Scanner::new(&src_path)
+                .expect(format!("Initialize scanner for file {:?}", &src_path).as_str());
         let protocol_name = scanner.get_protocol_name().expect("Extract protocol name");
 
         let mut dst_server_path = PathBuf::new();

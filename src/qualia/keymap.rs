@@ -54,9 +54,9 @@ impl XkbKeymap {
         let k = xkb::Keymap::new_from_names(&context, &rules, &model, &layout, &variant, None, 0x0);
         if let Some(keymap) = k {
             Some(XkbKeymap {
-                context: context,
-                keymap: keymap,
-            })
+                     context: context,
+                     keymap: keymap,
+                 })
         } else {
             None
         }
@@ -103,15 +103,15 @@ impl Keymap {
                          0) {
             Ok(memory) => {
                 Ok(Keymap {
-                    settings: Settings {
-                        format: DEFAULT_FORMAT,
-                        size: keymap_str.len() + 1,
-                        fd: file.as_raw_fd(),
-                    },
-                    file: file,
-                    xkb_keymap: xkb_keymap,
-                    memory: memory,
-                })
+                       settings: Settings {
+                           format: DEFAULT_FORMAT,
+                           size: keymap_str.len() + 1,
+                           fd: file.as_raw_fd(),
+                       },
+                       file: file,
+                       xkb_keymap: xkb_keymap,
+                       memory: memory,
+                   })
             }
             Err(_) => Err(Illusion::General(format!("mmap error"))),
         }

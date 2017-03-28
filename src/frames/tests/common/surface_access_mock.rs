@@ -19,14 +19,17 @@ pub struct SurfaceAccessMock {}
 
 impl SurfaceAccessMock {
     pub fn new() -> Self {
-        SurfaceAccessMock{}
+        SurfaceAccessMock {}
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl SurfaceAccess for SurfaceAccessMock {
-    fn reconfigure(&mut self, sid: SurfaceId, size: Size, state_flags: surface_state::SurfaceState) {
+    fn reconfigure(&mut self,
+                   sid: SurfaceId,
+                   size: Size,
+                   state_flags: surface_state::SurfaceState) {
     }
 }
 

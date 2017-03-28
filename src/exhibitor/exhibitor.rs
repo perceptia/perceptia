@@ -102,8 +102,7 @@ impl Exhibitor {
                                    display_frame);
         self.displays.insert(id, display);
 
-        self.signaler.emit(perceptron::DISPLAY_CREATED,
-                           Perceptron::DisplayCreated(info));
+        self.signaler.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));
     }
 
     /// This method is called when pageflip occurred.

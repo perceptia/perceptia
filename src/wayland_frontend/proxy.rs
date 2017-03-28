@@ -12,7 +12,7 @@ use dharma;
 use skylane as wl;
 use skylane_protocols::server::wayland::{wl_display, wl_callback, wl_buffer};
 use skylane_protocols::server::wayland::{wl_keyboard, wl_pointer};
-use skylane_protocols::server::wayland::{wl_shell_surface};
+use skylane_protocols::server::wayland::wl_shell_surface;
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 
 use qualia::{Coordinator, Settings};
@@ -443,7 +443,7 @@ impl Facade for Proxy {
 
 #[allow(unused_variables)]
 impl Gateway for Proxy {
-    fn on_display_created(&mut self,  output_info: OutputInfo) {
+    fn on_display_created(&mut self, output_info: OutputInfo) {
         self.register_global(protocol::output::get_global(output_info));
     }
 
@@ -473,9 +473,7 @@ impl Gateway for Proxy {
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds) {
         if let Some(info) = self.sid_to_surface_info_dictionary.get_mut(&sid) {
             if let Some(frame_oid) = info.frame_oid {
-                send!(wl_callback::done(&self.socket,
-                                        frame_oid,
-                                        milliseconds.get_value() as u32));
+                send!(wl_callback::done(&self.socket, frame_oid, milliseconds.get_value() as u32));
                 send!(wl_display::delete_id(&self.socket,
                                             wl::common::DISPLAY_ID,
                                             frame_oid.get_value()));
@@ -495,10 +493,7 @@ impl Gateway for Proxy {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for pointer_oid in self.pointer_oids.iter() {
                         let serial = self.socket.get_next_serial();
-                        send!(wl_pointer::leave(&self.socket,
-                                                *pointer_oid,
-                                                serial,
-                                                surface_oid));
+                        send!(wl_pointer::leave(&self.socket, *pointer_oid, serial, surface_oid));
                     }
                 }
             }
@@ -521,7 +516,8 @@ impl Gateway for Proxy {
         }
     }
 
-    fn on_pointer_relative_motion(&self, sid: SurfaceId,
+    fn on_pointer_relative_motion(&self,
+                                  sid: SurfaceId,
                                   position: Position,
                                   milliseconds: Milliseconds) {
         for pointer_oid in self.pointer_oids.iter() {
@@ -613,10 +609,7 @@ impl Gateway for Proxy {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for keyboard_oid in self.keyboard_oids.iter() {
                         let serial = self.socket.get_next_serial();
-                        send!(wl_keyboard::leave(&self.socket,
-                                                 *keyboard_oid,
-                                                 serial,
-                                                 surface_oid));
+                        send!(wl_keyboard::leave(&self.socket, *keyboard_oid, serial, surface_oid));
 
                         if let Some(window_info) = self.coordinator.get_surface(old_sid) {
                             self.on_surface_reconfigured(old_sid,
@@ -685,9 +678,7 @@ impl Gateway for Proxy {
                                                           size.height as i32,
                                                           &states[0..pos]));
                         let serial = self.socket.get_next_serial();
-                        send!(zxdg_surface_v6::configure(&self.socket,
-                                                         shell_surface_oid,
-                                                         serial));
+                        send!(zxdg_surface_v6::configure(&self.socket, shell_surface_oid, serial));
                     }
                 }
             } else {

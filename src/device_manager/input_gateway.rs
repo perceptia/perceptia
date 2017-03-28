@@ -76,8 +76,7 @@ impl InputGateway {
         let vector = Vector::new(x, y).scaled(self.config.mouse_scale);
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_MOTION,
-                           Perceptron::InputPointerMotion(vector))
+        self.signaler.emit(perceptron::INPUT_POINTER_MOTION, Perceptron::InputPointerMotion(vector))
     }
 
     /// Scale position and emit pointer position event.
@@ -95,8 +94,7 @@ impl InputGateway {
         let btn = Button::new_now(code, value);
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_BUTTON,
-                           Perceptron::InputPointerButton(btn))
+        self.signaler.emit(perceptron::INPUT_POINTER_BUTTON, Perceptron::InputPointerButton(btn))
     }
 
     /// Emit exist event.
@@ -105,8 +103,7 @@ impl InputGateway {
                                  Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32));
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_AXIS,
-                           Perceptron::InputPointerAxis(axis))
+        self.signaler.emit(perceptron::INPUT_POINTER_AXIS, Perceptron::InputPointerAxis(axis))
     }
 
     /// Emit position reset event.

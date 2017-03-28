@@ -212,9 +212,7 @@ fn test_one_sender_with_one_receiver_threaded() {
     let mut r = dharma::Receiver::new();
     dharma::connect(&mut s, &r);
 
-    let join_handle = thread::spawn(move || {
-        s.send_plain(E::A);
-    });
+    let join_handle = thread::spawn(move || { s.send_plain(E::A); });
 
     assert!(r.recv_timeout(d).is_plain(E::A));
     assert!(r.try_recv().is_empty());

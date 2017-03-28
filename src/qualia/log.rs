@@ -33,22 +33,22 @@ use timber;
 // -------------------------------------------------------------------------------------------------
 
 pub mod level {
-    pub const FATAL: i32 =  1;
-    pub const ERROR: i32 =  2;
-    pub const DEBUG: i32 =  3;
-    pub const NYIMP: i32 =  4;
-    pub const WARN1: i32 =  5;
-    pub const INFO1: i32 =  6;
-    pub const WAYL1: i32 =  7;
-    pub const WARN2: i32 =  8;
-    pub const INFO2: i32 =  9;
-    pub const WAYL2: i32 =  0;
-    pub const WARN3: i32 =  0;
-    pub const INFO3: i32 =  0;
-    pub const WAYL3: i32 =  0;
-    pub const WARN4: i32 =  0;
-    pub const INFO4: i32 =  0;
-    pub const WAYL4: i32 =  0;
+    pub const FATAL: i32 = 1;
+    pub const ERROR: i32 = 2;
+    pub const DEBUG: i32 = 3;
+    pub const NYIMP: i32 = 4;
+    pub const WARN1: i32 = 5;
+    pub const INFO1: i32 = 6;
+    pub const WAYL1: i32 = 7;
+    pub const WARN2: i32 = 8;
+    pub const INFO2: i32 = 9;
+    pub const WAYL2: i32 = 0;
+    pub const WARN3: i32 = 0;
+    pub const INFO3: i32 = 0;
+    pub const WAYL3: i32 = 0;
+    pub const WARN4: i32 = 0;
+    pub const INFO4: i32 = 0;
+    pub const WAYL4: i32 = 0;
 }
 
 // -------------------------------------------------------------------------------------------------

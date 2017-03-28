@@ -238,8 +238,7 @@ impl InnerCoordinator {
 
     /// Informs other parts of application the surface is now not visible.
     pub fn detach_surface(&mut self, sid: SurfaceId) {
-        self.signaler.emit(perceptron::SURFACE_DESTROYED,
-                           Perceptron::SurfaceDestroyed(sid));
+        self.signaler.emit(perceptron::SURFACE_DESTROYED, Perceptron::SurfaceDestroyed(sid));
     }
 
     /// Detaches and forgets given surface.
@@ -330,8 +329,7 @@ impl InnerCoordinator {
 
     /// Informs other parts of application about request from client to change cursor surface.
     pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
-        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE,
-                           Perceptron::CursorSurfaceChange(sid));
+        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
     }
 
     /// Reconfigure surface and send notification about this event.

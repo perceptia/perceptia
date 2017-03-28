@@ -25,12 +25,12 @@ fn main() {
     if args.len() > 1 {
         for arg in args.skip(1) {
             let path = Path::new(&arg);
-            let mut scanner = skylane_scanner::Scanner::new(&path)
-                .expect(format!("Initialize scanner for file {:?}", &path).as_str());
+            let mut scanner =
+                skylane_scanner::Scanner::new(&path)
+                    .expect(format!("Initialize scanner for file {:?}", &path).as_str());
 
             println!("pub mod {} {{\n\n    pub mod server {{",
-                     scanner.get_protocol_name()
-                         .expect("Extracting protocol name"));
+                     scanner.get_protocol_name().expect("Extracting protocol name"));
             println!("{}", scanner.generate_server_interface(2));
             println!("    }}\n\n    pub mod client {{");
             println!("{}", scanner.generate_client_interface(2));

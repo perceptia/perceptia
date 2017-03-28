@@ -144,9 +144,7 @@ fn test_subscribe_one_recever_threaded() {
     let mut s = dharma::Signaler::new();
 
     s.subscribe(0, &r);
-    let join_handle = thread::spawn(move || {
-        s.emit(0, String::from(T));
-    });
+    let join_handle = thread::spawn(move || { s.emit(0, String::from(T)); });
 
     assert!(r.recv_timeout(d).is_defined(0, String::from(T)));
     assert!(r.try_recv().is_empty());

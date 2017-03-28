@@ -98,8 +98,7 @@ fn should_casted_be_inside_area()
 
 /// Check if point casted to zero area lays in origin.
 #[test]
-fn should_casted_to_zero_area_be_in_origin()
-{
+fn should_casted_to_zero_area_be_in_origin() {
     let position = Position::new(5, 5);
     let origin = Position::new(10, 10);
     let area = Area::new(origin, Size::new(0, 0));

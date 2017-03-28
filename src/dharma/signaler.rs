@@ -43,9 +43,9 @@ impl<P> Signaler<P>
     pub fn new() -> Self {
         Signaler {
             inner: Arc::new(Mutex::new(InnerSignaler {
-                map: Map::new(),
-                registry: Vec::new(),
-            })),
+                                           map: Map::new(),
+                                           registry: Vec::new(),
+                                       })),
         }
     }
 

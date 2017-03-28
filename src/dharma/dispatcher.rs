@@ -153,9 +153,9 @@ impl Dispatcher {
     pub fn new() -> Self {
         Dispatcher {
             state: Arc::new(InnerDispatcher {
-                inner: Mutex::new(LocalDispatcher::new()),
-                run: AtomicBool::new(false),
-            }),
+                                inner: Mutex::new(LocalDispatcher::new()),
+                                run: AtomicBool::new(false),
+                            }),
         }
     }
 
@@ -187,10 +187,7 @@ impl Dispatcher {
         let result = mine.handlers.remove(&id);
         if let Some(ref handler) = result {
             let mut event = epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0);
-            epoll::epoll_ctl(mine.epfd,
-                             epoll::EpollOp::EpollCtlDel,
-                             handler.get_fd(),
-                             &mut event)
+            epoll::epoll_ctl(mine.epfd, epoll::EpollOp::EpollCtlDel, handler.get_fd(), &mut event)
                 .expect("Failed to delete epoll source");
         }
         result
@@ -236,9 +233,8 @@ impl Dispatcher {
     /// Helper method for waiting for events and then processing them.
     fn do_wait_and_process(&self, epfd: RawFd, timeout: isize) {
         // We will process epoll events one by one.
-        let mut events: [epoll::EpollEvent; 1] = [
-                epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)
-            ];
+        let mut events: [epoll::EpollEvent; 1] =
+            [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
 
         let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], timeout);
 

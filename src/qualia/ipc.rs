@@ -179,11 +179,11 @@ impl InnerIpc {
                                     MessageItem::Str(ref string) => {
                                         if string == seat {
                                             return match structure[4] {
-                                                MessageItem::ObjectPath(ref path) => {
-                                                    Some(path.clone())
-                                                }
-                                                _ => None,
-                                            }
+                                                       MessageItem::ObjectPath(ref path) => {
+                                                           Some(path.clone())
+                                                       }
+                                                       _ => None,
+                                                   };
                                         }
                                     }
                                     _ => return None,

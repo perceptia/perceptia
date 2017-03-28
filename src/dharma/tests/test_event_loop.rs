@@ -92,9 +92,9 @@ fn test_life_of_two_modules() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add one `Module` which subscribes for three signals to one `EventLoop`, start, emit many signals
-/// and terminate. `Module` should be initialized and finalized once and be notified in correct order
-/// for all signals it subscribed but not for the ones it did not subscribe.
+/// Add one `Module` which subscribes for three signals to one `EventLoop`, start, emit many
+/// signals and terminate. `Module` should be initialized and finalized once and be notified in
+/// correct order for all signals it subscribed but not for the ones it did not subscribe.
 #[test]
 fn test_execution_of_one_module() {
     // Prepare mock and set expectations
@@ -128,10 +128,10 @@ fn test_execution_of_one_module() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Add two `Module`s which subscribe for three signals (which partially overlap) to one `EventLoop`,
-/// start, emit many signals and terminate. `Module`s should be initialized and finalized once each
-/// and be notified in correct order for all signals they subscribed but not for the ones they did
-/// not subscribe.
+/// Add two `Module`s which subscribe for three signals (which partially overlap) to one
+/// `EventLoop`, start, emit many signals and terminate. `Module`s should be initialized and
+/// finalized once each and be notified in correct order for all signals they subscribed but not
+/// for the ones they did not subscribe.
 #[test]
 fn test_execution_of_two_modules() {
     // Prepare mock and set expectations

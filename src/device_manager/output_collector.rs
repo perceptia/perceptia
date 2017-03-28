@@ -83,8 +83,7 @@ impl OutputCollector {
                 };
                 self.signaler.emit(perceptron::OUTPUT_FOUND, Perceptron::OutputFound(bundle));
             } else {
-                log_warn1!("No encoder for connector '{:?}'",
-                           connector.get_connector_id());
+                log_warn1!("No encoder for connector '{:?}'", connector.get_connector_id());
             }
         }
     }

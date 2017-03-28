@@ -277,9 +277,9 @@ impl DisplaySocket {
         try_sock!("Listening", path, socket::listen(sockfd, 128));
 
         Ok(DisplaySocket {
-            fd: sockfd,
-            path: path.to_owned(),
-        })
+               fd: sockfd,
+               path: path.to_owned(),
+           })
     }
 
     /// Creates new `DisplaySocket` on default path.

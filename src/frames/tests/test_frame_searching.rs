@@ -101,7 +101,6 @@ fn test_find_with_sid() {
 ///  - 1*North from B should be A.
 ///  - 1*South from B should be NULL.
 ///
-///
 ///     ┌─────┐
 ///     │  A  │
 ///     ├─────┤
@@ -144,7 +143,6 @@ fn test_find_contiguous_on_the_same_level_one_further() {
 /// - 3*East from B should be E.
 /// - 5*West from F should be A.
 ///
-///
 ///     ┌─────┬─────┬─────┬─────┬─────┬─────┐
 ///     │  A  │  B  │  C  │  D  │  E  │  F  │
 ///     └─────┴─────┴─────┴─────┴─────┴─────┘
@@ -180,7 +178,7 @@ fn test_find_contiguous_on_the_same_level_many_further() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Find contiguous frame on the second level and going from vertcal to horizontal.
+/// Find contiguous frame on the second level and going from vertical to horizontal.
 ///
 ///  - 1*East from B should be D.
 ///  - 1*East from A should be BC.

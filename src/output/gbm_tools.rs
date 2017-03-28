@@ -47,9 +47,9 @@ impl GbmBucket {
 
 
         Ok(GbmBucket {
-            device: device,
-            surface: surface,
-        })
+               device: device,
+               surface: surface,
+           })
     }
 }
 

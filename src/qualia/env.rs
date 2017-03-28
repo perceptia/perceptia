@@ -97,9 +97,9 @@ impl Env {
     /// Opens file in predefined directory.
     pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, Illusion> {
         let mut dir = if let Some(dir) = match dir {
-            Directory::Data => self.data_dir.clone(),
-            Directory::Runtime => self.runtime_dir.clone(),
-        } {
+               Directory::Data => self.data_dir.clone(),
+               Directory::Runtime => self.runtime_dir.clone(),
+           } {
             dir
         } else {
             return Err(Illusion::General(format!("Requested directory is not available")));
@@ -213,11 +213,7 @@ impl Env {
     /// - `ss` is zero padded second
     fn get_time_representation() -> String {
         let tm = time::now().to_local();
-        format!("{:03}-{:02}-{:02}-{:02}",
-                tm.tm_yday,
-                tm.tm_hour,
-                tm.tm_min,
-                tm.tm_sec)
+        format!("{:03}-{:02}-{:02}-{:02}", tm.tm_yday, tm.tm_hour, tm.tm_min, tm.tm_sec)
     }
 }
 

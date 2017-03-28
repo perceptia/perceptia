@@ -79,10 +79,10 @@ impl Searching for Frame {
         for ref frame in self.time_iter() {
             if frame.get_area().contains(&point) {
                 return if self.get_mode() == Mode::Leaf {
-                    frame.clone()
-                } else {
-                    frame.find_pointed(point)
-                };
+                           frame.clone()
+                       } else {
+                           frame.find_pointed(point)
+                       };
             }
         }
         self.clone()

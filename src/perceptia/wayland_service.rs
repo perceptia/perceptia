@@ -40,10 +40,11 @@ impl WaylandService {
     pub fn new(mut context: Context) -> Box<dharma::Service> {
         dharma::system::block_signals();
         Box::new(WaylandService {
-            engine: Engine::new(context.get_coordinator().clone(), context.get_settings().clone()),
-            context: context,
-            receiver: dharma::Receiver::new(),
-        })
+                     engine: Engine::new(context.get_coordinator().clone(),
+                                         context.get_settings().clone()),
+                     context: context,
+                     receiver: dharma::Receiver::new(),
+                 })
     }
 }
 

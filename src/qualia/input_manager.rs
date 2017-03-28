@@ -289,8 +289,7 @@ impl binding_functions::InputContext for InnerInputManager {
     }
 
     fn execute_command(&mut self) {
-        self.signaler.emit(perceptron::COMMAND,
-                           Perceptron::Command(self.command.clone()));
+        self.signaler.emit(perceptron::COMMAND, Perceptron::Command(self.command.clone()));
         self.clean_command();
     }
 

@@ -80,8 +80,7 @@ impl Subsurface {
     fn new(surface_oid: wl::common::ObjectId,
            parent_surface_oid: wl::common::ObjectId,
            proxy_ref: ProxyRef)
-           -> Self
-    {
+           -> Self {
         {
             let proxy = proxy_ref.borrow_mut();
             proxy.relate(surface_oid, parent_surface_oid);

@@ -658,9 +658,7 @@ impl ServerGenerator {
     }
 
     fn generate_module_end(&mut self) {
-        self.buffer
-            .decrease_indent()
-            .push_line("}");
+        self.buffer.decrease_indent().push_line("}");
     }
 
     fn generate_enum_start(&mut self, name: &str) {
@@ -697,16 +695,11 @@ impl ServerGenerator {
     }
 
     fn generate_interface_start(&mut self) {
-        self.buffer
-            .push_end_of_line()
-            .push_line("pub trait Interface {")
-            .increase_indent();
+        self.buffer.push_end_of_line().push_line("pub trait Interface {").increase_indent();
     }
 
     fn generate_interface_end(&mut self) {
-        self.buffer
-            .decrease_indent()
-            .push_line("}");
+        self.buffer.decrease_indent().push_line("}");
     }
 
     fn generate_request_start(&mut self, name: &str) {
@@ -723,9 +716,7 @@ impl ServerGenerator {
     }
 
     fn generate_request_end(&mut self) {
-        self.buffer
-            .decrease_indent()
-            .push_line(") -> Task;");
+        self.buffer.decrease_indent().push_line(") -> Task;");
     }
 
     fn generate_event_start(&mut self, name: &str) {
@@ -760,9 +751,7 @@ impl ServerGenerator {
             .push(argument.rust_type.to_input_str())
             .push(",");
         if let Some(ref description) = argument.description.text {
-            self.buffer
-                .push(" // ")
-                .push(&description);
+            self.buffer.push(" // ").push(&description);
         }
         self.buffer.push_end_of_line();
     }
@@ -864,9 +853,15 @@ impl ServerGenerator {
         // Create cursor
         self.buffer.push_line("{").increase_indent();
         if message_size.is_constant() {
-            self.buffer.push_line("let mut _bytes_buf = std::io::Cursor::new(&mut _bytes[..]);");
+            self.buffer
+                .push_indent()
+                .push("let mut _bytes_buf = std::io::Cursor::new(&mut _bytes[..]);")
+                .push_end_of_line();
         } else {
-            self.buffer.push_line("let mut _bytes_buf = std::io::Cursor::new(_bytes.as_mut_slice());");
+            self.buffer
+                .push_indent()
+                .push("let mut _bytes_buf = std::io::Cursor::new(_bytes.as_mut_slice());")
+                .push_end_of_line();
         }
 
         // Header
@@ -1149,17 +1144,10 @@ impl ServerGenerator {
                 .push_line("_socket,");
 
             for arg in request.arguments.iter() {
-                self.buffer
-                    .push_indent()
-                    .push(&arg.name)
-                    .push(",\n");
+                self.buffer.push_indent().push(&arg.name).push(",\n");
             }
 
-            self.buffer
-                .decrease_indent()
-                .push_line("))")
-                .decrease_indent()
-                .push_line("}");
+            self.buffer.decrease_indent().push_line("))").decrease_indent().push_line("}");
         }
 
         self.buffer
@@ -1208,9 +1196,7 @@ impl ServerGenerator {
             self.buffer.pop(2);
         }
 
-        self.buffer
-            .push(")\",\n")
-            .increase_indent();
+        self.buffer.push(")\",\n").increase_indent();
 
         if incoming {
             self.buffer.push_line("_header.object_id,");
@@ -1219,17 +1205,10 @@ impl ServerGenerator {
         }
 
         for arg in arguments.iter() {
-            self.buffer
-                .push_indent()
-                .push(&arg.name)
-                .push(",\n");
+            self.buffer.push_indent().push(&arg.name).push(",\n");
         }
 
-        self.buffer
-            .decrease_indent()
-            .push_line("));")
-            .decrease_indent()
-            .push_line("}");
+        self.buffer.decrease_indent().push_line("));").decrease_indent().push_line("}");
     }
 }
 
@@ -1609,8 +1588,7 @@ impl Aggregator {
 
     /// Aggregates "entry" attributes of protocol definition XML file.
     fn aggregate_entry(&self, attributes: &Vec<OwnedAttribute>) -> Result<Entry, Error> {
-        Ok(Entry::new(util::get_attr("name", &attributes)?,
-                      util::get_attr("value", &attributes)?))
+        Ok(Entry::new(util::get_attr("name", &attributes)?, util::get_attr("value", &attributes)?))
     }
 }
 

@@ -25,9 +25,7 @@ struct Compositor {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_compositor::NAME,
-                wl_compositor::VERSION,
-                Box::new(Compositor::new_object))
+    Global::new(wl_compositor::NAME, wl_compositor::VERSION, Box::new(Compositor::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------

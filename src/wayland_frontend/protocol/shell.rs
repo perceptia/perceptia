@@ -39,9 +39,7 @@ pub fn get_global() -> Global {
 
 impl Shell {
     fn new(proxy_ref: ProxyRef) -> Self {
-        Shell {
-            proxy: proxy_ref,
-        }
+        Shell { proxy: proxy_ref }
     }
 
     fn new_object(_oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {

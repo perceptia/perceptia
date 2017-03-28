@@ -26,11 +26,7 @@ impl Registry {
             let proxy = proxy_ref.borrow();
             let socket = proxy.get_socket();
             for (name, global) in proxy.get_globals() {
-                send!(wl_registry::global(&socket,
-                                          oid,
-                                          *name,
-                                          global.interface,
-                                          global.version));
+                send!(wl_registry::global(&socket, oid, *name, global.interface, global.version));
             }
         }
 

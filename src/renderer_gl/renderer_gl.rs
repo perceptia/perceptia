@@ -155,9 +155,7 @@ impl RendererGl {
             gl::BlendFunc(gl::SRC_ALPHA, gl::ONE_MINUS_SRC_ALPHA);
 
             gl::UseProgram(self.program);
-            gl::Uniform2i(self.loc_screen_size,
-                          self.size.width as i32,
-                          self.size.height as i32);
+            gl::Uniform2i(self.loc_screen_size, self.size.width as i32, self.size.height as i32);
         }
     }
 

@@ -44,8 +44,8 @@ impl<'a> Udev<'a> {
     pub fn iterate_event_devices<F>(&self, mut f: F)
         where F: FnMut(&Path, qualia::DeviceKind, &libudev::Device)
     {
-        let mut enumerator = libudev::Enumerator::new(&self.context)
-            .expect("Failed to create device enumerator");
+        let mut enumerator =
+            libudev::Enumerator::new(&self.context).expect("Failed to create device enumerator");
         enumerator.match_subsystem("input").expect("Failed to apply filter for device enumerator");
         for device in enumerator.scan_devices().expect("Failed to scan devices") {
             if let Some(devnode) = device.devnode() {
@@ -65,8 +65,8 @@ impl<'a> Udev<'a> {
     /// Iterate over connected output DRM devices and pass results to given handler.
     /// Panic if something goes wrong - this is crucial for perceptia to have output.
     pub fn iterate_drm_devices<F: FnMut(&Path, &libudev::Device)>(&self, mut f: F) {
-        let mut enumerator = libudev::Enumerator::new(&self.context)
-            .expect("Failed to create device enumerator");
+        let mut enumerator =
+            libudev::Enumerator::new(&self.context).expect("Failed to create device enumerator");
         enumerator.match_subsystem("drm").expect("Failed to apply filter for device enumerator");
         for device in enumerator.scan_devices().expect("Failed to scan devices") {
             if let Some(devnode) = device.devnode() {

@@ -3,6 +3,9 @@
 
 //! This module defines frame layouts used in tests.
 
+// TODO: rust-fmt fails on diagrams.
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 // -------------------------------------------------------------------------------------------------
 
 use frames::Frame;

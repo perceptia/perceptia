@@ -117,9 +117,7 @@ impl Evdev {
                (ev.code == uinput_sys::BTN_RIGHT as _) {
                 self.gateway.emit_button(ev.code, ev.value);
             } else {
-                log_nyimp!("Unhandled mouse key event (code: {}, value: {})",
-                           ev.code,
-                           ev.value);
+                log_nyimp!("Unhandled mouse key event (code: {}, value: {})", ev.code, ev.value);
             }
         } else if ev.kind == uinput_sys::EV_REL as _ {
             if ev.code == uinput_sys::ABS_X as _ {
@@ -134,9 +132,7 @@ impl Evdev {
                            ev.value);
             }
         } else if ev.kind == uinput_sys::EV_ABS as _ {
-            log_nyimp!("Unhandled mouse absolute event (code: {}, value: {})",
-                       ev.code,
-                       ev.value);
+            log_nyimp!("Unhandled mouse absolute event (code: {}, value: {})", ev.code, ev.value);
         } else {
             log_nyimp!("Unhandled mouse event (type: {}, code: {}, value: {})",
                        ev.kind,
@@ -157,9 +153,7 @@ impl Evdev {
                       (ev.code == uinput_sys::BTN_TOUCH as _) {
                 self.gateway.emit_position_reset();
             } else {
-                log_nyimp!("Unhandled touchpad key event (code: {}, value: {})",
-                           ev.code,
-                           ev.value);
+                log_nyimp!("Unhandled touchpad key event (code: {}, value: {})", ev.code, ev.value);
             }
         } else if ev.kind == uinput_sys::EV_REL as _ {
             log_nyimp!("Unhandled touchpad relative event (code: {}, value: {})",

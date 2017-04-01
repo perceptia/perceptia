@@ -37,14 +37,14 @@ pub struct WaylandService {
 /// Public methods.
 impl WaylandService {
     /// Creates new `WaylandService`.
-    pub fn new(mut context: Context) -> Box<dharma::Service> {
+    pub fn new(mut context: Context) -> Self {
         dharma::system::block_signals();
-        Box::new(WaylandService {
-                     engine: Engine::new(context.get_coordinator().clone(),
-                                         context.get_settings().clone()),
-                     context: context,
-                     receiver: dharma::Receiver::new(),
-                 })
+        WaylandService {
+            engine: Engine::new(context.get_coordinator().clone(),
+                                context.get_settings().clone()),
+            context: context,
+            receiver: dharma::Receiver::new(),
+        }
     }
 }
 
@@ -201,6 +201,29 @@ impl WaylandService {
     /// Finalizes service.
     fn finalize(&mut self) {
         log_info1!("Stopped Wayland service");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub struct WaylandServiceConstructor {
+    context: Context,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl WaylandServiceConstructor {
+    /// Constructs new `WaylandServiceConstructor`.
+    pub fn new(context: Context) -> Box<dharma::ServiceConstructor> {
+        Box::new(WaylandServiceConstructor { context: context })
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl dharma::ServiceConstructor for WaylandServiceConstructor {
+    fn construct(&self) -> Box<dharma::Service> {
+        Box::new(WaylandService::new(self.context.clone()))
     }
 }
 

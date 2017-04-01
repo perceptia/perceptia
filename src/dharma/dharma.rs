@@ -32,7 +32,6 @@
 //!
 //! Last module contains helper code for and handling system signals.
 
-#![feature(fnbox)]
 #![warn(missing_docs)]
 
 #[macro_use]
@@ -53,7 +52,8 @@ pub use signaler::Signaler;
 /// Implementation of main thread loop with notification listening.
 ///
 pub mod event_loop;
-pub use event_loop::{EventLoop, EventLoopInfo, InitResult, Module, Service};
+pub use event_loop::{EventLoop, EventLoopInfo, InitResult};
+pub use event_loop::{Module, ModuleConstructor, Service, ServiceConstructor};
 
 /// Handling system events (`epoll` wrapper).
 ///

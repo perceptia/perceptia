@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{InitResult, Module};
+use dharma::{InitResult, Module, ModuleConstructor};
 use qualia::{Context, perceptron, Perceptron};
 use exhibitor::Exhibitor;
 
@@ -20,8 +20,8 @@ pub struct ExhibitorModule {
 
 impl ExhibitorModule {
     /// `ExhibitorModule` constructor.
-    pub fn new() -> Box<Module<T = Perceptron, C = Context>> {
-        Box::new(ExhibitorModule { exhibitor: None })
+    pub fn new() -> Self {
+        ExhibitorModule { exhibitor: None }
     }
 }
 
@@ -77,6 +77,30 @@ impl Module for ExhibitorModule {
 
     fn finalize(&mut self) {
         log_info1!("Finalized Exhibitor module");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub struct ExhibitorModuleConstructor {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ExhibitorModuleConstructor {
+    /// Constructs new `ExhibitorModuleConstructor`.
+    pub fn new() -> Box<ModuleConstructor<T = Perceptron, C = Context>> {
+        Box::new(ExhibitorModuleConstructor {})
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ModuleConstructor for ExhibitorModuleConstructor {
+    type T = Perceptron;
+    type C = Context;
+
+    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
+        Box::new(ExhibitorModule::new())
     }
 }
 

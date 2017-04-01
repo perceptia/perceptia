@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{InitResult, Module};
+use dharma::{InitResult, Module, ModuleConstructor};
 use qualia::{Context, Perceptron};
 use device_manager::DeviceManager;
 
@@ -19,8 +19,8 @@ pub struct DeviceManagerModule<'a> {
 
 impl<'a> DeviceManagerModule<'a> {
     /// `DeviceManagerModule` constructor.
-    pub fn new() -> Box<Module<T = Perceptron, C = Context>> {
-        Box::new(DeviceManagerModule { manager: None })
+    pub fn new() -> Self {
+        DeviceManagerModule { manager: None }
     }
 }
 
@@ -40,6 +40,30 @@ impl<'a> Module for DeviceManagerModule<'a> {
 
     fn finalize(&mut self) {
         log_info1!("Finalized Device Manager module");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+pub struct DeviceManagerModuleConstructor {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl DeviceManagerModuleConstructor {
+    /// Constructs new `DeviceManagerModuleConstructor`.
+    pub fn new() -> Box<ModuleConstructor<T = Perceptron, C = Context>> {
+        Box::new(DeviceManagerModuleConstructor {})
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ModuleConstructor for DeviceManagerModuleConstructor {
+    type T = Perceptron;
+    type C = Context;
+
+    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
+        Box::new(DeviceManagerModule::new())
     }
 }
 

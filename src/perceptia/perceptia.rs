@@ -3,8 +3,6 @@
 
 #![cfg_attr(not(test), allow(unused_variables))]
 
-#![feature(fnbox)]
-
 #[macro_use]
 extern crate timber;
 #[macro_use]
@@ -18,17 +16,12 @@ mod device_manager_module;
 mod exhibitor_module;
 mod wayland_service;
 
-use std::boxed::FnBox;
+use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler};
+use qualia::{Context, Coordinator, InputManager};
 
-use dharma::{EventLoopInfo, Dispatcher, SignalEventHandler, Signaler, Module, Service};
-use qualia::{Context, Coordinator, InputManager, Perceptron};
-
-use device_manager_module::DeviceManagerModule;
-use exhibitor_module::ExhibitorModule;
-use wayland_service::WaylandService;
-
-type ModuleConstructor = Box<FnBox() -> Box<Module<T = Perceptron, C = Context>> + Send + Sync>;
-type ServiceConstructor = Box<FnBox(Context) -> Box<Service> + Send>;
+use device_manager_module::DeviceManagerModuleConstructor;
+use exhibitor_module::ExhibitorModuleConstructor;
+use wayland_service::WaylandServiceConstructor;
 
 fn main() {
     // Set panic hook: log the panic and quit application - we want to exit when one of threads
@@ -67,9 +60,9 @@ fn main() {
         EventLoopInfo::new("p:wayland".to_owned(), signaler.clone(), context.clone());
 
     // Create modules and services
-    let device_manager_module: ModuleConstructor = Box::new(DeviceManagerModule::new);
-    let exhibitor_module: ModuleConstructor = Box::new(ExhibitorModule::new);
-    let wayland_service: ServiceConstructor = Box::new(WaylandService::new);
+    let device_manager_module = DeviceManagerModuleConstructor::new();
+    let exhibitor_module = ExhibitorModuleConstructor::new();
+    let wayland_service = WaylandServiceConstructor::new(context.clone());
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);

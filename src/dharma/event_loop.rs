@@ -15,7 +15,6 @@
 
 use std;
 use std::collections::btree_map::BTreeMap as Map;
-use std::boxed::FnBox;
 
 use bridge::{self, ReceiveResult, SpecialCommand};
 use signaler;
@@ -51,10 +50,38 @@ pub trait Module {
 
 // -------------------------------------------------------------------------------------------------
 
+/// To avoid requirement for `Module` to be `Send` and `Sync` it is constructed by special trait
+/// object.
+///
+/// NOTE: `ModuleConstructor` could be replaced by `FnBox` if it was stable.
+pub trait ModuleConstructor: Send + Sync {
+    /// Type for transported packages.
+    type T: Clone + Send;
+
+    /// Type for context that will be passed to `Module` at initialization.
+    type C: Clone + Send + Sync;
+
+    /// Constructs new `Module`.
+    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>>;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Trait for all `Service`s.
 pub trait Service {
     /// Main loop for `Service`.
     fn run(&mut self);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// To avoid requirement for `Service` to be `Send` and `Sync` it is constructed by special trait
+/// object.
+///
+/// NOTE: `ServiceConstructor` could be replaced by `FnBox` if it was stable.
+pub trait ServiceConstructor: Send + Sync {
+    /// Constructs new `Service`.
+    fn construct(&self) -> Box<Service>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -66,7 +93,7 @@ pub struct EventLoopInfo<P, C>
 {
     name: String,
     signaler: signaler::Signaler<P>,
-    constructors: Vec<Box<FnBox() -> Box<Module<T = P, C = C>> + Send + Sync>>,
+    constructors: Vec<Box<ModuleConstructor<T = P, C = C>>>,
     context: C,
 }
 
@@ -88,7 +115,7 @@ impl<P, C> EventLoopInfo<P, C>
 
     /// Add module constructor.
     pub fn add_module(&mut self,
-                      constructor: Box<FnBox() -> Box<Module<T = P, C = C>> + Send + Sync>) {
+                      constructor: Box<ModuleConstructor<T = P, C = C>>) {
         self.constructors.push(constructor);
     }
 
@@ -101,11 +128,11 @@ impl<P, C> EventLoopInfo<P, C>
 
     /// Consume `EventLoopInfo` to start custom event loop in new thread.
     pub fn start_service(self,
-                         contructor: Box<FnBox(C) -> Box<Service> + Send>)
+                         constructor: Box<ServiceConstructor>)
                          -> std::io::Result<std::thread::JoinHandle<()>> {
         std::thread::Builder::new()
             .name(self.name.clone())
-            .spawn(move || contructor.call_box((self.context.clone(),)).run())
+            .spawn(move || constructor.construct().run())
     }
 }
 
@@ -146,7 +173,7 @@ impl<P, C> EventLoop<P, C>
         // Consume constructors to return module instances
         loop {
             match info.constructors.pop() {
-                Some(constructor) => event_loop.modules.push(constructor.call_box(())),
+                Some(constructor) => event_loop.modules.push(constructor.construct()),
                 None => break,
             }
         }

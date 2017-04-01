@@ -8,8 +8,6 @@
 use std::{fmt, mem, ptr};
 use std::default::Default;
 
-use alloc::heap;
-
 use qualia::{SurfaceId, Area, Position, Size};
 
 // -------------------------------------------------------------------------------------------------
@@ -701,9 +699,17 @@ impl Frame {
 impl Frame {
     /// Helper method for allocating new frame on heap.
     fn allocate(inner: InnerFrame) -> Self {
-        let ptr = unsafe {
-            heap::allocate(mem::size_of::<InnerFrame>(), mem::align_of::<InnerFrame>())
+        let ptr = {
+            // NOTE: `alloc` crate would be more clean solution but it is unstable:
+            // ```
+            // alloc::heap::allocate(mem::size_of::<InnerFrame>(), mem::align_of::<InnerFrame>())
+            // ```
+            let mut v = Vec::with_capacity(mem::size_of::<InnerFrame>());
+            let ptr = v.as_mut_ptr();
+            mem::forget(v);
+            ptr
         } as *mut _;
+
         unsafe {
             ptr::write(ptr, inner);
         }
@@ -715,7 +721,13 @@ impl Frame {
     fn deallocate(&self) {
         let ptr = self.inner as *mut _;
         unsafe {
-            heap::deallocate(ptr, mem::size_of::<InnerFrame>(), mem::align_of::<InnerFrame>());
+            // NOTE: `alloc` crate would be more clean solution but it is unstable:
+            // ```
+            // alloc::heap::deallocate(ptr,
+            //                         mem::size_of::<InnerFrame>(),
+            //                         mem::align_of::<InnerFrame>());
+            // ```
+            mem::drop(Vec::from_raw_parts(ptr, 0, mem::size_of::<InnerFrame>()));
         }
     }
 }

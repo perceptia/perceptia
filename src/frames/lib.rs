@@ -46,12 +46,6 @@
 
 // -------------------------------------------------------------------------------------------------
 
-#![feature(alloc, alloc_system, heap_api)]
-#![feature(alloc_system)]
-
-extern crate alloc;
-extern crate alloc_system;
-
 extern crate qualia;
 
 mod frame;

@@ -4,8 +4,6 @@
 //! `qualia` is crate containing enumerations and simple tools common to all the crates of
 //! `perceptia`.
 
-#![feature(unique)]
-
 extern crate backtrace;
 extern crate dbus;
 extern crate libc;

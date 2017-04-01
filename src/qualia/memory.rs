@@ -20,7 +20,6 @@
 use std;
 use std::os::unix::io::RawFd;
 use std::sync::Arc;
-use std::ptr::Unique;
 
 use nix::sys::mman;
 
@@ -140,8 +139,15 @@ impl Pixmap for Buffer {
 
 /// Represents memory shared with client.
 pub struct MappedMemory {
-    data: Unique<u8>,
+    data: *const u8,
 }
+
+// -------------------------------------------------------------------------------------------------
+
+unsafe impl Send for MappedMemory {}
+
+/// `MappedMemory` is `Sync` as long as it does not provide means to change its internals.
+unsafe impl Sync for MappedMemory {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -154,7 +160,7 @@ impl MappedMemory {
                          mman::MAP_SHARED,
                          fd,
                          0) {
-            Ok(memory) => Ok(MappedMemory { data: unsafe { Unique::new(memory as *mut u8) } }),
+            Ok(memory) => Ok(MappedMemory { data: memory as *const u8 }),
             Err(err) => Err(errors::Illusion::General(format!("Failed to map memory! {:?}", err))),
         }
     }
@@ -165,11 +171,18 @@ impl MappedMemory {
 /// Represents view into memory shared with client.
 pub struct MemoryView {
     memory: Arc<MemoryKind>,
-    data: Unique<u8>,
+    data: *const u8,
     width: usize,
     height: usize,
     stride: usize,
 }
+
+// -------------------------------------------------------------------------------------------------
+
+unsafe impl Send for MemoryView {}
+
+/// `MemoryView` is `Sync` as long as it does not provide means to change its internals.
+unsafe impl Sync for MemoryView {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -209,7 +222,7 @@ impl Clone for MemoryView {
     fn clone(&self) -> Self {
         MemoryView {
             memory: self.memory.clone(),
-            data: unsafe { Unique::new(self.data.offset(0)) },
+            data: unsafe { self.data.offset(0) },
             width: self.width,
             height: self.height,
             stride: self.stride,
@@ -258,7 +271,7 @@ impl MemoryPool {
             MemoryKind::Mapped(ref map) => {
                 MemoryView {
                     memory: self.memory.clone(),
-                    data: unsafe { Unique::new(map.data.offset(offset as isize)) },
+                    data: unsafe { map.data.offset(offset as isize) },
                     width: width,
                     height: height,
                     stride: stride,
@@ -267,7 +280,7 @@ impl MemoryPool {
             MemoryKind::Buffered(ref buffer) => {
                 MemoryView {
                     memory: self.memory.clone(),
-                    data: unsafe { Unique::new(buffer.as_ptr() as *mut u8) },
+                    data: unsafe { buffer.as_ptr() as *const u8 },
                     width: width,
                     height: height,
                     stride: stride,

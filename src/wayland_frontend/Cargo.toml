@@ -5,11 +5,11 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 nix = "0.8.0"
+skylane = "0.0.1"
+skylane_protocols = "0.0.1"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
-skylane = { path = "../skylane" }
-skylane_protocols = { path = "../skylane_protocols" }
 
 [lib]
 name = "wayland_frontend"

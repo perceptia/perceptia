@@ -531,8 +531,6 @@ impl ResourceStorage {
     }
 }
 
-// -------------------------------------------------------------------------------------------------
-
 #[cfg(test)]
 mod tests {
     fn assert_storage_size(resources: &super::ResourceStorage) {

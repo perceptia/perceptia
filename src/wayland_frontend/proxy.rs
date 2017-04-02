@@ -8,23 +8,25 @@
 use std;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::PathBuf;
+use std::os::unix::io::RawFd;
 
 use dharma;
 use skylane::server as wl;
 use skylane_protocols::server::wayland::{wl_display, wl_callback, wl_buffer};
 use skylane_protocols::server::wayland::{wl_keyboard, wl_pointer};
+use skylane_protocols::server::wayland::{wl_data_source, wl_data_device, wl_data_offer};
 use skylane_protocols::server::wayland::wl_shell_surface;
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
-use qualia::Settings;
+use qualia::{Settings, Transfer};
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{DrmBundle, EglAttributes, DmabufAttributes, MappedMemory};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
-use qualia::{AppearanceManagement, HwGraphics, Screenshooting, MemoryManagement};
+use qualia::{AppearanceManagement, DataTransferring, HwGraphics, Screenshooting, MemoryManagement};
 
 use coordination::Coordinator;
 
@@ -144,7 +146,7 @@ impl BufferInfo {
 ///
 /// TODO: Add more information about members of `Proxy`.
 pub struct Proxy {
-    id: dharma::EventHandlerId,
+    client_id: dharma::EventHandlerId,
     coordinator: Coordinator,
     settings: Settings,
 
@@ -159,8 +161,11 @@ pub struct Proxy {
 
     regions: HashMap<wl::ObjectId, Area>,
     positioners: HashMap<wl::ObjectId, PositionerInfo>,
+    transfers: HashMap<wl::ObjectId, Transfer>,
     pointer_oids: HashSet<wl::ObjectId>,
     keyboard_oids: HashSet<wl::ObjectId>,
+    data_device_oids: HashSet<wl::ObjectId>,
+    data_source_oid: Option<wl::ObjectId>,
     memory_pools: HashSet<MemoryPoolId>,
     surface_oid_to_sid_dict: HashMap<wl::ObjectId, SurfaceId>,
     sid_to_surface_info_dict: HashMap<SurfaceId, SurfaceInfo>,
@@ -180,14 +185,14 @@ define_ref!(struct Proxy as ProxyRef);
 
 impl Proxy {
     /// Creates new `Proxy`.
-    pub fn new(id: dharma::EventHandlerId,
+    pub fn new(client_id: dharma::EventHandlerId,
                coordinator: Coordinator,
                settings: Settings,
                mediator: MediatorRef,
                socket: wl::Socket)
                -> Self {
         Proxy {
-            id: id,
+            client_id: client_id,
             coordinator: coordinator,
             mediator: mediator,
             settings: settings,
@@ -195,8 +200,11 @@ impl Proxy {
             globals: BTreeMap::new(),
             regions: HashMap::new(),
             positioners: HashMap::new(),
+            transfers: HashMap::new(),
             pointer_oids: HashSet::new(),
             keyboard_oids: HashSet::new(),
+            data_device_oids: HashSet::new(),
+            data_source_oid: None,
             memory_pools: HashSet::new(),
             surface_oid_to_sid_dict: HashMap::new(),
             sid_to_surface_info_dict: HashMap::new(),
@@ -298,6 +306,26 @@ impl Proxy {
         }
         None
     }
+
+    pub fn make_data_offer(&mut self, connection: &mut wl::Connection, proxy_ref: ProxyRef) {
+        if let Some(transfer) = self.coordinator.get_transfer() {
+            for data_device_oid in self.data_device_oids.iter() {
+                let data_offer_oid = connection.get_next_available_server_object_id();
+                let data_offer =
+                    protocol::data_device_manager::DataOffer::new_object(data_offer_oid,
+                                                                         proxy_ref.clone());
+                connection.add_object(data_offer_oid, data_offer);
+
+                send!(wl_data_device::data_offer(&self.socket, *data_device_oid, data_offer_oid));
+
+                for mime_type in transfer.get_mime_types() {
+                    send!(wl_data_offer::offer(&self.socket, data_offer_oid, mime_type));
+                }
+
+                send!(wl_data_device::selection(&self.socket, *data_device_oid, data_offer_oid));
+            }
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -397,6 +425,14 @@ impl Facade for Proxy {
         self.keyboard_oids.remove(&keyboard_oid);
     }
 
+    fn add_data_device_oid(&mut self, data_device_oid: wl::ObjectId) {
+        self.data_device_oids.insert(data_device_oid);
+    }
+
+    fn remove_data_device_oid(&mut self, data_device_oid: wl::ObjectId) {
+        self.data_device_oids.remove(&data_device_oid);
+    }
+
     fn set_positioner(&mut self, oid: wl::ObjectId, positioner: PositionerInfo) {
         self.positioners.insert(oid, positioner);
     }
@@ -413,6 +449,36 @@ impl Facade for Proxy {
         self.positioners.remove(&oid);
     }
 
+    fn set_transfer(&mut self, oid: wl::ObjectId, transfer: Transfer) {
+        self.transfers.insert(oid, transfer);
+    }
+
+    fn get_transfer(&mut self, oid: wl::ObjectId) -> Option<Transfer> {
+        if let Some(transfer) = self.transfers.get(&oid) {
+            Some(transfer.clone())
+        } else {
+            None
+        }
+    }
+
+    fn select_transfer(&mut self, data_source_oid: wl::ObjectId) {
+        if let Some(transfer) = self.transfers.get(&data_source_oid) {
+            self.data_source_oid = Some(data_source_oid);
+            self.mediator.borrow_mut().register_transfer_offerer(Some(self.client_id));
+            self.coordinator.set_transfer(Some(transfer.clone()));
+        } else {
+            log_warn2!("Transfer cannot be selected");
+        }
+    }
+
+    fn remove_transfer(&mut self, oid: wl::ObjectId) {
+        self.transfers.remove(&oid);
+    }
+
+    fn request_transfer(&mut self, mime_type: String, fd: RawFd) {
+        self.coordinator.request_transfer(mime_type, fd);
+    }
+
     fn set_input_region(&self, sid: SurfaceId, region_oid: wl::ObjectId) {
         if let Some(region) = self.regions.get(&region_oid) {
             self.coordinator.set_surface_offset(sid, region.pos);
@@ -425,7 +491,7 @@ impl Facade for Proxy {
     fn create_surface(&mut self, oid: wl::ObjectId) -> SurfaceId {
         let sid = self.coordinator.create_surface();
         self.relate_sid_with_surface(sid, oid);
-        self.mediator.borrow_mut().relate_sid_to_client(sid, self.id);
+        self.mediator.borrow_mut().relate_sid_to_client(sid, self.client_id);
         sid
     }
 
@@ -433,7 +499,7 @@ impl Facade for Proxy {
         self.coordinator.destroy_surface(sid)
     }
 
-    fn attach(&mut self, buffer_oid: wl::ObjectId, sid: SurfaceId, x: i32, y: i32) {
+    fn attach(&mut self, buffer_oid: wl::ObjectId, sid: SurfaceId, _x: i32, _y: i32) {
         if buffer_oid.is_null() {
             // Client wants to unmap this surface
             // TODO: This should be done on commit
@@ -544,7 +610,7 @@ impl Facade for Proxy {
                 self.coordinator.take_screenshot(*output_id);
 
                 // Save ID of client requesting screenshot for later use.
-                self.mediator.borrow_mut().register_screenshoter(Some(self.id));
+                self.mediator.borrow_mut().register_screenshoter(Some(self.client_id));
 
                 // Save screenshooter object ID for later use.
                 self.screenshooter_oid = Some(screenshooter_oid);
@@ -567,7 +633,6 @@ impl Facade for Proxy {
 
 // -------------------------------------------------------------------------------------------------
 
-#[allow(unused_variables)]
 impl Gateway for Proxy {
     fn on_output_found(&mut self, _bundle: DrmBundle) {}
 
@@ -643,7 +708,7 @@ impl Gateway for Proxy {
     }
 
     fn on_pointer_relative_motion(&self,
-                                  sid: SurfaceId,
+                                  _sid: SurfaceId,
                                   position: Position,
                                   milliseconds: Milliseconds) {
         for pointer_oid in self.pointer_oids.iter() {
@@ -770,6 +835,15 @@ impl Gateway for Proxy {
                     }
                 }
             }
+        }
+    }
+
+    /// Nothing to do here. `Engine` handles the request.
+    fn on_transfer_offered(&mut self) {}
+
+    fn on_transfer_requested(&mut self, mime_type: String, fd: RawFd) {
+        if let Some(data_source_oid) = self.data_source_oid {
+            send!(wl_data_source::send(&self.socket, data_source_oid, &mime_type, fd));
         }
     }
 

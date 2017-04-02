@@ -68,11 +68,15 @@ pub use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 pub use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 pub use surface::{show_reason, surface_state};
 
+pub mod transfer;
+pub use transfer::Transfer;
+
 pub mod perceptron;
 pub use perceptron::Perceptron;
 
 pub mod traits;
-pub use traits::{AppearanceManagement, Emiter, Screenshooting, MemoryManagement, HwGraphics};
+pub use traits::{AppearanceManagement, DataTransferring, Emiter};
+pub use traits::{Screenshooting, MemoryManagement, HwGraphics};
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 
 #[macro_use]

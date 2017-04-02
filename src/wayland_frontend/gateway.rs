@@ -5,6 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::os::unix::io::RawFd;
+
 use qualia::{Axis, Button, DrmBundle, Key, KeyMods, Milliseconds, OutputInfo, Position, Size};
 use qualia::{SurfaceId, surface_state};
 
@@ -43,6 +45,12 @@ pub trait Gateway {
 
     /// Notifies about keyboard focus change.
     fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId);
+
+    /// Handles change of offered transfer data.
+    fn on_transfer_offered(&mut self);
+
+    /// Handles data transfer request to requesting client.
+    fn on_transfer_requested(&mut self, mime_type: String, fd: RawFd);
 
     /// Notifies about change of size or state of surface.
     fn on_surface_reconfigured(&self,

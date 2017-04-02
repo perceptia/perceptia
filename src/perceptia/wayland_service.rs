@@ -80,6 +80,8 @@ impl WaylandService {
                       perceptron::POINTER_RELATIVE_MOTION,
                       perceptron::KEYBOARD_FOCUS_CHANGED,
                       perceptron::SURFACE_RECONFIGURED,
+                      perceptron::TRANSFER_OFFERED,
+                      perceptron::TRANSFER_REQUESTED,
                       perceptron::SCREENSHOT_DONE] {
             self.context.get_signaler().subscribe(s, &self.receiver);
         }
@@ -161,6 +163,12 @@ impl WaylandService {
             }
             Perceptron::KeyboardFocusChanged(old_sid, new_sid) => {
                 self.engine.on_keyboard_focus_changed(old_sid, new_sid);
+            }
+            Perceptron::TransferOffered => {
+                self.engine.on_transfer_offered();
+            }
+            Perceptron::TransferRequested(mime_type, fd) => {
+                self.engine.on_transfer_requested(mime_type, fd);
             }
             Perceptron::SurfaceReconfigured(sid) => {
                 if let Some(info) = self.context.get_coordinator().get_surface(sid) {

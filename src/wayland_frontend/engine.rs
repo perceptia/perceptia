@@ -6,6 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 use std;
 use std::collections::HashMap;
+use std::os::unix::io::RawFd;
 
 use dharma;
 use skylane::server as wl;
@@ -283,24 +284,45 @@ impl Gateway for Engine {
         let old_client_id = mediator.get_client_for_sid(old_sid);
         let new_client_id = mediator.get_client_for_sid(new_sid);
 
+
         if new_client_id != old_client_id {
             if let Some(client_id) = old_client_id {
                 if let Some(client) = self.clients.get(&client_id) {
-                    client.proxy.borrow_mut().on_keyboard_focus_changed(old_sid,
-                                                                        SurfaceId::invalid());
+                    let mut proxy = client.proxy.borrow_mut();
+                    proxy.on_keyboard_focus_changed(old_sid, SurfaceId::invalid());
                 }
             }
             if let Some(client_id) = new_client_id {
-                if let Some(client) = self.clients.get(&client_id) {
-                    client.proxy.borrow_mut().on_keyboard_focus_changed(SurfaceId::invalid(),
-                                                                        new_sid);
+                if let Some(client) = self.clients.get_mut(&client_id) {
+                    let mut proxy = client.proxy.borrow_mut();
+                    proxy.make_data_offer(&mut client.connection, client.proxy.clone());
+                    proxy.on_keyboard_focus_changed(SurfaceId::invalid(), new_sid);
                 }
             }
         } else {
             if let Some(client_id) = old_client_id {
                 if let Some(client) = self.clients.get(&client_id) {
-                    client.proxy.borrow_mut().on_keyboard_focus_changed(old_sid, new_sid);
+                    let mut proxy = client.proxy.borrow_mut();
+                    proxy.on_keyboard_focus_changed(old_sid, new_sid);
                 }
+            }
+        }
+    }
+
+    fn on_transfer_offered(&mut self) {
+        let sid = self.coordinator.get_keyboard_focused_sid();
+        if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
+            if let Some(client) = self.clients.get_mut(&id) {
+                client.proxy.borrow_mut().make_data_offer(&mut client.connection,
+                                                          client.proxy.clone());
+            }
+        }
+    }
+
+    fn on_transfer_requested(&mut self, mime_type: String, fd: RawFd) {
+        if let Some(id) = self.mediator.borrow().get_transfer_offerer() {
+            if let Some(client) = self.clients.get_mut(&id) {
+                client.proxy.borrow_mut().on_transfer_requested(mime_type, fd);
             }
         }
     }

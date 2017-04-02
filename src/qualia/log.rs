@@ -18,7 +18,7 @@
 //!              problem.
 //!  - `INFO*` - general info that something happened.
 //!
-//! In peceptia some logs may be printed 60 times per second. It is not always desirable to have
+//! In `perceptia` some logs may be printed 60 times per second. It is not always desirable to have
 //! them all always switched on. Numbers along level names mean:
 //!
 //!  - `*1` - very important, very rare log

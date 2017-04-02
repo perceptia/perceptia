@@ -6,6 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
+use std::os::unix::io::RawFd;
 
 use dharma::SignalId;
 
@@ -39,6 +40,8 @@ pub const SURFACE_FRAME: SignalId = 30;
 pub const POINTER_FOCUS_CHANGED: SignalId = 31;
 pub const POINTER_RELATIVE_MOTION: SignalId = 32;
 pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
+pub const TRANSFER_OFFERED: SignalId = 41;
+pub const TRANSFER_REQUESTED: SignalId = 42;
 pub const TAKE_SCREENSHOT: SignalId = 101;
 pub const SCREENSHOT_DONE: SignalId = 102;
 
@@ -76,6 +79,8 @@ pub enum Perceptron {
     PointerFocusChanged(SurfaceId, SurfaceId, Position),
     PointerRelativeMotion(SurfaceId, Position, Milliseconds),
     KeyboardFocusChanged(SurfaceId, SurfaceId),
+    TransferOffered,
+    TransferRequested(String, RawFd),
     TakeScreenshot(i32),
     ScreenshotDone,
 }
@@ -124,6 +129,10 @@ impl std::fmt::Display for Perceptron {
             }
             Perceptron::KeyboardFocusChanged(ref old_sid, ref new_sid) => {
                 write!(f, "KeyboardFocusChanged({:?}, {:?})", old_sid, new_sid)
+            }
+            Perceptron::TransferOffered => write!(f, "TransferOffered"),
+            Perceptron::TransferRequested(ref mime_type, fd) => {
+                write!(f, "TransferRequested('{:?}', fd: {:?})", mime_type, fd)
             }
             Perceptron::TakeScreenshot(ref id) => write!(f, "TakeScreenshot({:?})", id),
             Perceptron::ScreenshotDone => write!(f, "ScreenshotDone"),

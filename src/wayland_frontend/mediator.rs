@@ -13,6 +13,7 @@ use std::path::PathBuf;
 use libdrm;
 
 use dharma;
+
 use qualia::SurfaceId;
 
 // -------------------------------------------------------------------------------------------------
@@ -22,6 +23,7 @@ use qualia::SurfaceId;
 /// For information about its place among other structures see crate-level documentation.
 pub struct Mediator {
     sid_to_cid_dictionary: HashMap<SurfaceId, dharma::EventHandlerId>,
+    transfer_offerer: Option<dharma::EventHandlerId>,
     screenshoter_cid: Option<dharma::EventHandlerId>,
     drm_device_path: Option<PathBuf>,
     drm_device_fd: Option<RawFd>,
@@ -35,6 +37,7 @@ impl Mediator {
     pub fn new() -> Self {
         Mediator {
             sid_to_cid_dictionary: HashMap::new(),
+            transfer_offerer: None,
             screenshoter_cid: None,
             drm_device_fd: None,
             drm_device_path: None,
@@ -55,6 +58,14 @@ impl Mediator {
 
     pub fn remove(&mut self, sid: SurfaceId) {
         self.sid_to_cid_dictionary.remove(&sid);
+    }
+
+    pub fn register_transfer_offerer(&mut self, transfer_offerer: Option<dharma::EventHandlerId>) {
+        self.transfer_offerer = transfer_offerer;
+    }
+
+    pub fn get_transfer_offerer(&self) -> Option<dharma::EventHandlerId> {
+        self.transfer_offerer
     }
 
     pub fn register_screenshoter(&mut self, cid: Option<dharma::EventHandlerId>) {

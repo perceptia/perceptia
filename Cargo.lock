@@ -636,15 +636,6 @@ dependencies = [
 [[package]]
 name = "skylane_protocols"
 version = "0.1.2"
-dependencies = [
- "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane_scanner 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "skylane_protocols"
-version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -673,7 +664,7 @@ dependencies = [
  "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "qualia 0.0.1",
  "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane_protocols 0.1.2",
+ "skylane_protocols 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "timber 0.0.1",
 ]
 

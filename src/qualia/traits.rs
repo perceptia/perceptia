@@ -4,6 +4,8 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
+use std::os::unix::io::RawFd;
+
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
 use memory::{Buffer, MappedMemory};
@@ -11,6 +13,7 @@ use graphics::{EglAttributes, DmabufAttributes, GraphicsManagement};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
+use transfer::Transfer;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -21,6 +24,20 @@ pub trait AppearanceManagement {
 
     /// Sets given surface as background.
     fn set_surface_as_background(&self, sid: SurfaceId);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Offering and requesting data transfers (e.g. copy-paste) between clients.
+pub trait DataTransferring {
+    /// Sets transfer offer.
+    fn set_transfer(&mut self, transfer: Option<Transfer>);
+
+    /// Returns transfer offer.
+    fn get_transfer(&self) -> Option<Transfer>;
+
+    /// Requests start of data transfer to requesting client.
+    fn request_transfer(&mut self, mime_type: String, fd: RawFd);
 }
 
 // -------------------------------------------------------------------------------------------------

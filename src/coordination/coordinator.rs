@@ -7,6 +7,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::os::unix::io::RawFd;
 use std::sync::{Arc, Mutex};
 
 use dharma;
@@ -14,11 +15,12 @@ use dharma;
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{Buffer, MappedMemory, PixelFormat};
 use qualia::{EglAttributes, DmabufAttributes, GraphicsManagement};
-use qualia::{perceptron, Perceptron};
+use qualia::{perceptron, Perceptron, Transfer};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use qualia::{AppearanceManagement, Emiter, MemoryManagement, HwGraphics, Screenshooting};
+use qualia::{AppearanceManagement, DataTransferring, Emiter};
+use qualia::{MemoryManagement, HwGraphics, Screenshooting};
 use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 use qualia::{show_reason, surface_state};
 
@@ -40,6 +42,9 @@ struct InnerCoordinator {
 
     /// Currently pointer-focused surface ID
     pfsid: SurfaceId,
+
+    /// Represents possible data transfer between clients (e.g. copy-paste)
+    transfer: Option<Transfer>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -52,6 +57,7 @@ impl InnerCoordinator {
             screenshot_buffer: None,
             kfsid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
+            transfer: None,
         }
     }
 
@@ -104,6 +110,24 @@ impl InnerCoordinator {
     /// Notifies application about event that requires screen to be refreshed.
     pub fn notify(&mut self) {
         self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+    }
+
+    /// Sets data transfer information.
+    pub fn set_transfer(&mut self, transfer: Option<Transfer>) {
+        // TODO: Only currently focussed client should be able to set transfer.
+        self.transfer = transfer;
+        self.signaler.emit(perceptron::TRANSFER_OFFERED, Perceptron::TransferOffered);
+    }
+
+    /// Returns data transfer information.
+    pub fn get_transfer(&self) -> Option<Transfer> {
+        self.transfer.clone()
+    }
+
+    /// Requests begin of data transfer to requesting client.
+    pub fn request_transfer(&mut self, mime_type: String, fd: RawFd) {
+        self.signaler.emit(perceptron::TRANSFER_REQUESTED,
+                           Perceptron::TransferRequested(mime_type, fd));
     }
 
     /// Makes screenshot request.
@@ -321,6 +345,28 @@ impl AppearanceManagement for Coordinator {
     fn set_surface_as_background(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
         mine.set_surface_as_background(sid);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl DataTransferring for Coordinator {
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn set_transfer(&mut self, transfer: Option<Transfer>) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_transfer(transfer);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn get_transfer(&self) -> Option<Transfer> {
+        let mine = self.inner.lock().unwrap();
+        mine.get_transfer()
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn request_transfer(&mut self, mime_type: String, fd: RawFd) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.request_transfer(mime_type, fd);
     }
 }
 

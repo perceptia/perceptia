@@ -6,10 +6,11 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::path::PathBuf;
+use std::os::unix::io::RawFd;
 
 use skylane::server as wl;
 
-use qualia::{Area, PixelFormat, Size, SurfaceId, Vector, show_reason};
+use qualia::{Area, PixelFormat, Size, SurfaceId, Transfer, Vector, show_reason};
 use qualia::{EglAttributes, DmabufAttributes, MappedMemory};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 
@@ -111,6 +112,12 @@ pub trait Facade {
     /// Removes keyboard OID.
     fn remove_keyboard_oid(&mut self, keyboard_oid: wl::ObjectId);
 
+    /// Add data device OID.
+    fn add_data_device_oid(&mut self, data_device_oid: wl::ObjectId);
+
+    /// Removes data device OID.
+    fn remove_data_device_oid(&mut self, data_device_oid: wl::ObjectId);
+
     /// Sets positioner info.
     fn set_positioner(&mut self, wl::ObjectId, positioner: PositionerInfo);
 
@@ -119,6 +126,21 @@ pub trait Facade {
 
     /// Removes positioner info.
     fn remove_positioner(&mut self, oid: wl::ObjectId);
+
+    /// Sets transfer info.
+    fn set_transfer(&mut self, wl::ObjectId, transfer: Transfer);
+
+    /// Gets transfer info.
+    fn get_transfer(&mut self, oid: wl::ObjectId) -> Option<Transfer>;
+
+    /// Selects given transfer info as the offered one.
+    fn select_transfer(&mut self, oid: wl::ObjectId);
+
+    /// Removes transfer info.
+    fn remove_transfer(&mut self, oid: wl::ObjectId);
+
+    /// Request start of data transfer to requesting client.
+    fn request_transfer(&mut self, mime_type: String, fd: RawFd);
 
     /// Sets given region as input region of surface.
     fn set_input_region(&self, sid: SurfaceId, region_oid: wl::ObjectId);

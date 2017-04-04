@@ -66,10 +66,24 @@ impl Exhibitor {
 
 /// Notification handlers.
 impl Exhibitor {
-    /// Handle notification about needed redraw.
+    /// Handles notification about needed redraw.
     pub fn on_notify(&mut self) {
         for ref mut display in self.displays.values_mut() {
             display.on_notify();
+        }
+    }
+
+    /// Handles notification about deactivation of seat.
+    pub fn on_suspend(&self) {
+        // Nothing to do?...
+    }
+
+    /// Handles notification about activation of seat.
+    ///
+    /// Wakes up each display.
+    pub fn on_wakeup(&mut self) {
+        for ref mut display in self.displays.values_mut() {
+            display.on_wakeup();
         }
     }
 

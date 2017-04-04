@@ -3,9 +3,11 @@
 
 //! This module provides device management functionality for Perceptia.
 
+#[macro_use]
+extern crate nix;
 extern crate libudev;
 extern crate uinput_sys;
-extern crate nix;
+extern crate libc;
 extern crate drm as libdrm;
 
 #[macro_use]
@@ -14,12 +16,14 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 
+mod device_access;
 mod input_gateway;
 mod evdev;
 mod drivers;
 mod pageflip;
 mod output_collector;
 mod device_monitor;
+mod virtual_terminal;
 
 pub mod udev;
 

@@ -130,7 +130,7 @@ impl InnerIpc {
         }
     }
 
-    /// Communicate with `logind` to obtain path to object representing session we are assigned to.
+    /// Communicates with `logind` to obtain path to object representing session we are assigned to.
     fn get_session_by_pid(&mut self) -> Option<Path<'static>> {
         let connection = get_connection_or_return!(self.connection, None);
         let message_name = "GetSessionByPID";
@@ -151,7 +151,7 @@ impl InnerIpc {
         }
     }
 
-    /// Communicate with `logind` to obtain path to object representing session assigned to given
+    /// Communicates with `logind` to obtain path to object representing session assigned to given
     /// seat (e.g. `seat0`).
     fn get_session_by_seat(&mut self, seat: &str) -> Option<Path<'static>> {
         let connection = get_connection_or_return!(self.connection, None);
@@ -247,7 +247,7 @@ impl Ipc {
         mine.take_control()
     }
 
-    /// Communicate to `logind` to take control over given device.
+    /// Communicates to `logind` to take control over given device.
     pub fn take_device(&self, rdev: u64) -> Result<RawFd, Illusion> {
         let mine = self.inner.lock().unwrap();
         let connection = get_connection_or_return!(mine.connection);
@@ -269,6 +269,27 @@ impl Ipc {
             MessageItem::UnixFd(fd) => Ok(fd.into_fd()),
             _ => Err(Illusion::Unknown(format!("Received wrong answer!"))),
         }
+    }
+
+    /// Communicates to `logind` to release control over given device.
+    pub fn release_device(&self, rdev: u64) -> Result<(), Illusion> {
+        let mine = self.inner.lock().unwrap();
+        let connection = get_connection_or_return!(mine.connection);
+        let session_object_path = get_session_or_return!(mine.session_object_path);
+        let message_name = "ReleaseDevice";
+        let member = Member::new(message_name).unwrap();
+
+        // Prepare message
+        let mut message = Message::method_call(&mine.login_destination,
+                                               &session_object_path,
+                                               &mine.session_interface,
+                                               &member);
+        let (major, minor) = major_minor(rdev);
+        message.append_items(&[major.into(), minor.into()]);
+
+        // Send message and get result
+        assert_reply!(connection.send_with_reply_and_block(message, TIMEOUT));
+        Ok(())
     }
 }
 

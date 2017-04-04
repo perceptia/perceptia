@@ -5,28 +5,28 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::path::Path;
-use std::os::unix::io;
-use nix::{self, Errno};
-use nix::fcntl::{open, OFlag};
-use nix::sys::stat::{Mode, stat};
+use std::cell::RefCell;
+use std::rc::Rc;
 
 use dharma;
-use qualia::{Context, Illusion, Ipc};
+use qualia::Context;
 
 use evdev;
 use udev;
+use device_access::RestrictedOpener;
 use output_collector::OutputCollector;
 use input_gateway::InputGateway;
 use drivers::InputDriver;
+use virtual_terminal;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Device Manager manages searching input and output devices and monitoring them.
 pub struct DeviceManager<'a> {
     udev: udev::Udev<'a>,
-    ipc: Ipc,
+    restricted_opener: Rc<RefCell<RestrictedOpener>>,
     output_collector: OutputCollector,
+    context: Context,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -34,15 +34,18 @@ pub struct DeviceManager<'a> {
 impl<'a> DeviceManager<'a> {
     /// `DeviceManager` constructor.
     pub fn new(mut context: Context) -> Self {
+        let restricted_opener = Self::prepare_restricted_opener();
+
         let mut mine = DeviceManager {
             udev: udev::Udev::new(),
-            ipc: Ipc::new(),
+            restricted_opener: restricted_opener,
             output_collector: OutputCollector::new(context.get_dispatcher().clone(),
                                                    context.get_signaler().clone()),
+            context: context.clone(),
         };
 
-        // Initialize IPC
-        mine.initialize_ipc();
+        // Setup virtual terminal
+        mine.setup_virtual_terminal(&mut context);
 
         // Initialize input devices
         mine.initialize_input_devices(&mut context);
@@ -56,39 +59,23 @@ impl<'a> DeviceManager<'a> {
         mine
     }
 
-    /// Try to open device. If we have insufficient permissions ask `logind` to do it for us.
-    fn open_restricted(&self,
-                       path: &Path,
-                       oflag: OFlag,
-                       mode: Mode)
-                       -> Result<io::RawFd, Illusion> {
-        match open(path, oflag, mode) {
-            Ok(fd) => Ok(fd),
-            Err(nix::Error::Sys(errno)) => {
-                if (errno == Errno::EPERM) || (errno == Errno::EACCES) {
-                    match stat(path) {
-                        Ok(st) => self.ipc.take_device(st.st_rdev as u64),
-                        _ => Err(Illusion::General(format!("Could not stat file '{:?}'", path))),
-                    }
-                } else {
-                    Err(Illusion::InvalidArgument(errno.desc().to_owned()))
-                }
-            }
-            Err(nix::Error::InvalidPath) => {
-                Err(Illusion::InvalidArgument(format!("Path '{:?}' does not exist!", path)))
-            }
+    /// Prepares device opener.
+    fn prepare_restricted_opener() -> Rc<RefCell<RestrictedOpener>> {
+        let mut restricted_opener = RestrictedOpener::new();
+        if let Err(err) = restricted_opener.initialize_ipc() {
+            log_warn1!("Failed to initialize IPC ({:?}). \
+                        This may cause problems with access to devices.",
+                        err);
         }
+        Rc::new(RefCell::new(restricted_opener))
     }
 
-    /// Initialize connection to `logind`.
-    fn initialize_ipc(&mut self) {
-        match self.ipc.initialize() {
-            Ok(_) => (),
-            Err(err) => {
-                log_warn1!("Failed to initialize IPC ({:?}). \
-                           This may cause problems with access to devices.",
-                           err);
-            }
+    /// Sets up virtual terminal.
+    fn setup_virtual_terminal(&self, context: &mut Context) {
+        if let Err(err) = virtual_terminal::setup(context.get_dispatcher().clone(),
+                                                  context.get_signaler().clone(),
+                                                  &self.restricted_opener.borrow()) {
+            log_error!("Device Manager: {:?}", err);
         }
     }
 
@@ -103,9 +90,7 @@ impl<'a> DeviceManager<'a> {
                                                     devkind,
                                                     config,
                                                     gateway,
-                                                    |path, oflag, mode| {
-                                                        self.open_restricted(path, oflag, mode)
-                                                    });
+                                                    &self.restricted_opener.borrow());
             match r {
                 Ok(driver) => {
                     context.add_event_handler(driver, dharma::event_kind::READ);
@@ -140,6 +125,21 @@ impl<'a> DeviceManager<'a> {
                 log_warn1!("Device Manager: {}", err);
             }
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Event handlers
+impl<'a> DeviceManager<'a> {
+    pub fn on_suspend(&mut self) {
+        // Nothing to do as for now...
+    }
+
+    pub fn on_wakeup(&mut self) {
+        // Old event devices hung-up so devices must be reinitialized.
+        let mut context = self.context.clone();
+        self.initialize_input_devices(&mut context);
     }
 }
 

@@ -16,11 +16,13 @@ use defs::{Axis, Position, OptionalPosition, Vector, Button, Key};
 // -------------------------------------------------------------------------------------------------
 
 pub const NOTIFY: SignalId = 0;
-pub const VERTICAL_BLANK: SignalId = 1;
-pub const PAGE_FLIP: SignalId = 2;
-pub const OUTPUT_FOUND: SignalId = 3;
-pub const COMMAND: SignalId = 5;
-pub const DISPLAY_CREATED: SignalId = 6;
+pub const SUSPEND: SignalId = 1;
+pub const WAKEUP: SignalId = 2;
+pub const VERTICAL_BLANK: SignalId = 3;
+pub const PAGE_FLIP: SignalId = 4;
+pub const OUTPUT_FOUND: SignalId = 5;
+pub const COMMAND: SignalId = 7;
+pub const DISPLAY_CREATED: SignalId = 8;
 pub const INPUT_POINTER_MOTION: SignalId = 10;
 pub const INPUT_POINTER_POSITION: SignalId = 11;
 pub const INPUT_POINTER_BUTTON: SignalId = 12;
@@ -44,6 +46,8 @@ pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
 #[derive(Clone)]
 pub enum Perceptron {
     Notify,
+    Suspend,
+    WakeUp,
     CustomEmpty,
     CustomId(u64),
     VerticalBlank(i32),
@@ -73,6 +77,8 @@ impl std::fmt::Display for Perceptron {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             Perceptron::Notify => write!(f, "Notify"),
+            Perceptron::Suspend => write!(f, "Suspend"),
+            Perceptron::WakeUp => write!(f, "WakeUp"),
             Perceptron::CustomEmpty => write!(f, "CustomEmpty"),
             Perceptron::CustomId(ref id) => write!(f, "CustomId({:?})", id),
             Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),

@@ -112,6 +112,11 @@ impl Output {
 
         Ok(mine)
     }
+
+    /// Reinitializes the output.
+    pub fn recreate(&self) -> Result<Self, Illusion> {
+        Output::new(self.drm, self.id)
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -218,10 +223,11 @@ impl Output {
                                   drm_mode::PAGE_FLIP_EVENT,
                                   self.id) {
             Ok(_) => Ok(()),
-            Err(_) => {
-                let text = format!("Failed to page flip (crtc_id: {}, connector_id: {})",
+            Err(err) => {
+                let text = format!("Failed to page flip (crtc_id: {}, connector_id: {}, error: {})",
                                    self.drm.crtc_id,
-                                   self.drm.connector_id);
+                                   self.drm.connector_id,
+                                   err);
                 Err(Illusion::General(text))
             }
         }

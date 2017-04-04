@@ -128,6 +128,37 @@ impl LocalDispatcher {
             handlers: HashMap::new(),
         }
     }
+
+    /// Adds `EventHandler`.
+    ///
+    /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
+    pub fn add_source(&mut self,
+                      mut source: Box<EventHandler>,
+                      event_kind: EventKind)
+                      -> EventHandlerId {
+        self.last_id += 1;
+        let id = self.last_id;
+        source.set_id(id);
+        let fd = source.get_fd();
+        self.handlers.insert(id, source);
+
+        let mut event = epoll::EpollEvent::new(event_kind.into(), id);
+        epoll::epoll_ctl(self.epfd, epoll::EpollOp::EpollCtlAdd, fd, &mut event)
+            .expect("Failed to perform `epoll_ctl`");
+
+        id
+    }
+
+    /// Deletes `EventHandler`.
+    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler>> {
+        let result = self.handlers.remove(&id);
+        if let Some(ref handler) = result {
+            let mut event = epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0);
+            epoll::epoll_ctl(self.epfd, epoll::EpollOp::EpollCtlDel, handler.get_fd(), &mut event)
+                .expect("Failed to delete epoll source");
+        }
+        result
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -160,41 +191,24 @@ impl Dispatcher {
     }
 
     /// Adds `EventHandler`.
-    /// Return ID assigned to the added `EventHandler` which can be used to later delete it.
+    ///
+    /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
     pub fn add_source(&mut self,
-                      mut source: Box<EventHandler>,
+                      source: Box<EventHandler>,
                       event_kind: EventKind)
                       -> EventHandlerId {
         let mut mine = self.state.inner.lock().expect("Locking Dispatcher inner state");
-
-        mine.last_id += 1;
-        let last_id = mine.last_id;
-        source.set_id(last_id);
-        let fd = source.get_fd();
-        mine.handlers.insert(last_id, source);
-
-        let mut event = epoll::EpollEvent::new(event_kind.into(), last_id);
-        epoll::epoll_ctl(mine.epfd, epoll::EpollOp::EpollCtlAdd, fd, &mut event)
-            .expect("Failed to perform `epoll_ctl`");
-
-        last_id
+        mine.add_source(source, event_kind)
     }
 
-    /// Deleted `EventHandler`.
+    /// Deletes `EventHandler`.
     pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler>> {
         let mut mine = self.state.inner.lock().expect("Locking Dispatcher inner state");
-
-        let result = mine.handlers.remove(&id);
-        if let Some(ref handler) = result {
-            let mut event = epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0);
-            epoll::epoll_ctl(mine.epfd, epoll::EpollOp::EpollCtlDel, handler.get_fd(), &mut event)
-                .expect("Failed to delete epoll source");
-        }
-        result
+        mine.delete_source(id)
     }
 
     /// Starts processing events in current thread.
-    pub fn start(&self) {
+    pub fn start(&mut self) {
         // Initial setup
         system::block_signals();
         let epfd = self.get_epfd();
@@ -210,7 +224,7 @@ impl Dispatcher {
     }
 
     /// Waits for events and processes first one.
-    pub fn wait_and_process(&self, timeout: Option<usize>) {
+    pub fn wait_and_process(&mut self, timeout: Option<usize>) {
         let timeout = if let Some(t) = timeout {
             t as isize
         } else {
@@ -231,7 +245,7 @@ impl Dispatcher {
 /// Private methods.
 impl Dispatcher {
     /// Helper method for waiting for events and then processing them.
-    fn do_wait_and_process(&self, epfd: RawFd, timeout: isize) {
+    fn do_wait_and_process(&mut self, epfd: RawFd, timeout: isize) {
         // We will process epoll events one by one.
         let mut events: [epoll::EpollEvent; 1] =
             [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
@@ -242,8 +256,13 @@ impl Dispatcher {
             Ok(ready) => {
                 if ready > 0 {
                     let mut mine = self.state.inner.lock().unwrap();
+                    let id = &events[0].data();
+                    let event_kind = EventKind::from(events[0].events());
                     if let Some(handler) = mine.handlers.get_mut(&events[0].data()) {
-                        handler.process_event(EventKind::from(events[0].events()));
+                        handler.process_event(event_kind);
+                    }
+                    if event_kind == event_kind::HANGUP {
+                        mine.delete_source(*id);
                     }
                 }
             }

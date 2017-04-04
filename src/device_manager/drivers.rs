@@ -6,26 +6,23 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::path::Path;
-use std::os::unix::io;
-use nix::fcntl::OFlag;
-use nix::sys::stat::Mode;
 
 use qualia::{DeviceKind, Illusion, InputConfig};
 
 use input_gateway::InputGateway;
+use device_access::RestrictedOpener;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Trait for input event devices like keyboard, mouse or touchpad.
 pub trait InputDriver {
     /// Initialize drive. Return driver instance on success or error otherwise.
-    fn initialize_device<F>(devnode: &Path,
-                            device_kind: DeviceKind,
-                            config: InputConfig,
-                            gateway: InputGateway,
-                            open_restricted: F)
-                            -> Result<Box<Self>, Illusion>
-        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Illusion>;
+    fn initialize_device(devnode: &Path,
+                         device_kind: DeviceKind,
+                         config: InputConfig,
+                         gateway: InputGateway,
+                         ro: &RestrictedOpener)
+                         -> Result<Box<Self>, Illusion>;
 }
 
 // -------------------------------------------------------------------------------------------------

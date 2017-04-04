@@ -46,6 +46,7 @@ fn main() {
                                coordinator.clone(),
                                input_manager.clone());
 
+    // Set up signal handler
     let signal_source = Box::new(SignalEventHandler::new(dispatcher.clone(), signaler.clone()));
     dispatcher.add_source(signal_source, dharma::event_kind::READ);
 

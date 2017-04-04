@@ -13,21 +13,25 @@ use signaler::Signaler;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Block signals `SIGINT` and `SIGTERM` for current thread.
+/// Blocks signals `SIGINT`, `SIGTERM`, `SIGUSR1` and `SIGUSR2` for current thread.
 pub fn block_signals() {
     let mut mask = signal::SigSet::empty();
     mask.add(signal::SIGINT);
     mask.add(signal::SIGTERM);
+    mask.add(signal::SIGUSR1);
+    mask.add(signal::SIGUSR2);
     mask.thread_block().unwrap();
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Unblock signals `SIGINT` and `SIGTERM` for current thread.
+/// Unblocks signals `SIGINT`, `SIGTERM`, `SIGUSR1` and `SIGUSR2` for current thread.
 pub fn unblock_signals() {
     let mut mask = signal::SigSet::empty();
     mask.add(signal::SIGINT);
     mask.add(signal::SIGTERM);
+    mask.add(signal::SIGUSR1);
+    mask.add(signal::SIGUSR2);
     mask.thread_unblock().unwrap();
 }
 

@@ -36,6 +36,8 @@ impl Module for ExhibitorModule {
         self.exhibitor = Some(Exhibitor::new(context.get_signaler().clone(),
                                              context.get_coordinator().clone()));
         vec![perceptron::NOTIFY,
+             perceptron::SUSPEND,
+             perceptron::WAKEUP,
              perceptron::PAGE_FLIP,
              perceptron::OUTPUT_FOUND,
              perceptron::COMMAND,
@@ -70,6 +72,8 @@ impl Module for ExhibitorModule {
                 Perceptron::KeyboardFocusChanged(_, sid) => {
                     exhibitor.on_keyboard_focus_changed(sid)
                 }
+                Perceptron::Suspend => exhibitor.on_suspend(),
+                Perceptron::WakeUp => exhibitor.on_wakeup(),
                 _ => {}
             }
         }

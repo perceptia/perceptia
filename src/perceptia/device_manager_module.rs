@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module, ModuleConstructor};
-use qualia::{Context, Perceptron};
+use qualia::{Context, Perceptron, perceptron};
 use device_manager::DeviceManager;
 
 // -------------------------------------------------------------------------------------------------
@@ -32,11 +32,19 @@ impl<'a> Module for DeviceManagerModule<'a> {
 
     fn initialize(&mut self, context: &mut Self::C) -> InitResult {
         self.manager = Some(DeviceManager::new(context.clone()));
-        Vec::new()
+        vec![perceptron::SUSPEND, perceptron::WAKEUP]
     }
 
     // FIXME: Finnish handling signals in `DeviceManagerModule`.
-    fn execute(&mut self, package: &Self::T) {}
+    fn execute(&mut self, package: &Self::T) {
+        if let Some(ref mut manager) = self.manager {
+            match *package {
+                Perceptron::Suspend => manager.on_suspend(),
+                Perceptron::WakeUp => manager.on_wakeup(),
+                _ => {}
+            }
+        }
+    }
 
     fn finalize(&mut self) {
         log_info1!("Finalized Device Manager module");

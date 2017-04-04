@@ -70,11 +70,12 @@ impl EventHandler for PageFlipEventHandler {
     }
 
     fn process_event(&mut self, event_kind: EventKind) {
-        if event_kind.intersects(event_kind::HANGUP) {
-            // FIXME: Implement handup from DRM device if needed.
-        } else if event_kind.intersects(event_kind::READ) {
+        if event_kind.intersects(event_kind::READ) {
             let ctx = Box::new(PageFlipContext::new(self.signaler.clone()));
             drm::handle_event(self.drm_fd, ctx);
+        } else if event_kind.intersects(event_kind::HANGUP) {
+            // It seems that DRM devices do not hang-up during virtual terminal switch and after
+            // application regains access they are ready to use.
         }
     }
 }

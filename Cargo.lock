@@ -112,6 +112,7 @@ version = "0.0.1"
 dependencies = [
  "dharma 0.0.1",
  "drm-rs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "libudev 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "nix 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "qualia 0.0.1",

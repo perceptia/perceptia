@@ -54,13 +54,12 @@ impl Display {
     }
 
     /// Schedule page flip on assigned output.
-    fn schedule_pageflip(&mut self) -> Result<(), Illusion> {
+    pub fn schedule_pageflip(&mut self) -> Result<(), Illusion> {
         if !self.page_flip_scheduled {
+            self.output.schedule_pageflip()?;
             self.page_flip_scheduled = true;
-            self.output.schedule_pageflip()
-        } else {
-            Ok(())
         }
+        Ok(())
     }
 
     /// Handle page flip: redraw everything.
@@ -85,6 +84,20 @@ impl Display {
         }
     }
 
+    /// Handle notification about wakeup.
+    pub fn on_wakeup(&mut self) {
+        let output = self.output.recreate();
+        match output {
+            Ok(output) => {
+                self.output = output;
+                self.redraw_all();
+            }
+            Err(err) => {
+                log_error!("Failed to reset output after wakeup: {:?}", err);
+            }
+        }
+    }
+
     /// Prepare rendering context for layover.
     pub fn prepare_layover_context(&self) -> SurfaceContext {
         SurfaceContext::new(self.pointer.borrow().get_cursor_sid(),
@@ -92,7 +105,7 @@ impl Display {
     }
 
     /// Draw the scene and then schedule page flip.
-    pub fn redraw_all(&mut self) {
+    fn redraw_all(&mut self) {
         let surfaces = self.frame
             .get_first_time()
             .expect("display must have at least one workspace")

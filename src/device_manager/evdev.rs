@@ -10,14 +10,15 @@ use std::os::unix::io;
 use std::path::Path;
 use uinput_sys::{self, input_event};
 
-use nix::fcntl::{self, OFlag};
-use nix::sys::stat::Mode;
+use nix::fcntl;
+use nix::sys::stat;
 use nix::unistd::read;
 
 use qualia::{DeviceKind, Illusion, InputConfig};
 use dharma::{EventHandler, EventKind, event_kind};
 
 use drivers;
+use device_access::RestrictedOpener;
 use input_gateway::InputGateway;
 
 // -------------------------------------------------------------------------------------------------
@@ -34,15 +35,13 @@ pub struct Evdev {
 // -------------------------------------------------------------------------------------------------
 
 impl drivers::InputDriver for Evdev {
-    fn initialize_device<F>(devnode: &Path,
-                            device_kind: DeviceKind,
-                            config: InputConfig,
-                            gateway: InputGateway,
-                            open_restricted: F)
-                            -> Result<Box<Self>, Illusion>
-        where F: Fn(&Path, OFlag, Mode) -> Result<io::RawFd, Illusion>
-    {
-        let r = open_restricted(devnode, fcntl::O_RDONLY, Mode::empty());
+    fn initialize_device(devnode: &Path,
+                         device_kind: DeviceKind,
+                         config: InputConfig,
+                         gateway: InputGateway,
+                         ro: &RestrictedOpener)
+                         -> Result<Box<Self>, Illusion> {
+        let r = ro.open(devnode, fcntl::O_RDONLY, stat::Mode::empty());
         match r {
             Ok(fd) => Ok(Box::new(Evdev::new(fd, device_kind, config, gateway))),
             Err(err) => Err(err),
@@ -58,10 +57,10 @@ impl EventHandler for Evdev {
     }
 
     fn process_event(&mut self, event_kind: EventKind) {
-        if event_kind.intersects(event_kind::HANGUP) {
-            // TODO: Implement handling hangup of event device.
-        } else if event_kind.intersects(event_kind::READ) {
+        if event_kind.intersects(event_kind::READ) {
             self.read_events();
+        } else if event_kind.intersects(event_kind::HANGUP) {
+            self.gateway.emit_system_activity_event();
         }
     }
 }

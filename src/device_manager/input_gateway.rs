@@ -50,7 +50,7 @@ impl InputGateway {
 // -------------------------------------------------------------------------------------------------
 
 impl InputGateway {
-    /// Emit keyboards event.
+    /// Emits keyboards event.
     pub fn emit_key(&mut self, code: u16, value: i32) {
         // Ignore repeats
         if (value != KeyState::Pressed as KeyValue) && (value != KeyState::Released as KeyValue) {
@@ -70,47 +70,53 @@ impl InputGateway {
         }
     }
 
-    /// Scale displacements and emit pointer motion event.
+    /// Scales displacements and emits pointer motion event.
     pub fn emit_motion(&mut self, x: isize, y: isize) {
         // Scale event values
         let vector = Vector::new(x, y).scaled(self.config.mouse_scale);
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_MOTION, Perceptron::InputPointerMotion(vector))
+        self.signaler.emit(perceptron::INPUT_POINTER_MOTION,
+                           Perceptron::InputPointerMotion(vector));
     }
 
-    /// Scale position and emit pointer position event.
+    /// Scales position and emits pointer position event.
     pub fn emit_position(&mut self, x: Option<isize>, y: Option<isize>) {
         // Scale event values. Skip scaling invalid values
         let pos = OptionalPosition::new(x, y).scaled(self.config.touchpad_scale);
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_POSITION,
-                           Perceptron::InputPointerPosition(pos))
+                           Perceptron::InputPointerPosition(pos));
     }
 
-    /// Emit button event.
+    /// Emits button event.
     pub fn emit_button(&mut self, code: u16, value: i32) {
         let btn = Button::new_now(code, value);
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_BUTTON, Perceptron::InputPointerButton(btn))
+        self.signaler.emit(perceptron::INPUT_POINTER_BUTTON, Perceptron::InputPointerButton(btn));
     }
 
-    /// Emit exist event.
+    /// Emits exist event.
     pub fn emit_axis(&mut self, horizontal: isize, vertical: isize) {
         let axis = Axis::new_now(Vector::new(horizontal, vertical),
                                  Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32));
 
         // Signal event
-        self.signaler.emit(perceptron::INPUT_POINTER_AXIS, Perceptron::InputPointerAxis(axis))
+        self.signaler.emit(perceptron::INPUT_POINTER_AXIS, Perceptron::InputPointerAxis(axis));
     }
 
-    /// Emit position reset event.
+    /// Emits position reset event.
     pub fn emit_position_reset(&mut self) {
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_POSITION_RESET,
-                           Perceptron::InputPointerPositionReset)
+                           Perceptron::InputPointerPositionReset);
+    }
+
+    /// Emits system activity event.
+    pub fn emit_system_activity_event(&mut self) {
+        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
     }
 }
 

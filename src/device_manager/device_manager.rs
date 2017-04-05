@@ -25,6 +25,7 @@ use virtual_terminal;
 pub struct DeviceManager<'a> {
     udev: udev::Udev<'a>,
     restricted_opener: Rc<RefCell<RestrictedOpener>>,
+    vt: Option<virtual_terminal::VirtualTerminal>,
     output_collector: OutputCollector,
     context: Context,
 }
@@ -39,6 +40,7 @@ impl<'a> DeviceManager<'a> {
         let mut mine = DeviceManager {
             udev: udev::Udev::new(),
             restricted_opener: restricted_opener,
+            vt: None,
             output_collector: OutputCollector::new(context.get_dispatcher().clone(),
                                                    context.get_signaler().clone()),
             context: context.clone(),
@@ -71,11 +73,28 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Sets up virtual terminal.
-    fn setup_virtual_terminal(&self, context: &mut Context) {
-        if let Err(err) = virtual_terminal::setup(context.get_dispatcher().clone(),
-                                                  context.get_signaler().clone(),
-                                                  &self.restricted_opener.borrow()) {
-            log_error!("Device Manager: {:?}", err);
+    fn setup_virtual_terminal(&mut self, context: &mut Context) {
+        match virtual_terminal::VirtualTerminal::new(&self.restricted_opener.borrow()) {
+            Ok(vt) => {
+                self.vt = Some(vt);
+                match vt.get_current() {
+                    Ok(tty_num) => {
+                        match virtual_terminal::setup(tty_num,
+                                                      context.get_dispatcher().clone(),
+                                                      context.get_signaler().clone(),
+                                                      &self.restricted_opener.borrow()) {
+                            Ok(_) => {}
+                            Err(err) => log_error!("Device Manager: {:?}", err),
+                        }
+                    }
+                    Err(err) => {
+                        log_error!("Device Manager: {:?}", err);
+                    }
+                }
+            }
+            Err(err) => {
+                log_error!("Failed to open virtual terminal: {:?}", err);
+            }
         }
     }
 
@@ -85,7 +104,8 @@ impl<'a> DeviceManager<'a> {
             let config = context.get_config().get_input_config();
             let gateway = InputGateway::new(config,
                                             context.get_input_manager().clone(),
-                                            context.get_signaler().clone());
+                                            context.get_signaler().clone(),
+                                            self.vt);
             let r = evdev::Evdev::initialize_device(devnode,
                                                     devkind,
                                                     config,

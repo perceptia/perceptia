@@ -12,6 +12,9 @@ use qualia::{Axis, Button, Key, OptionalPosition, Slide, Vector};
 use qualia::{modifier, InputManager, KeyCatchResult, KeyCode, KeyValue, KeyState};
 use dharma::Signaler;
 
+// For built-in VT swithing
+use virtual_terminal::VirtualTerminal;
+
 // -------------------------------------------------------------------------------------------------
 
 pub struct InputGateway {
@@ -19,6 +22,7 @@ pub struct InputGateway {
     config: InputConfig,
     input_manager: InputManager,
     signaler: Signaler<Perceptron>,
+    vt: Option<VirtualTerminal>,
     modifier_keys: Vec<(KeyCode, modifier::ModifierType)>,
 }
 
@@ -28,13 +32,15 @@ impl InputGateway {
     /// `InputGateway` constructor.
     pub fn new(config: InputConfig,
                input_manager: InputManager,
-               signaler: Signaler<Perceptron>)
+               signaler: Signaler<Perceptron>,
+               vt: Option<VirtualTerminal>)
                -> Self {
         InputGateway {
             modifiers: modifier::NONE,
             config: config,
             input_manager: input_manager,
             signaler: signaler,
+            vt: vt,
             modifier_keys: vec![(uinput_sys::KEY_LEFTCTRL as KeyCode, modifier::LCTL),
                                 (uinput_sys::KEY_RIGHTCTRL as KeyCode, modifier::RCTL),
                                 (uinput_sys::KEY_LEFTSHIFT as KeyCode, modifier::LSHF),
@@ -59,6 +65,11 @@ impl InputGateway {
 
         // Update modifiers
         if self.update_modifiers(code, value) != KeyCatchResult::Passed {
+            return;
+        }
+
+        // Catch built-in key bindings
+        if self.catch_key(code, value) != KeyCatchResult::Passed {
             return;
         }
 
@@ -141,6 +152,36 @@ impl InputGateway {
             }
         }
         result
+    }
+
+    /// Helper method for executing built-in key bindings.
+    fn catch_key(&self, code: KeyCode, value: KeyValue) -> KeyCatchResult {
+        let code = code as i32;
+        if (uinput_sys::KEY_F1 <= code) && (code <= uinput_sys::KEY_F12) {
+            if (self.modifiers == (modifier::LALT | modifier::LCTL)) ||
+               (self.modifiers == (modifier::LALT | modifier::RCTL)) ||
+               (self.modifiers == (modifier::RALT | modifier::LCTL)) ||
+               (self.modifiers == (modifier::RALT | modifier::RCTL)) {
+                if value == KeyState::Pressed as KeyValue {
+                    self.switch_vt(code + 1 - uinput_sys::KEY_F1);
+                }
+                return KeyCatchResult::Caught;
+            }
+        }
+
+        KeyCatchResult::Passed
+    }
+
+    /// Helper method for switching virtual terminals.
+    fn switch_vt(&self, num: i32) {
+        log_info1!("Switching to virtual terminal {}", num);
+        if let Some(vt) = self.vt {
+            if let Err(err) = vt.switch_to(num as u8) {
+                log_warn1!("Failed to swith terminals: {:?}", err);
+            }
+        } else {
+            log_warn1!("Viertual terminals were not set up properly");
+        }
     }
 }
 

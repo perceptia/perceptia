@@ -32,6 +32,7 @@ mod ioctl {
     const VT_SETMODE: u32 = 0x5602;
     const VT_GETSTATE: u32 = 0x5603;
     const VT_RELDISP: u32 = 0x5605;
+    const VT_ACTIVATE: u32 = 0x5606;
 
     pub const PROCESS: u32 = 0x1;
     pub const ACK_ACQ: u32 = 0x2;
@@ -39,6 +40,7 @@ mod ioctl {
     ioctl!(set_vt_mode with VT_SETMODE);
     ioctl!(get_vt_state with VT_GETSTATE);
     ioctl!(release_vt with VT_RELDISP);
+    ioctl!(activate_vt with VT_ACTIVATE);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -176,23 +178,47 @@ impl VtState {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Gets name of current virtual terminal.
-pub fn get_current(ro: &RestrictedOpener) -> Result<u32, Illusion> {
-    match ro.open(&Path::new(DEFAULT_TTY_PATH), fcntl::O_WRONLY, stat::Mode::empty()) {
-        Ok(tty_fd) => {
-            let mut state = VtState::new();
-            let data = unsafe { mem::transmute::<&mut VtState, &mut u8>(&mut state) as *mut u8 };
-            match unsafe { ioctl::get_vt_state(tty_fd, data) } {
-                Ok(_) => Ok(state.active as u32),
-                Err(err) => {
-                    let text = format!("Failed to get state of terminal: {:?}", err);
-                    Err(Illusion::General(text))
-                }
+/// Represents a virtual terminal.
+#[derive(Clone, Copy)]
+pub struct VirtualTerminal {
+    fd: RawFd,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl VirtualTerminal {
+    /// Constructs new `VirtualTerminal`.
+    pub fn new(ro: &RestrictedOpener) -> Result<Self, Illusion> {
+        match ro.open(&Path::new(DEFAULT_TTY_PATH), fcntl::O_WRONLY, stat::Mode::empty()) {
+            Ok(tty_fd) => Ok(VirtualTerminal { fd: tty_fd }),
+            Err(err) => {
+                let text = format!("Failed to open VT device {:?}: {:?}", DEFAULT_TTY_PATH, err);
+                Err(Illusion::General(text))
             }
         }
-        Err(err) => {
-            let text = format!("Failed to open terminal device {:?}: {:?}", DEFAULT_TTY_PATH, err);
-            Err(Illusion::General(text))
+    }
+
+    /// Returns number of current virtual terminal.
+    pub fn get_current(&self) -> Result<u32, Illusion> {
+        let mut state = VtState::new();
+        let data = unsafe { mem::transmute::<&mut VtState, &mut u8>(&mut state) as *mut u8 };
+        match unsafe { ioctl::get_vt_state(self.fd, data) } {
+            Ok(_) => Ok(state.active as u32),
+            Err(err) => {
+                let text = format!("Failed to get state of terminal: {:?}", err);
+                Err(Illusion::General(text))
+            }
+        }
+    }
+
+    /// Switches to given virtual terminal.
+    pub fn switch_to(&self, num: u8) -> Result<(), Illusion> {
+        match unsafe { ioctl::activate_vt(self.fd, num as *mut u8) } {
+            Ok(_) => Ok(()),
+            Err(err) => {
+                let text = format!("Failed to activate virtual terminal {}: {:?}", num, err);
+                Err(Illusion::General(text))
+            }
         }
     }
 }
@@ -232,11 +258,11 @@ fn subscribe(path: &Path,
 // -------------------------------------------------------------------------------------------------
 
 /// Sets up virtual terminal by subscribing messages about its activation and deactivation.
-pub fn setup(dispatcher: Dispatcher,
+pub fn setup(tty_num: u32,
+             dispatcher: Dispatcher,
              signaler: Signaler<Perceptron>,
              ro: &RestrictedOpener)
              -> Result<(), Illusion> {
-    let tty_num = get_current(ro)?;
     let path_str = format!("{}{}", BASE_TTY_PATH, tty_num);
     let path = Path::new(&path_str);
 

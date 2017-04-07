@@ -37,6 +37,8 @@ pub const SURFACE_FRAME: SignalId = 30;
 pub const POINTER_FOCUS_CHANGED: SignalId = 31;
 pub const POINTER_RELATIVE_MOTION: SignalId = 32;
 pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
+pub const TAKE_SCREENSHOT: SignalId = 101;
+pub const SCREENSHOT_DONE: SignalId = 102;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -69,6 +71,8 @@ pub enum Perceptron {
     PointerFocusChanged(SurfaceId, SurfaceId, Position),
     PointerRelativeMotion(SurfaceId, Position, Milliseconds),
     KeyboardFocusChanged(SurfaceId, SurfaceId),
+    TakeScreenshot(i32),
+    ScreenshotDone,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -114,6 +118,8 @@ impl std::fmt::Display for Perceptron {
             Perceptron::KeyboardFocusChanged(ref old_sid, ref new_sid) => {
                 write!(f, "KeyboardFocusChanged({:?}, {:?})", old_sid, new_sid)
             }
+            Perceptron::TakeScreenshot(ref id) => write!(f, "TakeScreenshot({:?})", id),
+            Perceptron::ScreenshotDone => write!(f, "ScreenshotDone"),
         }
     }
 }

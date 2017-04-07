@@ -15,3 +15,5 @@ pub mod data_device_manager;
 pub mod seat;
 pub mod subcompositor;
 pub mod output;
+
+pub mod weston_screenshooter;

@@ -9,11 +9,12 @@ use std;
 use std::collections::{BTreeMap, HashMap, HashSet};
 
 use dharma;
-use skylane as wl;
+use skylane::server as wl;
 use skylane_protocols::server::wayland::{wl_display, wl_callback, wl_buffer};
 use skylane_protocols::server::wayland::{wl_keyboard, wl_pointer};
 use skylane_protocols::server::wayland::wl_shell_surface;
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
+use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
 use qualia::{Coordinator, Settings};
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, Vector};
@@ -65,13 +66,13 @@ macro_rules! unrelate_sid_with {
 /// Helper structure for aggregating information about surface.
 struct SurfaceInfo {
     // For sending keyboard `enter` and `leave`.
-    surface_oid: Option<wl::common::ObjectId>,
+    surface_oid: Option<wl::ObjectId>,
 
     // For releasing buffer in `on_surface_frame`
-    buffer_oid: Option<wl::common::ObjectId>,
+    buffer_oid: Option<wl::ObjectId>,
 
     // For sending frame callback in `on_surface_frame`
-    frame_oid: Option<wl::common::ObjectId>,
+    frame_oid: Option<wl::ObjectId>,
 
     // For send reconfiguration events in `on_surface_reconfigured`
     shell_surface_oid: Option<ShellSurfaceOid>,
@@ -95,14 +96,18 @@ impl SurfaceInfo {
 /// Helper structure for aggregating information about buffers.
 #[derive(Clone, Copy)]
 struct BufferInfo {
+    mpid: MemoryPoolId,
     mvid: MemoryViewId,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl BufferInfo {
-    pub fn new(mvid: MemoryViewId) -> Self {
-        BufferInfo { mvid: mvid }
+    pub fn new(mpid: MemoryPoolId, mvid: MemoryViewId) -> Self {
+        BufferInfo {
+            mpid: mpid,
+            mvid: mvid,
+        }
     }
 }
 
@@ -118,7 +123,7 @@ pub struct Proxy {
     settings: Settings,
 
     mediator: MediatorRef,
-    socket: wl::server::ClientSocket,
+    socket: wl::Socket,
 
     /// Map from global name to global info structure.
     ///
@@ -126,18 +131,21 @@ pub struct Proxy {
     /// globals in wrong order may crash clients
     globals: BTreeMap<u32, Global>,
 
-    regions: HashMap<wl::common::ObjectId, Area>,
-    positioners: HashMap<wl::common::ObjectId, PositionerInfo>,
-    pointer_oids: HashSet<wl::common::ObjectId>,
-    keyboard_oids: HashSet<wl::common::ObjectId>,
+    regions: HashMap<wl::ObjectId, Area>,
+    positioners: HashMap<wl::ObjectId, PositionerInfo>,
+    pointer_oids: HashSet<wl::ObjectId>,
+    keyboard_oids: HashSet<wl::ObjectId>,
     memory_pools: HashSet<MemoryPoolId>,
-    surface_oid_to_sid_dictionary: HashMap<wl::common::ObjectId, SurfaceId>,
+    surface_oid_to_sid_dictionary: HashMap<wl::ObjectId, SurfaceId>,
     sid_to_surface_info_dictionary: HashMap<SurfaceId, SurfaceInfo>,
-    buffer_oid_to_buffer_info_dictionary: HashMap<wl::common::ObjectId, BufferInfo>,
+    buffer_oid_to_buffer_info_dictionary: HashMap<wl::ObjectId, BufferInfo>,
+    output_oid_to_id: HashMap<wl::ObjectId, i32>,
+    screenshooter_oid: Option<wl::ObjectId>,
+    screenshot_memory: Option<MappedMemory>,
     last_global_id: u32,
 }
 
-define_ref!(Proxy, ProxyRef);
+define_ref!(struct Proxy as ProxyRef);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -147,7 +155,7 @@ impl Proxy {
                coordinator: Coordinator,
                settings: Settings,
                mediator: MediatorRef,
-               socket: wl::server::ClientSocket)
+               socket: wl::Socket)
                -> Self {
         Proxy {
             id: id,
@@ -164,6 +172,9 @@ impl Proxy {
             surface_oid_to_sid_dictionary: HashMap::new(),
             sid_to_surface_info_dictionary: HashMap::new(),
             buffer_oid_to_buffer_info_dictionary: HashMap::new(),
+            output_oid_to_id: HashMap::new(),
+            screenshooter_oid: None,
+            screenshot_memory: None,
             last_global_id: 0,
         }
     }
@@ -174,7 +185,7 @@ impl Proxy {
     }
 
     /// Returns client connection socket.
-    pub fn get_socket(&self) -> wl::server::ClientSocket {
+    pub fn get_socket(&self) -> wl::Socket {
         self.socket.clone()
     }
 
@@ -207,7 +218,7 @@ impl Proxy {
 
 impl Proxy {
     /// Helper method for setting surface information for surface.
-    fn relate_sid_with_surface(&mut self, sid: SurfaceId, oid: wl::common::ObjectId) {
+    fn relate_sid_with_surface(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
         self.surface_oid_to_sid_dictionary.insert(oid, sid);
         relate_sid_with!(surface_oid, self.sid_to_surface_info_dictionary, sid, oid);
     }
@@ -218,12 +229,12 @@ impl Proxy {
     }
 
     /// Helper method for setting buffer information for surface.
-    fn relate_sid_with_buffer(&mut self, sid: SurfaceId, oid: wl::common::ObjectId) {
+    fn relate_sid_with_buffer(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
         relate_sid_with!(buffer_oid, self.sid_to_surface_info_dictionary, sid, oid);
     }
 
     /// Helper method for setting frame callback ID information for surface.
-    fn relate_sid_with_frame(&mut self, sid: SurfaceId, oid: wl::common::ObjectId) {
+    fn relate_sid_with_frame(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
         relate_sid_with!(frame_oid, self.sid_to_surface_info_dictionary, sid, oid);
     }
 }
@@ -242,8 +253,8 @@ impl Proxy {
 // Other functions (which should be probably refactored).
 impl Proxy {
     pub fn get_surface_oid_for_shell(&self,
-                                     parent_shell_surface_oid: wl::common::ObjectId)
-                                     -> Option<wl::common::ObjectId> {
+                                     parent_shell_surface_oid: wl::ObjectId)
+                                     -> Option<wl::ObjectId> {
         for info in self.sid_to_surface_info_dictionary.values() {
             if let Some(shell_surface_oid) = info.shell_surface_oid {
                 match shell_surface_oid {
@@ -281,7 +292,7 @@ impl Facade for Proxy {
 
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
-                          buffer_oid: wl::common::ObjectId,
+                          buffer_oid: wl::ObjectId,
                           offset: usize,
                           width: usize,
                           height: usize,
@@ -289,7 +300,8 @@ impl Facade for Proxy {
                           -> Option<MemoryViewId> {
         let result = self.coordinator.create_memory_view(mpid, offset, width, height, stride);
         if let Some(mvid) = result {
-            self.buffer_oid_to_buffer_info_dictionary.insert(buffer_oid, BufferInfo::new(mvid));
+            let info = BufferInfo::new(mpid, mvid);
+            self.buffer_oid_to_buffer_info_dictionary.insert(buffer_oid, info);
         }
         result
     }
@@ -298,35 +310,35 @@ impl Facade for Proxy {
         self.coordinator.destroy_memory_view(mvid);
     }
 
-    fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area) {
+    fn define_region(&mut self, region_oid: wl::ObjectId, region: Area) {
         self.regions.insert(region_oid, region);
     }
 
-    fn undefine_region(&mut self, region_oid: wl::common::ObjectId) {
+    fn undefine_region(&mut self, region_oid: wl::ObjectId) {
         self.regions.remove(&region_oid);
     }
 
-    fn add_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId) {
+    fn add_pointer_oid(&mut self, pointer_oid: wl::ObjectId) {
         self.pointer_oids.insert(pointer_oid);
     }
 
-    fn remove_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId) {
+    fn remove_pointer_oid(&mut self, pointer_oid: wl::ObjectId) {
         self.pointer_oids.remove(&pointer_oid);
     }
 
-    fn add_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId) {
+    fn add_keyboard_oid(&mut self, keyboard_oid: wl::ObjectId) {
         self.keyboard_oids.insert(keyboard_oid);
     }
 
-    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId) {
+    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::ObjectId) {
         self.keyboard_oids.remove(&keyboard_oid);
     }
 
-    fn set_positioner(&mut self, oid: wl::common::ObjectId, positioner: PositionerInfo) {
+    fn set_positioner(&mut self, oid: wl::ObjectId, positioner: PositionerInfo) {
         self.positioners.insert(oid, positioner);
     }
 
-    fn get_positioner(&mut self, oid: wl::common::ObjectId) -> Option<PositionerInfo> {
+    fn get_positioner(&mut self, oid: wl::ObjectId) -> Option<PositionerInfo> {
         if let Some(positioner) = self.positioners.get(&oid) {
             Some(*positioner)
         } else {
@@ -334,11 +346,11 @@ impl Facade for Proxy {
         }
     }
 
-    fn remove_positioner(&mut self, oid: wl::common::ObjectId) {
+    fn remove_positioner(&mut self, oid: wl::ObjectId) {
         self.positioners.remove(&oid);
     }
 
-    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId) {
+    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::ObjectId) {
         if let Some(region) = self.regions.get(&region_oid) {
             self.coordinator.set_surface_offset(sid, region.pos);
             self.coordinator.set_surface_requested_size(sid, region.size);
@@ -347,7 +359,7 @@ impl Facade for Proxy {
         }
     }
 
-    fn create_surface(&mut self, oid: wl::common::ObjectId) -> SurfaceId {
+    fn create_surface(&mut self, oid: wl::ObjectId) -> SurfaceId {
         let sid = self.coordinator.create_surface();
         self.relate_sid_with_surface(sid, oid);
         self.mediator.borrow_mut().relate_sid_to_client(sid, self.id);
@@ -358,7 +370,7 @@ impl Facade for Proxy {
         self.coordinator.destroy_surface(sid)
     }
 
-    fn attach(&mut self, buffer_oid: wl::common::ObjectId, sid: SurfaceId, x: i32, y: i32) {
+    fn attach(&mut self, buffer_oid: wl::ObjectId, sid: SurfaceId, x: i32, y: i32) {
         if buffer_oid.is_null() {
             // Client wants to unmap this surface
             // TODO: This should be done on commit
@@ -376,12 +388,12 @@ impl Facade for Proxy {
         self.coordinator.commit_surface(sid);
     }
 
-    fn set_frame(&mut self, sid: SurfaceId, frame_oid: wl::common::ObjectId) {
+    fn set_frame(&mut self, sid: SurfaceId, frame_oid: wl::ObjectId) {
         self.relate_sid_with_frame(sid, frame_oid);
     }
 
     fn show(&mut self,
-            surface_oid: wl::common::ObjectId,
+            surface_oid: wl::ObjectId,
             shell_surface_oid: ShellSurfaceOid,
             reason: show_reason::ShowReason) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
@@ -392,7 +404,7 @@ impl Facade for Proxy {
         }
     }
 
-    fn hide(&mut self, surface_oid: wl::common::ObjectId, reason: show_reason::ShowReason) {
+    fn hide(&mut self, surface_oid: wl::ObjectId, reason: show_reason::ShowReason) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
             self.coordinator.hide_surface(sid, reason);
             self.unrelate_sid_with_shell_surface(sid);
@@ -409,14 +421,14 @@ impl Facade for Proxy {
         self.coordinator.set_surface_requested_size(sid, size);
     }
 
-    fn set_relative_position(&self, surface_oid: wl::common::ObjectId, x: isize, y: isize) {
+    fn set_relative_position(&self, surface_oid: wl::ObjectId, x: isize, y: isize) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
             let position = Position::new(x, y);
             self.coordinator.set_surface_relative_position(sid, position);
         }
     }
 
-    fn relate(&self, surface_oid: wl::common::ObjectId, parent_surface_oid: wl::common::ObjectId) {
+    fn relate(&self, surface_oid: wl::ObjectId, parent_surface_oid: wl::ObjectId) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
             if let Some(&parent_sid) = self.surface_oid_to_sid_dictionary.get(&parent_surface_oid) {
                 self.coordinator.relate_surfaces(sid, parent_sid);
@@ -425,16 +437,49 @@ impl Facade for Proxy {
         }
     }
 
-    fn unrelate(&self, surface_oid: wl::common::ObjectId) {
+    fn unrelate(&self, surface_oid: wl::ObjectId) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
             self.coordinator.unrelate_surface(sid);
         }
     }
 
-    fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_y: isize) {
+    fn set_as_cursor(&self, surface_oid: wl::ObjectId, hotspot_x: isize, hotspot_y: isize) {
         if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
             self.coordinator.set_surface_offset(sid, Position { x: hotspot_x, y: hotspot_y });
             self.coordinator.set_surface_as_cursor(sid);
+        }
+    }
+
+    fn relate_output_oid_with_id(&mut self, oid: wl::ObjectId, id: i32) {
+        self.output_oid_to_id.insert(oid, id);
+    }
+
+    fn take_screenshot(&mut self,
+                       screenshooter_oid: wl::ObjectId,
+                       output_oid: wl::ObjectId,
+                       buffer_oid: wl::ObjectId) {
+        // Destroy memory pool to be used to transfer screenshot.
+        if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
+            self.screenshot_memory = self.coordinator.destroy_memory_pool(info.mpid);
+        }
+
+        // If the memory was not in use the mapped memory will be returned.
+        if self.screenshot_memory.is_some() {
+            if let Some(output_id) = self.output_oid_to_id.get(&output_oid) {
+                // Request to take screenshot asynchronously. After data is ready method
+                // `on_screenshot_done` will be called.
+                self.coordinator.take_screenshot(*output_id);
+
+                // Save ID of client requesting screenshot for later use.
+                self.mediator.borrow_mut().register_screenshoter(Some(self.id));
+
+                // Save screenshooter object ID for later use.
+                self.screenshooter_oid = Some(screenshooter_oid);
+            } else {
+                log_warn1!("No matching output for screenshot");
+            }
+        } else {
+            log_warn1!("Could not set buffer up for screenshot");
         }
     }
 }
@@ -475,7 +520,7 @@ impl Gateway for Proxy {
             if let Some(frame_oid) = info.frame_oid {
                 send!(wl_callback::done(&self.socket, frame_oid, milliseconds.get_value() as u32));
                 send!(wl_display::delete_id(&self.socket,
-                                            wl::common::DISPLAY_ID,
+                                            wl::DISPLAY_ID,
                                             frame_oid.get_value()));
             }
             info.frame_oid = None;
@@ -686,6 +731,23 @@ impl Gateway for Proxy {
                            which is not in shell",
                            sid);
             }
+        }
+    }
+
+    fn on_screenshot_done(&mut self) {
+        if let Some(screenshooter_oid) = self.screenshooter_oid {
+            if let Some(ref mut screenshot_memory) = self.screenshot_memory {
+                let screenshot = self.coordinator.take_screenshot_buffer();
+                if let Some(ref screenshot) = screenshot {
+                    if let Err(err) = unsafe { screenshot_memory.absorb(screenshot) } {
+                        log_warn1!("Screenshot: {:?}", err);
+                    }
+                } else {
+                    log_warn1!("Screenshot: buffer not found");
+                }
+            }
+            send!(weston_screenshooter::done(&self.get_socket(), screenshooter_oid));
+            self.mediator.borrow_mut().register_screenshoter(None);
         }
     }
 }

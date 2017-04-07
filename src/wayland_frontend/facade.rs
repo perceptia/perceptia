@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use skylane as wl;
+use skylane::server as wl;
 
 use qualia::{Area, MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryViewId, show_reason};
 
@@ -14,13 +14,13 @@ use qualia::{Area, MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryVi
 /// Enum describing type of shell and related object IDs.
 #[derive(Clone, Copy)]
 pub enum ShellSurfaceOid {
-    Shell(wl::common::ObjectId),
-    ZxdgToplevelV6(wl::common::ObjectId, wl::common::ObjectId),
+    Shell(wl::ObjectId),
+    ZxdgToplevelV6(wl::ObjectId, wl::ObjectId),
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Data realted to positioner object.
+/// Data related to positioner object.
 #[derive(Clone, Copy)]
 pub struct PositionerInfo {
     pub offset: Vector,
@@ -60,7 +60,7 @@ pub trait Facade {
     /// Requests creation of memory view.
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
-                          buffer_oid: wl::common::ObjectId,
+                          buffer_oid: wl::ObjectId,
                           offset: usize,
                           width: usize,
                           height: usize,
@@ -71,58 +71,58 @@ pub trait Facade {
     fn destroy_memory_view(&mut self, mvid: MemoryViewId);
 
     /// Defines region. Regions may be used to define input area of surface.
-    fn define_region(&mut self, region_oid: wl::common::ObjectId, region: Area);
+    fn define_region(&mut self, region_oid: wl::ObjectId, region: Area);
 
     /// Undefines region.
-    fn undefine_region(&mut self, region_oid: wl::common::ObjectId);
+    fn undefine_region(&mut self, region_oid: wl::ObjectId);
 
     /// Adds pointer OID.
-    fn add_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId);
+    fn add_pointer_oid(&mut self, pointer_oid: wl::ObjectId);
 
     /// Removes pointer OID.
-    fn remove_pointer_oid(&mut self, pointer_oid: wl::common::ObjectId);
+    fn remove_pointer_oid(&mut self, pointer_oid: wl::ObjectId);
 
     /// Adds keyboard OID.
-    fn add_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId);
+    fn add_keyboard_oid(&mut self, keyboard_oid: wl::ObjectId);
 
     /// Removes keyboard OID.
-    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::common::ObjectId);
+    fn remove_keyboard_oid(&mut self, keyboard_oid: wl::ObjectId);
 
     /// Sets positioner info.
-    fn set_positioner(&mut self, wl::common::ObjectId, positioner: PositionerInfo);
+    fn set_positioner(&mut self, wl::ObjectId, positioner: PositionerInfo);
 
     /// Gets positioner info.
-    fn get_positioner(&mut self, oid: wl::common::ObjectId) -> Option<PositionerInfo>;
+    fn get_positioner(&mut self, oid: wl::ObjectId) -> Option<PositionerInfo>;
 
     /// Removes positioner info.
-    fn remove_positioner(&mut self, oid: wl::common::ObjectId);
+    fn remove_positioner(&mut self, oid: wl::ObjectId);
 
     /// Sets given region as input region of surface.
-    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::common::ObjectId);
+    fn set_input_region(&self, sid: SurfaceId, region_oid: wl::ObjectId);
 
     /// Requests creation of surface. Return ID of newly created surface.
-    fn create_surface(&mut self, surface_oid: wl::common::ObjectId) -> SurfaceId;
+    fn create_surface(&mut self, surface_oid: wl::ObjectId) -> SurfaceId;
 
     /// Requests destruction of surface.
     fn destroy_surface(&self, sid: SurfaceId);
 
     /// Attaches memory view to surface. This will take effect after `commit`.
-    fn attach(&mut self, buffer_oid: wl::common::ObjectId, sid: SurfaceId, x: i32, y: i32);
+    fn attach(&mut self, buffer_oid: wl::ObjectId, sid: SurfaceId, x: i32, y: i32);
 
     /// Commits all requests to surface.
     fn commit(&self, sid: SurfaceId);
 
     /// Requests (one-shot) notification about redrawing of given surface.
-    fn set_frame(&mut self, sid: SurfaceId, frame_oid: wl::common::ObjectId);
+    fn set_frame(&mut self, sid: SurfaceId, frame_oid: wl::ObjectId);
 
     /// Adds a reason to show given surface on screen.
     fn show(&mut self,
-            surface_oid: wl::common::ObjectId,
+            surface_oid: wl::ObjectId,
             shell_surface_oid: ShellSurfaceOid,
             reason: show_reason::ShowReason);
 
     /// Removes a reason to show given surface on screen.
-    fn hide(&mut self, surface_oid: wl::common::ObjectId, reason: show_reason::ShowReason);
+    fn hide(&mut self, surface_oid: wl::ObjectId, reason: show_reason::ShowReason);
 
     /// Defines offset between origin of buffer and real area of surface. Client for example may
     /// want to draw shadow, which should not be threated by compositor as internal part of
@@ -133,16 +133,25 @@ pub trait Facade {
     fn set_requested_size(&self, sid: SurfaceId, size: Size);
 
     /// Requests setting relation (child-parent) between two surfaces.
-    fn relate(&self, surface_oid: wl::common::ObjectId, parent_surface_oid: wl::common::ObjectId);
+    fn relate(&self, surface_oid: wl::ObjectId, parent_surface_oid: wl::ObjectId);
 
     /// Requests cancellation of relation between given surface and its parent.
-    fn unrelate(&self, surface_oid: wl::common::ObjectId);
+    fn unrelate(&self, surface_oid: wl::ObjectId);
 
     /// Requests to set offset between related surfaces.
-    fn set_relative_position(&self, surface_oid: wl::common::ObjectId, x: isize, y: isize);
+    fn set_relative_position(&self, surface_oid: wl::ObjectId, x: isize, y: isize);
 
     /// Requests to use given surface for drawing cursor.
-    fn set_as_cursor(&self, surface_oid: wl::common::ObjectId, hotspot_x: isize, hotspot_x: isize);
+    fn set_as_cursor(&self, surface_oid: wl::ObjectId, hotspot_x: isize, hotspot_x: isize);
+
+    /// Relates output object ID with output ID.
+    fn relate_output_oid_with_id(&mut self, oid: wl::ObjectId, id: i32);
+
+    /// Requests taking screenshot.
+    fn take_screenshot(&mut self,
+                       screenshoter_oid: wl::ObjectId,
+                       output_oid: wl::ObjectId,
+                       output_oid: wl::ObjectId);
 }
 
 // -------------------------------------------------------------------------------------------------

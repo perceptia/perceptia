@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 
 use dharma::Signaler;
-use qualia::{Coordinator, Illusion};
+use qualia::{Buffer, Coordinator, Illusion};
 use qualia::{Milliseconds, OutputInfo, SurfaceContext, perceptron, Perceptron};
 
 use frames::{Frame, Displaying};
@@ -131,6 +131,17 @@ impl Display {
         self.redraw_needed = false;
         if let Err(err) = self.schedule_pageflip() {
             log_error!("Display: {}", err);
+        }
+    }
+
+    /// Requests output to take screenshot. Return `Buffer` containing image data.
+    pub fn take_screenshot(&self) -> Option<Buffer> {
+        match self.output.take_screenshot() {
+            Ok(buffer) => Some(buffer),
+            Err(err) => {
+                log_error!("Display: {}", err);
+                None
+            }
         }
     }
 

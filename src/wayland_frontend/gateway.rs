@@ -43,6 +43,9 @@ pub trait Gateway {
                                sid: SurfaceId,
                                size: Size,
                                state_flags: surface_state::SurfaceState);
+
+    /// Notifies that screenshot data are ready.
+    fn on_screenshot_done(&mut self);
 }
 
 // -------------------------------------------------------------------------------------------------

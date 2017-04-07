@@ -3,7 +3,9 @@
 
 //! Implementations of Wayland `wl_data_device_manager` object.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_data_device_manager;
 
@@ -20,18 +22,18 @@ struct DataDeviceManager {}
 pub fn get_global() -> Global {
     Global::new(wl_data_device_manager::NAME,
                 wl_data_device_manager::VERSION,
-                Box::new(DataDeviceManager::new_object))
+                Rc::new(DataDeviceManager::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl DataDeviceManager {
     /// Creates new `DataDeviceManager`.
-    fn new(_oid: wl::common::ObjectId, _proxy_ref: ProxyRef) -> Self {
+    fn new(_oid: ObjectId, _proxy_ref: ProxyRef) -> Self {
         DataDeviceManager {}
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_data_device_manager::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }
@@ -41,22 +43,22 @@ impl DataDeviceManager {
 #[allow(unused_variables)]
 impl wl_data_device_manager::Interface for DataDeviceManager {
     fn create_data_source(&mut self,
-                          this_object_id: wl::common::ObjectId,
-                          socket: &mut wl::server::ClientSocket,
-                          id: wl::common::ObjectId)
-                          -> wl::server::Task {
+                          this_object_id: ObjectId,
+                          bundle: &mut Bundle,
+                          id: ObjectId)
+                          -> Task {
         // FIXME: Finish implementation of `create_data_source`.
-        wl::server::Task::None
+        Task::None
     }
 
     fn get_data_device(&mut self,
-                       this_object_id: wl::common::ObjectId,
-                       socket: &mut wl::server::ClientSocket,
-                       id: wl::common::ObjectId,
-                       seat: wl::common::ObjectId)
-                       -> wl::server::Task {
+                       this_object_id: ObjectId,
+                       bundle: &mut Bundle,
+                       id: ObjectId,
+                       seat: ObjectId)
+                       -> Task {
         // FIXME: Finish implementation of `get_data_device`.
-        wl::server::Task::None
+        Task::None
     }
 }
 

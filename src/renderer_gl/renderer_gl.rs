@@ -9,7 +9,7 @@ use std;
 use gl;
 use egl;
 
-use qualia::{Coordinator, SurfaceContext, Illusion, Size, Pixmap};
+use qualia::{Coordinator, SurfaceContext, Illusion, Size, Buffer, Pixmap};
 
 use gl_tools;
 use egl_tools;
@@ -138,6 +138,35 @@ impl RendererGl {
     pub fn swap_buffers(&mut self) -> Result<(), Illusion> {
         let context = self.egl.make_current()?;
         context.swap_buffers()
+    }
+
+    /// Reads pixels for whole screen and returns image data as `Buffer`.
+    pub fn take_screenshot(&self) -> Result<Buffer, Illusion> {
+        let _context = self.egl.make_current()?;
+
+        let stride = 4 * self.size.width;
+        let size = stride * self.size.height;
+        let mut dst: Vec<u8> = Vec::with_capacity(size);
+        unsafe { dst.set_len(size) };
+
+        unsafe {
+            gl::ReadBuffer(gl::BACK);
+            gl::ReadPixels(0,
+                           0,
+                           self.size.width as i32,
+                           self.size.height as i32,
+                           gl::RGBA,
+                           gl::UNSIGNED_BYTE,
+                           dst.as_mut_ptr() as *mut std::os::raw::c_void);
+        }
+
+        // GL returns data starting from bottom. We have to reverse the order.
+        let mut data = Vec::new();
+        for chunk in dst.chunks(stride).rev() {
+            data.extend(chunk);
+        }
+
+        Ok(Buffer::new(self.size.width, self.size.height, stride, data))
     }
 }
 

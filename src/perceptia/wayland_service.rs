@@ -73,7 +73,8 @@ impl WaylandService {
                       perceptron::POINTER_FOCUS_CHANGED,
                       perceptron::POINTER_RELATIVE_MOTION,
                       perceptron::KEYBOARD_FOCUS_CHANGED,
-                      perceptron::SURFACE_RECONFIGURED] {
+                      perceptron::SURFACE_RECONFIGURED,
+                      perceptron::SCREENSHOT_DONE] {
             self.context.get_signaler().subscribe(s, &self.receiver);
         }
         log_info1!("Started Wayland service");
@@ -159,6 +160,9 @@ impl WaylandService {
                 if let Some(info) = self.context.get_coordinator().get_surface(sid) {
                     self.engine.on_surface_reconfigured(sid, info.desired_size, info.state_flags);
                 }
+            }
+            Perceptron::ScreenshotDone => {
+                self.engine.on_screenshot_done();
             }
             _ => {}
         }

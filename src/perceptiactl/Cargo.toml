@@ -10,11 +10,13 @@ gl = "0.6.0"
 nix = "0.8.0"
 libudev = "0.2.0"
 drm-rs = "0.1.2"
-timber         = { path = "../timber" }
-qualia         = { path = "../qualia" }
-device_manager = { path = "../device_manager" }
-renderer_gl    = { path = "../renderer_gl" }
-output         = { path = "../output" }
+image = "0.12.3"
+timber                   = { path = "../timber" }
+qualia                   = { path = "../qualia" }
+device_manager           = { path = "../device_manager" }
+renderer_gl              = { path = "../renderer_gl" }
+output                   = { path = "../output" }
+skylane_simple_framework = { path = "../skylane_simple_framework" }
 
 [[bin]]
 name = "perceptiactl"

@@ -5,7 +5,9 @@
 
 // TODO: Finish implementation of subcompositor.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_subcompositor;
 use skylane_protocols::server::wayland::wl_subsurface;
@@ -26,7 +28,7 @@ struct Subcompositor {
 pub fn get_global() -> Global {
     Global::new(wl_subcompositor::NAME,
                 wl_subcompositor::VERSION,
-                Box::new(Subcompositor::new_object))
+                Rc::new(Subcompositor::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -36,7 +38,7 @@ impl Subcompositor {
         Subcompositor { proxy: proxy_ref }
     }
 
-    fn new_object(_oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_subcompositor::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }
@@ -45,21 +47,21 @@ impl Subcompositor {
 
 impl wl_subcompositor::Interface for Subcompositor {
     fn destroy(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
-        wl::server::Task::Destroy { id: this_object_id }
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
+        Task::Destroy { id: this_object_id }
     }
 
     fn get_subsurface(&mut self,
-                      _this_object_id: wl::common::ObjectId,
-                      _socket: &mut wl::server::ClientSocket,
-                      new_subsurface_oid: wl::common::ObjectId,
-                      surface_oid: wl::common::ObjectId,
-                      parent_oid: wl::common::ObjectId)
-                      -> wl::server::Task {
+                      _this_object_id: ObjectId,
+                      _bundle: &mut Bundle,
+                      new_subsurface_oid: ObjectId,
+                      surface_oid: ObjectId,
+                      parent_oid: ObjectId)
+                      -> Task {
         let subsurface = Subsurface::new_object(surface_oid, parent_oid, self.proxy.clone());
-        wl::server::Task::Create {
+        Task::Create {
             id: new_subsurface_oid,
             object: subsurface,
         }
@@ -70,15 +72,15 @@ impl wl_subcompositor::Interface for Subcompositor {
 
 /// Wayland `wl_subsurface` object.
 struct Subsurface {
-    surface_oid: wl::common::ObjectId,
+    surface_oid: ObjectId,
     proxy: ProxyRef,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Subsurface {
-    fn new(surface_oid: wl::common::ObjectId,
-           parent_surface_oid: wl::common::ObjectId,
+    fn new(surface_oid: ObjectId,
+           parent_surface_oid: ObjectId,
            proxy_ref: ProxyRef)
            -> Self {
         {
@@ -91,10 +93,10 @@ impl Subsurface {
         }
     }
 
-    fn new_object(surface_oid: wl::common::ObjectId,
-                  parent_surface_oid: wl::common::ObjectId,
+    fn new_object(surface_oid: ObjectId,
+                  parent_surface_oid: ObjectId,
                   proxy_ref: ProxyRef)
-                  -> Box<wl::server::Object> {
+                  -> Box<Object> {
         let subsurface = Self::new(surface_oid, parent_surface_oid, proxy_ref);
         Box::new(Handler::<_, wl_subsurface::Dispatcher>::new(subsurface))
     }
@@ -105,53 +107,53 @@ impl Subsurface {
 #[allow(unused_variables)]
 impl wl_subsurface::Interface for Subsurface {
     fn destroy(&mut self,
-               this_object_id: wl::common::ObjectId,
-               socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
+               this_object_id: ObjectId,
+               bundle: &mut Bundle)
+               -> Task {
         let proxy = self.proxy.borrow_mut();
         proxy.unrelate(self.surface_oid);
-        wl::server::Task::Destroy { id: this_object_id }
+        Task::Destroy { id: this_object_id }
     }
 
     fn set_position(&mut self,
-                    _this_object_id: wl::common::ObjectId,
-                    _socket: &mut wl::server::ClientSocket,
+                    _this_object_id: ObjectId,
+                    _bundle: &mut Bundle,
                     x: i32,
                     y: i32)
-                    -> wl::server::Task {
+                    -> Task {
         let proxy = self.proxy.borrow_mut();
         proxy.set_relative_position(self.surface_oid, x as isize, y as isize);
-        wl::server::Task::None
+        Task::None
     }
 
     fn place_above(&mut self,
-                   _this_object_id: wl::common::ObjectId,
-                   _socket: &mut wl::server::ClientSocket,
-                   sibling: wl::common::ObjectId)
-                   -> wl::server::Task {
-        wl::server::Task::None
+                   _this_object_id: ObjectId,
+                   _bundle: &mut Bundle,
+                   sibling: ObjectId)
+                   -> Task {
+        Task::None
     }
 
     fn place_below(&mut self,
-                   this_object_id: wl::common::ObjectId,
-                   socket: &mut wl::server::ClientSocket,
-                   sibling: wl::common::ObjectId)
-                   -> wl::server::Task {
-        wl::server::Task::None
+                   this_object_id: ObjectId,
+                   bundle: &mut Bundle,
+                   sibling: ObjectId)
+                   -> Task {
+        Task::None
     }
 
     fn set_sync(&mut self,
-                this_object_id: wl::common::ObjectId,
-                socket: &mut wl::server::ClientSocket)
-                -> wl::server::Task {
-        wl::server::Task::None
+                this_object_id: ObjectId,
+                bundle: &mut Bundle)
+                -> Task {
+        Task::None
     }
 
     fn set_desync(&mut self,
-                  this_object_id: wl::common::ObjectId,
-                  socket: &mut wl::server::ClientSocket)
-                  -> wl::server::Task {
-        wl::server::Task::None
+                  this_object_id: ObjectId,
+                  bundle: &mut Bundle)
+                  -> Task {
+        Task::None
     }
 }
 

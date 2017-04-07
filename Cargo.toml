@@ -10,6 +10,7 @@ members = [
         "src/device_manager",
         "src/exhibitor",
         "src/wayland_frontend",
+        "src/skylane_simple_framework",
         "src/perceptia",
         "src/perceptiactl",
     ]

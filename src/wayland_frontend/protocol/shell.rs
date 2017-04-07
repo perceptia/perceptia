@@ -3,7 +3,9 @@
 
 //! Implementation of Wayland `wl_shell` and `wl_shell_surface` objects.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_shell;
 use skylane_protocols::server::wayland::wl_shell_surface;
@@ -32,7 +34,7 @@ struct Shell {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_shell::NAME, wl_shell::VERSION, Box::new(Shell::new_object))
+    Global::new(wl_shell::NAME, wl_shell::VERSION, Rc::new(Shell::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -42,7 +44,7 @@ impl Shell {
         Shell { proxy: proxy_ref }
     }
 
-    fn new_object(_oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_shell::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }
@@ -52,13 +54,13 @@ impl Shell {
 #[allow(unused_variables)]
 impl wl_shell::Interface for Shell {
     fn get_shell_surface(&mut self,
-                         this_object_id: wl::common::ObjectId,
-                         socket: &mut wl::server::ClientSocket,
-                         new_shell_surface_oid: wl::common::ObjectId,
-                         surface_oid: wl::common::ObjectId)
-                         -> wl::server::Task {
+                         this_object_id: ObjectId,
+                         bundle: &mut Bundle,
+                         new_shell_surface_oid: ObjectId,
+                         surface_oid: ObjectId)
+                         -> Task {
         let surface = Surface::new_object(new_shell_surface_oid, surface_oid, self.proxy.clone());
-        wl::server::Task::Create {
+        Task::Create {
             id: new_shell_surface_oid,
             object: surface,
         }
@@ -69,7 +71,7 @@ impl wl_shell::Interface for Shell {
 
 /// Wayland `wl_shell_surface` object.
 struct Surface {
-    surface_oid: wl::common::ObjectId,
+    surface_oid: ObjectId,
     proxy: ProxyRef,
     surface_type: SurfaceType,
 }
@@ -77,8 +79,8 @@ struct Surface {
 // -------------------------------------------------------------------------------------------------
 
 impl Surface {
-    fn new(_oid: wl::common::ObjectId,
-           surface_oid: wl::common::ObjectId,
+    fn new(_oid: ObjectId,
+           surface_oid: ObjectId,
            proxy_ref: ProxyRef)
            -> Self {
         Surface {
@@ -88,10 +90,10 @@ impl Surface {
         }
     }
 
-    fn new_object(oid: wl::common::ObjectId,
-                  surface_oid: wl::common::ObjectId,
+    fn new_object(oid: ObjectId,
+                  surface_oid: ObjectId,
                   proxy_ref: ProxyRef)
-                  -> Box<wl::server::Object> {
+                  -> Box<Object> {
         let surface = Self::new(oid, surface_oid, proxy_ref);
         Box::new(Handler::<_, wl_shell_surface::Dispatcher>::new(surface))
     }
@@ -102,36 +104,36 @@ impl Surface {
 #[allow(unused_variables)]
 impl wl_shell_surface::Interface for Surface {
     fn pong(&mut self,
-            this_object_id: wl::common::ObjectId,
-            socket: &mut wl::server::ClientSocket,
+            this_object_id: ObjectId,
+            bundle: &mut Bundle,
             serial: u32)
-            -> wl::server::Task {
-        wl::server::Task::None
+            -> Task {
+        Task::None
     }
 
     fn move_(&mut self,
-             this_object_id: wl::common::ObjectId,
-             socket: &mut wl::server::ClientSocket,
-             seat: wl::common::ObjectId,
+             this_object_id: ObjectId,
+             bundle: &mut Bundle,
+             seat: ObjectId,
              serial: u32)
-             -> wl::server::Task {
-        wl::server::Task::None
+             -> Task {
+        Task::None
     }
 
     fn resize(&mut self,
-              this_object_id: wl::common::ObjectId,
-              socket: &mut wl::server::ClientSocket,
-              seat: wl::common::ObjectId,
+              this_object_id: ObjectId,
+              bundle: &mut Bundle,
+              seat: ObjectId,
               serial: u32,
               edges: u32)
-              -> wl::server::Task {
-        wl::server::Task::None
+              -> Task {
+        Task::None
     }
 
     fn set_toplevel(&mut self,
-                    this_object_id: wl::common::ObjectId,
-                    socket: &mut wl::server::ClientSocket)
-                    -> wl::server::Task {
+                    this_object_id: ObjectId,
+                    bundle: &mut Bundle)
+                    -> Task {
         let mut proxy = self.proxy.borrow_mut();
 
         // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
@@ -143,18 +145,18 @@ impl wl_shell_surface::Interface for Surface {
         self.surface_type = SurfaceType::Toplevel;
 
         proxy.show(self.surface_oid, ShellSurfaceOid::Shell(this_object_id), show_reason::IN_SHELL);
-        wl::server::Task::None
+        Task::None
     }
 
     // TODO: Currently transient and pop-up are handled the same way.
     fn set_transient(&mut self,
-                     this_object_id: wl::common::ObjectId,
-                     socket: &mut wl::server::ClientSocket,
-                     parent_surface_oid: wl::common::ObjectId,
+                     this_object_id: ObjectId,
+                     bundle: &mut Bundle,
+                     parent_surface_oid: ObjectId,
                      x: i32,
                      y: i32,
                      flags: u32)
-                     -> wl::server::Task {
+                     -> Task {
         let mut proxy = self.proxy.borrow_mut();
 
         // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
@@ -167,29 +169,29 @@ impl wl_shell_surface::Interface for Surface {
 
         proxy.relate(self.surface_oid, parent_surface_oid);
         proxy.set_relative_position(self.surface_oid, x as isize, y as isize);
-        wl::server::Task::None
+        Task::None
     }
 
     fn set_fullscreen(&mut self,
-                      this_object_id: wl::common::ObjectId,
-                      socket: &mut wl::server::ClientSocket,
+                      this_object_id: ObjectId,
+                      bundle: &mut Bundle,
                       method: u32,
                       framerate: u32,
-                      output: wl::common::ObjectId)
-                      -> wl::server::Task {
-        wl::server::Task::None
+                      output: ObjectId)
+                      -> Task {
+        Task::None
     }
 
     fn set_popup(&mut self,
-                 this_object_id: wl::common::ObjectId,
-                 socket: &mut wl::server::ClientSocket,
-                 seat: wl::common::ObjectId,
+                 this_object_id: ObjectId,
+                 bundle: &mut Bundle,
+                 seat: ObjectId,
                  serial: u32,
-                 parent_surface_oid: wl::common::ObjectId,
+                 parent_surface_oid: ObjectId,
                  x: i32,
                  y: i32,
                  flags: u32)
-                 -> wl::server::Task {
+                 -> Task {
         let mut proxy = self.proxy.borrow_mut();
 
         // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
@@ -201,31 +203,31 @@ impl wl_shell_surface::Interface for Surface {
 
         proxy.relate(self.surface_oid, parent_surface_oid);
         proxy.set_relative_position(self.surface_oid, x as isize, y as isize);
-        wl::server::Task::None
+        Task::None
     }
 
     fn set_maximized(&mut self,
-                     this_object_id: wl::common::ObjectId,
-                     socket: &mut wl::server::ClientSocket,
-                     output: wl::common::ObjectId)
-                     -> wl::server::Task {
-        wl::server::Task::None
+                     this_object_id: ObjectId,
+                     bundle: &mut Bundle,
+                     output: ObjectId)
+                     -> Task {
+        Task::None
     }
 
     fn set_title(&mut self,
-                 this_object_id: wl::common::ObjectId,
-                 socket: &mut wl::server::ClientSocket,
+                 this_object_id: ObjectId,
+                 bundle: &mut Bundle,
                  title: String)
-                 -> wl::server::Task {
-        wl::server::Task::None
+                 -> Task {
+        Task::None
     }
 
     fn set_class(&mut self,
-                 this_object_id: wl::common::ObjectId,
-                 socket: &mut wl::server::ClientSocket,
+                 this_object_id: ObjectId,
+                 bundle: &mut Bundle,
                  class: String)
-                 -> wl::server::Task {
-        wl::server::Task::None
+                 -> Task {
+        Task::None
     }
 }
 

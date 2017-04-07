@@ -154,6 +154,15 @@ impl Exhibitor {
     pub fn on_keyboard_focus_changed(&mut self, sid: SurfaceId) {
         self.pointer.borrow_mut().on_keyboard_focus_changed(sid);
     }
+
+    /// This method is called when screenshot was requested.
+    pub fn take_screenshot(&mut self, id: i32) {
+        if let Some(ref mut display) = self.displays.get_mut(&id) {
+            if let Some(buffer) = display.take_screenshot() {
+                self.coordinator.set_screenshot_buffer(buffer);
+            }
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

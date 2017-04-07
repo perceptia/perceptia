@@ -7,7 +7,7 @@
 
 use std::os::unix::io::RawFd;
 
-use skylane as wl;
+use skylane::server as wl;
 
 use dharma;
 use qualia::Perceptron;
@@ -18,14 +18,14 @@ use constants;
 
 /// Implementation of `dharma::EventHandler` for global (display) socket.
 pub struct DisplayEventHandler {
-    socket: wl::server::DisplaySocket,
+    socket: wl::DisplaySocket,
     sender: dharma::Sender<Perceptron>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl DisplayEventHandler {
-    pub fn new(socket: wl::server::DisplaySocket, sender: dharma::Sender<Perceptron>) -> Self {
+    pub fn new(socket: wl::DisplaySocket, sender: dharma::Sender<Perceptron>) -> Self {
         DisplayEventHandler {
             socket: socket,
             sender: sender,
@@ -69,14 +69,14 @@ impl dharma::EventHandler for DisplayEventHandler {
 /// Implementation of `dharma::EventHandler` for client socket.
 pub struct ClientEventHandler {
     id: dharma::EventHandlerId,
-    socket: wl::server::ClientSocket,
+    socket: wl::Socket,
     sender: dharma::DirectSender<Perceptron>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl ClientEventHandler {
-    pub fn new(socket: wl::server::ClientSocket, sender: dharma::DirectSender<Perceptron>) -> Self {
+    pub fn new(socket: wl::Socket, sender: dharma::DirectSender<Perceptron>) -> Self {
         ClientEventHandler {
             // No `Option` used here as `Dispatcher` will for sure set this data and we would
             // `expect` it anyway.

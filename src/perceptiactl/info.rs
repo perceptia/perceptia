@@ -1,6 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+//! Printing useful information about system and devices.
+
 use std;
 use std::os::unix::io;
 use nix::fcntl::{self, open};
@@ -136,7 +138,7 @@ fn print_egl_info(fd: io::RawFd) {
              egl::query_string(egl.display, egl::EGL_VENDOR).unwrap());
 
     // Make EGL context current
-    let ctx = match egl.make_current() {
+    let _ctx = match egl.make_current() {
         Ok(ctx) => ctx,
         Err(err) => {
             println!("\t\tFailed to make EGL context current: {}", err);

@@ -1,5 +1,5 @@
 [package]
-name = "wayland_frontend"
+name = "skylane_simple_framework"
 version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
@@ -12,6 +12,6 @@ dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
 
 [lib]
-name = "wayland_frontend"
+name = "skylane_simple_framework"
 path = "lib.rs"
 

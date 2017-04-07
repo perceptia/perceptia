@@ -42,12 +42,12 @@ pub use defs::{MemoryPoolId, MemoryViewId};
 pub mod config;
 pub use config::{Config, InputConfig};
 
-pub mod memory;
-pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
-
 #[macro_use]
 pub mod log;
 pub use log::level;
+
+pub mod memory;
+pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
 
 pub mod functions;
 

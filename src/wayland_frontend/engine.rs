@@ -8,7 +8,7 @@
 use std::collections::HashMap;
 
 use dharma;
-use skylane as wl;
+use skylane::server as wl;
 
 use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, SurfaceId, KeyMods};
 use qualia::{Coordinator, KeyboardState, XkbKeymap, Perceptron, Settings, surface_state};
@@ -21,9 +21,9 @@ use event_handlers::{ClientEventHandler, DisplayEventHandler};
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure for aggregating `Client` with its `Proxy`.
-struct ClientPackage {
-    client: wl::server::Client,
+/// Helper structure for aggregating `Connection` with its `Proxy`.
+struct Client {
+    connection: wl::Connection,
     proxy: ProxyRef,
 }
 
@@ -33,9 +33,9 @@ struct ClientPackage {
 ///
 /// For information about its role and place among other structures see crate-level documentation.
 pub struct Engine {
-    display: wl::server::DisplaySocket,
+    display: wl::DisplaySocket,
     mediator: MediatorRef,
-    clients: HashMap<dharma::EventHandlerId, ClientPackage>,
+    clients: HashMap<dharma::EventHandlerId, Client>,
     output_infos: Vec<OutputInfo>,
     coordinator: Coordinator,
     settings: Settings,
@@ -51,7 +51,7 @@ impl Engine {
         let xkb_keymap = XkbKeymap::default().expect("Creating XKB map");
 
         Engine {
-            display: wl::server::DisplaySocket::new_default().expect("Creating display socket"),
+            display: wl::DisplaySocket::new_default().expect("Creating display socket"),
             mediator: MediatorRef::new(Mediator::new()),
             clients: HashMap::new(),
             output_infos: Vec::new(),
@@ -105,6 +105,7 @@ impl Engine {
         proxy.register_global(protocol::data_device_manager::get_global());
         proxy.register_global(protocol::seat::get_global());
         proxy.register_global(protocol::subcompositor::get_global());
+        proxy.register_global(protocol::weston_screenshooter::get_global());
         for info in self.output_infos.iter() {
             proxy.register_global(protocol::output::get_global(info.clone()));
         }
@@ -112,13 +113,13 @@ impl Engine {
 
         // Prepare client.
         let display = protocol::display::Display::new_object(proxy_ref.clone());
-        let mut client = wl::server::Client::new(client_socket);
-        client.add_object(wl::common::DISPLAY_ID, display);
-        let pkg = ClientPackage {
-            client: client,
+        let mut connection = wl::Connection::new(client_socket);
+        connection.add_object(wl::DISPLAY_ID, display);
+        let client = Client {
+            connection: connection,
             proxy: proxy_ref,
         };
-        self.clients.insert(id, pkg);
+        self.clients.insert(id, client);
     }
 
     /// Handles termination (socket hung up) of client.
@@ -130,7 +131,7 @@ impl Engine {
             false
         };
 
-        let result2 = if let Some(_package) = self.clients.remove(&id) {
+        let result2 = if let Some(_client) = self.clients.remove(&id) {
             true
         } else {
             log_warn2!("Proxy not found for client {} on termination", id);
@@ -144,8 +145,8 @@ impl Engine {
 
     /// Handles request from client associated with given `id`.
     pub fn process_events(&mut self, id: dharma::EventHandlerId) {
-        if let Some(ref mut package) = self.clients.get_mut(&id) {
-            match package.client.process_events() {
+        if let Some(ref mut client) = self.clients.get_mut(&id) {
+            match client.connection.process_events() {
                 Ok(_) => {}
                 Err(err) => {
                     log_warn3!("Wayland Engine: ERROR: {:?}", err);
@@ -171,8 +172,8 @@ impl Engine {
 impl Gateway for Engine {
     fn on_display_created(&mut self, output_info: OutputInfo) {
         self.output_infos.push(output_info.clone());
-        for (_, package) in self.clients.iter() {
-            package.proxy.borrow_mut().on_display_created(output_info.clone());
+        for (_, client) in self.clients.iter() {
+            client.proxy.borrow_mut().on_display_created(output_info.clone());
         }
     }
 
@@ -185,16 +186,16 @@ impl Gateway for Engine {
 
         let sid = self.coordinator.get_keyboard_focused_sid();
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_keyboard_input(key, mods);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow_mut().on_keyboard_input(key, mods);
             }
         }
     }
 
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds) {
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_surface_frame(sid, milliseconds);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow_mut().on_surface_frame(sid, milliseconds);
             }
         }
     }
@@ -209,23 +210,23 @@ impl Gateway for Engine {
 
         if new_client_id != old_client_id {
             if let Some(client_id) = old_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_pointer_focus_changed(old_sid,
-                                                                        SurfaceId::invalid(),
-                                                                        Position::default());
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_pointer_focus_changed(old_sid,
+                                                                       SurfaceId::invalid(),
+                                                                       Position::default());
                 }
             }
             if let Some(client_id) = new_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_pointer_focus_changed(SurfaceId::invalid(),
-                                                                        new_sid,
-                                                                        position);
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_pointer_focus_changed(SurfaceId::invalid(),
+                                                                       new_sid,
+                                                                       position);
                 }
             }
         } else {
             if let Some(client_id) = old_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_pointer_focus_changed(old_sid, new_sid, position);
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_pointer_focus_changed(old_sid, new_sid, position);
                 }
             }
         }
@@ -236,8 +237,8 @@ impl Gateway for Engine {
                                   position: Position,
                                   milliseconds: Milliseconds) {
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_pointer_relative_motion(sid, position, milliseconds);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow_mut().on_pointer_relative_motion(sid, position, milliseconds);
             }
         }
     }
@@ -245,8 +246,8 @@ impl Gateway for Engine {
     fn on_pointer_button(&self, btn: Button) {
         let sid = self.coordinator.get_pointer_focused_sid();
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_pointer_button(btn);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow_mut().on_pointer_button(btn);
             }
         }
     }
@@ -254,8 +255,8 @@ impl Gateway for Engine {
     fn on_pointer_axis(&self, axis: Axis) {
         let sid = self.coordinator.get_pointer_focused_sid();
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow_mut().on_pointer_axis(axis);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow_mut().on_pointer_axis(axis);
             }
         }
     }
@@ -267,21 +268,21 @@ impl Gateway for Engine {
 
         if new_client_id != old_client_id {
             if let Some(client_id) = old_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_keyboard_focus_changed(old_sid,
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_keyboard_focus_changed(old_sid,
                                                                          SurfaceId::invalid());
                 }
             }
             if let Some(client_id) = new_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_keyboard_focus_changed(SurfaceId::invalid(),
-                                                                         new_sid);
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_keyboard_focus_changed(SurfaceId::invalid(),
+                                                                        new_sid);
                 }
             }
         } else {
             if let Some(client_id) = old_client_id {
-                if let Some(package) = self.clients.get(&client_id) {
-                    package.proxy.borrow_mut().on_keyboard_focus_changed(old_sid, new_sid);
+                if let Some(client) = self.clients.get(&client_id) {
+                    client.proxy.borrow_mut().on_keyboard_focus_changed(old_sid, new_sid);
                 }
             }
         }
@@ -292,8 +293,19 @@ impl Gateway for Engine {
                                size: Size,
                                state_flags: surface_state::SurfaceState) {
         if let Some(id) = self.mediator.borrow().get_client_for_sid(sid) {
-            if let Some(package) = self.clients.get(&id) {
-                package.proxy.borrow().on_surface_reconfigured(sid, size, state_flags);
+            if let Some(client) = self.clients.get(&id) {
+                client.proxy.borrow().on_surface_reconfigured(sid, size, state_flags);
+            }
+        }
+    }
+
+    fn on_screenshot_done(&mut self) {
+        if let Some(id) = {
+            let mediator = self.mediator.borrow();
+            mediator.get_screenshooter()
+        } {
+            if let Some(client) = self.clients.get_mut(&id) {
+                client.proxy.borrow_mut().on_screenshot_done();
             }
         }
     }

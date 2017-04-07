@@ -139,14 +139,16 @@ impl Pixmap for Buffer {
 
 /// Represents memory shared with client.
 pub struct MappedMemory {
-    data: *const u8,
+    data: *mut u8,
+    size: usize,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 unsafe impl Send for MappedMemory {}
 
-/// `MappedMemory` is `Sync` as long as it does not provide means to change its internals.
+/// `MappedMemory` is `Sync` as long as its contents do not change. All modifying methods should be
+/// marked as `unsafe` and it is programmers responsibility to ensure they are used properly.
 unsafe impl Sync for MappedMemory {}
 
 // -------------------------------------------------------------------------------------------------
@@ -160,8 +162,23 @@ impl MappedMemory {
                          mman::MAP_SHARED,
                          fd,
                          0) {
-            Ok(memory) => Ok(MappedMemory { data: memory as *const u8 }),
+            Ok(memory) => Ok(MappedMemory { data: memory as *mut u8, size: size }),
             Err(err) => Err(errors::Illusion::General(format!("Failed to map memory! {:?}", err))),
+        }
+    }
+
+    /// Copies contents of given buffer to memory.
+    ///
+    /// Buffers size must be exactly the size of memory.
+    pub unsafe fn absorb(&mut self, buffer: &Buffer) -> Result<(), errors::Illusion> {
+        let buffer_size = buffer.as_slice().len();
+        if buffer_size == self.size {
+            std::ptr::copy_nonoverlapping(buffer.as_ptr(), self.data, self.size);
+            Ok(())
+        } else {
+            Err(errors::Illusion::General(format!("Sizes differ: memory map is {}, but buffer {}",
+                                                  self.size,
+                                                  buffer_size)))
         }
     }
 }
@@ -285,6 +302,24 @@ impl MemoryPool {
                     height: height,
                     stride: stride,
                 }
+            }
+        }
+    }
+
+    /// Consumes the pool and if
+    /// - it was created from mapped memory
+    /// - there are no other references to this memory left
+    /// returns the mapped memory.
+    pub fn take_mapped_memory(self) -> Option<MappedMemory> {
+        match Arc::try_unwrap(self.memory) {
+            Ok(kind) => match kind {
+                MemoryKind::Mapped(mapped_memory) => {
+                    Some(mapped_memory)
+                }
+                MemoryKind::Buffered(_) => None,
+            },
+            Err(_) => {
+                None
             }
         }
     }

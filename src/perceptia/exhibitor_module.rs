@@ -48,7 +48,9 @@ impl Module for ExhibitorModule {
              perceptron::CURSOR_SURFACE_CHANGE,
              perceptron::SURFACE_READY,
              perceptron::SURFACE_DESTROYED,
-             perceptron::KEYBOARD_FOCUS_CHANGED]
+             perceptron::KEYBOARD_FOCUS_CHANGED,
+             perceptron::TAKE_SCREENSHOT,
+        ]
     }
 
     fn execute(&mut self, package: &Self::T) {
@@ -74,6 +76,7 @@ impl Module for ExhibitorModule {
                 }
                 Perceptron::Suspend => exhibitor.on_suspend(),
                 Perceptron::WakeUp => exhibitor.on_wakeup(),
+                Perceptron::TakeScreenshot(id) => exhibitor.take_screenshot(id),
                 _ => {}
             }
         }

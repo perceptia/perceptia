@@ -10,46 +10,69 @@
 /// and suitable warning is logged in such case.
 #[macro_export]
 macro_rules! define_ref {
-    ($name:ident, $ref_name:ident) => {
+    (struct $name:ident as $ref_name:ident) => {
         #[derive(Clone)]
         pub struct $ref_name (std::rc::Rc<std::cell::RefCell<$name>>);
 
+        #[allow(dead_code)]
         impl $ref_name {
-            pub fn new(obj: $name) -> Self {
-                $ref_name(std::rc::Rc::new(std::cell::RefCell::new(obj)))
-            }
+            define_ref!(_impl_ $name as $ref_name);
+        }
+    };
 
-            pub fn borrow(&self) -> std::cell::Ref<$name> {
-                match self.0.try_borrow() {
-                    Ok(obj) => {
-                        obj
-                    }
-                    Err(err) => {
-                        let msg = format!("Failed to borrow {}! \
-                                          This is fail of programs internal logic. {:?}",
-                                          stringify!($name), err);
-                        log_fatal!("{}", msg);
-                        panic!(msg);
-                    }
+    (trait $name:ident as $ref_name:ident) => {
+        #[derive(Clone)]
+        pub struct $ref_name<T> (std::rc::Rc<std::cell::RefCell<T>>) where T: $name;
+
+        #[allow(dead_code)]
+        impl<T> $ref_name<T> where T: $name {
+            define_ref!(_impl_ T as $ref_name);
+        }
+    };
+
+    (_impl_ $name:ident as $ref_name:ident) => {
+        pub fn new(obj: $name) -> Self {
+            $ref_name(std::rc::Rc::new(std::cell::RefCell::new(obj)))
+        }
+
+        pub fn transform(obj: std::rc::Rc<std::cell::RefCell<$name>>) -> Self {
+            $ref_name(obj)
+        }
+
+        pub fn borrow(&self) -> std::cell::Ref<$name> {
+            match self.0.try_borrow() {
+                Ok(obj) => {
+                    obj
                 }
-            }
-
-            pub fn borrow_mut(&self) -> std::cell::RefMut<$name> {
-                match self.0.try_borrow_mut() {
-                    Ok(obj) => {
-                        obj
-                    }
-                    Err(err) => {
-                        let msg = format!("Failed to borrow {} mutably! \
-                                          This is fail of programs internal logic. {:?}",
-                                          stringify!($name), err);
-                        log_fatal!("{}", msg);
-                        panic!(msg);
-                    }
+                Err(err) => {
+                    let msg = format!("Failed to borrow {}! \
+                                      This is fail of programs internal logic. {:?}",
+                                      stringify!($name), err);
+                    log_fatal!("{}", msg);
+                    panic!(msg);
                 }
             }
         }
-    }
+
+        pub fn borrow_mut(&self) -> std::cell::RefMut<$name> {
+            match self.0.try_borrow_mut() {
+                Ok(obj) => {
+                    obj
+                }
+                Err(err) => {
+                    let msg = format!("Failed to borrow {} mutably! \
+                                      This is fail of programs internal logic. {:?}",
+                                      stringify!($name), err);
+                    log_fatal!("{}", msg);
+                    panic!(msg);
+                }
+            }
+        }
+
+        pub fn downgrade(&self) -> std::rc::Weak<std::cell::RefCell<$name>> {
+            std::rc::Rc::downgrade(&self.0)
+        }
+    };
 }
 
 // -------------------------------------------------------------------------------------------------

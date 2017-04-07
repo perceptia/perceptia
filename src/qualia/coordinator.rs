@@ -20,9 +20,53 @@ use surface::{show_reason, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 
+/// Bundles memory pool with its views.
+///
+/// Used to remove views when pool is removed.
+struct MemoryPoolBundle {
+    pub pool: MemoryPool,
+    pub views: std::collections::HashSet<MemoryViewId>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl MemoryPoolBundle {
+    /// Constructs new `MemoryPoolBundle`.
+    pub fn new(pool: MemoryPool) -> Self {
+        MemoryPoolBundle {
+            pool: pool,
+            views: std::collections::HashSet::new(),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Bundles memory view with its pool.
+///
+/// Used to unrelate view from pool when view is removed.
+struct MemoryViewBundle {
+    pub view: MemoryView,
+    pub pool: MemoryPoolId,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl MemoryViewBundle {
+    /// Constructs new `MemoryViewBundle`.
+    pub fn new(view: MemoryView, pool: MemoryPoolId) -> Self {
+        MemoryViewBundle {
+            view: view,
+            pool: pool,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 type SurfaceMap = std::collections::HashMap<SurfaceId, Surface>;
-type MemoryViewMap = std::collections::HashMap<MemoryViewId, MemoryView>;
-type MemoryPoolMap = std::collections::HashMap<MemoryPoolId, MemoryPool>;
+type MemoryViewMap = std::collections::HashMap<MemoryViewId, MemoryViewBundle>;
+type MemoryPoolMap = std::collections::HashMap<MemoryPoolId, MemoryPoolBundle>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -83,6 +127,9 @@ struct InnerCoordinator {
     /// Storage for all memory pools.
     memory_pools: MemoryPoolMap,
 
+    /// Screenshot buffer to be shared between threads.
+    screenshot_buffer: Option<Buffer>,
+
     /// Counter of surface IDs
     last_surface_id: SurfaceId,
 
@@ -109,6 +156,7 @@ impl InnerCoordinator {
             surfaces: SurfaceMap::new(),
             memory_views: MemoryViewMap::new(),
             memory_pools: MemoryPoolMap::new(),
+            screenshot_buffer: None,
             last_surface_id: SurfaceId::invalid(),
             last_memory_view_id: MemoryViewId::initial(),
             last_memory_pool_id: MemoryPoolId::initial(),
@@ -181,28 +229,44 @@ impl InnerCoordinator {
     /// Creates new memory pool from mapped memory. Returns ID of newly created pool.
     pub fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
         let mpid = self.generate_next_memory_pool_id();
-        self.memory_pools.insert(mpid, MemoryPool::new_from_mapped_memory(memory));
+        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_mapped_memory(memory));
+        self.memory_pools.insert(mpid, bundle);
         mpid
     }
 
     /// Creates new memory pool from buffer. Returns ID of newly created pool.
     pub fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
         let mpid = self.generate_next_memory_pool_id();
-        self.memory_pools.insert(mpid, MemoryPool::new_from_buffer(buffer));
+        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_buffer(buffer));
+        self.memory_pools.insert(mpid, bundle);
         mpid
     }
 
     /// Schedules destruction of memory pool identified by given ID. The pool will be destructed
     /// when all its views go out of the scope.
-    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
-        self.memory_pools.remove(&mpid);
+    ///
+    /// If the poll was created from mapped memory, returns this memory.
+    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory> {
+        match self.memory_pools.remove(&mpid) {
+            Some(memory_pool) => {
+                // Remove all related views
+                for mvid in memory_pool.views.iter() {
+                    self.memory_views.remove(mvid);
+                }
+
+                // Remove the pool
+                memory_pool.pool.take_mapped_memory()
+            }
+            None => None,
+        }
     }
 
     /// Replaces mapped memory with other memory reusing its ID. This method may be used when
     /// client requests memory map resize.
     pub fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
         self.memory_pools.remove(&mpid);
-        self.memory_pools.insert(mpid, MemoryPool::new_from_mapped_memory(memory));
+        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_mapped_memory(memory));
+        self.memory_pools.insert(mpid, bundle);
     }
 
     /// Creates new memory view from mapped memory.
@@ -214,9 +278,10 @@ impl InnerCoordinator {
                               stride: usize)
                               -> Option<MemoryViewId> {
         let id = self.generate_next_memory_view_id();
-        if let Some(memory_pool) = self.memory_pools.get(&mpid) {
-            let memory_view = memory_pool.get_memory_view(offset, width, height, stride);
-            self.memory_views.insert(id, memory_view);
+        if let Some(mut memory_pool) = self.memory_pools.get_mut(&mpid) {
+            let memory_view = memory_pool.pool.get_memory_view(offset, width, height, stride);
+            self.memory_views.insert(id, MemoryViewBundle::new(memory_view, mpid));
+            memory_pool.views.insert(id);
             Some(id)
         } else {
             log_error!("No memory pool with ID {:?}", mpid);
@@ -226,7 +291,11 @@ impl InnerCoordinator {
 
     /// Destroys memory view.
     pub fn destroy_memory_view(&mut self, mvid: MemoryViewId) {
-        self.memory_views.remove(&mvid);
+        if let Some(view) = self.memory_views.remove(&mvid) {
+            if let Some(mut memory_pool) = self.memory_pools.get_mut(&view.pool) {
+                memory_pool.views.remove(&mvid);
+            }
+        }
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -251,7 +320,7 @@ impl InnerCoordinator {
     pub fn attach(&mut self, mvid: MemoryViewId, sid: SurfaceId) {
         let surface = try_get_surface!(self, sid);
         let view = try_get_memory_view!(self, mvid);
-        surface.attach(view.clone());
+        surface.attach(view.view.clone());
     }
 
     /// Sets pending buffer of given surface as current. Corrects sizes adds `drawable` show reason.
@@ -344,6 +413,22 @@ impl InnerCoordinator {
             self.signaler.emit(perceptron::SURFACE_RECONFIGURED,
                                Perceptron::SurfaceReconfigured(sid));
         }
+    }
+
+    /// Makes screenshot request.
+    pub fn take_screenshot(&mut self, id: i32) {
+        self.signaler.emit(perceptron::TAKE_SCREENSHOT, Perceptron::TakeScreenshot(id));
+    }
+
+    /// Sets given buffer as results of screenshot.
+    pub fn set_screenshot_buffer(&mut self, buffer: Buffer) {
+        self.screenshot_buffer = Some(buffer);
+        self.signaler.emit(perceptron::SCREENSHOT_DONE, Perceptron::ScreenshotDone);
+    }
+
+    /// Returns and forgets screenshot buffer.
+    pub fn take_screenshot_buffer(&mut self) -> Option<Buffer> {
+        self.screenshot_buffer.take()
     }
 }
 
@@ -443,7 +528,7 @@ impl Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) {
+    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory> {
         let mut mine = self.inner.lock().unwrap();
         mine.destroy_memory_pool(mpid)
     }
@@ -549,6 +634,24 @@ impl Coordinator {
     pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
         mine.set_surface_as_cursor(sid);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn take_screenshot(&mut self, id: i32) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.take_screenshot(id);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn set_screenshot_buffer(&mut self, buffer: Buffer) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_screenshot_buffer(buffer);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    pub fn take_screenshot_buffer(&mut self) -> Option<Buffer> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.take_screenshot_buffer()
     }
 }
 

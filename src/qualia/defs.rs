@@ -477,6 +477,7 @@ impl Axis {
 /// Set of informations about output.
 #[derive(Clone, Debug)]
 pub struct OutputInfo {
+    pub id: i32,
     pub area: Area,
     pub physical_size: Size,
     pub refresh_rate: usize,
@@ -488,13 +489,15 @@ pub struct OutputInfo {
 
 impl OutputInfo {
     /// Constructs new `OutputInfo`.
-    pub fn new(area: Area,
+    pub fn new(id: i32,
+               area: Area,
                physical_size: Size,
                refresh_rate: usize,
                make: String,
                model: String)
                -> Self {
         OutputInfo {
+            id: id,
             area: area,
             physical_size: physical_size,
             refresh_rate: refresh_rate,

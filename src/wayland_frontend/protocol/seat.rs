@@ -3,7 +3,9 @@
 
 //! Implementations of Wayland `wl_seat` and `wl_keyboard` objects.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_seat;
 use skylane_protocols::server::wayland::wl_pointer;
@@ -24,13 +26,13 @@ struct Seat {
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_seat::NAME, wl_seat::VERSION, Box::new(Seat::new_object))
+    Global::new(wl_seat::NAME, wl_seat::VERSION, Rc::new(Seat::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Seat {
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
+    fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             // TODO: Add more capabilities
             let proxy = proxy_ref.borrow();
@@ -42,7 +44,7 @@ impl Seat {
         Seat { proxy: proxy_ref }
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_seat::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }
@@ -51,43 +53,43 @@ impl Seat {
 
 impl wl_seat::Interface for Seat {
     fn get_pointer(&mut self,
-                   _this_object_id: wl::common::ObjectId,
-                   _socket: &mut wl::server::ClientSocket,
-                   new_pointer_id: wl::common::ObjectId)
-                   -> wl::server::Task {
-        wl::server::Task::Create {
+                   _this_object_id: ObjectId,
+                   _bundle: &mut Bundle,
+                   new_pointer_id: ObjectId)
+                   -> Task {
+        Task::Create {
             id: new_pointer_id,
             object: Pointer::new_object(new_pointer_id, self.proxy.clone()),
         }
     }
 
     fn get_keyboard(&mut self,
-                    _this_object_id: wl::common::ObjectId,
-                    _socket: &mut wl::server::ClientSocket,
-                    new_keyboard_id: wl::common::ObjectId)
-                    -> wl::server::Task {
-        wl::server::Task::Create {
+                    _this_object_id: ObjectId,
+                    _bundle: &mut Bundle,
+                    new_keyboard_id: ObjectId)
+                    -> Task {
+        Task::Create {
             id: new_keyboard_id,
             object: Keyboard::new_object(new_keyboard_id, self.proxy.clone()),
         }
     }
 
     fn get_touch(&mut self,
-                 _this_object_id: wl::common::ObjectId,
-                 _socket: &mut wl::server::ClientSocket,
-                 new_touch_id: wl::common::ObjectId)
-                 -> wl::server::Task {
-        wl::server::Task::Create {
+                 _this_object_id: ObjectId,
+                 _bundle: &mut Bundle,
+                 new_touch_id: ObjectId)
+                 -> Task {
+        Task::Create {
             id: new_touch_id,
             object: Touch::new_object(new_touch_id, self.proxy.clone()),
         }
     }
 
     fn release(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
-        wl::server::Task::Destroy { id: this_object_id }
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
+        Task::Destroy { id: this_object_id }
     }
 }
 
@@ -101,12 +103,12 @@ struct Pointer {
 // -------------------------------------------------------------------------------------------------
 
 impl Pointer {
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
+    fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         proxy_ref.borrow_mut().add_pointer_oid(oid);
         Pointer { proxy: proxy_ref }
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_pointer::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }
@@ -115,23 +117,23 @@ impl Pointer {
 
 impl wl_pointer::Interface for Pointer {
     fn set_cursor(&mut self,
-                  _this_object_id: wl::common::ObjectId,
-                  _socket: &mut wl::server::ClientSocket,
+                  _this_object_id: ObjectId,
+                  _bundle: &mut Bundle,
                   _serial: u32,
-                  surface_oid: wl::common::ObjectId,
+                  surface_oid: ObjectId,
                   hotspot_x: i32,
                   hotspot_y: i32)
-                  -> wl::server::Task {
+                  -> Task {
         self.proxy.borrow_mut().set_as_cursor(surface_oid, hotspot_x as isize, hotspot_y as isize);
-        wl::server::Task::None
+        Task::None
     }
 
     fn release(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
         self.proxy.borrow_mut().remove_pointer_oid(this_object_id);
-        wl::server::Task::Destroy { id: this_object_id }
+        Task::Destroy { id: this_object_id }
     }
 }
 
@@ -145,7 +147,7 @@ struct Keyboard {
 // -------------------------------------------------------------------------------------------------
 
 impl Keyboard {
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
+    fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             let mut proxy = proxy_ref.borrow_mut();
             let socket = proxy.get_socket();
@@ -157,7 +159,7 @@ impl Keyboard {
         Keyboard { proxy: proxy_ref }
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_keyboard::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }
@@ -166,11 +168,11 @@ impl Keyboard {
 
 impl wl_keyboard::Interface for Keyboard {
     fn release(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
         self.proxy.borrow_mut().remove_keyboard_oid(this_object_id);
-        wl::server::Task::Destroy { id: this_object_id }
+        Task::Destroy { id: this_object_id }
     }
 }
 
@@ -189,7 +191,7 @@ impl Touch {
         Touch { proxy: proxy_ref }
     }
 
-    fn new_object(_oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_touch::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }
@@ -198,10 +200,10 @@ impl Touch {
 
 impl wl_touch::Interface for Touch {
     fn release(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
-        wl::server::Task::Destroy { id: this_object_id }
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
+        Task::Destroy { id: this_object_id }
     }
 }
 

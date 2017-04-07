@@ -5,7 +5,10 @@
 
 // TODO: Consider if it would be simpler to have all objects in one handler.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server as wl;
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_display;
 use skylane_protocols::server::wayland::wl_shm;
@@ -23,21 +26,21 @@ use facade::Facade;
 /// Wayland `wl_shm` object.
 #[allow(dead_code)]
 struct Shm {
-    oid: wl::common::ObjectId,
+    oid: ObjectId,
     proxy: ProxyRef,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 pub fn get_global() -> Global {
-    Global::new(wl_shm::NAME, wl_shm::VERSION, Box::new(Shm::new_object))
+    Global::new(wl_shm::NAME, wl_shm::VERSION, Rc::new(Shm::new_object))
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Shm {
     /// Creates new `Shm` and posts supprted formats.
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Self {
+    fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             let mut socket = proxy_ref.borrow().get_socket();
             send!(wl_shm::format(&mut socket, oid, wl_shm::format::XRGB8888));
@@ -50,7 +53,7 @@ impl Shm {
         }
     }
 
-    fn new_object(oid: wl::common::ObjectId, proxy_ref: ProxyRef) -> Box<wl::server::Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_shm::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }
@@ -60,25 +63,25 @@ impl Shm {
 #[allow(unused_variables)]
 impl wl_shm::Interface for Shm {
     fn create_pool(&mut self,
-                   this_object_id: wl::common::ObjectId,
-                   socket: &mut wl::server::ClientSocket,
-                   new_pool_id: wl::common::ObjectId,
+                   this_object_id: ObjectId,
+                   bundle: &mut Bundle,
+                   new_pool_id: ObjectId,
                    fd: i32,
                    size: i32)
-                   -> wl::server::Task {
+                   -> Task {
         match MappedMemory::new(fd, size as usize) {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
                 let mpid = proxy.create_memory_pool(memory);
                 let pool = ShmPool::new_object(self.proxy.clone(), mpid, fd, size as usize);
-                wl::server::Task::Create {
+                Task::Create {
                     id: new_pool_id,
                     object: pool,
                 }
             }
             Err(err) => {
                 log_error!("Failed to map memory! {:?}", err);
-                wl::server::Task::None
+                Task::None
             }
         }
     }
@@ -110,7 +113,7 @@ impl ShmPool {
                   mpid: MemoryPoolId,
                   fd: i32,
                   size: usize)
-                  -> Box<wl::server::Object> {
+                  -> Box<Object> {
         Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy_ref, mpid, fd, size)))
     }
 }
@@ -120,15 +123,15 @@ impl ShmPool {
 #[allow(unused_variables)]
 impl wl_shm_pool::Interface for ShmPool {
     fn create_buffer(&mut self,
-                     this_object_id: wl::common::ObjectId,
-                     socket: &mut wl::server::ClientSocket,
-                     new_buffer_id: wl::common::ObjectId,
+                     this_object_id: ObjectId,
+                     bundle: &mut Bundle,
+                     new_buffer_id: ObjectId,
                      offset: i32,
                      width: i32,
                      height: i32,
                      stride: i32,
                      format: u32)
-                     -> wl::server::Task {
+                     -> Task {
         let mut proxy = self.proxy.borrow_mut();
         if let Some(mvid) = proxy.create_memory_view(self.mpid,
                                                      new_buffer_id,
@@ -137,32 +140,32 @@ impl wl_shm_pool::Interface for ShmPool {
                                                      height as usize,
                                                      stride as usize) {
             let buffer = ShmBuffer::new_object(self.proxy.clone(), mvid);
-            wl::server::Task::Create {
+            Task::Create {
                 id: new_buffer_id,
                 object: buffer,
             }
         } else {
-            wl::server::Task::None
+            Task::None
         }
     }
 
     fn destroy(&mut self,
-               this_object_id: wl::common::ObjectId,
-               socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
+               this_object_id: ObjectId,
+               bundle: &mut Bundle)
+               -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.destroy_memory_pool(self.mpid);
         send!(wl_display::delete_id(&mut proxy.get_socket(),
-                                    wl::common::DISPLAY_ID,
+                                    wl::DISPLAY_ID,
                                     this_object_id.get_value()));
-        wl::server::Task::Destroy { id: this_object_id }
+        Task::Destroy { id: this_object_id }
     }
 
     fn resize(&mut self,
-              this_object_id: wl::common::ObjectId,
-              socket: &mut wl::server::ClientSocket,
+              this_object_id: ObjectId,
+              bundle: &mut Bundle,
               size: i32)
-              -> wl::server::Task {
+              -> Task {
         match MappedMemory::new(self.fd, size as usize) {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
@@ -173,7 +176,7 @@ impl wl_shm_pool::Interface for ShmPool {
                 log_error!("Failed to map memory! {:?}", err);
             }
         }
-        wl::server::Task::None
+        Task::None
     }
 }
 
@@ -196,7 +199,7 @@ impl ShmBuffer {
         }
     }
 
-    fn new_object(proxy_ref: ProxyRef, mvid: MemoryViewId) -> Box<wl::server::Object> {
+    fn new_object(proxy_ref: ProxyRef, mvid: MemoryViewId) -> Box<Object> {
         Box::new(Handler::<_, wl_buffer::Dispatcher>::new(Self::new(proxy_ref, mvid)))
     }
 }
@@ -206,12 +209,12 @@ impl ShmBuffer {
 #[allow(unused_variables)]
 impl wl_buffer::Interface for ShmBuffer {
     fn destroy(&mut self,
-               this_object_id: wl::common::ObjectId,
-               socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
+               this_object_id: ObjectId,
+               bundle: &mut Bundle)
+               -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.destroy_memory_view(self.mvid);
-        wl::server::Task::Destroy { id: this_object_id }
+        Task::Destroy { id: this_object_id }
     }
 }
 

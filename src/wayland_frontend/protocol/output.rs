@@ -3,7 +3,9 @@
 
 //! Implementations of Wayland `wl_output` object.
 
-use skylane as wl;
+use std::rc::Rc;
+
+use skylane::server::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::server::Handler;
 use skylane_protocols::server::wayland::wl_output;
 
@@ -11,6 +13,7 @@ use qualia::OutputInfo;
 
 use global::Global;
 use proxy::ProxyRef;
+use facade::Facade;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -22,15 +25,15 @@ struct Output {}
 pub fn get_global(info: OutputInfo) -> Global {
     Global::new(wl_output::NAME,
                 wl_output::VERSION,
-                Box::new(move |oid, proxy| Output::new_object(oid, proxy, info.clone())))
+                Rc::new(move |oid, proxy| Output::new_object(oid, proxy, info.clone())))
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Output {
-    fn new(oid: wl::common::ObjectId, proxy_ref: ProxyRef, info: OutputInfo) -> Self {
+    fn new(oid: ObjectId, proxy_ref: ProxyRef, info: OutputInfo) -> Self {
         {
-            let proxy = proxy_ref.borrow();
+            let mut proxy = proxy_ref.borrow_mut();
             let socket = proxy.get_socket();
             send!(wl_output::geometry(&socket,
                                       oid,
@@ -52,15 +55,17 @@ impl Output {
 
             send!(wl_output::scale(&socket, oid, 1));
             send!(wl_output::done(&socket, oid));
+
+            proxy.relate_output_oid_with_id(oid, info.id);
         }
 
         Output {}
     }
 
-    fn new_object(oid: wl::common::ObjectId,
+    fn new_object(oid: ObjectId,
                   proxy_ref: ProxyRef,
                   info: OutputInfo)
-                  -> Box<wl::server::Object> {
+                  -> Box<Object> {
         Box::new(Handler::<_, wl_output::Dispatcher>::new(Self::new(oid, proxy_ref, info)))
     }
 }
@@ -69,10 +74,10 @@ impl Output {
 
 impl wl_output::Interface for Output {
     fn release(&mut self,
-               this_object_id: wl::common::ObjectId,
-               _socket: &mut wl::server::ClientSocket)
-               -> wl::server::Task {
-        wl::server::Task::Destroy { id: this_object_id }
+               this_object_id: ObjectId,
+               _bundle: &mut Bundle)
+               -> Task {
+        Task::Destroy { id: this_object_id }
     }
 }
 

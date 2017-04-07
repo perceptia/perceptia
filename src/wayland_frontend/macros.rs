@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 /// This macro executes passed expression and in case of error logs warning about failing to send
-/// data. It is indended to use when posting `skylane` events to clients.
+/// data. It is intended to use when posting `skylane` events to clients.
 #[macro_export]
 macro_rules! send {
     {$command:expr} => {

@@ -11,7 +11,8 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use qualia::{Coordinator, DrmBundle, Illusion, Area, OutputInfo, Position, Size, SurfaceContext};
+use qualia::{Buffer, Coordinator, DrmBundle, Illusion, SurfaceContext};
+use qualia::{Area, OutputInfo, Position, Size};
 use renderer_gl::{egl_tools, RendererGl};
 
 use gbm_tools::GbmBucket;
@@ -123,13 +124,18 @@ impl Output {
 
 // Public methods
 impl Output {
-    /// Draw passed scene using renderer.
+    /// Draws passed scene using renderer.
     pub fn draw(&mut self,
                 surfaces: &Vec<SurfaceContext>,
                 pointer: SurfaceContext,
                 coordinator: &Coordinator)
                 -> Result<(), Illusion> {
         self.renderer.draw(surfaces, pointer, coordinator)
+    }
+
+    /// Takes screenshot. Returns `Buffer` containing image data.
+    pub fn take_screenshot(&self) -> Result<Buffer, Illusion> {
+        self.renderer.take_screenshot()
     }
 }
 
@@ -155,7 +161,8 @@ impl Output {
 
     /// Get info about output.
     pub fn get_info(&self) -> OutputInfo {
-        OutputInfo::new(self.get_area(),
+        OutputInfo::new(self.id,
+                        self.get_area(),
                         self.physical_size,
                         60, // TODO: make output aware of its refresh rate.
                         self.get_name(),

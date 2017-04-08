@@ -86,6 +86,33 @@ pub trait ServiceConstructor: Send + Sync {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Context for creation of `Service`.
+pub struct ServiceInfo {
+    name: String,
+    constructor: Box<ServiceConstructor>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ServiceInfo {
+    /// Constructs new `ServiceInfo`.
+    pub fn new(name: String, constructor: Box<ServiceConstructor>) -> Self {
+        ServiceInfo {
+            name: name,
+            constructor: constructor,
+        }
+    }
+
+    /// Consume `ServiceInfo` to start custom event loop in new thread.
+    pub fn start(self) -> std::io::Result<std::thread::JoinHandle<()>> {
+        std::thread::Builder::new()
+            .name(self.name.clone())
+            .spawn(move || self.constructor.construct().run())
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Context for creation of `EventLoop`.
 pub struct EventLoopInfo<P, C>
     where P: Clone + Send + 'static,
@@ -103,7 +130,7 @@ impl<P, C> EventLoopInfo<P, C>
     where P: Clone + Send + std::fmt::Display,
           C: Clone + Send + Sync
 {
-    /// `EventLoop` constructor.
+    /// Constructs new `EventLoopInfo`.
     pub fn new(name: String, signaler: signaler::Signaler<P>, context: C) -> Self {
         EventLoopInfo {
             name: name,
@@ -120,19 +147,10 @@ impl<P, C> EventLoopInfo<P, C>
     }
 
     /// Consume `EventLoopInfo` to start event loop in new thread.
-    pub fn start_event_loop(self) -> std::io::Result<std::thread::JoinHandle<()>> {
+    pub fn start(self) -> std::io::Result<std::thread::JoinHandle<()>> {
         std::thread::Builder::new()
             .name(self.name.clone())
             .spawn(move || EventLoop::new(self).run())
-    }
-
-    /// Consume `EventLoopInfo` to start custom event loop in new thread.
-    pub fn start_service(self,
-                         constructor: Box<ServiceConstructor>)
-                         -> std::io::Result<std::thread::JoinHandle<()>> {
-        std::thread::Builder::new()
-            .name(self.name.clone())
-            .spawn(move || constructor.construct().run())
     }
 }
 

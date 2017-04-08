@@ -39,7 +39,7 @@ pub struct Engine {
     output_infos: Vec<OutputInfo>,
     coordinator: Coordinator,
     settings: Settings,
-    dispatcher: dharma::Dispatcher,
+    dispatcher: dharma::LocalDispatcher,
     keyboard_state: KeyboardState,
 }
 
@@ -57,12 +57,12 @@ impl Engine {
             output_infos: Vec::new(),
             coordinator: coordinator,
             settings: settings,
-            dispatcher: dharma::Dispatcher::new(),
+            dispatcher: dharma::LocalDispatcher::new(),
             keyboard_state: KeyboardState::new(&xkb_keymap.keymap),
         }
     }
 
-    /// Starts `Engine`: adds display socket to `Dispatcher`.
+    /// Starts `Engine`: adds display socket to `LocalDispatcher`.
     pub fn start(&mut self, sender: dharma::Sender<Perceptron>) {
         let handler = Box::new(DisplayEventHandler::new(self.display.clone(), sender));
         self.dispatcher.add_source(handler, dharma::event_kind::READ);

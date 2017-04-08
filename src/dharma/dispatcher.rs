@@ -1,8 +1,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! `Dispatcher` provides functionality to implement main program loop by waiting for system events
+//! This module provides functionality to implement main program loop by waiting for system events
 //! using `epoll` mechanism.
+//!
+//! Source of events is represented by `EventHandler`s, while whole loop by `Dispatcher`s.
+//! `LocalDispatcher` can be used for single-thread programs when `EventHandler` do not implement
+//! `Send` while `Dispatcher` is meant for multi-threaded programs. `DispatcherController` and
+//! `LocalDispatcherController` are used to control `Dispatcher` and `LocalDispatcher`
+//! respectively.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -90,7 +96,7 @@ pub type EventHandlerId = u64;
 /// `EventHandler` is responsible for processing events. `EventHandler::process_event` will be
 /// called when handlers file descriptor becomes readable in thread where `Dispatcher::start` was
 /// called.
-pub trait EventHandler: Send {
+pub trait EventHandler {
     /// Returns file descriptor.
     fn get_fd(&self) -> RawFd;
 
@@ -105,24 +111,18 @@ pub trait EventHandler: Send {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper alias.
-type EventHandlerMap = HashMap<EventHandlerId, Box<EventHandler>>;
-
-// -------------------------------------------------------------------------------------------------
-
-/// Helper structure guarded by mutex.
-struct LocalDispatcher {
+/// Helper structure for storing part of state of `Dispatcher` and `LocalDispatcher` which must be
+/// guarded by mutex.
+struct InnerState<E> where E: EventHandler + ?Sized {
     epfd: RawFd,
     last_id: EventHandlerId,
-    handlers: EventHandlerMap,
+    handlers: HashMap<EventHandlerId, Box<E>>,
 }
 
-// -------------------------------------------------------------------------------------------------
-
-impl LocalDispatcher {
-    /// `LocalDispatcher` constructor.
+impl<E> InnerState<E> where E: EventHandler + ?Sized {
+    /// Constructs new `InnerState`.
     pub fn new() -> Self {
-        LocalDispatcher {
+        InnerState {
             epfd: epoll::epoll_create().expect("Failed to create epoll!"),
             last_id: 0,
             handlers: HashMap::new(),
@@ -133,7 +133,7 @@ impl LocalDispatcher {
     ///
     /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
     pub fn add_source(&mut self,
-                      mut source: Box<EventHandler>,
+                      mut source: Box<E>,
                       event_kind: EventKind)
                       -> EventHandlerId {
         self.last_id += 1;
@@ -150,7 +150,7 @@ impl LocalDispatcher {
     }
 
     /// Deletes `EventHandler`.
-    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler>> {
+    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<E>> {
         let result = self.handlers.remove(&id);
         if let Some(ref handler) = result {
             let mut event = epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0);
@@ -159,67 +159,107 @@ impl LocalDispatcher {
         }
         result
     }
+
+    /// Passes execution of event to handler.
+    ///
+    /// If file descriptor hung up the corresponding handler is removed.
+    pub fn process(&mut self, id: EventHandlerId, event_kind: EventKind) {
+        if let Some(handler) = self.handlers.get_mut(&id) {
+            handler.process_event(event_kind);
+        }
+        if event_kind == event_kind::HANGUP {
+            self.delete_source(id);
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure constituting shared memory between `Dispatcher`s from different threads.
-struct InnerDispatcher {
-    inner: Mutex<LocalDispatcher>,
+/// Helper structure for storing state of `Dispatcher` and `LocalDispatcher`.
+struct State<E> where E: EventHandler + ?Sized {
+    state: Mutex<InnerState<E>>,
     run: AtomicBool,
 }
 
-// -------------------------------------------------------------------------------------------------
-
-/// Structure representing dispatcher of system events.
-#[derive(Clone)]
-pub struct Dispatcher {
-    state: Arc<InnerDispatcher>,
+impl<E> State<E> where E: EventHandler + ?Sized {
+    pub fn new() -> Self {
+        State {
+            state: Mutex::new(InnerState::new()),
+            run: AtomicBool::new(false),
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl Dispatcher {
-    /// `Dispatcher` constructor.
+/// Helper method for waiting for events and then processing them.
+fn do_wait_and_process<E>(state: &mut Arc<State<E>>,
+                          epfd: RawFd,
+                          timeout: isize)
+    where E: EventHandler + ?Sized
+{
+    // We will process epoll events one by one.
+    let mut events: [epoll::EpollEvent; 1] =
+        [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
+
+    let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], timeout);
+
+    match wait_result {
+        Ok(ready) => {
+            if ready > 0 {
+                let id = &events[0].data();
+                let event_kind = EventKind::from(events[0].events());
+                state.state.lock().unwrap().process(*id, event_kind);
+            }
+        }
+        Err(err) => {
+            if let nix::Error::Sys(errno) = err {
+                if errno != nix::Errno::EINTR {
+                    panic!("Error occurred during processing epoll events! ({:?})", err);
+                }
+            }
+        }
+    }
+}
+
+/// Helper method for precessing events in infinite loop.
+fn do_run<E>(state: &mut Arc<State<E>>, epfd: RawFd) where E: EventHandler + ?Sized {
+    // Initial setup
+    system::block_signals();
+    state.run.store(true, Ordering::Relaxed);
+
+    // Main loop
+    loop {
+        do_wait_and_process(state, epfd, WAIT_INFINITELY);
+
+        if !state.run.load(Ordering::Relaxed) {
+            break;
+        }
+    }
+}
+
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure representing dispatcher of system events for use in one-threaded program.
+pub struct LocalDispatcher {
+    state: Arc<State<EventHandler>>,
+}
+
+impl LocalDispatcher {
+    /// Constructor new `LocalDispatcher`.
     pub fn new() -> Self {
-        Dispatcher {
-            state: Arc::new(InnerDispatcher {
-                                inner: Mutex::new(LocalDispatcher::new()),
-                                run: AtomicBool::new(false),
-                            }),
+        LocalDispatcher {
+            state: Arc::new(State::new()),
         }
     }
 
-    /// Adds `EventHandler`.
+    /// Return local controller.
     ///
-    /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
-    pub fn add_source(&mut self,
-                      source: Box<EventHandler>,
-                      event_kind: EventKind)
-                      -> EventHandlerId {
-        let mut mine = self.state.inner.lock().expect("Locking Dispatcher inner state");
-        mine.add_source(source, event_kind)
-    }
-
-    /// Deletes `EventHandler`.
-    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler>> {
-        let mut mine = self.state.inner.lock().expect("Locking Dispatcher inner state");
-        mine.delete_source(id)
-    }
-
-    /// Starts processing events in current thread.
-    pub fn start(&mut self) {
-        // Initial setup
-        system::block_signals();
-        let epfd = self.get_epfd();
-
-        // Main loop
-        loop {
-            self.do_wait_and_process(epfd, WAIT_INFINITELY);
-
-            if !self.state.run.load(Ordering::Relaxed) {
-                break;
-            }
+    /// This controller does not implement `Send`.
+    pub fn get_controller(&self) -> LocalDispatcherController {
+        LocalDispatcherController {
+            state: self.state.clone(),
         }
     }
 
@@ -230,57 +270,112 @@ impl Dispatcher {
         } else {
             WAIT_INFINITELY
         };
-        let epfd = self.get_epfd();
-        self.do_wait_and_process(epfd, timeout);
+        let epfd = self.state.state.lock().unwrap().epfd;
+        do_wait_and_process(&mut self.state, epfd, timeout);
     }
 
-    /// Stops `Dispatcher`s loop.
+    /// Adds `EventHandler`.
+    ///
+    /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
+    pub fn add_source(&mut self,
+                      source: Box<EventHandler>,
+                      event_kind: EventKind)
+                      -> EventHandlerId {
+        self.state.state.lock().unwrap().add_source(source, event_kind)
+    }
+
+    /// Deletes `EventHandler`.
+    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler>> {
+        self.state.state.lock().unwrap().delete_source(id)
+    }
+
+    /// Starts processing events in current thread.
+    pub fn run(&mut self) {
+        let epfd = self.state.state.lock().unwrap().epfd;
+        do_run(&mut self.state, epfd);
+    }
+
+    /// Stops processing of events.
     pub fn stop(&self) {
-        self.state.run.store(false, Ordering::Relaxed);
+        self.state.run.store(false, Ordering::Relaxed)
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Private methods.
+/// Structure representing dispatcher of system events for use in multi-threaded program.
+///
+/// This version of `Dispatcher` does not accept `EventHandler`s which are not `Send`.
+pub struct Dispatcher {
+    state: Arc<State<EventHandler + Send>>,
+}
+
 impl Dispatcher {
-    /// Helper method for waiting for events and then processing them.
-    fn do_wait_and_process(&mut self, epfd: RawFd, timeout: isize) {
-        // We will process epoll events one by one.
-        let mut events: [epoll::EpollEvent; 1] =
-            [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
-
-        let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], timeout);
-
-        match wait_result {
-            Ok(ready) => {
-                if ready > 0 {
-                    let mut mine = self.state.inner.lock().unwrap();
-                    let id = &events[0].data();
-                    let event_kind = EventKind::from(events[0].events());
-                    if let Some(handler) = mine.handlers.get_mut(&events[0].data()) {
-                        handler.process_event(event_kind);
-                    }
-                    if event_kind == event_kind::HANGUP {
-                        mine.delete_source(*id);
-                    }
-                }
-            }
-            Err(err) => {
-                if let nix::Error::Sys(errno) = err {
-                    if errno != nix::Errno::EINTR {
-                        panic!("Error occurred during processing epoll events! ({:?})", err);
-                    }
-                }
-            }
+    /// Constructs new `Dispatcher`.
+    pub fn new() -> Self {
+        Dispatcher {
+            state: Arc::new(State::new()),
         }
     }
 
-    /// Helper method for getting epoll file descriptor.
-    fn get_epfd(&self) -> RawFd {
-        let mine = self.state.inner.lock().unwrap();
-        self.state.run.store(true, Ordering::Relaxed);
-        mine.epfd
+    /// Return controller.
+    pub fn get_controller(&self) -> DispatcherController {
+        DispatcherController {
+            state: self.state.clone(),
+        }
+    }
+
+    /// Starts processing events in current thread.
+    pub fn run(&mut self) {
+        let epfd = self.state.state.lock().unwrap().epfd;
+        do_run(&mut self.state, epfd);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Helps controlling `LocalDispatcher`.
+///
+/// Does not allow to add or delete handlers. In one-threaded program this would be unsafe.
+#[derive(Clone)]
+pub struct LocalDispatcherController {
+    state: Arc<State<EventHandler>>,
+}
+
+impl LocalDispatcherController {
+    /// Stops processing events.
+    pub fn stop(&self) {
+        self.state.run.store(false, Ordering::Relaxed)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Helps controlling `Dispatcher`.
+#[derive(Clone)]
+pub struct DispatcherController {
+    state: Arc<State<EventHandler + Send>>,
+}
+
+impl DispatcherController {
+    /// Adds `EventHandler`.
+    ///
+    /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
+    pub fn add_source(&mut self,
+                      source: Box<EventHandler + Send>,
+                      event_kind: EventKind)
+                      -> EventHandlerId {
+        self.state.state.lock().unwrap().add_source(source, event_kind)
+    }
+
+    /// Deletes `EventHandler`.
+    pub fn delete_source(&mut self, id: EventHandlerId) -> Option<Box<EventHandler + Send>> {
+        self.state.state.lock().unwrap().delete_source(id)
+    }
+
+    /// Stops processing events.
+    pub fn stop(&self) {
+        self.state.run.store(false, Ordering::Relaxed)
     }
 }
 

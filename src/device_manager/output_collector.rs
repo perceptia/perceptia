@@ -13,7 +13,7 @@ use nix::fcntl;
 use nix::sys::stat;
 use libdrm::drm_mode;
 
-use dharma::{Dispatcher, Signaler, event_kind};
+use dharma::{DispatcherController, Signaler, event_kind};
 use qualia::{DrmBundle, Illusion, perceptron, Perceptron};
 
 use pageflip::PageFlipEventHandler;
@@ -23,7 +23,7 @@ use pageflip::PageFlipEventHandler;
 /// Output Collector manages output devices. When output if found or lost Collector notifies the
 /// rest of application about this event.
 pub struct OutputCollector {
-    dispatcher: Dispatcher,
+    dispatcher: DispatcherController,
     signaler: Signaler<Perceptron>,
 }
 
@@ -31,7 +31,7 @@ pub struct OutputCollector {
 
 impl OutputCollector {
     /// `OutputCollector` constructor.
-    pub fn new(dispatcher: Dispatcher, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(dispatcher: DispatcherController, signaler: Signaler<Perceptron>) -> Self {
         OutputCollector {
             dispatcher: dispatcher,
             signaler: signaler,

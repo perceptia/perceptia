@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{Dispatcher, EventHandler, EventKind, Signaler, SignalId};
+use dharma::{DispatcherController, EventHandler, EventKind, Signaler, SignalId};
 
 use config::Config;
 use settings::Settings;
@@ -21,7 +21,7 @@ pub struct Context {
     config: Config,
     settings: Settings,
     signaler: Signaler<Perceptron>,
-    dispatcher: Dispatcher,
+    dispatcher: DispatcherController,
     coordinator: Coordinator,
     input_manager: InputManager,
 }
@@ -33,7 +33,7 @@ impl Context {
     pub fn new(config: Config,
                settings: Settings,
                signaler: Signaler<Perceptron>,
-               dispatcher: Dispatcher,
+               dispatcher: DispatcherController,
                coordinator: Coordinator,
                input_manager: InputManager)
                -> Self {
@@ -74,8 +74,8 @@ impl Context {
         &mut self.signaler
     }
 
-    /// Get reference to `Dispatcher`.
-    pub fn get_dispatcher(&mut self) -> &mut Dispatcher {
+    /// Get reference to `DispatcherController`.
+    pub fn get_dispatcher(&mut self) -> &mut DispatcherController {
         &mut self.dispatcher
     }
 

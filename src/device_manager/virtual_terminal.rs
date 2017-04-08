@@ -12,7 +12,7 @@ use std::mem;
 use std::path::Path;
 use libc;
 
-use dharma::{Dispatcher, EventHandler, EventKind, Signaler, event_kind};
+use dharma::{DispatcherController, EventHandler, EventKind, Signaler, event_kind};
 
 use qualia::{Illusion, Perceptron, perceptron};
 
@@ -227,7 +227,7 @@ impl VirtualTerminal {
 
 /// Subscribes for terminal activation and deactivation events.
 fn subscribe(path: &Path,
-             mut dispatcher: Dispatcher,
+             mut dispatcher: DispatcherController,
              signaler: Signaler<Perceptron>,
              ro: &RestrictedOpener)
              -> Result<(), Illusion> {
@@ -259,7 +259,7 @@ fn subscribe(path: &Path,
 
 /// Sets up virtual terminal by subscribing messages about its activation and deactivation.
 pub fn setup(tty_num: u32,
-             dispatcher: Dispatcher,
+             dispatcher: DispatcherController,
              signaler: Signaler<Perceptron>,
              ro: &RestrictedOpener)
              -> Result<(), Illusion> {

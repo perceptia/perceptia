@@ -8,7 +8,7 @@
 use std::os::unix::io::{RawFd, AsRawFd};
 use nix::sys::{signal, signalfd};
 
-use dispatcher::{Dispatcher, EventHandler, EventKind};
+use dispatcher::{DispatcherController, EventHandler, EventKind};
 use signaler::Signaler;
 
 // -------------------------------------------------------------------------------------------------
@@ -44,7 +44,7 @@ pub struct SignalEventHandler<P>
     where P: Clone + Send + 'static
 {
     fd: signalfd::SignalFd,
-    dispatcher: Dispatcher,
+    dispatcher: DispatcherController,
     signaler: Signaler<P>,
 }
 
@@ -55,7 +55,7 @@ impl<P> SignalEventHandler<P>
 {
     /// `SignalEventHandler` constructor. Creates `SignalEventHandler` ready for handling `SIGINT`
     /// and `SIGTERM` signals.
-    pub fn new(dispatcher: Dispatcher, signaler: Signaler<P>) -> Self {
+    pub fn new(dispatcher: DispatcherController, signaler: Signaler<P>) -> Self {
         let mut mask = signal::SigSet::empty();
         mask.add(signal::SIGINT);
         mask.add(signal::SIGTERM);

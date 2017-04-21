@@ -10,23 +10,23 @@ extern crate dharma;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use dharma::{InitResult, Module};
+use dharma::{InitResult, Module, ModuleConstructor};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Helper structure constituting shared memory between mocks from different threads.
 struct InnerModuleMock {
-    times_initialized: i32,
-    times_executed: i32,
-    times_finalized: i32,
+    times_initialized: u32,
+    times_executed: u32,
+    times_finalized: u32,
     packages: Vec<String>,
 
-    expected_times_initialized: Option<i32>,
-    expected_times_executed: Option<i32>,
-    expected_times_finalized: Option<i32>,
+    expected_times_initialized: Option<u32>,
+    expected_times_executed: Option<u32>,
+    expected_times_finalized: Option<u32>,
     expected_packages: Option<Vec<String>>,
 
-    signals: Option<Vec<dharma::SignalId>>,
+    signals: Vec<dharma::SignalId>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -38,7 +38,7 @@ pub struct ContextStub {}
 // -------------------------------------------------------------------------------------------------
 
 impl ContextStub {
-    /// `ContextStub` constructor.
+    /// Constructs new `ContextStub`.
     pub fn new() -> Self {
         ContextStub {}
     }
@@ -54,8 +54,8 @@ pub struct ModuleMock {
 // -------------------------------------------------------------------------------------------------
 
 impl ModuleMock {
-    /// `ModuleMock` constructor.
-    pub fn new(signals: Option<Vec<dharma::SignalId>>) -> Self {
+    /// Constructs new `ModuleMock`.
+    pub fn new(signals: Vec<dharma::SignalId>) -> Self {
         ModuleMock {
             inner: Arc::new(Mutex::new(InnerModuleMock {
                                            times_initialized: 0,
@@ -72,13 +72,13 @@ impl ModuleMock {
     }
 
     /// Set expectation on number of invocations of `initialize`.
-    pub fn expect_initialized_times(&mut self, times: i32) {
+    pub fn expect_initialized_times(&mut self, times: u32) {
         let mut mine = self.inner.lock().unwrap();
         mine.expected_times_initialized = Some(times);
     }
 
     /// Set expectation on number of invocations of `execute`.
-    pub fn expect_executed_times(&mut self, times: i32) {
+    pub fn expect_executed_times(&mut self, times: u32) {
         let mut mine = self.inner.lock().unwrap();
         mine.expected_times_executed = Some(times);
     }
@@ -97,7 +97,7 @@ impl ModuleMock {
     }
 
     /// Set expectation on number of invocations of `finalize`.
-    pub fn expect_finalized_times(&mut self, times: i32) {
+    pub fn expect_finalized_times(&mut self, times: u32) {
         let mut mine = self.inner.lock().unwrap();
         mine.expected_times_finalized = Some(times);
     }
@@ -170,10 +170,7 @@ impl Module for ModuleMock {
     fn initialize(&mut self, context: &mut ContextStub) -> InitResult {
         let mut mine = self.inner.lock().unwrap();
         mine.times_initialized += 1;
-        match mine.signals {
-            Some(ref signals) => signals.to_vec(),
-            None => Vec::new(),
-        }
+        mine.signals.clone()
     }
 
     /// Handle `execute` invocation.
@@ -187,6 +184,44 @@ impl Module for ModuleMock {
     fn finalize(&mut self) {
         let mut mine = self.inner.lock().unwrap();
         mine.times_finalized += 1;
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Mock of `ModuleConstructor`.
+pub struct ModuleConstructorMock {
+    signals: Vec<dharma::SignalId>,
+    packages: Vec<String>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ModuleConstructorMock {
+    /// Constructs new `ModuleConstructorMock`.
+    pub fn new(signals: Vec<dharma::SignalId>, packages: Vec<String>) -> Self {
+        ModuleConstructorMock {
+            signals: signals,
+            packages: packages,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ModuleConstructor for ModuleConstructorMock {
+    type T = String;
+    type C = ContextStub;
+
+    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
+        let mut module = Box::new(ModuleMock::new(self.signals.clone()));
+        module.expect_initialized_times(1);
+        module.expect_executed_times(self.packages.len() as u32);
+        for package in self.packages.iter() {
+            module.expect_execute(package.clone());
+        }
+        module.expect_finalized_times(1);
+        module
     }
 }
 

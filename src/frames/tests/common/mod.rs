@@ -3,6 +3,8 @@
 
 //! Common functionality for unit tests.
 
+#![allow(dead_code)]
+
 pub mod layouts;
 pub mod frame_representation;
 pub mod assertions;

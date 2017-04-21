@@ -27,9 +27,9 @@ impl SurfaceAccessMock {
 
 impl SurfaceAccess for SurfaceAccessMock {
     fn reconfigure(&mut self,
-                   sid: SurfaceId,
-                   size: Size,
-                   state_flags: surface_state::SurfaceState) {
+                   _sid: SurfaceId,
+                   _size: Size,
+                   _state_flags: surface_state::SurfaceState) {
     }
 }
 

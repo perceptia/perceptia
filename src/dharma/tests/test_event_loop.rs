@@ -12,12 +12,8 @@ mod common;
 use std::thread;
 use std::time;
 
-use common::mocks::{ContextStub, ModuleMock};
-use dharma::{EventLoopInfo, Module, Signaler};
-
-// -------------------------------------------------------------------------------------------------
-
-type StringModule = Box<Module<T = String, C = ContextStub>>;
+use common::mocks::{ContextStub, ModuleConstructorMock};
+use dharma::{EventLoopInfo, Signaler};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -36,19 +32,12 @@ fn test_life_of_one_module() {
     let context = ContextStub::new();
     let mut info = EventLoopInfo::new("test".to_owned(), signaler.clone(), context);
 
-    // Prepare mock and set expectations
-    let module = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(None));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(0);
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let module = Box::new(ModuleConstructorMock::new(Vec::new(), Vec::new()));
 
     // Do test
     info.add_module(module);
-    let join_handle = info.start_event_loop().unwrap();
-    thread::sleep(time::Duration::from_millis(100));
+    let join_handle = info.start().unwrap();
+    thread::sleep(time::Duration::from_millis(D));
     signaler.terminate();
     assert!(join_handle.join().is_ok());
 }
@@ -60,21 +49,8 @@ fn test_life_of_one_module() {
 #[test]
 fn test_life_of_two_modules() {
     // Prepare mock and set expectations
-    let module1 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(None));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(0);
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
-
-    let module2 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(None));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(0);
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let module1 = Box::new(ModuleConstructorMock::new(Vec::new(), Vec::new()));
+    let module2 = Box::new(ModuleConstructorMock::new(Vec::new(), Vec::new()));
 
     // Prepare environment
     let mut signaler = Signaler::new();
@@ -84,8 +60,8 @@ fn test_life_of_two_modules() {
     // Do test
     info.add_module(module1);
     info.add_module(module2);
-    let join_handle = info.start_event_loop().unwrap();
-    thread::sleep(time::Duration::from_millis(100));
+    let join_handle = info.start().unwrap();
+    thread::sleep(time::Duration::from_millis(D));
     signaler.terminate();
     assert!(join_handle.join().is_ok());
 }
@@ -98,16 +74,9 @@ fn test_life_of_two_modules() {
 #[test]
 fn test_execution_of_one_module() {
     // Prepare mock and set expectations
-    let module = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(Some(vec![1, 2, 3])));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(3);
-        module.expect_execute("2".to_owned());
-        module.expect_execute("1".to_owned());
-        module.expect_execute("3".to_owned());
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let signals = vec![1, 2, 3];
+    let packages = vec!["2".to_owned(), "1".to_owned(), "3".to_owned()];
+    let module = Box::new(ModuleConstructorMock::new(signals, packages));
 
     // Prepare environment
     let mut signaler = Signaler::new();
@@ -116,7 +85,7 @@ fn test_execution_of_one_module() {
 
     // Do test
     info.add_module(module);
-    let join_handle = info.start_event_loop().unwrap();
+    let join_handle = info.start().unwrap();
     thread::sleep(time::Duration::from_millis(D));
     signaler.emit(2, "2".to_owned());
     signaler.emit(4, "4".to_owned());
@@ -135,27 +104,14 @@ fn test_execution_of_one_module() {
 #[test]
 fn test_execution_of_two_modules() {
     // Prepare mock and set expectations
-    let module1 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(Some(vec![1, 2])));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(3);
-        module.expect_execute("2".to_owned());
-        module.expect_execute("1".to_owned());
-        module.expect_execute("2".to_owned());
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let signals1 = vec![1, 2];
+    let packages1 = vec!["2".to_owned(), "1".to_owned(), "2".to_owned()];
+    let module1 = Box::new(ModuleConstructorMock::new(signals1, packages1));
 
-    let module2 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(Some(vec![2, 3])));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(3);
-        module.expect_execute("2".to_owned());
-        module.expect_execute("3".to_owned());
-        module.expect_execute("2".to_owned());
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let signals2 = vec![2, 3];
+    let packages2 = vec!["2".to_owned(), "3".to_owned(), "2".to_owned()];
+    let module2 = Box::new(ModuleConstructorMock::new(signals2, packages2));
+
     // Prepare environment
     let mut signaler = Signaler::new();
     let context = ContextStub::new();
@@ -164,8 +120,8 @@ fn test_execution_of_two_modules() {
     // Do test
     info.add_module(module1);
     info.add_module(module2);
-    let join_handle = info.start_event_loop().unwrap();
-    thread::sleep(time::Duration::from_millis(100));
+    let join_handle = info.start().unwrap();
+    thread::sleep(time::Duration::from_millis(D));
     signaler.emit(2, "2".to_owned());
     signaler.emit(4, "4".to_owned());
     signaler.emit(1, "1".to_owned());
@@ -184,27 +140,13 @@ fn test_execution_of_two_modules() {
 #[test]
 fn test_execution_of_two_modules_in_different_threads() {
     // Prepare mock and set expectations
-    let module1 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(Some(vec![1, 2])));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(3);
-        module.expect_execute("2".to_owned());
-        module.expect_execute("1".to_owned());
-        module.expect_execute("2".to_owned());
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let signals1 = vec![1, 2];
+    let packages1 = vec!["2".to_owned(), "1".to_owned(), "2".to_owned()];
+    let module1 = Box::new(ModuleConstructorMock::new(signals1, packages1));
 
-    let module2 = Box::new(move || {
-        let mut module = Box::new(ModuleMock::new(Some(vec![2, 3])));
-        module.expect_initialized_times(1);
-        module.expect_executed_times(3);
-        module.expect_execute("2".to_owned());
-        module.expect_execute("3".to_owned());
-        module.expect_execute("2".to_owned());
-        module.expect_finalized_times(1);
-        module as StringModule
-    });
+    let signals2 = vec![2, 3];
+    let packages2 = vec!["2".to_owned(), "3".to_owned(), "2".to_owned()];
+    let module2 = Box::new(ModuleConstructorMock::new(signals2, packages2));
 
     // Prepare environment
     let mut signaler = Signaler::new();
@@ -215,9 +157,9 @@ fn test_execution_of_two_modules_in_different_threads() {
     // Do test
     info1.add_module(module1);
     info2.add_module(module2);
-    let join_handle1 = info1.start_event_loop().unwrap();
-    let join_handle2 = info2.start_event_loop().unwrap();
-    thread::sleep(time::Duration::from_millis(100));
+    let join_handle1 = info1.start().unwrap();
+    let join_handle2 = info2.start().unwrap();
+    thread::sleep(time::Duration::from_millis(D));
     signaler.emit(2, "2".to_owned());
     signaler.emit(4, "4".to_owned());
     signaler.emit(1, "1".to_owned());

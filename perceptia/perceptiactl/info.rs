@@ -170,13 +170,13 @@ fn print_egl_info(fd: io::RawFd) {
 
 fn print_devices() {
     let udev = device_manager::udev::Udev::new();
-    udev.iterate_event_devices(|devnode, device_kind, device| {
+    udev.iterate_input_devices(|devnode, device_kind, device| {
                                    println!("{:?}: ({:?})", device_kind, devnode);
                                    print_properties_and_attributes(&device);
                                    println!("");
                                });
 
-    udev.iterate_drm_devices(|devnode, device| {
+    udev.iterate_output_devices(|devnode, device| {
         println!("display: ({:?})", devnode);
         print_properties_and_attributes(&device);
 

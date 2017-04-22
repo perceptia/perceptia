@@ -6,7 +6,7 @@
 
 use std::os::unix::io::RawFd;
 
-use dharma::{EventHandler, EventKind};
+use dharma::{EventHandler, EventHandlerId, EventKind};
 use graphics::egl_tools::HwImage;
 use graphics::attributes::{EglAttributes, DmabufAttributes};
 
@@ -51,7 +51,11 @@ pub trait EventHandling {
     /// Adds new event handler.
     fn add_event_handler(&mut self,
                          event_handler: Box<EventHandler + Send>,
-                         event_kind: EventKind);
+                         event_kind: EventKind)
+                         -> EventHandlerId;
+
+    /// Removes new event handler.
+    fn remove_event_handler(&mut self, EventHandlerId);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -66,8 +70,14 @@ pub trait StatePublishing {
     /// is not available to us.
     fn suspend(&mut self);
 
-    /// Send request to revoke application from suspension.
+    /// Sends request to revoke application from suspension.
     fn wakeup(&mut self);
+
+    /// Sends notification about changing of state of input devices.
+    fn input_devices_changed(&mut self);
+
+    /// Sends notification about changing of state of output devices.
+    fn output_devices_changed(&mut self);
 
     /// Notifies application about event that requires screen to be refreshed.
     /// TODO: Rename `notify` to `refresh`.

@@ -12,6 +12,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 libc = "0.2.18"
 nix = "0.8.0"
+libudev-sys = "0.1.3"
 libudev = "0.2.0"
 drm-rs = "0.1.2"
 egl = "0.2.6"

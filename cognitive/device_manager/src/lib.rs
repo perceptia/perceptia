@@ -6,6 +6,7 @@
 #[macro_use]
 extern crate nix;
 extern crate libc;
+extern crate libudev_sys;
 extern crate libudev;
 extern crate egl;
 extern crate gbm_rs as libgbm;
@@ -24,13 +25,16 @@ extern crate cognitive_inputs as inputs;
 mod ipc;
 mod device_access;
 mod input_gateway;
-mod evdev_driver;
 mod drivers;
+mod evdev_driver;
 mod pageflip;
 mod device_monitor;
 
 pub mod udev;
 pub use udev::Udev;
+
+mod input_collector;
+pub use input_collector::InputCollector;
 
 mod output_collector;
 pub use output_collector::OutputCollector;

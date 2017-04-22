@@ -13,13 +13,13 @@ use device_manager::DeviceManager;
 
 // -------------------------------------------------------------------------------------------------
 
-pub struct DeviceManagerModule<'a> {
-    manager: DeviceManager<'a, Coordinator>,
+pub struct DeviceManagerModule {
+    manager: DeviceManager<Coordinator>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<'a> DeviceManagerModule<'a> {
+impl DeviceManagerModule {
     /// `DeviceManagerModule` constructor.
     pub fn new(context: &mut Context) -> Self {
         let coordinator = context.get_coordinator().clone();
@@ -44,12 +44,17 @@ impl<'a> DeviceManagerModule<'a> {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<'a> Module for DeviceManagerModule<'a> {
+impl Module for DeviceManagerModule {
     type T = Perceptron;
     type C = Context;
 
     fn get_signals(&self) -> Vec<SignalId> {
-        vec![perceptron::SUSPEND, perceptron::WAKEUP]
+        vec![
+            perceptron::SUSPEND,
+            perceptron::WAKEUP,
+            perceptron::INPUTS_CHANGED,
+            perceptron::OUTPUTS_CHANGED,
+        ]
     }
 
     fn initialize(&mut self) {
@@ -61,6 +66,8 @@ impl<'a> Module for DeviceManagerModule<'a> {
         match *package {
             Perceptron::Suspend => self.manager.on_suspend(),
             Perceptron::WakeUp => self.manager.on_wakeup(),
+            Perceptron::InputsChanged => self.manager.on_inputs_changed(),
+            Perceptron::OutputsChanged => self.manager.on_outputs_changed(),
             _ => {}
         }
     }

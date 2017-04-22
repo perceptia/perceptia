@@ -10,7 +10,7 @@ use std::fmt;
 // -------------------------------------------------------------------------------------------------
 
 /// Enum describing kind of input device.
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DeviceKind {
     Keyboard,
     Mouse,

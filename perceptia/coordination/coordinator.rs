@@ -130,6 +130,16 @@ impl InnerCoordinator {
         self.signaler.emit(perceptron::WAKEUP, Perceptron::WakeUp);
     }
 
+    /// Sends notification about changing of state of input devices.
+    pub fn input_devices_changed(&mut self) {
+        self.signaler.emit(perceptron::INPUTS_CHANGED, Perceptron::InputsChanged);
+    }
+
+    /// Sends notification about changing of state of output devices.
+    pub fn output_devices_changed(&mut self) {
+        self.signaler.emit(perceptron::OUTPUTS_CHANGED, Perceptron::OutputsChanged);
+    }
+
     /// Notifies application about event that requires screen to be refreshed.
     pub fn notify(&mut self) {
         self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
@@ -171,8 +181,14 @@ impl InnerCoordinator {
     /// Adds new event handler.
     pub fn add_event_handler(&mut self,
                              event_handler: Box<dharma::EventHandler + Send>,
-                             event_kind: dharma::EventKind) {
-        self.dispatcher.add_source(event_handler, event_kind);
+                             event_kind: dharma::EventKind)
+                             -> dharma::EventHandlerId {
+        self.dispatcher.add_source(event_handler, event_kind)
+    }
+
+    /// Adds new event handler.
+    pub fn remove_event_handler(&mut self, id: dharma::EventHandlerId) {
+        self.dispatcher.delete_source(id);
     }
 
     /// Stores new workspace state and informs other parts of application it has changed.
@@ -468,9 +484,16 @@ impl EventHandling for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     fn add_event_handler(&mut self,
                          event_handler: Box<dharma::EventHandler + Send>,
-                         event_kind: dharma::EventKind) {
+                         event_kind: dharma::EventKind)
+                         -> dharma::EventHandlerId {
         let mut mine = self.inner.lock().unwrap();
-        mine.add_event_handler(event_handler, event_kind);
+        mine.add_event_handler(event_handler, event_kind)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn remove_event_handler(&mut self, id: dharma::EventHandlerId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.remove_event_handler(id);
     }
 }
 
@@ -493,6 +516,18 @@ impl StatePublishing for Coordinator {
     fn wakeup(&mut self) {
         let mut mine = self.inner.lock().unwrap();
         mine.wakeup();
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn input_devices_changed(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.input_devices_changed();
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn output_devices_changed(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.output_devices_changed();
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

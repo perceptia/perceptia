@@ -133,6 +133,8 @@ impl StatePublishing for CoordinatorMock {
     fn emit(&mut self, id: SignalId, package: Perceptron) {}
     fn suspend(&mut self) {}
     fn wakeup(&mut self) {}
+    fn input_devices_changed(&mut self) {}
+    fn output_devices_changed(&mut self) {}
     fn notify(&mut self) {}
     fn publish_output(&mut self, drm_bundle: DrmBundle) {}
     fn emit_vblank(&mut self, display_id: i32) {}

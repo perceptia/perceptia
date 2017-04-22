@@ -209,7 +209,7 @@ impl Default for Config {
                     // insert
                     BindingEntry::new(mode_name::INSERT,
                                       uinput_sys::KEY_ESC,
-                                      modifier::NONE,
+                                      modifier::LMTA,
                                       binding_functions::swap_mode_insert_to_normal),
                     // focus frame
                     BindingEntry::new(mode_name::INSERT,

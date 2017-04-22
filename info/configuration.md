@@ -29,3 +29,56 @@ Scripting language
 
 **Not yet implemented**.
 
+Default configuration
+=====================
+
+This section presents set of default settings. Reader should be familiar with
+[concepts.md](./concepts.md) (frame layouts, key modes, framing).
+
+Global bindings:
+
+ * `[meta]+[ctrl]+[esc]` - quit application
+
+Insert mode:
+
+ * `[meta]+[esc]` - swap to normal mode
+
+ * `[meta]+[_X_ arrow]` - focus frame in `_X_` direction from currently focused one
+
+ * `[meta]+[tab]` - circle history forward
+
+ * `[meta]+[shift]+[tab]` - circle history backward
+
+ * `[meta]+[_N_]` - focus workspace number `_N_`
+
+ * `[meta]+[shift]+[_X_ arrow]` - jump focused frame in `_X_` direction
+
+ * `[meta]+[shift]+[ctrl]+[_N_]` - jump focused frame to workspace number `_N_`
+
+ * `[meta]+[alt]+[_X_ arrow]` - dive focused frame in `_X_` direction
+
+ * `[meta]+[alt]+[shift]+[ctrl]+[_N_]` - dive focused frame to workspace number `_N_`
+
+ * `[meta]+[home]`, `[meta]+[end]` - exalt/ramify focused frame
+
+Normal mode:
+
+ * `[esc]` - clean the command
+
+ * `[i]`, `[space]` - swap to insert mode
+
+ * `[h]`, `[v]`, `[s]` - make layout of focused frame horizontal, vertical or stacked
+
+ * `[f]`, `[shift]+[f]`, `[j]`, `[d]` - indicate focus/swap/jump/dive action
+
+ * `[home]`, `[end]` - indicate begin/end directions
+
+ * `[_X_ arrow]` - indicate `_X_` direction
+
+ * `[page up]`, `[page down]` - indicate direction forward/backward in time
+
+For example `[f] [right arrow]` will focus surface on the right from focussed one.
+
+Built-ins:
+
+ * `[ctrl]+[alt]+[F_X_]` - switch to virtual terminal `_X_`

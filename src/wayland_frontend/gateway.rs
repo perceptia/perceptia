@@ -21,7 +21,10 @@ pub trait Gateway {
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds);
 
     /// Notifies that pointer was moved from above one surface above another.
-    fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position);
+    fn on_pointer_focus_changed(&self,
+                                old_sid: SurfaceId,
+                                new_sid: SurfaceId,
+                                position: Position);
 
     /// Notifies that pointer moved.
     fn on_pointer_relative_motion(&self,

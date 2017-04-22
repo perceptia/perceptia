@@ -270,7 +270,7 @@ impl Gateway for Engine {
             if let Some(client_id) = old_client_id {
                 if let Some(client) = self.clients.get(&client_id) {
                     client.proxy.borrow_mut().on_keyboard_focus_changed(old_sid,
-                                                                         SurfaceId::invalid());
+                                                                        SurfaceId::invalid());
                 }
             }
             if let Some(client_id) = new_client_id {

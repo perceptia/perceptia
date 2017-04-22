@@ -33,11 +33,7 @@ impl Display {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_display::Interface for Display {
-    fn sync(&mut self,
-            this_object_id: ObjectId,
-            bundle: &mut Bundle,
-            callback: ObjectId)
-            -> Task {
+    fn sync(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, callback: ObjectId) -> Task {
         let serial = bundle.get_socket().get_next_serial();
         send!(wl_callback::done(&bundle.get_socket(), callback, serial));
         send!(wl_display::delete_id(&bundle.get_socket(), this_object_id, callback.get_value()));

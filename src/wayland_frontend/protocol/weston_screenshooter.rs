@@ -32,9 +32,7 @@ pub fn get_global() -> Global {
 
 impl Screenshooter {
     fn new(proxy_ref: ProxyRef) -> Self {
-        Screenshooter {
-            proxy: proxy_ref,
-        }
+        Screenshooter { proxy: proxy_ref }
     }
 
     fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {

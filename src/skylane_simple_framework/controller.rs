@@ -27,7 +27,7 @@ use nix;
 
 use skylane::client as wl;
 use skylane_protocols::client::wayland::{wl_shm, wl_shm_pool};
-use skylane_protocols::client::weston_screenshooter::{weston_screenshooter};
+use skylane_protocols::client::weston_screenshooter::weston_screenshooter;
 
 use dharma;
 
@@ -55,7 +55,8 @@ impl Controller {
     pub fn new(connection_controller: wl::Controller,
                store: StoreRef,
                dispatcher: dharma::LocalDispatcherController,
-               proxy: Weak<RefCell<Proxy>>) -> Self {
+               proxy: Weak<RefCell<Proxy>>)
+               -> Self {
         Controller {
             connection_controller: connection_controller,
             store: store,
@@ -77,14 +78,15 @@ impl Controller {
         let size = stride * output.height;
         let output_oid = wl::ObjectId::new(output.id);
 
-        let (fd, path) = create_anonymous_file(Some(size), output.id)
-                         .expect("Create screenshot file");
+        let (fd, path) =
+            create_anonymous_file(Some(size), output.id).expect("Create screenshot file");
         let memory = nix::sys::mman::mmap(std::ptr::null_mut(),
                                           size,
                                           nix::sys::mman::PROT_READ | nix::sys::mman::PROT_WRITE,
                                           nix::sys::mman::MAP_SHARED,
                                           fd,
-                                          0).expect("Map memory shared for screenshot");
+                                          0)
+                .expect("Map memory shared for screenshot");
 
         // Create pool
         let pool_oid = self.connection_controller.get_next_available_client_object_id();
@@ -118,13 +120,13 @@ impl Controller {
                                           buffer_oid));
 
         store.screenshot = Some(ScreenshotStore {
-                fd: fd,
-                path: path,
-                memory: memory as *mut u8,
-                size: size,
-                width: output.width,
-                height: output.height,
-            });
+                                    fd: fd,
+                                    path: path,
+                                    memory: memory as *mut u8,
+                                    size: size,
+                                    width: output.width,
+                                    height: output.height,
+                                });
     }
 
     /// Stops the application.

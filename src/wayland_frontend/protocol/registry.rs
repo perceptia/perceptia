@@ -61,7 +61,8 @@ impl wl_registry::Interface for Registry {
                     Err(format!("Invalid version for global '{}': 0 is not valid version.",
                                 interface))
                 } else if global.version < version {
-                    Err(format!("Invalid version for global '{}': server has: {}, client wanted: {}.",
+                    Err(format!("Invalid version for global '{}': \
+                                server has: {}, client wanted: {}.",
                                 interface,
                                 global.version,
                                 version))
@@ -69,9 +70,7 @@ impl wl_registry::Interface for Registry {
                     Ok(global.clone())
                 }
             } else {
-                Err(format!("Requested for not registered global '{}' ({})",
-                            interface,
-                            name))
+                Err(format!("Requested for not registered global '{}' ({})", interface, name))
             }
         } {
             Ok(global) => {

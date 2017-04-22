@@ -41,10 +41,7 @@ impl Display {
         Box::new(Handler::<_, wl_display::Dispatcher>::new(Self::new(proxy)))
     }
 
-    pub fn synchronize(proxy_ref: ProxyRef,
-                       callback_id: ObjectId,
-                       action: Action)
-                       -> Box<Object> {
+    pub fn synchronize(proxy_ref: ProxyRef, callback_id: ObjectId, action: Action) -> Box<Object> {
         let proxy = proxy_ref.borrow_mut();
         let socket = proxy.get_socket();
         let callback_object = callback::Callback::new_object(proxy_ref.clone(), action);
@@ -67,11 +64,7 @@ impl wl_display::Interface for Display {
         Task::None
     }
 
-    fn delete_id(&mut self,
-                 _this_object_id: ObjectId,
-                 _bundle: &mut Bundle,
-                 id: u32)
-                 -> Task {
+    fn delete_id(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, id: u32) -> Task {
         Task::Destroy { id: ObjectId::new(id) }
     }
 }

@@ -62,10 +62,7 @@ impl Output {
         Output {}
     }
 
-    fn new_object(oid: ObjectId,
-                  proxy_ref: ProxyRef,
-                  info: OutputInfo)
-                  -> Box<Object> {
+    fn new_object(oid: ObjectId, proxy_ref: ProxyRef, info: OutputInfo) -> Box<Object> {
         Box::new(Handler::<_, wl_output::Dispatcher>::new(Self::new(oid, proxy_ref, info)))
     }
 }
@@ -73,10 +70,7 @@ impl Output {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_output::Interface for Output {
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 }

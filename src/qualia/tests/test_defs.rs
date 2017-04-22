@@ -75,8 +75,7 @@ fn should_correctly_cast_point_into_area() {
 
 /// Check if point casted into area is really in area.
 #[test]
-fn should_casted_be_inside_area()
-{
+fn should_casted_be_inside_area() {
     let area = Area::new(Position::new(10, 10), Size::new(10, 10));
     let positions: [Position; 5] = [
             Position::new(30, 30),

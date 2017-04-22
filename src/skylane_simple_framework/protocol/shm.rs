@@ -43,11 +43,7 @@ impl Shm {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_shm::Interface for Shm {
-    fn format(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle,
-              _format: u32)
-              -> Task {
+    fn format(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _format: u32) -> Task {
         Task::None
     }
 }
@@ -93,10 +89,7 @@ impl Buffer {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_buffer::Interface for Buffer {
-    fn release(&mut self,
-               _this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::None
     }
 }

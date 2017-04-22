@@ -49,8 +49,7 @@ impl Module for ExhibitorModule {
              perceptron::SURFACE_READY,
              perceptron::SURFACE_DESTROYED,
              perceptron::KEYBOARD_FOCUS_CHANGED,
-             perceptron::TAKE_SCREENSHOT,
-        ]
+             perceptron::TAKE_SCREENSHOT]
     }
 
     fn execute(&mut self, package: &Self::T) {

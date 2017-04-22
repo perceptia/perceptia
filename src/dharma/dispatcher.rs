@@ -113,13 +113,17 @@ pub trait EventHandler {
 
 /// Helper structure for storing part of state of `Dispatcher` and `LocalDispatcher` which must be
 /// guarded by mutex.
-struct InnerState<E> where E: EventHandler + ?Sized {
+struct InnerState<E>
+    where E: EventHandler + ?Sized
+{
     epfd: RawFd,
     last_id: EventHandlerId,
     handlers: HashMap<EventHandlerId, Box<E>>,
 }
 
-impl<E> InnerState<E> where E: EventHandler + ?Sized {
+impl<E> InnerState<E>
+    where E: EventHandler + ?Sized
+{
     /// Constructs new `InnerState`.
     pub fn new() -> Self {
         InnerState {
@@ -132,10 +136,7 @@ impl<E> InnerState<E> where E: EventHandler + ?Sized {
     /// Adds `EventHandler`.
     ///
     /// Returns ID assigned to the added `EventHandler` which can be used to later delete it.
-    pub fn add_source(&mut self,
-                      mut source: Box<E>,
-                      event_kind: EventKind)
-                      -> EventHandlerId {
+    pub fn add_source(&mut self, mut source: Box<E>, event_kind: EventKind) -> EventHandlerId {
         self.last_id += 1;
         let id = self.last_id;
         source.set_id(id);
@@ -176,12 +177,16 @@ impl<E> InnerState<E> where E: EventHandler + ?Sized {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper structure for storing state of `Dispatcher` and `LocalDispatcher`.
-struct State<E> where E: EventHandler + ?Sized {
+struct State<E>
+    where E: EventHandler + ?Sized
+{
     state: Mutex<InnerState<E>>,
     run: AtomicBool,
 }
 
-impl<E> State<E> where E: EventHandler + ?Sized {
+impl<E> State<E>
+    where E: EventHandler + ?Sized
+{
     pub fn new() -> Self {
         State {
             state: Mutex::new(InnerState::new()),
@@ -193,9 +198,7 @@ impl<E> State<E> where E: EventHandler + ?Sized {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper method for waiting for events and then processing them.
-fn do_wait_and_process<E>(state: &mut Arc<State<E>>,
-                          epfd: RawFd,
-                          timeout: isize)
+fn do_wait_and_process<E>(state: &mut Arc<State<E>>, epfd: RawFd, timeout: isize)
     where E: EventHandler + ?Sized
 {
     // We will process epoll events one by one.
@@ -223,7 +226,9 @@ fn do_wait_and_process<E>(state: &mut Arc<State<E>>,
 }
 
 /// Helper method for precessing events in infinite loop.
-fn do_run<E>(state: &mut Arc<State<E>>, epfd: RawFd) where E: EventHandler + ?Sized {
+fn do_run<E>(state: &mut Arc<State<E>>, epfd: RawFd)
+    where E: EventHandler + ?Sized
+{
     // Initial setup
     system::block_signals();
     state.run.store(true, Ordering::Relaxed);
@@ -249,18 +254,14 @@ pub struct LocalDispatcher {
 impl LocalDispatcher {
     /// Constructor new `LocalDispatcher`.
     pub fn new() -> Self {
-        LocalDispatcher {
-            state: Arc::new(State::new()),
-        }
+        LocalDispatcher { state: Arc::new(State::new()) }
     }
 
     /// Return local controller.
     ///
     /// This controller does not implement `Send`.
     pub fn get_controller(&self) -> LocalDispatcherController {
-        LocalDispatcherController {
-            state: self.state.clone(),
-        }
+        LocalDispatcherController { state: self.state.clone() }
     }
 
     /// Waits for events and processes first one.
@@ -313,16 +314,12 @@ pub struct Dispatcher {
 impl Dispatcher {
     /// Constructs new `Dispatcher`.
     pub fn new() -> Self {
-        Dispatcher {
-            state: Arc::new(State::new()),
-        }
+        Dispatcher { state: Arc::new(State::new()) }
     }
 
     /// Return controller.
     pub fn get_controller(&self) -> DispatcherController {
-        DispatcherController {
-            state: self.state.clone(),
-        }
+        DispatcherController { state: self.state.clone() }
     }
 
     /// Starts processing events in current thread.

@@ -28,8 +28,7 @@ use qualia::{Position, Size, SurfaceId};
 /// Spatial order should be preserved.
 #[test]
 fn test_poping_directed() {
-    let (mut r, _, _, _, _, _, _, _, mut h2, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (mut r, _, _, _, _, _, _, _, mut h2, _, _, _, _) = layouts::make_simple_frames_appending();
 
     r.pop_recursively(&mut h2);
 
@@ -74,11 +73,10 @@ fn test_poping_directed() {
 /// Test popping of stacked frame.
 ///
 /// Given frame should be popped as well as its parent.
-/// Frames in stacked should also be popped in spatial order. 
+/// Frames in stacked should also be popped in spatial order.
 #[test]
 fn test_poping_stacked() {
-    let (mut r, _, _, _, _, _, _, _, _, _, _, mut s2, _)
-      = layouts::make_simple_frames_appending();
+    let (mut r, _, _, _, _, _, _, _, _, _, _, mut s2, _) = layouts::make_simple_frames_appending();
 
     r.pop_recursively(&mut s2);
 
@@ -153,8 +151,7 @@ fn test_poping_stacked() {
 /// Check if leaf frame is correctly ramified.
 #[test]
 fn test_ramifing_leaf() {
-    let (r, v, h, s, _, _, mut v3, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, h, s, _, _, mut v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let geometry = Horizontal;
     let d = v3.ramify(geometry);
@@ -180,8 +177,7 @@ fn test_ramifing_leaf() {
 /// Check if non-leaf frame is correctly ramified.
 #[test]
 fn test_ramifing_nonleaf() {
-    let (r, mut v, h, s, _, _, _, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, mut v, h, s, _, _, _, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let geometry = Horizontal;
     let d = v.ramify(geometry);
@@ -300,8 +296,7 @@ fn should_not_deramify_with_many_leafs() {
 #[test]
 fn should_jumpin_before() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, v, h, s, v1, mut v2, v3, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, h, s, v1, mut v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let mut f = Frame::new_leaf(SurfaceId::new(66), Stacked);
     f.jumpin(Before, &mut v2, &mut sa);
@@ -338,8 +333,7 @@ fn should_jumpin_before() {
 #[test]
 fn should_jumpin_after() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, v, h, s, v1, mut v2, v3, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, h, s, v1, mut v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let mut f = Frame::new_leaf(SurfaceId::new(66), Stacked);
     f.jumpin(After, &mut v2, &mut sa);
@@ -376,8 +370,7 @@ fn should_jumpin_after() {
 #[test]
 fn should_jumpin_on() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, v, h, s, _, mut v2, _, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, h, s, _, mut v2, _, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let mut f = Frame::new_leaf(SurfaceId::new(66), Stacked);
     f.jumpin(On, &mut v2, &mut sa);
@@ -418,8 +411,8 @@ fn should_jumpin_on() {
 #[test]
 fn should_jump_after_on_the_same_level() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, _, fghi, mut ghi, _, _, _,  _, _, _, _, _, mut f, _, _, _)
-      = layouts::make_positioned_for_jumping();
+    let (r, _, fghi, mut ghi, _, _, _, _, _, _, _, _, mut f, _, _, _) =
+        layouts::make_positioned_for_jumping();
 
     f.jump(After, &mut ghi, &mut sa);
 
@@ -454,8 +447,8 @@ fn should_jump_after_on_the_same_level() {
 #[test]
 fn should_jump_before_on_the_same_level() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, w, mut fghi, _, mut abcde, _, _,  _, _, _, _, _, _, _, _, _)
-      = layouts::make_positioned_for_jumping();
+    let (r, w, mut fghi, _, mut abcde, _, _, _, _, _, _, _, _, _, _, _) =
+        layouts::make_positioned_for_jumping();
 
     fghi.jump(Before, &mut abcde, &mut sa);
 

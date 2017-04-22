@@ -44,8 +44,8 @@ fn test_prepend() {
 /// Check remove from begin, center and end works correctly.
 #[test]
 fn test_remove() {
-    let (r, _, _, _, mut v1, _, _, _, mut h2, _, _, _, mut s3)
-      = layouts::make_simple_frames_appending();
+    let (r, _, _, _, mut v1, _, _, _, mut h2, _, _, _, mut s3) =
+        layouts::make_simple_frames_appending();
 
     // Remove chosen frames and destroy them.
     v1.remove();
@@ -95,8 +95,8 @@ fn test_remove() {
 /// order should not change.
 #[test]
 fn test_pop() {
-    let (r, _, _, mut s, _, mut v2, _, _, _, _, _, _, mut s3)
-      = layouts::make_simple_frames_appending();
+    let (r, _, _, mut s, _, mut v2, _, _, _, _, _, _, mut s3) =
+        layouts::make_simple_frames_appending();
 
     // Perform pop
     s.pop();
@@ -147,8 +147,8 @@ fn test_pop() {
 /// Check if spaced order is correct when inserting frames at the begin, center and end.
 #[test]
 fn test_prejoin_adjoin() {
-    let (r, _, _, _, mut v1, mut v2, _, mut h1, mut h2, _, mut s1, mut s2, _)
-      = layouts::make_simple_frames_joining();
+    let (r, _, _, _, mut v1, mut v2, _, mut h1, mut h2, _, mut s1, mut s2, _) =
+        layouts::make_simple_frames_joining();
 
     // Pop some surfaces just to be able to use predefined timed representation
     v2.pop();
@@ -170,8 +170,7 @@ fn test_prejoin_adjoin() {
 /// Test forward iteration in time.
 #[test]
 fn test_iteration_forward_in_time() {
-    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let mut iter = v.time_iter();
     assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v1);
@@ -187,8 +186,7 @@ fn test_iteration_forward_in_time() {
 /// Test backward iteration in time.
 #[test]
 fn test_iteration_backward_in_time() {
-    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _)
-      = layouts::make_simple_frames_appending();
+    let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
 
     let mut iter = v.time_rev_iter();
     assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v3);

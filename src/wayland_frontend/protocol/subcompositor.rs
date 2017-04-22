@@ -46,10 +46,7 @@ impl Subcompositor {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_subcompositor::Interface for Subcompositor {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 
@@ -79,10 +76,7 @@ struct Subsurface {
 // -------------------------------------------------------------------------------------------------
 
 impl Subsurface {
-    fn new(surface_oid: ObjectId,
-           parent_surface_oid: ObjectId,
-           proxy_ref: ProxyRef)
-           -> Self {
+    fn new(surface_oid: ObjectId, parent_surface_oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             let proxy = proxy_ref.borrow_mut();
             proxy.relate(surface_oid, parent_surface_oid);
@@ -106,10 +100,7 @@ impl Subsurface {
 
 #[allow(unused_variables)]
 impl wl_subsurface::Interface for Subsurface {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let proxy = self.proxy.borrow_mut();
         proxy.unrelate(self.surface_oid);
         Task::Destroy { id: this_object_id }
@@ -142,17 +133,11 @@ impl wl_subsurface::Interface for Subsurface {
         Task::None
     }
 
-    fn set_sync(&mut self,
-                this_object_id: ObjectId,
-                bundle: &mut Bundle)
-                -> Task {
+    fn set_sync(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 
-    fn set_desync(&mut self,
-                  this_object_id: ObjectId,
-                  bundle: &mut Bundle)
-                  -> Task {
+    fn set_desync(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 }

@@ -93,10 +93,7 @@ impl wl_output::Interface for Output {
         Task::None
     }
 
-    fn done(&mut self,
-            this_object_id: ObjectId,
-            _bundle: &mut Bundle)
-            -> Task {
+    fn done(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         if self.width != 0 && self.height != 0 {
             let output = OutputInfo::new(self.x,
                                          self.y,
@@ -110,11 +107,7 @@ impl wl_output::Interface for Output {
         Task::None
     }
 
-    fn scale(&mut self,
-             _this_object_id: ObjectId,
-             _bundle: &mut Bundle,
-             _factor: i32)
-             -> Task {
+    fn scale(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _factor: i32) -> Task {
         // Ignore scale.
         Task::None
     }

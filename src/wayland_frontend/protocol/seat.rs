@@ -85,10 +85,7 @@ impl wl_seat::Interface for Seat {
         }
     }
 
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 }
@@ -128,10 +125,7 @@ impl wl_pointer::Interface for Pointer {
         Task::None
     }
 
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         self.proxy.borrow_mut().remove_pointer_oid(this_object_id);
         Task::Destroy { id: this_object_id }
     }
@@ -167,10 +161,7 @@ impl Keyboard {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_keyboard::Interface for Keyboard {
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         self.proxy.borrow_mut().remove_keyboard_oid(this_object_id);
         Task::Destroy { id: this_object_id }
     }
@@ -199,10 +190,7 @@ impl Touch {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_touch::Interface for Touch {
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 }

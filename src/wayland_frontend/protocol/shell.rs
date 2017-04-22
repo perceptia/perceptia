@@ -79,10 +79,7 @@ struct Surface {
 // -------------------------------------------------------------------------------------------------
 
 impl Surface {
-    fn new(_oid: ObjectId,
-           surface_oid: ObjectId,
-           proxy_ref: ProxyRef)
-           -> Self {
+    fn new(_oid: ObjectId, surface_oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         Surface {
             surface_oid: surface_oid,
             proxy: proxy_ref,
@@ -90,10 +87,7 @@ impl Surface {
         }
     }
 
-    fn new_object(oid: ObjectId,
-                  surface_oid: ObjectId,
-                  proxy_ref: ProxyRef)
-                  -> Box<Object> {
+    fn new_object(oid: ObjectId, surface_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
         let surface = Self::new(oid, surface_oid, proxy_ref);
         Box::new(Handler::<_, wl_shell_surface::Dispatcher>::new(surface))
     }
@@ -103,11 +97,7 @@ impl Surface {
 
 #[allow(unused_variables)]
 impl wl_shell_surface::Interface for Surface {
-    fn pong(&mut self,
-            this_object_id: ObjectId,
-            bundle: &mut Bundle,
-            serial: u32)
-            -> Task {
+    fn pong(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, serial: u32) -> Task {
         Task::None
     }
 
@@ -130,10 +120,7 @@ impl wl_shell_surface::Interface for Surface {
         Task::None
     }
 
-    fn set_toplevel(&mut self,
-                    this_object_id: ObjectId,
-                    bundle: &mut Bundle)
-                    -> Task {
+    fn set_toplevel(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
 
         // NOTE: Workaround for Qt. It first sets menus as toplevel and later as pop-up.
@@ -214,19 +201,11 @@ impl wl_shell_surface::Interface for Surface {
         Task::None
     }
 
-    fn set_title(&mut self,
-                 this_object_id: ObjectId,
-                 bundle: &mut Bundle,
-                 title: String)
-                 -> Task {
+    fn set_title(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, title: String) -> Task {
         Task::None
     }
 
-    fn set_class(&mut self,
-                 this_object_id: ObjectId,
-                 bundle: &mut Bundle,
-                 class: String)
-                 -> Task {
+    fn set_class(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, class: String) -> Task {
         Task::None
     }
 }

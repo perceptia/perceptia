@@ -109,11 +109,7 @@ impl ShmPool {
         }
     }
 
-    fn new_object(proxy_ref: ProxyRef,
-                  mpid: MemoryPoolId,
-                  fd: i32,
-                  size: usize)
-                  -> Box<Object> {
+    fn new_object(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: i32, size: usize) -> Box<Object> {
         Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy_ref, mpid, fd, size)))
     }
 }
@@ -149,10 +145,7 @@ impl wl_shm_pool::Interface for ShmPool {
         }
     }
 
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.destroy_memory_pool(self.mpid);
         send!(wl_display::delete_id(&mut proxy.get_socket(),
@@ -161,11 +154,7 @@ impl wl_shm_pool::Interface for ShmPool {
         Task::Destroy { id: this_object_id }
     }
 
-    fn resize(&mut self,
-              this_object_id: ObjectId,
-              bundle: &mut Bundle,
-              size: i32)
-              -> Task {
+    fn resize(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, size: i32) -> Task {
         match MappedMemory::new(self.fd, size as usize) {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
@@ -208,10 +197,7 @@ impl ShmBuffer {
 
 #[allow(unused_variables)]
 impl wl_buffer::Interface for ShmBuffer {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.destroy_memory_view(self.mvid);
         Task::Destroy { id: this_object_id }

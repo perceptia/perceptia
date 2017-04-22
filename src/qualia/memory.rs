@@ -162,7 +162,12 @@ impl MappedMemory {
                          mman::MAP_SHARED,
                          fd,
                          0) {
-            Ok(memory) => Ok(MappedMemory { data: memory as *mut u8, size: size }),
+            Ok(memory) => {
+                Ok(MappedMemory {
+                       data: memory as *mut u8,
+                       size: size,
+                   })
+            }
             Err(err) => Err(errors::Illusion::General(format!("Failed to map memory! {:?}", err))),
         }
     }
@@ -312,15 +317,13 @@ impl MemoryPool {
     /// returns the mapped memory.
     pub fn take_mapped_memory(self) -> Option<MappedMemory> {
         match Arc::try_unwrap(self.memory) {
-            Ok(kind) => match kind {
-                MemoryKind::Mapped(mapped_memory) => {
-                    Some(mapped_memory)
+            Ok(kind) => {
+                match kind {
+                    MemoryKind::Mapped(mapped_memory) => Some(mapped_memory),
+                    MemoryKind::Buffered(_) => None,
                 }
-                MemoryKind::Buffered(_) => None,
-            },
-            Err(_) => {
-                None
             }
+            Err(_) => None,
         }
     }
 }

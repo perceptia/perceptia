@@ -64,10 +64,8 @@ impl Pointer {
         }
 
         let default_csid = coordinator.create_surface();
-        let b = Buffer::new(DEFAULT_CURSOR_SIZE,
-                            DEFAULT_CURSOR_SIZE,
-                            4 * DEFAULT_CURSOR_SIZE,
-                            data);
+        let b =
+            Buffer::new(DEFAULT_CURSOR_SIZE, DEFAULT_CURSOR_SIZE, 4 * DEFAULT_CURSOR_SIZE, data);
         let bid = coordinator.create_pool_from_buffer(b);
         if let Some(mvid) = coordinator.create_memory_view(bid,
                                                            0,

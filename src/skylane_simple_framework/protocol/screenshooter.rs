@@ -32,11 +32,9 @@ pub struct Screenshooter {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Screenshooter{
+impl Screenshooter {
     fn new(proxy: ProxyRef) -> Self {
-        Screenshooter {
-            proxy: proxy,
-        }
+        Screenshooter { proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
@@ -47,10 +45,7 @@ impl Screenshooter{
 // -------------------------------------------------------------------------------------------------
 
 impl weston_screenshooter::Interface for Screenshooter {
-    fn done(&mut self,
-            _this_object_id: ObjectId,
-            _bundle: &mut Bundle)
-            -> Task {
+    fn done(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         self.proxy.borrow_mut().screenshot_done();
         Task::None
     }

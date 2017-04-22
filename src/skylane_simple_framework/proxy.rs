@@ -49,11 +49,9 @@ pub struct Proxy {
 
 impl Proxy {
     /// Constructs new `Proxy`.
-    pub fn new(store: StoreRef,
-               socket: wl::Socket)
-                -> Self {
+    pub fn new(store: StoreRef, socket: wl::Socket) -> Self {
         Proxy {
-            listener: Box::new(Dummy{}),
+            listener: Box::new(Dummy {}),
             socket: socket,
             globals: HashSet::new(),
             outputs: Vec::new(),

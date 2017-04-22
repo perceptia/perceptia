@@ -56,10 +56,7 @@ impl ZxdgShellV6 {
 
 #[allow(unused_variables)]
 impl zxdg_shell_v6::Interface for ZxdgShellV6 {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 
@@ -88,11 +85,7 @@ impl zxdg_shell_v6::Interface for ZxdgShellV6 {
         }
     }
 
-    fn pong(&mut self,
-            this_object_id: ObjectId,
-            bundle: &mut Bundle,
-            serial: u32)
-            -> Task {
+    fn pong(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, serial: u32) -> Task {
         Task::None
     }
 }
@@ -124,10 +117,7 @@ impl ZxdgPositionerV6 {
 
 #[allow(unused_variables)]
 impl zxdg_positioner_v6::Interface for ZxdgPositionerV6 {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.remove_positioner(this_object_id);
         Task::Destroy { id: this_object_id }
@@ -167,19 +157,11 @@ impl zxdg_positioner_v6::Interface for ZxdgPositionerV6 {
         Task::None
     }
 
-    fn set_anchor(&mut self,
-                  this_object_id: ObjectId,
-                  bundle: &mut Bundle,
-                  anchor: u32)
-                  -> Task {
+    fn set_anchor(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, anchor: u32) -> Task {
         Task::None
     }
 
-    fn set_gravity(&mut self,
-                   this_object_id: ObjectId,
-                   bundle: &mut Bundle,
-                   gravity: u32)
-                   -> Task {
+    fn set_gravity(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, gravity: u32) -> Task {
         Task::None
     }
 
@@ -219,10 +201,7 @@ struct ZxdgSurfaceV6 {
 // -------------------------------------------------------------------------------------------------
 
 impl ZxdgSurfaceV6 {
-    fn new(oid: ObjectId,
-           surface_oid: ObjectId,
-           proxy_ref: ProxyRef)
-           -> Self {
+    fn new(oid: ObjectId, surface_oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         ZxdgSurfaceV6 {
             oid: oid,
             surface_oid: surface_oid,
@@ -230,10 +209,7 @@ impl ZxdgSurfaceV6 {
         }
     }
 
-    fn new_object(oid: ObjectId,
-                  surface_oid: ObjectId,
-                  proxy: ProxyRef)
-                  -> Box<Object> {
+    fn new_object(oid: ObjectId, surface_oid: ObjectId, proxy: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, zxdg_surface_v6::Dispatcher>::new(Self::new(oid, surface_oid, proxy)))
     }
 }
@@ -242,10 +218,7 @@ impl ZxdgSurfaceV6 {
 
 #[allow(unused_variables)]
 impl zxdg_surface_v6::Interface for ZxdgSurfaceV6 {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.hide(self.surface_oid, show_reason::IN_SHELL);
         Task::Destroy { id: this_object_id }
@@ -360,10 +333,7 @@ impl ZxdgToplevelV6 {
 
 #[allow(unused_variables)]
 impl zxdg_toplevel_v6::Interface for ZxdgToplevelV6 {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 
@@ -375,11 +345,7 @@ impl zxdg_toplevel_v6::Interface for ZxdgToplevelV6 {
         Task::None
     }
 
-    fn set_title(&mut self,
-                 this_object_id: ObjectId,
-                 bundle: &mut Bundle,
-                 title: String)
-                 -> Task {
+    fn set_title(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, title: String) -> Task {
         Task::None
     }
 
@@ -439,17 +405,11 @@ impl zxdg_toplevel_v6::Interface for ZxdgToplevelV6 {
         Task::None
     }
 
-    fn set_maximized(&mut self,
-                     this_object_id: ObjectId,
-                     bundle: &mut Bundle)
-                     -> Task {
+    fn set_maximized(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 
-    fn unset_maximized(&mut self,
-                       this_object_id: ObjectId,
-                       bundle: &mut Bundle)
-                       -> Task {
+    fn unset_maximized(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 
@@ -461,17 +421,11 @@ impl zxdg_toplevel_v6::Interface for ZxdgToplevelV6 {
         Task::None
     }
 
-    fn unset_fullscreen(&mut self,
-                        this_object_id: ObjectId,
-                        bundle: &mut Bundle)
-                        -> Task {
+    fn unset_fullscreen(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 
-    fn set_minimized(&mut self,
-                     this_object_id: ObjectId,
-                     bundle: &mut Bundle)
-                     -> Task {
+    fn set_minimized(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         Task::None
     }
 }
@@ -521,10 +475,7 @@ impl ZxdgPopupV6 {
 
 #[allow(unused_variables)]
 impl zxdg_popup_v6::Interface for ZxdgPopupV6 {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let proxy = self.proxy.borrow();
         proxy.unrelate(self.surface_oid);
         Task::Destroy { id: this_object_id }

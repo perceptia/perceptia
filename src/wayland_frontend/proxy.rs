@@ -519,9 +519,7 @@ impl Gateway for Proxy {
         if let Some(info) = self.sid_to_surface_info_dictionary.get_mut(&sid) {
             if let Some(frame_oid) = info.frame_oid {
                 send!(wl_callback::done(&self.socket, frame_oid, milliseconds.get_value() as u32));
-                send!(wl_display::delete_id(&self.socket,
-                                            wl::DISPLAY_ID,
-                                            frame_oid.get_value()));
+                send!(wl_display::delete_id(&self.socket, wl::DISPLAY_ID, frame_oid.get_value()));
             }
             info.frame_oid = None;
 

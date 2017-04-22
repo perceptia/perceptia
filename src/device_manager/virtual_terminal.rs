@@ -139,10 +139,7 @@ struct VtMode {
 
 impl VtMode {
     /// Constructs new `VtMode`.
-    pub fn new(hang_on_writes: bool,
-               relsig: signal::Signal,
-               acqsig: signal::Signal)
-               -> Self {
+    pub fn new(hang_on_writes: bool, relsig: signal::Signal, acqsig: signal::Signal) -> Self {
         VtMode {
             mode: ioctl::PROCESS as libc::c_char,
             waitv: hang_on_writes as libc::c_char,

@@ -141,8 +141,7 @@ impl<P, C> EventLoopInfo<P, C>
     }
 
     /// Add module constructor.
-    pub fn add_module(&mut self,
-                      constructor: Box<ModuleConstructor<T = P, C = C>>) {
+    pub fn add_module(&mut self, constructor: Box<ModuleConstructor<T = P, C = C>>) {
         self.constructors.push(constructor);
     }
 

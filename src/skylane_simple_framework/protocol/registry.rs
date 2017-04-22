@@ -37,9 +37,7 @@ pub struct Registry {
 
 impl Registry {
     fn new(proxy: ProxyRef) -> Self {
-        Registry {
-            proxy: proxy,
-        }
+        Registry { proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
@@ -65,17 +63,26 @@ impl wl_registry::Interface for Registry {
         if interface == wl_output::NAME {
             send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
             let object = output::Output::new_object(self.proxy.clone());
-            Task::Create{ id: id, object: object }
+            Task::Create {
+                id: id,
+                object: object,
+            }
         } else if interface == wl_shm::NAME {
             proxy.set_shm_oid(id);
             send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
             let object = shm::Shm::new_object(self.proxy.clone());
-            Task::Create{ id: id, object: object }
+            Task::Create {
+                id: id,
+                object: object,
+            }
         } else if interface == weston_screenshooter::NAME {
             send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
             proxy.set_screenshooter_oid(id);
             let object = screenshooter::Screenshooter::new_object(self.proxy.clone());
-            Task::Create{ id: id, object: object }
+            Task::Create {
+                id: id,
+                object: object,
+            }
         } else {
             Task::None
         }

@@ -102,10 +102,7 @@ impl Surface {
 
 #[allow(unused_variables)]
 impl wl_surface::Interface for Surface {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let proxy = self.proxy.borrow();
         proxy.destroy_surface(self.sid);
         Task::Destroy { id: this_object_id }
@@ -134,11 +131,7 @@ impl wl_surface::Interface for Surface {
         Task::None
     }
 
-    fn frame(&mut self,
-             this_object_id: ObjectId,
-             bundle: &mut Bundle,
-             callback: ObjectId)
-             -> Task {
+    fn frame(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, callback: ObjectId) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.set_frame(self.sid, callback);
         Task::None
@@ -164,10 +157,7 @@ impl wl_surface::Interface for Surface {
         Task::None
     }
 
-    fn commit(&mut self,
-              this_object_id: ObjectId,
-              bundle: &mut Bundle)
-              -> Task {
+    fn commit(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let proxy = self.proxy.borrow_mut();
         proxy.commit(self.sid);
         Task::None
@@ -227,10 +217,7 @@ impl Region {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_region::Interface for Region {
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.undefine_region(this_object_id);
         Task::Destroy { id: this_object_id }

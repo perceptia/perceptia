@@ -50,7 +50,9 @@ impl Application {
     }
 
     /// Runs the application.
-    pub fn run<C>(&self, listener_contructor: C) where C: ListenerConstructor {
+    pub fn run<C>(&self, listener_contructor: C)
+        where C: ListenerConstructor
+    {
         // Initialize Wayland
         let mut socket = wl::Socket::connect_default().expect("Create default socket");
 
@@ -75,8 +77,7 @@ impl Application {
         proxy_ref.borrow_mut().set_listener(listener);
 
         // Setup dispatcher
-        let event_handler = DisplayEventHandler::new(connection,
-                                                     dispatcher.get_controller());
+        let event_handler = DisplayEventHandler::new(connection, dispatcher.get_controller());
         dispatcher.add_source(Box::new(event_handler), dharma::event_kind::READ);
 
         // Initiate communication

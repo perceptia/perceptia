@@ -51,9 +51,7 @@ struct Screenshooter {
 
 impl Screenshooter {
     pub fn new(controller: Controller) -> Self {
-        Screenshooter {
-            controller: controller,
-        }
+        Screenshooter { controller: controller }
     }
 }
 
@@ -84,11 +82,7 @@ impl Listener for Screenshooter {
         // TODO: Generate better file name and allow passing it from command line.
         let path = Path::new("screenshot.png");
 
-        match image::save_buffer(&path,
-                                 buffer,
-                                 width as u32,
-                                 height as u32,
-                                 image::RGBA(8)) {
+        match image::save_buffer(&path, buffer, width as u32, height as u32, image::RGBA(8)) {
             Ok(_) => println!("Screenshot written to {:?}", path),
             Err(_) => println!("Failed to write screenshot to {:?}", path),
         }

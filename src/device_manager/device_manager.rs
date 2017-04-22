@@ -67,7 +67,7 @@ impl<'a> DeviceManager<'a> {
         if let Err(err) = restricted_opener.initialize_ipc() {
             log_warn1!("Failed to initialize IPC ({:?}). \
                         This may cause problems with access to devices.",
-                        err);
+                       err);
         }
         Rc::new(RefCell::new(restricted_opener))
     }

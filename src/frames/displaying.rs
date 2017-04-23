@@ -24,7 +24,7 @@ impl Displaying for Frame {
     fn to_array(&self, listing: &SurfaceListing) -> Vec<SurfaceContext> {
         // FIXME: Do not allocate here.
         let mut result = Vec::new();
-        for frame in self.time_rev_iter() {
+        for frame in self.space_rev_iter() {
             if frame.get_sid().is_valid() {
                 if let Some(ref mut array) = listing.get_renderer_context(frame.get_sid()) {
                     for ref mut c in array.iter() {

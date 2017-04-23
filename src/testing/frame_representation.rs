@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use frames::{Frame, Parameters, Geometry};
-use qualia::SurfaceId;
+use qualia::{Area, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -19,6 +19,7 @@ pub struct FrameRepresentation {
 
 // -------------------------------------------------------------------------------------------------
 
+// Constructing
 impl FrameRepresentation {
     /// Creates representation of leaf `Frame`.
     pub fn new_leaf(sid: u64, geometry: Geometry) -> Self {
@@ -28,6 +29,46 @@ impl FrameRepresentation {
         }
     }
 
+    /// Creates representation of whole frame tree with display of given area and with given
+    /// workspaces.
+    pub fn single_display(area: Area, workspaces: Vec<FrameRepresentation>) -> Self {
+        FrameRepresentation {
+            params: Parameters::new_root(),
+            branches: vec![
+                FrameRepresentation {
+                    params: Parameters::new_display(area, String::default()),
+                    branches: workspaces,
+                },
+            ]
+        }
+    }
+
+    /// Creates representation of whole frame tree with single display of given area and single
+    /// workspaces with given geometry and branches.
+    pub fn single_workspace(area: Area,
+                            geometry: Geometry,
+                            branches: Vec<FrameRepresentation>) -> Self {
+        FrameRepresentation {
+            params: Parameters::new_root(),
+            branches: vec![
+                FrameRepresentation {
+                    params: Parameters::new_display(area, String::default()),
+                    branches: vec![
+                        FrameRepresentation {
+                            params: Parameters::new_workspace("1".to_owned(), geometry),
+                            branches: branches,
+                        }
+                    ],
+                },
+            ]
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// Validating
+impl FrameRepresentation {
     /// Validates `Frame`s parameters by comparing with its representation.
     pub fn assert_frame(&self, frame: &Frame) {
         assert_eq!(frame.get_sid(), self.params.sid, "wrong sid");

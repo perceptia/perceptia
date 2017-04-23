@@ -8,14 +8,16 @@
 extern crate frames;
 
 extern crate qualia;
+extern crate testing;
 
 mod common;
 
 use frames::Parameters;
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 
+use testing::frame_representation::FrameRepresentation;
+
 use common::{assertions, layouts};
-use common::frame_representation::FrameRepresentation;
 
 // -------------------------------------------------------------------------------------------------
 

@@ -6,7 +6,9 @@
 // -------------------------------------------------------------------------------------------------
 
 extern crate frames;
+
 extern crate qualia;
+extern crate testing;
 
 mod common;
 
@@ -46,8 +48,8 @@ fn test_find_buildable() {
 #[test]
 fn test_find_top() {
     let mut r = Frame::new_root();
-    let mut s1 = Frame::new_workspace("".to_string());
-    let mut s2 = Frame::new_workspace("".to_string());
+    let mut s1 = Frame::new_workspace("".to_string(), Stacked);
+    let mut s2 = Frame::new_workspace("".to_string(), Stacked);
     let mut c1 = Frame::new_container(Horizontal);
     let mut c2 = Frame::new_container(Vertical);
     let mut l = Frame::new_leaf(SurfaceId::new(1), Stacked);

@@ -6,7 +6,9 @@
 // -------------------------------------------------------------------------------------------------
 
 extern crate frames;
+
 extern crate qualia;
+extern crate testing;
 
 mod common;
 

@@ -4,6 +4,7 @@ members = [
         "src/dharma",
         "src/timber",
         "src/qualia",
+        "src/testing",
         "src/renderer_gl",
         "src/output",
         "src/frames",

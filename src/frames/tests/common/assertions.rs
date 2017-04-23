@@ -9,7 +9,7 @@
 use frames::{Frame, Parameters};
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 
-use common::frame_representation::FrameRepresentation;
+use testing::frame_representation::FrameRepresentation;
 
 use qualia::{Position, Size};
 

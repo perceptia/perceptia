@@ -205,6 +205,7 @@ dependencies = [
  "frames 0.0.1",
  "output 0.0.1",
  "qualia 0.0.1",
+ "testing 0.0.1",
  "timber 0.0.1",
 ]
 
@@ -213,6 +214,7 @@ name = "frames"
 version = "0.0.1"
 dependencies = [
  "qualia 0.0.1",
+ "testing 0.0.1",
 ]
 
 [[package]]
@@ -604,6 +606,15 @@ dependencies = [
  "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "testing"
+version = "0.0.1"
+dependencies = [
+ "frames 0.0.1",
+ "output 0.0.1",
+ "qualia 0.0.1",
 ]
 
 [[package]]

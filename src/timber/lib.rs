@@ -98,7 +98,7 @@ impl Timber {
                 log_file.write(format!("{}", args).as_bytes()).expect("Failed to log!");
             }
             None => {
-                println!("{}", args);
+                print!("{}", args);
             }
         }
     }

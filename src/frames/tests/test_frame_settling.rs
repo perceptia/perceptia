@@ -7,6 +7,7 @@
 
 extern crate frames;
 extern crate qualia;
+extern crate testing;
 
 mod common;
 
@@ -15,10 +16,10 @@ use frames::Geometry::{Horizontal, Stacked, Vertical};
 use frames::Side::{Before, On, After};
 use frames::settling::Settling;
 
-use common::{assertions, layouts, surface_access_mock};
-use common::frame_representation::FrameRepresentation;
-
 use qualia::{Position, Size, SurfaceId};
+use testing::frame_representation::FrameRepresentation;
+
+use common::{assertions, layouts, surface_access_mock};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -392,8 +393,8 @@ fn should_jumpin_on() {
             FrameRepresentation {
                 params: Parameters::new_container(Stacked),
                 branches: vec![
-                    FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(66, Stacked),
+                    FrameRepresentation::new_leaf(12, Stacked),
                 ]
             },
             FrameRepresentation::new_leaf(13, Stacked),

@@ -181,11 +181,11 @@ impl Parameters {
     }
 
     /// Creates new parameters for workspace frame.
-    pub fn new_workspace(title: String) -> Self {
+    pub fn new_workspace(title: String, geometry: Geometry) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Workspace,
-            geometry: Geometry::Stacked,
+            geometry: geometry,
             pos: Position::default(),
             size: Size::default(),
             title: title,
@@ -279,9 +279,9 @@ impl Frame {
     }
 
     /// Creates new workspace frame.
-    pub fn new_workspace(title: String) -> Self {
+    pub fn new_workspace(title: String, geometry: Geometry) -> Self {
         Self::allocate(InnerFrame {
-                           params: Parameters::new_workspace(title),
+                           params: Parameters::new_workspace(title, geometry),
                            node: Node::default(),
                        })
     }
@@ -328,6 +328,11 @@ impl Frame {
     /// Gets iterator over children in space order.
     pub fn space_iter(&self) -> FrameSpaceIterator {
         FrameSpaceIterator { frame: self.get_first_space() }
+    }
+
+    /// Gets iterator over children in space reversed order.
+    pub fn space_rev_iter(&self) -> FrameSpaceReveresedIterator {
+        FrameSpaceReveresedIterator { frame: self.get_last_space() }
     }
 }
 
@@ -829,6 +834,29 @@ impl Iterator for FrameSpaceIterator {
         let result = self.frame.clone();
         self.frame = if let Some(ref mut frame) = self.frame {
             frame.get_next_space()
+        } else {
+            None
+        };
+        result
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Iterator over frames in reversed space order.
+pub struct FrameSpaceReveresedIterator {
+    frame: Link,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Iterator for FrameSpaceReveresedIterator {
+    type Item = Frame;
+
+    fn next(&mut self) -> Option<Frame> {
+        let result = self.frame.clone();
+        self.frame = if let Some(ref mut frame) = self.frame {
+            frame.get_prev_space()
         } else {
             None
         };

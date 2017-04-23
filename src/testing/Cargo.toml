@@ -1,18 +1,14 @@
 [package]
-name = "exhibitor"
+name = "testing"
 version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-timber = { path = "../timber" }
 qualia = { path = "../qualia" }
 frames = { path = "../frames" }
 output = { path = "../output" }
 
-[dev-dependencies]
-testing = { path = "../testing" }
-
 [lib]
-name = "exhibitor"
-path = "exhibitor.rs"
+name = "testing"
+path = "lib.rs"
 

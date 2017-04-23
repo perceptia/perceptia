@@ -188,6 +188,11 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     pub fn get_root(&self) -> frames::Frame {
         self.compositor.get_root()
     }
+    
+    /// Returns selected frame.
+    pub fn get_selection(&self) -> frames::Frame {
+        self.compositor.get_selection()
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

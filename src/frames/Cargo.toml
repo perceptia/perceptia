@@ -6,6 +6,9 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 qualia = { path = "../qualia" }
 
+[dev-dependencies]
+testing = { path = "../testing" }
+
 [lib]
 name = "frames"
 path = "lib.rs"

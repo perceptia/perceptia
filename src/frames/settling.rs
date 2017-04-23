@@ -55,7 +55,11 @@ pub trait Settling {
 impl Settling for Frame {
     fn settle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
         if let Some(ref mut buildable) = target.find_buildable() {
-            buildable.append(self);
+            if buildable.get_geometry() == Geometry::Stacked {
+                buildable.prepend(self);
+            } else {
+                buildable.append(self);
+            }
             buildable.relax(sa);
         }
     }

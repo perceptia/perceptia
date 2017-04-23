@@ -4,9 +4,7 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
-use dharma;
-
-use defs::{MemoryPoolId, MemoryViewId};
+use defs::{MemoryPoolId, MemoryViewId, SignalId};
 use memory::{Buffer, MappedMemory};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
@@ -17,7 +15,7 @@ use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 /// Generic communication with the rest of application.
 pub trait Emiter {
     /// Emits given signal.
-    fn emit(&mut self, id: dharma::SignalId, package: Perceptron);
+    fn emit(&mut self, id: SignalId, package: Perceptron);
 
     /// Notifies application about event that requires screen to be refreshed.
     fn notify(&mut self);

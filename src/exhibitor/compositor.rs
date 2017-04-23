@@ -224,6 +224,11 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     pub fn get_root(&self) -> Frame {
         self.root.clone()
     }
+
+    /// Returns selected frame.
+    pub fn get_selection(&self) -> Frame {
+        self.selection.clone()
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -471,7 +476,8 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         log_info2!("Compositor: create new workspace (title: {}, focus: {})", title, focus);
 
         // Create and configure workspace
-        let mut workspace = Frame::new_workspace(title.clone());
+        // TODO: Make default workspace geometry configurable.
+        let mut workspace = Frame::new_workspace(title.clone(), Geometry::Stacked);
         workspace.settle(&mut display, &mut self.coordinator);
 
         // Focus if requested or make sure current selection stays focused
@@ -493,7 +499,7 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         for i in 1..MAX_WORKSPACES {
             let title = i.to_string();
             if self.find_workspace(&title).is_none() {
-                return Some(Frame::new_workspace(title));
+                return Some(Frame::new_workspace(title, Geometry::Stacked));
             }
         }
         log_error!("Don't you think {} workspaces isn't enough?", MAX_WORKSPACES);
@@ -536,11 +542,6 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         if self.selection.get_sid().is_valid() {
             self.coordinator.set_keyboard_focus(self.selection.get_sid());
         }
-    }
-
-    /// Get selected frame.
-    fn get_selection(&self) -> Frame {
-        self.selection.clone()
     }
 
     /// Decide how to handle new surface.

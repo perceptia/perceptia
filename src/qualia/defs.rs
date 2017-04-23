@@ -38,6 +38,9 @@ pub struct SurfaceId(SurfaceIdType);
 define_id!(pub MemoryPoolId: usize);
 define_id!(pub MemoryViewId: usize);
 
+/// Type alias for signal IDs.
+pub type SignalId = usize;
+
 // -------------------------------------------------------------------------------------------------
 
 impl SurfaceId {

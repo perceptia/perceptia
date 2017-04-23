@@ -12,15 +12,15 @@ use device_manager::DeviceManager;
 // -------------------------------------------------------------------------------------------------
 
 pub struct DeviceManagerModule<'a> {
-    manager: Option<DeviceManager<'a>>,
+    manager: DeviceManager<'a>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl<'a> DeviceManagerModule<'a> {
     /// `DeviceManagerModule` constructor.
-    pub fn new() -> Self {
-        DeviceManagerModule { manager: None }
+    pub fn new(context: &mut Context) -> Self {
+        DeviceManagerModule { manager: DeviceManager::new(context.clone()) }
     }
 }
 
@@ -30,19 +30,16 @@ impl<'a> Module for DeviceManagerModule<'a> {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self, context: &mut Self::C) -> InitResult {
-        self.manager = Some(DeviceManager::new(context.clone()));
+    fn initialize(&mut self) -> InitResult {
         vec![perceptron::SUSPEND, perceptron::WAKEUP]
     }
 
     // FIXME: Finnish handling signals in `DeviceManagerModule`.
     fn execute(&mut self, package: &Self::T) {
-        if let Some(ref mut manager) = self.manager {
-            match *package {
-                Perceptron::Suspend => manager.on_suspend(),
-                Perceptron::WakeUp => manager.on_wakeup(),
-                _ => {}
-            }
+        match *package {
+            Perceptron::Suspend => self.manager.on_suspend(),
+            Perceptron::WakeUp => self.manager.on_wakeup(),
+            _ => {}
         }
     }
 
@@ -70,8 +67,8 @@ impl ModuleConstructor for DeviceManagerModuleConstructor {
     type T = Perceptron;
     type C = Context;
 
-    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
-        Box::new(DeviceManagerModule::new())
+    fn construct(&self, context: &mut Self::C) -> Box<Module<T = Self::T, C = Self::C>> {
+        Box::new(DeviceManagerModule::new(context))
     }
 }
 

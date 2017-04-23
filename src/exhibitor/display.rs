@@ -24,7 +24,7 @@ pub struct Display {
     coordinator: Coordinator,
     signaler: Signaler<Perceptron>,
     pointer: Rc<RefCell<Pointer>>,
-    output: Output,
+    output: Box<Output>,
     frame: Frame,
     redraw_needed: bool,
     page_flip_scheduled: bool,
@@ -37,7 +37,7 @@ impl Display {
     pub fn new(coordinator: Coordinator,
                signaler: Signaler<Perceptron>,
                pointer: Rc<RefCell<Pointer>>,
-               output: Output,
+               output: Box<Output>,
                frame: Frame)
                -> Self {
         let mut d = Display {
@@ -112,7 +112,7 @@ impl Display {
             .to_array(&self.coordinator);
 
         let pointer = self.prepare_layover_context();
-        self.pointer.borrow_mut().update_hover_state(self.output.get_area(), &surfaces);
+        self.pointer.borrow_mut().update_hover_state(self.output.get_info().area, &surfaces);
 
         if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
             log_error!("Display: {}", err);

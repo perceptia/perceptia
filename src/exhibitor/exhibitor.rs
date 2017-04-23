@@ -37,7 +37,6 @@ use display::Display;
 
 /// `Exhibitor` manages tasks related to drawing and compositing surfaces.
 pub struct Exhibitor {
-    last_output_id: i32,
     compositor: Compositor,
     pointer: Rc<RefCell<Pointer>>,
     displays: HashMap<i32, Display>,
@@ -52,7 +51,6 @@ impl Exhibitor {
     /// `Exhibitor` constructor.
     pub fn new(signaler: Signaler<Perceptron>, coordinator: Coordinator) -> Self {
         Exhibitor {
-            last_output_id: 0,
             compositor: Compositor::new(coordinator.clone()),
             pointer: Rc::new(RefCell::new(Pointer::new(signaler.clone(), coordinator.clone()))),
             displays: HashMap::new(),
@@ -88,33 +86,21 @@ impl Exhibitor {
     }
 
     /// This method is called when new output was found.
-    pub fn on_output_found(&mut self, bundle: qualia::DrmBundle) {
+    pub fn on_output_found(&mut self, output: Box<Output>) {
         log_info1!("Exhibitor: found output");
-        let id = self.generate_next_output_id();
-        let output = match Output::new(bundle, id) {
-            Ok(output) => {
-                log_info2!("Created output: {}", output.get_name());
-                output
-            }
-            Err(err) => {
-                log_error!("Could not create output: {}", err);
-                return;
-            }
-        };
-
         let info = output.get_info();
         if self.displays.len() == 0 {
             self.pointer.borrow_mut().change_display(info.area);
         }
 
         log_info1!("Exhibitor: creating display");
-        let display_frame = self.compositor.create_display(output.get_area(), output.get_name());
+        let display_frame = self.compositor.create_display(info.area, info.make.clone());
         let display = Display::new(self.coordinator.clone(),
                                    self.signaler.clone(),
                                    self.pointer.clone(),
                                    output,
                                    display_frame);
-        self.displays.insert(id, display);
+        self.displays.insert(info.id, display);
 
         self.signaler.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));
     }
@@ -195,17 +181,6 @@ impl Exhibitor {
     /// Handle pointer position reset event.
     pub fn on_position_reset(&self) {
         self.pointer.borrow_mut().reset_position()
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Private methods.
-impl Exhibitor {
-    /// Generate next output ID.
-    fn generate_next_output_id(&mut self) -> i32 {
-        self.last_output_id += 1;
-        self.last_output_id
     }
 }
 

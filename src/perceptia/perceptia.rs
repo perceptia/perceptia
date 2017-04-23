@@ -8,6 +8,7 @@ extern crate timber;
 #[macro_use]
 extern crate qualia;
 extern crate dharma;
+extern crate output;
 extern crate exhibitor;
 extern crate device_manager;
 extern crate wayland_frontend;

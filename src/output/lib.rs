@@ -16,8 +16,11 @@ extern crate dharma;
 extern crate renderer_gl;
 
 pub mod gbm_tools;
-pub mod output;
 
+mod output;
 pub use output::Output;
+
+mod drm_output;
+pub use drm_output::DrmOutput;
 
 // -------------------------------------------------------------------------------------------------

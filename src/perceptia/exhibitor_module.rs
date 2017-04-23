@@ -6,22 +6,28 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module, ModuleConstructor};
-use qualia::{Context, perceptron, Perceptron};
+use qualia::{Context, DrmBundle, perceptron, Perceptron};
+use output::{DrmOutput};
 use exhibitor::Exhibitor;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Implementation of `dharma::Module` for Device Manager.
 pub struct ExhibitorModule {
-    exhibitor: Option<Exhibitor>,
+    last_output_id: i32,
+    exhibitor: Exhibitor,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl ExhibitorModule {
-    /// `ExhibitorModule` constructor.
-    pub fn new() -> Self {
-        ExhibitorModule { exhibitor: None }
+    /// Constructs new `ExhibitorModule`.
+    pub fn new(context: &mut Context) -> Self {
+        ExhibitorModule {
+            last_output_id: 0,
+            exhibitor: Exhibitor::new(context.get_signaler().clone(),
+                                      context.get_coordinator().clone()),
+        }
     }
 }
 
@@ -31,10 +37,8 @@ impl Module for ExhibitorModule {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self, context: &mut Self::C) -> InitResult {
+    fn initialize(&mut self) -> InitResult {
         log_info1!("Starting Exhibitor module");
-        self.exhibitor = Some(Exhibitor::new(context.get_signaler().clone(),
-                                             context.get_coordinator().clone()));
         vec![perceptron::NOTIFY,
              perceptron::SUSPEND,
              perceptron::WAKEUP,
@@ -53,36 +57,56 @@ impl Module for ExhibitorModule {
     }
 
     fn execute(&mut self, package: &Self::T) {
-        if let Some(ref mut exhibitor) = self.exhibitor {
-            match *package {
-                Perceptron::Notify => exhibitor.on_notify(),
-                Perceptron::OutputFound(bundle) => exhibitor.on_output_found(bundle),
-                Perceptron::PageFlip(id) => exhibitor.on_pageflip(id),
-                Perceptron::Command(ref command) => exhibitor.on_command(command.clone()),
+        match *package {
+            Perceptron::Notify => self.exhibitor.on_notify(),
+            Perceptron::OutputFound(bundle) => self.on_output_found(bundle),
+            Perceptron::PageFlip(id) => self.exhibitor.on_pageflip(id),
+            Perceptron::Command(ref command) => self.exhibitor.on_command(command.clone()),
 
-                Perceptron::InputPointerMotion(ref vector) => exhibitor.on_motion(vector.clone()),
-                Perceptron::InputPointerPosition(ref pos) => exhibitor.on_position(pos.clone()),
-                Perceptron::InputPointerButton(ref btn) => exhibitor.on_button(btn.clone()),
-                Perceptron::InputPointerPositionReset => exhibitor.on_position_reset(),
+            Perceptron::InputPointerMotion(ref vector) => self.exhibitor.on_motion(vector.clone()),
+            Perceptron::InputPointerPosition(ref pos) => self.exhibitor.on_position(pos.clone()),
+            Perceptron::InputPointerButton(ref btn) => self.exhibitor.on_button(btn.clone()),
+            Perceptron::InputPointerPositionReset => self.exhibitor.on_position_reset(),
 
-                Perceptron::CursorSurfaceChange(sid) => exhibitor.on_cursor_surface_change(sid),
+            Perceptron::CursorSurfaceChange(sid) => self.exhibitor.on_cursor_surface_change(sid),
 
-                Perceptron::SurfaceReady(sid) => exhibitor.on_surface_ready(sid),
-                Perceptron::SurfaceDestroyed(sid) => exhibitor.on_surface_destroyed(sid),
+            Perceptron::SurfaceReady(sid) => self.exhibitor.on_surface_ready(sid),
+            Perceptron::SurfaceDestroyed(sid) => self.exhibitor.on_surface_destroyed(sid),
 
-                Perceptron::KeyboardFocusChanged(_, sid) => {
-                    exhibitor.on_keyboard_focus_changed(sid)
-                }
-                Perceptron::Suspend => exhibitor.on_suspend(),
-                Perceptron::WakeUp => exhibitor.on_wakeup(),
-                Perceptron::TakeScreenshot(id) => exhibitor.take_screenshot(id),
-                _ => {}
+            Perceptron::KeyboardFocusChanged(_, sid) => {
+                self.exhibitor.on_keyboard_focus_changed(sid)
             }
+            Perceptron::Suspend => self.exhibitor.on_suspend(),
+            Perceptron::WakeUp => self.exhibitor.on_wakeup(),
+            Perceptron::TakeScreenshot(id) => self.exhibitor.take_screenshot(id),
+            _ => {}
         }
     }
 
     fn finalize(&mut self) {
         log_info1!("Finalized Exhibitor module");
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// Event handling helpers
+impl ExhibitorModule {
+    /// Helper method for handling new output.
+    ///
+    /// For unit testing construction of the output must be done outside `Exhibitor`.
+    fn on_output_found(&mut self, bundle: DrmBundle) {
+        self.last_output_id += 1;
+        match DrmOutput::new(bundle, self.last_output_id) {
+            Ok(output) => {
+                log_info2!("Created output: {}", output.get_info().make);
+                self.exhibitor.on_output_found(output);
+            }
+            Err(err) => {
+                log_error!("Could not create output: {}", err);
+                return;
+            }
+        }
     }
 }
 
@@ -105,8 +129,8 @@ impl ModuleConstructor for ExhibitorModuleConstructor {
     type T = Perceptron;
     type C = Context;
 
-    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
-        Box::new(ExhibitorModule::new())
+    fn construct(&self, context: &mut Self::C) -> Box<Module<T = Self::T, C = Self::C>> {
+        Box::new(ExhibitorModule::new(context))
     }
 }
 

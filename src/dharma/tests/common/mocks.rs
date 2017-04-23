@@ -167,7 +167,7 @@ impl Module for ModuleMock {
 
     /// Handle `initialize` invocation.
     #[allow(unused_variables)]
-    fn initialize(&mut self, context: &mut ContextStub) -> InitResult {
+    fn initialize(&mut self) -> InitResult {
         let mut mine = self.inner.lock().unwrap();
         mine.times_initialized += 1;
         mine.signals.clone()
@@ -213,7 +213,7 @@ impl ModuleConstructor for ModuleConstructorMock {
     type T = String;
     type C = ContextStub;
 
-    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>> {
+    fn construct(&self, _context: &mut Self::C) -> Box<Module<T = Self::T, C = Self::C>> {
         let mut module = Box::new(ModuleMock::new(self.signals.clone()));
         module.expect_initialized_times(1);
         module.expect_executed_times(self.packages.len() as u32);

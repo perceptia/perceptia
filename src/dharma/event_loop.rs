@@ -39,7 +39,7 @@ pub trait Module {
     type C: Clone + Send + Sync;
 
     /// Callback run just after start of `Module`.
-    fn initialize(&mut self, context: &mut Self::C) -> InitResult;
+    fn initialize(&mut self) -> InitResult;
 
     /// Callback run on every message `Module` subscribed for.
     fn execute(&mut self, package: &Self::T);
@@ -62,7 +62,7 @@ pub trait ModuleConstructor: Send + Sync {
     type C: Clone + Send + Sync;
 
     /// Constructs new `Module`.
-    fn construct(&self) -> Box<Module<T = Self::T, C = Self::C>>;
+    fn construct(&self, &mut Self::C) -> Box<Module<T = Self::T, C = Self::C>>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -164,7 +164,6 @@ pub struct EventLoop<P, C>
     modules: Vec<Box<Module<T = P, C = C>>>,
     receiver: bridge::Receiver<P>,
     subscriptions: Map<bridge::SignalId, Vec<usize>>,
-    context: C,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -184,13 +183,14 @@ impl<P, C> EventLoop<P, C>
             modules: Vec::new(),
             receiver: bridge::Receiver::new(),
             subscriptions: Map::new(),
-            context: info.context,
         };
 
         // Consume constructors to return module instances
         loop {
             match info.constructors.pop() {
-                Some(constructor) => event_loop.modules.push(constructor.construct()),
+                Some(constructor) => {
+                    event_loop.modules.push(constructor.construct(&mut info.context));
+                }
                 None => break,
             }
         }
@@ -210,7 +210,7 @@ impl<P, C> EventLoop<P, C>
         self.signaler.register(&self.receiver);
         let mut i = 0;
         for mut m in self.modules.iter_mut() {
-            let signals = m.initialize(&mut self.context);
+            let signals = m.initialize();
             for s in signals {
                 if self.subscriptions.contains_key(&s) {
                     match self.subscriptions.get_mut(&s) {

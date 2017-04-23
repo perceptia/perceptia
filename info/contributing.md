@@ -40,7 +40,7 @@ Later parts of this file focus on tips for developers.
 Directories
 -----------
 
-Here is description of directories:
+Here is overview of directories (documentation in code will provide more details):
 
  * **src** - all applications source code
 
@@ -52,29 +52,26 @@ Here is description of directories:
 
 Sources are split into several modules:
 
- * **src/skylane** - implementation of Wayland protocol in pure Rust
-
- * **src/skylane_scanner** - generator for Wayland protocols. Equivalent to `wayland-scanner`
-
- * **src/skylane_protocols** - auto generated Wayland protocols
-
  * **src/dharma** - managing threads and inter-thread communication
 
  * **src/timber** - logging helper
 
- * **src/qualia** - miscellaneous tools not important enough to create separate module
-
- * **src/device_manager** - device management functionality
-
- * **src/output** - output related functionality
+ * **src/qualia** - contains common definitions and traits 
 
  * **src/renderer_gl** - rendering using GL
 
- * **src/wayland_frontend** - Wayland related functionality
+ * **src/output** - output related functionality
 
  * **src/frames** - framing
 
  * **src/exhibitor** - managing frames, displays and other compositing related stuff
+
+ * **src/device_manager** - device management functionality
+
+ * **src/wayland_frontend** - Wayland related functionality
+
+ * **src/skylane_simple_framework** - example how `skylane` client could be written; used by
+   perceptiactl
 
  * **src/perceptia** - main application
 
@@ -143,3 +140,9 @@ Future
 List of features planed for nearest releases can be found on [wiki TODO
 page](https://github.com/perceptia/perceptia/wiki/TODO).
 
+Related projects
+----------------
+
+[`skylane`](https://github.com/perceptia/skylane) is implementation of Wayland protocol written from
+scratch in Rust. It originated in `perceptia` but was moved away as separate crate and repository
+to be able to used independently from `perceptia`.

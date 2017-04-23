@@ -34,15 +34,18 @@
 
 extern crate nix;
 
+extern crate skylane;
+extern crate skylane_protocols;
+
 extern crate dharma;
 #[macro_use]
 extern crate timber;
 #[macro_use]
 extern crate qualia;
 
-extern crate skylane;
-extern crate skylane_protocols;
-
+// TODO: Get rid of dependency from `coordination` and `dharma` in `wayland_frontend`. See
+// description of `coordination` crate. Provide unit tests.
+extern crate coordination;
 
 pub mod constants;
 

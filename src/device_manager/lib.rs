@@ -16,6 +16,10 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 
+// TODO: Get rid of dependency from `coordination` and `dharma` in `device_manager`. See
+// description of `coordination` crate. Provide unit tests.
+extern crate coordination;
+
 mod device_access;
 mod input_gateway;
 mod evdev;

@@ -6,8 +6,9 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module, ModuleConstructor};
-use qualia::{Context, DrmBundle, perceptron, Perceptron};
-use output::{DrmOutput};
+use qualia::{DrmBundle, perceptron, Perceptron};
+use output::DrmOutput;
+use coordination::{Context, Coordinator};
 use exhibitor::Exhibitor;
 
 // -------------------------------------------------------------------------------------------------
@@ -15,7 +16,7 @@ use exhibitor::Exhibitor;
 /// Implementation of `dharma::Module` for Device Manager.
 pub struct ExhibitorModule {
     last_output_id: i32,
-    exhibitor: Exhibitor,
+    exhibitor: Exhibitor<Coordinator>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -25,8 +26,7 @@ impl ExhibitorModule {
     pub fn new(context: &mut Context) -> Self {
         ExhibitorModule {
             last_output_id: 0,
-            exhibitor: Exhibitor::new(context.get_signaler().clone(),
-                                      context.get_coordinator().clone()),
+            exhibitor: Exhibitor::new(context.get_coordinator().clone()),
         }
     }
 }

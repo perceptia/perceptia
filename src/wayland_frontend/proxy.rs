@@ -16,10 +16,14 @@ use skylane_protocols::server::wayland::wl_shell_surface;
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
-use qualia::{Coordinator, Settings};
+use qualia::Settings;
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
+use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
+use qualia::{SurfaceFocusing, Screenshooting, MemoryManagement};
+
+use coordination::Coordinator;
 
 use protocol;
 use facade::{Facade, PositionerInfo, ShellSurfaceOid};
@@ -378,7 +382,7 @@ impl Facade for Proxy {
             self.coordinator.detach_surface(sid)
         } else if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
             self.relate_sid_with_buffer(sid, buffer_oid);
-            self.coordinator.attach(info.mvid, sid);
+            self.coordinator.attach_surface(info.mvid, sid);
         } else {
             log_error!("Unknown buffer object ID: {}", buffer_oid);
         }

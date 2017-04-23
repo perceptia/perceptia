@@ -7,6 +7,7 @@ members = [
         "src/frames",
         "src/renderer_gl",
         "src/output",
+        "src/coordination",
         "src/device_manager",
         "src/exhibitor",
         "src/wayland_frontend",

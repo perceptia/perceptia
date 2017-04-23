@@ -9,7 +9,7 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use dharma;
-use qualia::Context;
+use coordination::Context;
 
 use evdev;
 use udev;

@@ -10,6 +10,7 @@ skylane_protocols = "0.1.0"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
+coordination = { path = "../coordination" }
 
 [lib]
 name = "wayland_frontend"

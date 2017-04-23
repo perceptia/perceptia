@@ -9,7 +9,7 @@ use std;
 use gl;
 use egl;
 
-use qualia::{Coordinator, SurfaceContext, Illusion, Size, Buffer, Pixmap};
+use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, Buffer, Pixmap};
 
 use gl_tools;
 use egl_tools;
@@ -123,13 +123,13 @@ impl RendererGl {
     pub fn draw(&mut self,
                 surfaces: &Vec<SurfaceContext>,
                 pointer: SurfaceContext,
-                coordinator: &Coordinator)
+                viewer: &SurfaceViewer)
                 -> Result<(), Illusion> {
         let _context = self.egl.make_current()?;
         self.prepare_view();
         self.draw_bg_image();
-        self.draw_surfaces(surfaces, coordinator);
-        self.draw_pointer(pointer, coordinator);
+        self.draw_surfaces(surfaces, viewer);
+        self.draw_pointer(pointer, viewer);
         self.release_view();
         Ok(())
     }
@@ -193,12 +193,12 @@ impl RendererGl {
 
     /// Load textures and prepare vertices.
     fn load_texture_and_prepare_vertices(&self,
-                                         coordinator: &Coordinator,
+                                         viewer: &SurfaceViewer,
                                          context: &SurfaceContext,
                                          vertices: &mut [gl::types::GLfloat],
                                          texcoords: &mut [gl::types::GLfloat],
                                          index: usize) {
-        if let Some(ref surface) = coordinator.get_surface(context.id) {
+        if let Some(ref surface) = viewer.get_surface(context.id) {
             if let Some(ref buffer) = surface.buffer {
                 unsafe {
                     gl::ActiveTexture(gl::TEXTURE0 + index as u32);
@@ -253,7 +253,7 @@ impl RendererGl {
     }
 
     /// Draw surfaces.
-    fn draw_surfaces(&self, surfaces: &Vec<SurfaceContext>, coordinator: &Coordinator) {
+    fn draw_surfaces(&self, surfaces: &Vec<SurfaceContext>, viewer: &SurfaceViewer) {
         if surfaces.len() == 0 {
             return;
         }
@@ -265,7 +265,7 @@ impl RendererGl {
         let mut texcoords = vec![0.0; vertices_len];
 
         for i in 0..surfaces.len() {
-            self.load_texture_and_prepare_vertices(coordinator,
+            self.load_texture_and_prepare_vertices(viewer,
                                                    &surfaces[i],
                                                    &mut vertices[12 * i..12 * i + 12],
                                                    &mut texcoords[12 * i..12 * i + 12],
@@ -316,9 +316,9 @@ impl RendererGl {
     }
 
     /// Draw pointer.
-    fn draw_pointer(&self, pointer: SurfaceContext, coordinator: &Coordinator) {
+    fn draw_pointer(&self, pointer: SurfaceContext, viewer: &SurfaceViewer) {
         let surfaces = vec![pointer];
-        self.draw_surfaces(&surfaces, coordinator);
+        self.draw_surfaces(&surfaces, viewer);
     }
 
     /// Unbind framebuffer and program.

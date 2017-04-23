@@ -5,7 +5,6 @@
 
 // -------------------------------------------------------------------------------------------------
 
-extern crate dharma;
 #[macro_use]
 extern crate timber;
 #[macro_use]
@@ -24,9 +23,9 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use dharma::Signaler;
-use qualia::{Coordinator, SurfaceId, Button, Command, OptionalPosition, Vector};
+use qualia::{SurfaceId, Button, Command, OptionalPosition, Vector};
 use qualia::{perceptron, Perceptron};
+use qualia::ExhibitorCoordinationTrait;
 use output::Output;
 
 use compositor::Compositor;
@@ -36,26 +35,24 @@ use display::Display;
 // -------------------------------------------------------------------------------------------------
 
 /// `Exhibitor` manages tasks related to drawing and compositing surfaces.
-pub struct Exhibitor {
-    compositor: Compositor,
-    pointer: Rc<RefCell<Pointer>>,
-    displays: HashMap<i32, Display>,
-    coordinator: Coordinator,
-    signaler: Signaler<Perceptron>,
+pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
+    compositor: Compositor<C>,
+    pointer: Rc<RefCell<Pointer<C>>>,
+    displays: HashMap<i32, Display<C>>,
+    coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl Exhibitor {
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
     /// `Exhibitor` constructor.
-    pub fn new(signaler: Signaler<Perceptron>, coordinator: Coordinator) -> Self {
+    pub fn new(coordinator: C) -> Self {
         Exhibitor {
             compositor: Compositor::new(coordinator.clone()),
-            pointer: Rc::new(RefCell::new(Pointer::new(signaler.clone(), coordinator.clone()))),
+            pointer: Rc::new(RefCell::new(Pointer::new(coordinator.clone()))),
             displays: HashMap::new(),
             coordinator: coordinator,
-            signaler: signaler,
         }
     }
 }
@@ -63,7 +60,7 @@ impl Exhibitor {
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
-impl Exhibitor {
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
     /// Handles notification about needed redraw.
     pub fn on_notify(&mut self) {
         for ref mut display in self.displays.values_mut() {
@@ -96,13 +93,12 @@ impl Exhibitor {
         log_info1!("Exhibitor: creating display");
         let display_frame = self.compositor.create_display(info.area, info.make.clone());
         let display = Display::new(self.coordinator.clone(),
-                                   self.signaler.clone(),
                                    self.pointer.clone(),
                                    output,
                                    display_frame);
         self.displays.insert(info.id, display);
 
-        self.signaler.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));
+        self.coordinator.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));
     }
 
     /// This method is called when pageflip occurred.
@@ -154,7 +150,7 @@ impl Exhibitor {
 // -------------------------------------------------------------------------------------------------
 
 /// Input handlers.
-impl Exhibitor {
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     /// Handle pointer motion event.
     pub fn on_motion(&mut self, vector: Vector) {
         self.pointer.borrow_mut().move_and_cast(vector, &self.displays);
@@ -181,6 +177,16 @@ impl Exhibitor {
     /// Handle pointer position reset event.
     pub fn on_position_reset(&self) {
         self.pointer.borrow_mut().reset_position()
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Getters
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+    /// Returns root frame.
+    pub fn get_root(&self) -> frames::Frame {
+        self.compositor.get_root()
     }
 }
 

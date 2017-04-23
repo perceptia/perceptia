@@ -10,8 +10,10 @@ use std::collections::HashMap;
 use dharma;
 use skylane::server as wl;
 
-use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, SurfaceId, KeyMods};
-use qualia::{Coordinator, KeyboardState, XkbKeymap, Perceptron, Settings, surface_state};
+use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, KeyMods};
+use qualia::{KeyboardState, XkbKeymap, Perceptron, Settings};
+use qualia::{surface_state, SurfaceId, SurfaceFocusing};
+use coordination::Coordinator;
 
 use protocol;
 use gateway::Gateway;

@@ -7,10 +7,8 @@
 
 use std::collections::HashMap;
 
-use dharma::Signaler;
-
-use qualia::{Buffer, Coordinator, Area, OptionalPosition, Position, Vector, SurfaceId,
-             SurfaceContext, perceptron, Perceptron, Milliseconds};
+use qualia::{Area, Buffer, Milliseconds, OptionalPosition, Position, Vector};
+use qualia::{perceptron, Perceptron, SurfaceContext, SurfaceId, ExhibitorCoordinationTrait};
 
 use display::Display;
 
@@ -21,7 +19,7 @@ const DEFAULT_CURSOR_SIZE: usize = 15;
 // -------------------------------------------------------------------------------------------------
 
 /// State of the pointer.
-pub struct Pointer {
+pub struct Pointer<C> where C: ExhibitorCoordinationTrait {
     /// Position in global coordinates.
     position: Position,
 
@@ -46,18 +44,15 @@ pub struct Pointer {
     /// Default surface ID of cursor surface.
     default_csid: SurfaceId,
 
-    /// Signaler.
-    signaler: Signaler<Perceptron>,
-
     /// Coordinator.
-    coordinator: Coordinator,
+    coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl Pointer {
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait { 
     /// `Pointer` constructor.
-    pub fn new(signaler: Signaler<Perceptron>, mut coordinator: Coordinator) -> Self {
+    pub fn new(mut coordinator: C) -> Self {
         let mut data = vec![200; 4 * DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE];
         for z in 0..(DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE) {
             data[4 * z + 3] = 100;
@@ -72,7 +67,7 @@ impl Pointer {
                                                            DEFAULT_CURSOR_SIZE,
                                                            DEFAULT_CURSOR_SIZE,
                                                            DEFAULT_CURSOR_SIZE) {
-            coordinator.attach(mvid, default_csid);
+            coordinator.attach_surface(mvid, default_csid);
             coordinator.commit_surface(default_csid);
         }
 
@@ -85,7 +80,6 @@ impl Pointer {
             pfsid: SurfaceId::invalid(),
             kfsid: SurfaceId::invalid(),
             default_csid: default_csid,
-            signaler: signaler,
             coordinator: coordinator,
         }
     }
@@ -99,7 +93,8 @@ impl Pointer {
 // -------------------------------------------------------------------------------------------------
 
 // Getters
-impl Pointer {
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait { 
+    /// `Pointer` constructor.
     /// Returns pointer position in global coordinates.
     pub fn get_global_position(&self) -> Position {
         self.position
@@ -124,15 +119,16 @@ impl Pointer {
 // -------------------------------------------------------------------------------------------------
 
 /// Input handlers.
-impl Pointer {
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+    /// `Pointer` constructor.
     /// Move pointer and cast to correct output.
-    pub fn move_and_cast(&mut self, vector: Vector, displays: &HashMap<i32, Display>) {
+    pub fn move_and_cast(&mut self, vector: Vector, displays: &HashMap<i32, Display<C>>) {
         let moved = self.position.clone() + vector.clone();
         self.position = self.cast(moved, displays);
     }
 
     /// Change position of the pointer and cast to correct output.
-    pub fn update_position(&mut self, pos: OptionalPosition, displays: &HashMap<i32, Display>) {
+    pub fn update_position(&mut self, pos: OptionalPosition, displays: &HashMap<i32, Display<C>>) {
         let mut vector = Vector::default();
 
         // Calculate X-axis part of position
@@ -194,8 +190,8 @@ impl Pointer {
         } else if self.pfsid.is_valid() && (surface_relative != self.last_surface_relative) {
             let now = Milliseconds::now();
             self.last_surface_relative = surface_relative;
-            self.signaler.emit(perceptron::POINTER_RELATIVE_MOTION,
-                               Perceptron::PointerRelativeMotion(sid, surface_relative, now));
+            self.coordinator.emit(perceptron::POINTER_RELATIVE_MOTION,
+                                  Perceptron::PointerRelativeMotion(sid, surface_relative, now));
         }
     }
 
@@ -215,7 +211,8 @@ impl Pointer {
 // -------------------------------------------------------------------------------------------------
 
 /// Other requests.
-impl Pointer {
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+    /// `Pointer` constructor.
     /// Handles cursor surface change request.
     pub fn on_surface_change(&mut self, sid: SurfaceId) {
         self.csid = sid;
@@ -225,11 +222,12 @@ impl Pointer {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper methods
-impl Pointer {
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+    /// `Pointer` constructor.
     /// Cast position to one of available displays:
     /// - if position is in one of the displays - return it without change
     /// - otherwise cast it to last used display.
-    fn cast(&mut self, mut position: Position, displays: &HashMap<i32, Display>) -> Position {
+    fn cast(&mut self, mut position: Position, displays: &HashMap<i32, Display<C>>) -> Position {
         if !self.display_area.contains(&position) {
             let mut found = false;
             // Iterate display to find the one display is in

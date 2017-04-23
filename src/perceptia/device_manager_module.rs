@@ -6,7 +6,8 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{InitResult, Module, ModuleConstructor};
-use qualia::{Context, Perceptron, perceptron};
+use qualia::{Perceptron, perceptron};
+use coordination::Context;
 use device_manager::DeviceManager;
 
 // -------------------------------------------------------------------------------------------------

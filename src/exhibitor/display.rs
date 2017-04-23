@@ -8,9 +8,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use dharma::Signaler;
-use qualia::{Buffer, Coordinator, Illusion};
-use qualia::{Milliseconds, OutputInfo, SurfaceContext, perceptron, Perceptron};
+use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron};
+use qualia::{ExhibitorCoordinationTrait, SurfaceContext};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -20,10 +19,9 @@ use pointer::Pointer;
 // -------------------------------------------------------------------------------------------------
 
 /// `Display`
-pub struct Display {
-    coordinator: Coordinator,
-    signaler: Signaler<Perceptron>,
-    pointer: Rc<RefCell<Pointer>>,
+pub struct Display<C> where C: ExhibitorCoordinationTrait {
+    coordinator: C,
+    pointer: Rc<RefCell<Pointer<C>>>,
     output: Box<Output>,
     frame: Frame,
     redraw_needed: bool,
@@ -32,17 +30,15 @@ pub struct Display {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Display {
+impl<C> Display<C> where C: ExhibitorCoordinationTrait {
     /// `Display` constructor.
-    pub fn new(coordinator: Coordinator,
-               signaler: Signaler<Perceptron>,
-               pointer: Rc<RefCell<Pointer>>,
+    pub fn new(coordinator: C,
+               pointer: Rc<RefCell<Pointer<C>>>,
                output: Box<Output>,
                frame: Frame)
                -> Self {
         let mut d = Display {
             coordinator: coordinator,
-            signaler: signaler,
             pointer: pointer,
             output: output,
             frame: frame,
@@ -51,6 +47,11 @@ impl Display {
         };
         d.redraw_all(); // TODO: Remove when notifications are supported in Wayland module.
         d
+    }
+
+    /// Get information about output (size, position, model name, etc.).
+    pub fn get_info(&self) -> OutputInfo {
+        self.output.get_info()
     }
 
     /// Schedule page flip on assigned output.
@@ -125,7 +126,7 @@ impl Display {
         // Send frame notifications
         for context in surfaces {
             let frame = Perceptron::SurfaceFrame(context.id, Milliseconds::now());
-            self.signaler.emit(perceptron::SURFACE_FRAME, frame);
+            self.coordinator.emit(perceptron::SURFACE_FRAME, frame);
         }
 
         self.redraw_needed = false;
@@ -143,11 +144,6 @@ impl Display {
                 None
             }
         }
-    }
-
-    /// Get information about output (size, position, model name, etc.).
-    pub fn get_info(&self) -> OutputInfo {
-        self.output.get_info()
     }
 }
 

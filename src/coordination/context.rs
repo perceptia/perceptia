@@ -7,11 +7,9 @@
 
 use dharma::{DispatcherController, EventHandler, EventKind, Signaler, SignalId};
 
-use config::Config;
-use settings::Settings;
-use perceptron::Perceptron;
+use qualia::{Config, Settings, Perceptron, InputManager};
+
 use coordinator::Coordinator;
-use input_manager::InputManager;
 
 // -------------------------------------------------------------------------------------------------
 

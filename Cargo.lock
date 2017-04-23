@@ -2,6 +2,7 @@
 name = "wayland_frontend"
 version = "0.0.1"
 dependencies = [
+ "coordination 0.0.1",
  "dharma 0.0.1",
  "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "qualia 0.0.1",
@@ -99,6 +100,15 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "coordination"
+version = "0.0.1"
+dependencies = [
+ "dharma 0.0.1",
+ "qualia 0.0.1",
+ "timber 0.0.1",
+]
+
+[[package]]
 name = "dbghelp-sys"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -137,6 +147,7 @@ dependencies = [
 name = "device_manager"
 version = "0.0.1"
 dependencies = [
+ "coordination 0.0.1",
  "dharma 0.0.1",
  "drm-rs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.21 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -191,7 +202,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "exhibitor"
 version = "0.0.1"
 dependencies = [
- "dharma 0.0.1",
  "frames 0.0.1",
  "output 0.0.1",
  "qualia 0.0.1",
@@ -427,6 +437,7 @@ dependencies = [
 name = "perceptia"
 version = "0.0.1"
 dependencies = [
+ "coordination 0.0.1",
  "device_manager 0.0.1",
  "dharma 0.0.1",
  "exhibitor 0.0.1",

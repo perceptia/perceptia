@@ -11,7 +11,7 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use qualia::{Buffer, Coordinator, DrmBundle, Illusion, SurfaceContext};
+use qualia::{Buffer, DrmBundle, Illusion, SurfaceContext, SurfaceViewer};
 use qualia::{Area, OutputInfo, Position, Size};
 use renderer_gl::{egl_tools, RendererGl};
 
@@ -124,9 +124,9 @@ impl Output for DrmOutput {
     fn draw(&mut self,
             surfaces: &Vec<SurfaceContext>,
             pointer: SurfaceContext,
-            coordinator: &Coordinator)
+            viewer: &SurfaceViewer)
             -> Result<(), Illusion> {
-        self.renderer.draw(surfaces, pointer, coordinator)
+        self.renderer.draw(surfaces, pointer, viewer)
     }
 
     /// Takes screenshot. Returns `Buffer` containing image data.

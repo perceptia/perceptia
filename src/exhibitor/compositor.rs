@@ -9,7 +9,7 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Coordinator, Direction, SurfaceId, SurfaceInfo};
+use qualia::{Action, Area, Command, Direction, SurfaceId, SurfaceInfo, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
 use frames::{self, Frame, Geometry, Side};
@@ -77,9 +77,9 @@ struct ManageDecision {
 // -------------------------------------------------------------------------------------------------
 
 /// Compositor main structure.
-pub struct Compositor {
+pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
     history: SurfaceHistory,
-    coordinator: Coordinator,
+    coordinator: C,
     root: Frame,
     selection: Frame,
 }
@@ -87,9 +87,9 @@ pub struct Compositor {
 // -------------------------------------------------------------------------------------------------
 
 /// Public methods.
-impl Compositor {
+impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// `Compositor` constructor.
-    pub fn new(coordinator: Coordinator) -> Self {
+    pub fn new(coordinator: C) -> Self {
         let root = Frame::new_root();
         Compositor {
             history: SurfaceHistory::new(),
@@ -219,12 +219,17 @@ impl Compositor {
             self.history.pop(sid);
         }
     }
+
+    /// Returns root frame.
+    pub fn get_root(&self) -> Frame {
+        self.root.clone()
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Private methods related to handling commands.
-impl Compositor {
+impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// Reconfigure frame to have different geometry.
     ///
     /// Only `Container`, `Leaf` or `Workspace` can be reconfigured (from this follows that
@@ -415,7 +420,7 @@ impl Compositor {
 // -------------------------------------------------------------------------------------------------
 
 /// Miscellaneous private methods.
-impl Compositor {
+impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// Find most recently focused frame inside given frame. This function is used to find most
     /// recently used frame when focusing to workspace or when currently focussed frame jumps from
     /// workspace.
@@ -438,7 +443,7 @@ impl Compositor {
 // -------------------------------------------------------------------------------------------------
 
 /// Private methods related to workspaces.
-impl Compositor {
+impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// Search for existing workspace with given title.
     fn find_workspace(&self, title: &String) -> Option<Frame> {
         for display_frame in self.root.time_iter() {
@@ -523,7 +528,7 @@ impl Compositor {
 // -------------------------------------------------------------------------------------------------
 
 /// Miscellaneous private methods.
-impl Compositor {
+impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// Set given frame as selected.
     fn select(&mut self, mut frame: Frame) {
         self.root.pop_recursively(&mut frame);

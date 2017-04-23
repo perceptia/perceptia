@@ -9,6 +9,7 @@ extern crate timber;
 extern crate qualia;
 extern crate dharma;
 extern crate output;
+extern crate coordination;
 extern crate exhibitor;
 extern crate device_manager;
 extern crate wayland_frontend;
@@ -18,7 +19,8 @@ mod exhibitor_module;
 mod wayland_service;
 
 use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, SignalEventHandler, Signaler};
-use qualia::{Context, Coordinator, InputManager};
+use qualia::InputManager;
+use coordination::{Context, Coordinator};
 
 use device_manager_module::DeviceManagerModuleConstructor;
 use exhibitor_module::ExhibitorModuleConstructor;

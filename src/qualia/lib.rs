@@ -1,8 +1,12 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! `qualia` is crate containing enumerations and simple tools common to all the crates of
-//! `perceptia`.
+//! `qualia` is crate containing enumerations, macros and definitions common to all the crates of
+//! `perceptia` and traits used to decouple `perceptia`'s creates one from another (mainly for unit
+//! tests).
+//!
+//! Unfortunately it is also home for small tools not important enough to have their own crate.
+//! TODO: Identify and move to separate crate tools not fitting to purpose of this crate.
 
 extern crate backtrace;
 extern crate dbus;
@@ -22,9 +26,6 @@ extern crate dharma;
 pub mod enums;
 pub use enums::{DeviceKind, KeyState, Action, Direction};
 
-pub mod perceptron;
-pub use perceptron::Perceptron;
-
 pub mod errors;
 pub use errors::Illusion;
 
@@ -42,12 +43,24 @@ pub use defs::{MemoryPoolId, MemoryViewId};
 pub mod config;
 pub use config::{Config, InputConfig};
 
+pub mod memory;
+pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
+
+pub mod surface;
+pub use surface::{SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo};
+pub use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
+pub use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
+pub use surface::{show_reason, surface_state};
+
+pub mod perceptron;
+pub use perceptron::Perceptron;
+
+pub mod traits;
+pub use traits::{Emiter, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
+
 #[macro_use]
 pub mod log;
 pub use log::level;
-
-pub mod memory;
-pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
 
 pub mod functions;
 
@@ -63,19 +76,9 @@ pub use keymap::{Keymap, Settings as KeymapSettings, XkbKeymap};
 pub mod settings;
 pub use settings::Settings;
 
-pub mod surface;
-pub use surface::{SurfaceAccess, SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo};
-pub use surface::{show_reason, surface_state};
-
-pub mod coordinator;
-pub use coordinator::Coordinator;
-
 mod binding_functions;
 pub mod input_manager;
 pub use input_manager::{InputManager, KeyCatchResult};
-
-pub mod context;
-pub use context::Context;
 
 pub mod ipc;
 pub use ipc::Ipc;

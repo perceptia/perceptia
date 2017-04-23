@@ -10,9 +10,11 @@ use std::any::Any;
 
 use dharma;
 
-use qualia::{Context, perceptron, Perceptron};
+use qualia::{perceptron, Perceptron, SurfaceViewer};
 
 use wayland_frontend::{Engine, Gateway, constants};
+
+use coordination::Context;
 
 // -------------------------------------------------------------------------------------------------
 

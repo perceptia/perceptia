@@ -3,7 +3,7 @@
 
 //! This module contains interface for all output devices or mocks.
 
-use qualia::{Buffer, Coordinator, Illusion, OutputInfo, SurfaceContext};
+use qualia::{Buffer, Illusion, OutputInfo, SurfaceContext, SurfaceViewer};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ pub trait Output {
     fn draw(&mut self,
             surfaces: &Vec<SurfaceContext>,
             pointer: SurfaceContext,
-            coordinator: &Coordinator)
+            viewer: &SurfaceViewer)
             -> Result<(), Illusion>;
 
     /// Takes screenshot. Returns `Buffer` containing image data.

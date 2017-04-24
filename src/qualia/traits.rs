@@ -4,11 +4,19 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
-use defs::{MemoryPoolId, MemoryViewId, SignalId};
+use defs::{MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use memory::{Buffer, MappedMemory};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
+
+// -------------------------------------------------------------------------------------------------
+
+/// Managing visual appearance;
+pub trait AppearanceManagement {
+    /// Sets given surface as cursor.
+    fn set_surface_as_cursor(&self, sid: SurfaceId);
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -70,16 +78,21 @@ pub trait Screenshooting {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Helper trait gathering traits used by `Aesthetics`.
+pub trait AestheticsCoordinationTrait: SurfaceManagement +
+                                       AppearanceManagement +
+                                       MemoryManagement {}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Helper trait gathering traits used by `Exhibitor`. Keeping list of all traits in all
 /// implementations is too verbose so this trait was introduced as best for now solution.
-pub trait ExhibitorCoordinationTrait: SurfaceManagement +
-                                      SurfaceControl +
+pub trait ExhibitorCoordinationTrait: SurfaceControl +
                                       SurfaceViewer +
                                       SurfaceAccess +
                                       SurfaceListing +
                                       SurfaceFocusing +
                                       Emiter +
-                                      MemoryManagement +
                                       Screenshooting {}
 
 // -------------------------------------------------------------------------------------------------

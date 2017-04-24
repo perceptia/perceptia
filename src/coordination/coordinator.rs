@@ -18,8 +18,8 @@ use qualia::{perceptron, Perceptron};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use qualia::{Emiter, MemoryManagement, Screenshooting};
-use qualia::ExhibitorCoordinationTrait;
+use qualia::{AppearanceManagement, Emiter, MemoryManagement, Screenshooting};
+use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 use qualia::{show_reason, surface_state};
 
 use surfaces::Surface;
@@ -175,11 +175,6 @@ impl InnerCoordinator {
     pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
         let surface = try_get_surface_or_none!(self, sid);
         surface.get_buffer()
-    }
-
-    /// Informs other parts of application about request from client to change cursor surface.
-    pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
-        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -344,6 +339,11 @@ impl InnerCoordinator {
         }
     }
 
+    /// Informs other parts of application about request from client to change cursor surface.
+    pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
+        self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
+    }
+
     /// Emits given signal.
     fn emit(&mut self, id: dharma::SignalId, package: Perceptron) {
         self.signaler.emit(id, package);
@@ -487,12 +487,6 @@ impl Coordinator {
     pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
         let mine = self.inner.lock().unwrap();
         mine.get_buffer(sid)
-    }
-
-    /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn set_surface_as_cursor(&self, sid: SurfaceId) {
-        let mut mine = self.inner.lock().unwrap();
-        mine.set_surface_as_cursor(sid);
     }
 }
 
@@ -640,6 +634,16 @@ impl SurfaceFocusing for Coordinator {
 
 // -------------------------------------------------------------------------------------------------
 
+impl AppearanceManagement for Coordinator {
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn set_surface_as_cursor(&self, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_surface_as_cursor(sid);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 impl Emiter for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     fn emit(&mut self, id: dharma::SignalId, package: Perceptron) {
@@ -724,6 +728,7 @@ impl Screenshooting for Coordinator {
 
 // -------------------------------------------------------------------------------------------------
 
+impl AestheticsCoordinationTrait for Coordinator {}
 impl ExhibitorCoordinationTrait for Coordinator {}
 
 // -------------------------------------------------------------------------------------------------

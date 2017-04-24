@@ -10,10 +10,13 @@ extern crate qualia;
 extern crate dharma;
 extern crate output;
 extern crate coordination;
-extern crate exhibitor;
+
+extern crate aesthetics;
 extern crate device_manager;
+extern crate exhibitor;
 extern crate wayland_frontend;
 
+mod aesthetics_module;
 mod device_manager_module;
 mod exhibitor_module;
 mod wayland_service;
@@ -22,6 +25,7 @@ use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, SignalEventHandler, Signale
 use qualia::InputManager;
 use coordination::{Context, Coordinator};
 
+use aesthetics_module::AestheticsModuleConstructor;
 use device_manager_module::DeviceManagerModuleConstructor;
 use exhibitor_module::ExhibitorModuleConstructor;
 use wayland_service::WaylandServiceConstructor;
@@ -56,6 +60,7 @@ fn main() {
     dispatcher_controller.add_source(signal_source, dharma::event_kind::READ);
 
     // Create modules and services
+    let aesthetics_module = AestheticsModuleConstructor::new();
     let device_manager_module = DeviceManagerModuleConstructor::new();
     let exhibitor_module = ExhibitorModuleConstructor::new();
     let wayland_service = WaylandServiceConstructor::new(context.clone());
@@ -71,6 +76,7 @@ fn main() {
 
     // Assign modules to threads
     utils_info.add_module(device_manager_module);
+    utils_info.add_module(aesthetics_module);
     exhibitor_info.add_module(exhibitor_module);
 
     // Start threads

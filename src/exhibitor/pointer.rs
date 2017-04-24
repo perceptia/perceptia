@@ -7,14 +7,10 @@
 
 use std::collections::HashMap;
 
-use qualia::{Area, Buffer, Milliseconds, OptionalPosition, Position, Vector};
+use qualia::{Area, Milliseconds, OptionalPosition, Position, Vector};
 use qualia::{perceptron, Perceptron, SurfaceContext, SurfaceId, ExhibitorCoordinationTrait};
 
 use display::Display;
-
-// -------------------------------------------------------------------------------------------------
-
-const DEFAULT_CURSOR_SIZE: usize = 15;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -41,45 +37,23 @@ pub struct Pointer<C> where C: ExhibitorCoordinationTrait {
     /// Surface ID of keyboard-focused surface.
     kfsid: SurfaceId,
 
-    /// Default surface ID of cursor surface.
-    default_csid: SurfaceId,
-
     /// Coordinator.
     coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait { 
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
     /// `Pointer` constructor.
-    pub fn new(mut coordinator: C) -> Self {
-        let mut data = vec![200; 4 * DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE];
-        for z in 0..(DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE) {
-            data[4 * z + 3] = 100;
-        }
-
-        let default_csid = coordinator.create_surface();
-        let b =
-            Buffer::new(DEFAULT_CURSOR_SIZE, DEFAULT_CURSOR_SIZE, 4 * DEFAULT_CURSOR_SIZE, data);
-        let bid = coordinator.create_pool_from_buffer(b);
-        if let Some(mvid) = coordinator.create_memory_view(bid,
-                                                           0,
-                                                           DEFAULT_CURSOR_SIZE,
-                                                           DEFAULT_CURSOR_SIZE,
-                                                           DEFAULT_CURSOR_SIZE) {
-            coordinator.attach_surface(mvid, default_csid);
-            coordinator.commit_surface(default_csid);
-        }
-
+    pub fn new(coordinator: C) -> Self {
         Pointer {
             position: Position::default(),
             last_position: OptionalPosition::default(),
             last_surface_relative: Position::default(),
             display_area: Area::default(),
-            csid: default_csid,
+            csid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
             kfsid: SurfaceId::invalid(),
-            default_csid: default_csid,
             coordinator: coordinator,
         }
     }
@@ -185,7 +159,7 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
         // otherwise
         if sid != self.pfsid {
             self.pfsid = sid;
-            self.csid = self.default_csid;
+            self.csid = SurfaceId::invalid();
             self.coordinator.set_pointer_focus(sid, surface_relative)
         } else if self.pfsid.is_valid() && (surface_relative != self.last_surface_relative) {
             let now = Milliseconds::now();
@@ -194,7 +168,12 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
                                   Perceptron::PointerRelativeMotion(sid, surface_relative, now));
         }
     }
+}
 
+// -------------------------------------------------------------------------------------------------
+
+/// Other requests.
+impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
     /// Handles destruction of cursor surface.
     pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
         if self.csid == sid {
@@ -206,13 +185,7 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
     pub fn on_keyboard_focus_changed(&mut self, sid: SurfaceId) {
         self.kfsid = sid;
     }
-}
 
-// -------------------------------------------------------------------------------------------------
-
-/// Other requests.
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
-    /// `Pointer` constructor.
     /// Handles cursor surface change request.
     pub fn on_surface_change(&mut self, sid: SurfaceId) {
         self.csid = sid;

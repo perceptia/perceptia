@@ -9,6 +9,7 @@ members = [
         "src/output",
         "src/frames",
         "src/exhibitor",
+        "src/aesthetics",
         "src/coordination",
         "src/device_manager",
         "src/wayland_frontend",

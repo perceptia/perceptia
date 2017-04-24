@@ -8,10 +8,11 @@ timber           = { path = "../timber" }
 dharma           = { path = "../dharma" }
 qualia           = { path = "../qualia" }
 output           = { path = "../output" }
-exhibitor        = { path = "../exhibitor" }
-device_manager   = { path = "../device_manager" }
-wayland_frontend = { path = "../wayland_frontend" }
 coordination     = { path = "../coordination" }
+aesthetics       = { path = "../aesthetics" }
+device_manager   = { path = "../device_manager" }
+exhibitor        = { path = "../exhibitor" }
+wayland_frontend = { path = "../wayland_frontend" }
 
 [[bin]]
 name = "perceptia"

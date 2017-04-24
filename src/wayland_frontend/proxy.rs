@@ -20,8 +20,8 @@ use qualia::Settings;
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
-use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
-use qualia::{SurfaceFocusing, Screenshooting, MemoryManagement};
+use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
+use qualia::{AppearanceManagement, Screenshooting, MemoryManagement};
 
 use coordination::Coordinator;
 

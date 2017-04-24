@@ -62,9 +62,14 @@ Sources are split into several modules:
 
  * **src/output** - output related functionality
 
+ * **src/testing** - common unit testing functionality
+
  * **src/frames** - framing
 
  * **src/exhibitor** - managing frames, displays and other compositing related stuff
+
+ * **src/aesthetics** - functionality related to visual appearance. Aesthetics uses the same API as
+   exposed to client frontends.
 
  * **src/device_manager** - device management functionality
 

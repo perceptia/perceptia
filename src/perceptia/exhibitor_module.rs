@@ -13,7 +13,7 @@ use exhibitor::Exhibitor;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Implementation of `dharma::Module` for Device Manager.
+/// Implementation of `dharma::Module` for Exhibitor.
 pub struct ExhibitorModule {
     last_output_id: i32,
     exhibitor: Exhibitor<Coordinator>,

@@ -56,7 +56,8 @@ pub mod perceptron;
 pub use perceptron::Perceptron;
 
 pub mod traits;
-pub use traits::{Emiter, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
+pub use traits::{AppearanceManagement, Emiter, Screenshooting, MemoryManagement};
+pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 
 #[macro_use]
 pub mod log;

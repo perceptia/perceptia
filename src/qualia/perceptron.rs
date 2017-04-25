@@ -33,6 +33,7 @@ pub const SURFACE_READY: SignalId = 20;
 pub const SURFACE_DESTROYED: SignalId = 21;
 pub const SURFACE_RECONFIGURED: SignalId = 22;
 pub const CURSOR_SURFACE_CHANGE: SignalId = 25;
+pub const BACKGROUND_SURFACE_CHANGE: SignalId = 26;
 pub const SURFACE_FRAME: SignalId = 30;
 pub const POINTER_FOCUS_CHANGED: SignalId = 31;
 pub const POINTER_RELATIVE_MOTION: SignalId = 32;
@@ -67,6 +68,7 @@ pub enum Perceptron {
     SurfaceDestroyed(SurfaceId),
     SurfaceReconfigured(SurfaceId),
     CursorSurfaceChange(SurfaceId),
+    BackgroundSurfaceChange(SurfaceId),
     SurfaceFrame(SurfaceId, Milliseconds),
     PointerFocusChanged(SurfaceId, SurfaceId, Position),
     PointerRelativeMotion(SurfaceId, Position, Milliseconds),
@@ -105,7 +107,9 @@ impl std::fmt::Display for Perceptron {
             Perceptron::SurfaceDestroyed(ref sid) => write!(f, "SurfaceDestroyed({})", sid),
             Perceptron::SurfaceReconfigured(ref sid) => write!(f, "SurfaceReconfigured({})", sid),
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
-
+            Perceptron::BackgroundSurfaceChange(ref sid) => {
+                write!(f, "BackgroundSurfaceChange({})", sid)
+            }
             Perceptron::SurfaceFrame(sid, time) => {
                 write!(f, "SurfaceFrame(sid: {}, milliseconds: {})", sid, time.get_value())
             }

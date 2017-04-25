@@ -101,8 +101,8 @@ impl<'a> DeviceManager<'a> {
     /// Iterate over input devices to find usable ones and initialize event handlers for them.
     fn initialize_input_devices(&mut self, context: &mut Context) {
         self.udev.iterate_event_devices(|devnode, devkind, _| {
-            let config = context.get_config().get_input_config();
-            let gateway = InputGateway::new(config,
+            let config = context.get_config().get_input_config().clone();
+            let gateway = InputGateway::new(config.clone(),
                                             context.get_input_manager().clone(),
                                             context.get_signaler().clone(),
                                             self.vt);

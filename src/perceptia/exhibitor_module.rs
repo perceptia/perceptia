@@ -50,6 +50,7 @@ impl Module for ExhibitorModule {
              perceptron::INPUT_POINTER_BUTTON,
              perceptron::INPUT_POINTER_POSITION_RESET,
              perceptron::CURSOR_SURFACE_CHANGE,
+             perceptron::BACKGROUND_SURFACE_CHANGE,
              perceptron::SURFACE_READY,
              perceptron::SURFACE_DESTROYED,
              perceptron::KEYBOARD_FOCUS_CHANGED,
@@ -79,6 +80,9 @@ impl Module for ExhibitorModule {
             Perceptron::Suspend => self.exhibitor.on_suspend(),
             Perceptron::WakeUp => self.exhibitor.on_wakeup(),
             Perceptron::TakeScreenshot(id) => self.exhibitor.take_screenshot(id),
+            Perceptron::BackgroundSurfaceChange(sid) => {
+                self.exhibitor.on_background_surface_change(sid);
+            }
             _ => {}
         }
     }

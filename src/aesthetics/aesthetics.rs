@@ -6,14 +6,20 @@
 
 // -------------------------------------------------------------------------------------------------
 
+extern crate image;
+
+#[macro_use]
 extern crate timber;
+#[macro_use]
 extern crate qualia;
 
 mod cursor;
+mod background;
 
-use qualia::{SurfaceId, AestheticsCoordinationTrait};
+use qualia::{SurfaceId, AestheticsConfig, AestheticsCoordinationTrait};
 
 use cursor::Cursor;
+use background::Background;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -21,16 +27,18 @@ use cursor::Cursor;
 /// client frontends.
 pub struct Aesthetics<C> where C: AestheticsCoordinationTrait {
     cursor: Cursor<C>,
+    background: Background<C>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait {
+impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone{
     /// Constructs new `Aesthetics`.
-    pub fn new(coordinator: C) -> Self {
+    pub fn new(coordinator: C, config: AestheticsConfig) -> Self {
         Aesthetics {
-            cursor: Cursor::new(coordinator),
+            cursor: Cursor::new(coordinator.clone()),
+            background: Background::new(coordinator.clone(), config),
         }
     }
 }
@@ -44,6 +52,11 @@ impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone {
         self.cursor.on_surface_change(sid);
     }
 
+    /// This method is called when changing background surface was requested.
+    pub fn on_background_surface_change(&mut self, sid: SurfaceId) {
+        self.background.on_surface_change(sid);
+    }
+
     /// This method is called when pointer focus changed.
     pub fn on_pointer_focus_changed(&mut self, old_pfsid: SurfaceId, new_pfsid: SurfaceId) {
         self.cursor.on_focus_changed(old_pfsid, new_pfsid);
@@ -52,6 +65,12 @@ impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone {
     /// This method is called when surface was destroyed.
     pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
         self.cursor.on_surface_destroyed(sid);
+    }
+
+    /// This method is called when new display was created.
+    pub fn on_display_created(&mut self) {
+        self.cursor.on_display_created();
+        self.background.on_display_created();
     }
 }
 

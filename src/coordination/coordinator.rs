@@ -342,6 +342,14 @@ impl InnerCoordinator {
     /// Informs other parts of application about request from client to change cursor surface.
     pub fn set_surface_as_cursor(&mut self, sid: SurfaceId) {
         self.signaler.emit(perceptron::CURSOR_SURFACE_CHANGE, Perceptron::CursorSurfaceChange(sid));
+        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+    }
+
+    /// Informs other parts of application about request from client to change background surface.
+    pub fn set_surface_as_background(&mut self, sid: SurfaceId) {
+        self.signaler.emit(perceptron::BACKGROUND_SURFACE_CHANGE,
+                           Perceptron::BackgroundSurfaceChange(sid));
+        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
     }
 
     /// Emits given signal.
@@ -639,6 +647,12 @@ impl AppearanceManagement for Coordinator {
     fn set_surface_as_cursor(&self, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
         mine.set_surface_as_cursor(sid);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn set_surface_as_background(&self, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_surface_as_background(sid);
     }
 }
 

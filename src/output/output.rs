@@ -11,8 +11,9 @@ use qualia::{Buffer, Illusion, OutputInfo, SurfaceContext, SurfaceViewer};
 pub trait Output {
     /// Draws passed scene using renderer.
     fn draw(&mut self,
+            layunder: &Vec<SurfaceContext>,
             surfaces: &Vec<SurfaceContext>,
-            pointer: SurfaceContext,
+            layover: &Vec<SurfaceContext>,
             viewer: &SurfaceViewer)
             -> Result<(), Illusion>;
 

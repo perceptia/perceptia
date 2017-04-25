@@ -121,15 +121,17 @@ impl RendererGl {
 
     /// Draw passed frame scene.
     pub fn draw(&mut self,
+                layunder: &Vec<SurfaceContext>,
                 surfaces: &Vec<SurfaceContext>,
-                pointer: SurfaceContext,
+                layover: &Vec<SurfaceContext>,
                 viewer: &SurfaceViewer)
                 -> Result<(), Illusion> {
         let _context = self.egl.make_current()?;
         self.prepare_view();
         self.draw_bg_image();
+        self.draw_surfaces(layunder, viewer);
         self.draw_surfaces(surfaces, viewer);
-        self.draw_pointer(pointer, viewer);
+        self.draw_surfaces(layover, viewer);
         self.release_view();
         Ok(())
     }
@@ -313,12 +315,6 @@ impl RendererGl {
             gl::DisableVertexAttribArray(self.loc_texcoords as gl::types::GLuint);
             gl::DisableVertexAttribArray(self.loc_vertices as gl::types::GLuint);
         }
-    }
-
-    /// Draw pointer.
-    fn draw_pointer(&self, pointer: SurfaceContext, viewer: &SurfaceViewer) {
-        let surfaces = vec![pointer];
-        self.draw_surfaces(&surfaces, viewer);
     }
 
     /// Unbind framebuffer and program.

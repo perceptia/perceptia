@@ -16,6 +16,9 @@ use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 pub trait AppearanceManagement {
     /// Sets given surface as cursor.
     fn set_surface_as_cursor(&self, sid: SurfaceId);
+
+    /// Sets given surface as background.
+    fn set_surface_as_background(&self, sid: SurfaceId);
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -29,32 +29,35 @@ pub struct Cursor<C> where C: AestheticsCoordinationTrait {
 
 impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
     /// Constructs new `Cursor`.
+    pub fn new(coordinator: C) -> Self {
+        Cursor {
+            csid: SurfaceId::invalid(),
+            default_csid: SurfaceId::invalid(),
+            coordinator: coordinator,
+        }
+    }
+
+    /// Initializes default cursor buffer.
     ///
     /// Sets default cursor to be white semitransparent rectangle.
-    pub fn new(mut coordinator: C) -> Self {
+    pub fn initialize(&mut self) {
         let mut data = vec![200; 4 * DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE];
         for z in 0..(DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE) {
             data[4 * z + 3] = 100;
         }
 
-        let default_csid = coordinator.create_surface();
+        self.default_csid = self.coordinator.create_surface();
         let b =
             Buffer::new(DEFAULT_CURSOR_SIZE, DEFAULT_CURSOR_SIZE, 4 * DEFAULT_CURSOR_SIZE, data);
-        let bid = coordinator.create_pool_from_buffer(b);
-        if let Some(mvid) = coordinator.create_memory_view(bid,
-                                                           0,
-                                                           DEFAULT_CURSOR_SIZE,
-                                                           DEFAULT_CURSOR_SIZE,
-                                                           DEFAULT_CURSOR_SIZE) {
-            coordinator.attach_surface(mvid, default_csid);
-            coordinator.commit_surface(default_csid);
-            coordinator.set_surface_as_cursor(default_csid);
-        }
-
-        Cursor {
-            csid: SurfaceId::invalid(),
-            default_csid: default_csid,
-            coordinator: coordinator,
+        let bid = self.coordinator.create_pool_from_buffer(b);
+        if let Some(mvid) = self.coordinator.create_memory_view(bid,
+                                                                0,
+                                                                DEFAULT_CURSOR_SIZE,
+                                                                DEFAULT_CURSOR_SIZE,
+                                                                4 * DEFAULT_CURSOR_SIZE) {
+            self.coordinator.attach_surface(mvid, self.default_csid);
+            self.coordinator.commit_surface(self.default_csid);
+            self.coordinator.set_surface_as_cursor(self.default_csid);
         }
     }
 }
@@ -80,6 +83,15 @@ impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
     pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
         if self.csid == sid {
             self.coordinator.set_surface_as_cursor(self.default_csid);
+        }
+    }
+
+    /// Handles creation of display.
+    ///
+    /// Here we have sure `Exhibitor` is initialized so we can initialize cursor buffer.
+    pub fn on_display_created(&mut self) {
+        if !self.default_csid.is_valid() {
+            self.initialize();
         }
     }
 }

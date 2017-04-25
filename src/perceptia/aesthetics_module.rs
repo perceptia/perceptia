@@ -23,7 +23,8 @@ impl AestheticsModule {
     /// Constructs new `AestheticsModule`.
     pub fn new(context: &mut Context) -> Self {
         AestheticsModule {
-            aesthetics: Aesthetics::new(context.get_coordinator().clone()),
+            aesthetics: Aesthetics::new(context.get_coordinator().clone(),
+                                        context.get_config().get_aesthetics_config().clone()),
         }
     }
 }
@@ -36,7 +37,9 @@ impl Module for AestheticsModule {
 
     fn initialize(&mut self) -> InitResult {
         log_info1!("Starting Aesthetics module");
-        vec![perceptron::CURSOR_SURFACE_CHANGE,
+        vec![perceptron::DISPLAY_CREATED,
+             perceptron::CURSOR_SURFACE_CHANGE,
+             perceptron::BACKGROUND_SURFACE_CHANGE,
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::SURFACE_DESTROYED]
     }
@@ -48,6 +51,10 @@ impl Module for AestheticsModule {
                 self.aesthetics.on_pointer_focus_changed(old_pfsid, new_pfsid);
             }
             Perceptron::SurfaceDestroyed(sid) => self.aesthetics.on_surface_destroyed(sid),
+            Perceptron::DisplayCreated(_) => self.aesthetics.on_display_created(),
+            Perceptron::BackgroundSurfaceChange(sid) => {
+                self.aesthetics.on_background_surface_change(sid);
+            }
             _ => {}
         }
     }

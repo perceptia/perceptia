@@ -41,7 +41,7 @@ pub use defs::{Axis, Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValu
 pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod config;
-pub use config::{Config, InputConfig};
+pub use config::{Config, AestheticsConfig, InputConfig};
 
 pub mod memory;
 pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};

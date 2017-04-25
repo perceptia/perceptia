@@ -51,8 +51,9 @@ impl OutputMock {
 #[allow(unused_variables)]
 impl Output for OutputMock {
     fn draw(&mut self,
+            layunder: &Vec<SurfaceContext>,
             surfaces: &Vec<SurfaceContext>,
-            pointer: SurfaceContext,
+            layover: &Vec<SurfaceContext>,
             viewer: &SurfaceViewer)
             -> Result<(), Illusion> {
         Ok(())

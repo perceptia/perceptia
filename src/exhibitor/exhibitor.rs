@@ -121,6 +121,15 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
         self.pointer.borrow_mut().on_surface_change(sid);
     }
 
+    /// This method is called when changing background surface was requested.
+    ///
+    /// TODO: Make change background request be display specific.
+    pub fn on_background_surface_change(&mut self, sid: SurfaceId) {
+        for ref mut display in self.displays.values_mut() {
+            display.on_background_change(sid);
+        }
+    }
+
     /// This method is called when new surface is ready to be managed.
     pub fn on_surface_ready(&mut self, sid: SurfaceId) {
         self.compositor.manage_surface(sid);

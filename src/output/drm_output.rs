@@ -122,11 +122,12 @@ impl DrmOutput {
 impl Output for DrmOutput {
     /// Draws passed scene using renderer.
     fn draw(&mut self,
+            layunder: &Vec<SurfaceContext>,
             surfaces: &Vec<SurfaceContext>,
-            pointer: SurfaceContext,
+            layover: &Vec<SurfaceContext>,
             viewer: &SurfaceViewer)
             -> Result<(), Illusion> {
-        self.renderer.draw(surfaces, pointer, viewer)
+        self.renderer.draw(layunder, surfaces, layover, viewer)
     }
 
     /// Takes screenshot. Returns `Buffer` containing image data.

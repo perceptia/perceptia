@@ -8,8 +8,8 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron};
-use qualia::{ExhibitorCoordinationTrait, SurfaceContext};
+use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron, Position};
+use qualia::{ExhibitorCoordinationTrait, SurfaceContext, SurfaceId};
 
 use frames::{Frame, Displaying};
 use output::Output;
@@ -26,6 +26,7 @@ pub struct Display<C> where C: ExhibitorCoordinationTrait {
     frame: Frame,
     redraw_needed: bool,
     page_flip_scheduled: bool,
+    background_sid: SurfaceId,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -44,6 +45,7 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
             frame: frame,
             redraw_needed: true,
             page_flip_scheduled: false,
+            background_sid: SurfaceId::invalid()
         };
         d.redraw_all(); // TODO: Remove when notifications are supported in Wayland module.
         d
@@ -100,22 +102,34 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
     }
 
     /// Prepare rendering context for layover.
-    pub fn prepare_layover_context(&self) -> SurfaceContext {
-        SurfaceContext::new(self.pointer.borrow().get_cursor_sid(),
-                            self.pointer.borrow().get_global_position())
+    pub fn prepare_layover_context(&self) -> Vec<SurfaceContext> {
+        vec![SurfaceContext::new(self.pointer.borrow().get_cursor_sid(),
+                                 self.pointer.borrow().get_global_position())]
+    }
+
+    /// Prepare rendering context for layunder.
+    pub fn prepare_layunder_context(&self) -> Vec<SurfaceContext> {
+        if self.background_sid.is_valid() {
+            vec![SurfaceContext::new(self.background_sid, Position::default())]
+        } else {
+            Vec::new()
+        }
     }
 
     /// Draw the scene and then schedule page flip.
+    ///
+    /// TODO: Benchmark drawing.
     fn redraw_all(&mut self) {
         let surfaces = self.frame
             .get_first_time()
             .expect("display must have at least one workspace")
             .to_array(&self.coordinator);
 
-        let pointer = self.prepare_layover_context();
+        let layover = self.prepare_layover_context();
+        let layunder = self.prepare_layunder_context();
         self.pointer.borrow_mut().update_hover_state(self.output.get_info().area, &surfaces);
 
-        if let Err(err) = self.output.draw(&surfaces, pointer, &self.coordinator) {
+        if let Err(err) = self.output.draw(&layunder, &surfaces, &layover, &self.coordinator) {
             log_error!("Display: {}", err);
         }
 
@@ -144,6 +158,11 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
                 None
             }
         }
+    }
+
+    /// Handles request to change background surface ID.
+    pub fn on_background_change(&mut self, sid: SurfaceId) {
+        self.background_sid = sid;
     }
 }
 

@@ -84,7 +84,7 @@ impl InputGateway {
     /// Scales displacements and emits pointer motion event.
     pub fn emit_motion(&mut self, x: isize, y: isize) {
         // Scale event values
-        let vector = Vector::new(x, y).scaled(self.config.mouse_scale);
+        let vector = Vector::new(x, y).scaled(self.config.mouse_scale as f32);
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_MOTION,
@@ -94,7 +94,7 @@ impl InputGateway {
     /// Scales position and emits pointer position event.
     pub fn emit_position(&mut self, x: Option<isize>, y: Option<isize>) {
         // Scale event values. Skip scaling invalid values
-        let pos = OptionalPosition::new(x, y).scaled(self.config.touchpad_scale);
+        let pos = OptionalPosition::new(x, y).scaled(self.config.touchpad_scale as f32);
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_POSITION,

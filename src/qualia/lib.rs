@@ -19,6 +19,12 @@ extern crate uinput_sys;
 #[macro_use]
 extern crate bitflags;
 
+extern crate yaml_rust;
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_yaml;
+
 #[macro_use(timber)]
 extern crate timber;
 extern crate dharma;
@@ -43,6 +49,8 @@ pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
 pub mod config;
 pub use config::{Config, AestheticsConfig, InputConfig};
 
+pub mod config_defaults;
+
 pub mod memory;
 pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
 
@@ -66,7 +74,7 @@ pub use log::level;
 pub mod functions;
 
 pub mod env;
-pub use env::Env;
+pub use env::{Env, LogDestination};
 
 pub mod keyboard_state;
 pub use keyboard_state::{KeyboardState, KeyMods};

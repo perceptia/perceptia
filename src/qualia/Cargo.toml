@@ -13,6 +13,10 @@ nix = "0.8"
 time = "0.1"
 xkbcommon = "0.2"
 uinput-sys = "0.1"
+yaml-rust = "0.3"
+serde = "0.9"
+serde_derive = "0.9"
+serde_yaml = "0.6"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 

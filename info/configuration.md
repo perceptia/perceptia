@@ -7,8 +7,8 @@ There will be three levels of configuration:
    the program without need for additional config files.
    (Ultimately similar to `dwm`'s configuration.)
 
- * plain text config file - **not yet implemented** - basically the same options as in build time
-   configuration but read from text file in run time.
+ * static text config file - basically the same options as in build time configuration but read from
+   text file in run time.
 
  * plugable modules written in scripting language (Python? Lua?) - **not yet implemented**.
    (Ultimately similar to `awesome`'s configuration.)
@@ -19,10 +19,35 @@ Build-time
 Currently there is only a few simple options that can be set in `src/qualia/config.rs` file. In
 future it is planned to add compositor strategies.
 
-Plain text
-----------
+Static text
+-----------
 
-**Not yet implemented**.
+Text config files use YAML format. YAML is human friendly data serialization standard.
+
+`perceptiactl` provides `verify-config` subcommand which verifies correctness of configuration files
+and prints effective configuration.
+
+Here is example configuration:
+
+```
+aesthetics:
+  background_path: /home/user/bg.jpg
+input:
+  touchpad_scale: 0.5
+  touchpad_pressure_threshold: 50
+  mouse_scale: 0.5
+```
+
+List of all available options:
+
+ * `aesthetics`
+   - `background_path` - path to background image file
+ * `input`
+   - `touchpad_scale` - value by which touchpad move events will be scaled (the smaller the pointer
+     moves slower)
+   - `touchpad_pressure_threshold` - touchpad events with pressure below this value will be ignored
+   - `mouse_scale` - value by which mouse move events will be scaled (the smaller the pointer moves
+     slower)
 
 Scripting language
 ------------------

@@ -21,6 +21,7 @@ extern crate skylane_simple_framework;
 mod info;
 mod about;
 mod screenshot;
+mod verify_config;
 
 fn main() {
     timber::init(std::path::Path::new("/dev/null")).unwrap();
@@ -36,6 +37,8 @@ fn main() {
             .about("Prints information about this program."))
         .subcommand(clap::SubCommand::with_name("screenshot")
             .about("Takes screenshot"))
+        .subcommand(clap::SubCommand::with_name("verify-config")
+            .about("Verifies validity of configurations files(s)"))
         .get_matches();
 
     match matches.subcommand() {
@@ -47,6 +50,9 @@ fn main() {
         }
         ("screenshot", Some(_)) => {
             screenshot::process();
+        }
+        ("verify-config", Some(_)) => {
+            verify_config::process();
         }
         _ => println!("Error during parsing arguments!"),
     }

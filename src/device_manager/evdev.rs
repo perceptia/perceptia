@@ -29,7 +29,7 @@ pub struct Evdev {
     device_kind: DeviceKind,
     config: InputConfig,
     gateway: InputGateway,
-    pressure: i32,
+    pressure: i64,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -161,7 +161,7 @@ impl Evdev {
         } else if ev.kind == uinput_sys::EV_ABS as _ {
             if ev.code == uinput_sys::ABS_PRESSURE as _ {
                 log_info4!("Touchpad pressure: {:?}", ev.value);
-                self.pressure = ev.value;
+                self.pressure = ev.value as i64;
             } else if ev.code == uinput_sys::ABS_MT_TRACKING_ID as _ {
                 self.gateway.emit_position_reset();
             } else if self.pressure > self.config.touchpad_pressure_threshold {

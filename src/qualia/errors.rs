@@ -5,8 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use libudev;
 use std;
+use libudev;
 
 use std::error::Error;
 
@@ -21,6 +21,7 @@ pub enum Illusion {
     Permissions(String),
     InvalidArgument(String),
     General(String),
+    Config(std::path::PathBuf, String),
     IO(String),
     Unknown(String),
 }
@@ -33,6 +34,7 @@ impl std::fmt::Display for Illusion {
             Illusion::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
             Illusion::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
             Illusion::General(ref s) => write!(f, "{}", s),
+            Illusion::Config(ref path, ref s) => write!(f, "Config error ({:?}): {}", path, s),
             Illusion::IO(ref s) => write!(f, "IO error: {}", s),
             Illusion::Unknown(ref s) => write!(f, "Unknown error: {}", s),
         }

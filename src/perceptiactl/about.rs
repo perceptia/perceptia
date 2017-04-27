@@ -3,7 +3,25 @@
 
 //! Printing useful information about `perceptia`.
 
+const ABOUT: &'static str = r#"
+Perceptia - dynamic window manager with support for Wayland
+
+Source code:
+   https://github.com/perceptia/perceptia/
+
+Bug tracker:
+    https://github.com/perceptia/perceptia/issues
+
+Configuration:
+    https://github.com/perceptia/perceptia/blob/master/info/configuration.md
+
+Contributors:
+    https://github.com/perceptia/perceptia/blob/master/info/authors.md
+
+Mailing list:
+    perceptia@freelists.org
+"#;
+
 pub fn process() {
-    // TODO: Add information about repository, bug tracker, authors.
-    println!("Not yet implemented");
+    println!("{}", ABOUT);
 }

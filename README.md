@@ -21,4 +21,6 @@ If you want to see features from your favourite window manager in `perceptia` yo
 contribute in brain-storming and development. For details see
 [contributing.md](./info/contributing.md).
 
+Contact via mailing list `perceptia@freelists.org` or directly with [authors](./info/authors.md).
+
 `perceptia` is licensed on `MPL-2.0`. For more information see [license.md](./info/license.md).

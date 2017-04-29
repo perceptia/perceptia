@@ -29,7 +29,7 @@ use qualia::{SurfaceId, Position, Size};
 ///
 pub fn make_simple_frames_appending()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -88,7 +88,7 @@ pub fn make_simple_frames_appending()
 ///
 pub fn make_simple_frames_prepending()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -134,7 +134,7 @@ pub fn make_simple_frames_prepending()
 ///
 pub fn make_simple_frames_joining()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -192,7 +192,7 @@ pub fn make_simple_frames_joining()
 ///
 pub fn make_simple_for_deramifying()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r  = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut a1 = Frame::new_container(Stacked);
     let mut a2 = Frame::new_container(Stacked);
     let mut a3 = Frame::new_leaf(SurfaceId::new(1), Stacked);
@@ -235,7 +235,7 @@ pub fn make_simple_for_deramifying()
 ///
 pub fn make_sized_for_homogenizing()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -301,7 +301,7 @@ pub fn make_sized_for_homogenizing()
 ///
 pub fn make_positioned_for_searching()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_root();
+    let mut r = Frame::new_workspace(String::new(), Vertical);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -354,7 +354,7 @@ pub fn make_positioned_for_searching()
 ///
 pub fn make_positioned_for_jumping()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r     = Frame::new_root();
+    let mut r     = Frame::new_workspace(String::new(), Vertical);
     let mut w     = Frame::new_container(Vertical);
     let mut a     = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b     = Frame::new_leaf(SurfaceId::new(2), Stacked);

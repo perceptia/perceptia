@@ -202,6 +202,15 @@ pub fn stackize(context: &mut InputContext) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Executes command toggling anchorization.
+pub fn toggle_anchorization(context: &mut InputContext) {
+    context.set_action(Action::Anchor);
+    context.set_direction(Direction::None);
+    context.execute_command();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Executes command for circling surfaces forward.
 pub fn cicle_history_forward(context: &mut InputContext) {
     context.set_action(Action::Focus);

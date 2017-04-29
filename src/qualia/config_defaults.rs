@@ -309,6 +309,10 @@ impl Default for Config {
                               uinput_sys::KEY_END,
                               modifier::LMTA,
                               binding_functions::ramify),
+            BindingEntry::new(mode_name::INSERT,
+                              uinput_sys::KEY_SPACE,
+                              modifier::LALT,
+                              binding_functions::toggle_anchorization),
         ];
 
         Config::new(AestheticsConfig::default(), InputConfig::default(), bindings)

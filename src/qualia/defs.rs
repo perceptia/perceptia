@@ -301,6 +301,16 @@ impl Size {
             height: height,
         }
     }
+
+    /// Returns new scaled `Size`.
+    pub fn scaled(&self, scale: f32) -> Size {
+        Size::new((scale * self.width as f32) as usize, (scale * self.height as f32) as usize)
+    }
+
+    /// Check if `Size` has zero size.
+    pub fn is_zero(&self) -> bool {
+        self.width == 0 && self.height == 0
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -311,15 +321,6 @@ impl std::default::Default for Size {
             width: 0,
             height: 0,
         }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Size {
-    /// Check if `Size` has zero size.
-    pub fn is_zero(&self) -> bool {
-        self.width == 0 && self.height == 0
     }
 }
 

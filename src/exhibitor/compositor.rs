@@ -9,7 +9,8 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Direction, SurfaceId, SurfaceInfo, ExhibitorCoordinationTrait};
+use qualia::{Action, Area, Command, Direction, Position, Size};
+use qualia::{SurfaceId, SurfaceInfo, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
 use frames::{self, Frame, Geometry, Side};
@@ -62,6 +63,14 @@ impl std::fmt::Display for CommandResult {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Structure describing strategic decision about how to place floating frame.
+struct FloatingDecision {
+    /// Area of the frame.
+    area: Area,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Structure describing strategic decision about how to handle new surface.
 struct ManageDecision {
     /// Target frame where new surface should be settled.
@@ -72,6 +81,9 @@ struct ManageDecision {
 
     /// True if new frame should be selected. False otherwise.
     selection: bool,
+
+    /// `Some` if frame should be floating. `None` otherwise.
+    floating: Option<FloatingDecision>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -105,7 +117,7 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         let mut workspace = self.create_next_workspace()
             .expect("Could not create workspace. This probably indicates compositor logic error");
         self.root.append(&mut display);
-        workspace.settle(&mut display, &mut self.coordinator);
+        workspace.settle(&mut display, None, &mut self.coordinator);
         self.select(workspace);
         display
     }
@@ -151,6 +163,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
                     _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
             }
+            Action::Anchor => {
+                self.anchorize(frame)
+            }
             _ => CommandResult::NotHandled,
         };
 
@@ -173,10 +188,15 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
 
             // Consult about placement strategy
             let mut decision = self.choose_target(&surface);
+            let area = if let Some(floating) = decision.floating {
+                Some(floating.area)
+            } else {
+                None
+            };
 
             // Settle and optionally select new frame
             let mut frame = Frame::new_leaf(sid, decision.geometry);
-            frame.settle(&mut decision.target, &mut self.coordinator);
+            frame.settle(&mut decision.target, area, &mut self.coordinator);
             if decision.selection {
                 self.select(frame);
             }
@@ -243,7 +263,7 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// For convenience if target is `Leaf` its parent is reconfigured.
     fn configure(&mut self, frame: &mut Frame, direction: Direction) -> CommandResult {
         // Check validity of frame
-        if !frame.get_mode().is_regeometrizable() {
+        if !frame.get_mode().is_reorientable() {
             log_warn1!("Can not change geometry of frame which is not \
                        container, leaf or workspace. {:?}",
                        frame);
@@ -395,6 +415,18 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         }
     }
 
+    /// Handles anchorization command.
+    fn anchorize(&mut self, mut frame: Frame) -> CommandResult {
+        if frame.is_anchored() {
+            let workspace = self.find_current_workspace();
+            let decision = self.choose_floating_parameters(workspace.get_size());
+            frame.deanchorize(decision.area, &mut self.coordinator);
+        } else {
+            frame.anchorize(&mut self.coordinator);
+        }
+        CommandResult::Ok
+    }
+
     /// Adds new container just above selection.
     fn ramify(&mut self, mut frame: Frame) {
         // TODO: Geometry should be configurable.
@@ -478,7 +510,7 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         // Create and configure workspace
         // TODO: Make default workspace geometry configurable.
         let mut workspace = Frame::new_workspace(title.clone(), Geometry::Stacked);
-        workspace.settle(&mut display, &mut self.coordinator);
+        workspace.settle(&mut display, None, &mut self.coordinator);
 
         // Focus if requested or make sure current selection stays focused
         if focus {
@@ -545,20 +577,28 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     }
 
     /// Decide how to handle new surface.
-    fn choose_target(&self, surface: &SurfaceInfo) -> ManageDecision {
-        if surface.parent_sid.is_valid() {
-            // FIXME: Choosing surface target should be configurable.
-            ManageDecision {
-                target: self.get_selection().find_buildable().unwrap(),
-                geometry: frames::Geometry::Stacked,
-                selection: true,
-            }
-        } else {
-            ManageDecision {
-                target: self.get_selection().find_buildable().unwrap(),
-                geometry: frames::Geometry::Vertical,
-                selection: true,
-            }
+    ///
+    /// FIXME: Choosing surface target should be configurable.
+    fn choose_target(&self, _surface: &SurfaceInfo) -> ManageDecision {
+        let target = self.find_current_workspace();
+        let floating = self.choose_floating_parameters(target.get_size());
+        ManageDecision {
+            target: target,
+            geometry: frames::Geometry::Vertical,
+            selection: true,
+            floating: Some(floating),
+        }
+    }
+
+    /// Decide where to place floating surface.
+    ///
+    /// FIXME: Placement of floating frame should be configurable.
+    fn choose_floating_parameters(&self, workspace_size: Size) -> FloatingDecision {
+        let size = workspace_size.scaled(0.5);
+        let pos = Position::new((workspace_size.width / 4) as isize,
+                                (workspace_size.height / 4) as isize);
+        FloatingDecision {
+            area: Area::new(pos, size),
         }
     }
 

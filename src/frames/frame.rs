@@ -87,13 +87,31 @@ pub enum Mode {
 
 impl Mode {
     /// Returns `false` if mode is `Leaf` or `Container`, `true` otherwise.
-    pub fn is_top(self) -> bool {
-        (self != Mode::Container) && (self != Mode::Leaf)
+    pub fn is_top(&self) -> bool {
+        (*self != Mode::Container) && (*self != Mode::Leaf)
     }
 
     /// Returns `true` if mode is `Leaf`, `Container` or `Workspace`, `false` otherwise.
-    pub fn is_regeometrizable(self) -> bool {
-        (self == Mode::Container) || (self == Mode::Leaf) || (self == Mode::Workspace)
+    pub fn is_reorientable(&self) -> bool {
+        (*self == Mode::Container) || (*self == Mode::Leaf) || (*self == Mode::Workspace)
+    }
+
+    /// Returns `true` if frame with this mode can be reanchorized, `false` otherwise.
+    ///
+    /// NOTE: Display must be floating. Otherwise it could be relaxed. For the same reason
+    /// workspace must be anchored.
+    pub fn is_reanchorizable(&self) -> bool {
+        (*self != Mode::Workspace) && (*self != Mode::Special) && (*self != Mode::Root)
+    }
+
+    /// Returns `true` if mode is `Workspace`, `false` otherwise.
+    pub fn is_workspace(&self) -> bool {
+        *self == Mode::Workspace
+    }
+
+    /// Returns `true` if mode is `Leaf`, `false` otherwise.
+    pub fn is_leaf(&self) -> bool {
+        *self == Mode::Leaf
     }
 }
 
@@ -110,9 +128,6 @@ pub enum Geometry {
 
     /// Children of frame with this geometry are placed on stack - only one is visible at a time.
     Stacked,
-
-    /// Children of frame with this geometry can be in arbitrary place and have arbitrary size.
-    Floating,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -151,6 +166,9 @@ pub struct Parameters {
 
     /// Title.
     pub title: String,
+
+    /// Anchorization state.
+    pub is_anchored: bool,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -161,10 +179,11 @@ impl Parameters {
         Parameters {
             sid: SurfaceId::invalid(),
             mode: Mode::Root,
-            geometry: Geometry::Floating,
+            geometry: Geometry::Stacked,
             pos: Position::default(),
             size: Size::default(),
             title: "PERCEPTIA".to_owned(),
+            is_anchored: false,
         }
     }
 
@@ -177,6 +196,7 @@ impl Parameters {
             pos: area.pos,
             size: area.size,
             title: title,
+            is_anchored: false,
         }
     }
 
@@ -189,6 +209,7 @@ impl Parameters {
             pos: Position::default(),
             size: Size::default(),
             title: title,
+            is_anchored: true,
         }
     }
 
@@ -201,10 +222,14 @@ impl Parameters {
             pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
+            is_anchored: true,
         }
     }
 
     /// Creates new parameters for leaf frame.
+    ///
+    /// Position, size and anchorization state are not important now. They will be set during
+    /// settling the frame.
     pub fn new_leaf(sid: SurfaceId, geometry: Geometry) -> Self {
         Parameters {
             sid: sid,
@@ -213,6 +238,7 @@ impl Parameters {
             pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
+            is_anchored: true,
         }
     }
 }
@@ -247,7 +273,8 @@ impl Frame {
                geometry: Geometry,
                pos: Position,
                size: Size,
-               title: String)
+               title: String,
+               is_anchored: bool)
                -> Self {
         Self::allocate(InnerFrame {
                            params: Parameters {
@@ -257,6 +284,7 @@ impl Frame {
                                pos: pos,
                                size: size,
                                title: title,
+                               is_anchored: is_anchored,
                            },
                            node: Node::default(),
                        })
@@ -380,6 +408,11 @@ impl Frame {
     pub fn get_title(&self) -> String {
         unsafe { (*self.inner).params.title.clone() }
     }
+
+    /// Returns anchorization state.
+    pub fn is_anchored(&self) -> bool {
+        unsafe { (*self.inner).params.is_anchored }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -434,6 +467,14 @@ impl Frame {
         }
         unsafe {
             (*self.inner).params.size = size;
+        }
+    }
+
+    /// Sets anchorization state without correcting position changing position or size.
+    #[inline]
+    pub fn set_plumbing_is_anchored(&mut self, is_anchored: bool) {
+        unsafe {
+            (*self.inner).params.is_anchored = is_anchored;
         }
     }
 }
@@ -761,14 +802,20 @@ impl Frame {
 
 impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let pos = self.get_position();
+        let size = self.get_size();
+        let is_anchored = if self.is_anchored() { "A" } else { "F" };
         write!(f,
-               "Frame {{ sid: {:?}, title: '{}', mode: {:?}, geometry: {:?}, {:?}, {:?} }}",
+               "Frame {{ sid: {:?}, '{}', {:?}, {:?}, {}x{}+{}+{}, {} }}",
                self.get_sid(),
                self.get_title(),
                self.get_mode(),
                self.get_geometry(),
-               self.get_position(),
-               self.get_size())
+               size.width,
+               size.height,
+               pos.x,
+               pos.y,
+               is_anchored)
     }
 }
 

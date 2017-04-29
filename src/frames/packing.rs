@@ -64,17 +64,15 @@ impl Packing for Frame {
                 size.width = self.get_size().width / len;
                 increment.x = size.width as isize;
             }
-            Geometry::Floating => {
-                // Nothing to do for not-directed frames
-                return;
-            }
         }
 
         // Resize and reposition all subframes recursively
         let mut pos = self.get_position();
         for mut frame in self.space_iter() {
-            frame.set_size(size.clone(), sa);
-            frame.set_position(pos.clone());
+            if frame.is_anchored() {
+                frame.set_size(size.clone(), sa);
+                frame.set_position(pos.clone());
+            }
             pos = pos + increment.clone();
         }
     }

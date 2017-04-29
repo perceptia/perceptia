@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{SurfaceAccess, SurfaceId};
+use qualia::{Area, SurfaceAccess, SurfaceId};
 
 use frame::{Frame, Geometry, Mode, Side};
 use searching::Searching;
@@ -16,7 +16,9 @@ use packing::Packing;
 /// Extension trait for `Frame` adding more settling functionality.
 pub trait Settling {
     /// Settle self in buildable of target and relax it.
-    fn settle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess);
+    ///
+    /// If `area` is provided settle the surface as floating with given position and size.
+    fn settle(&mut self, target: &mut Frame, area: Option<Area>, sa: &mut SurfaceAccess);
 
     /// Remove given frame, relax old parent and settle the frame on given target.
     fn resettle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess);
@@ -46,6 +48,13 @@ pub trait Settling {
     /// Removes frame `self` from frame layout and then places it using `jumpin` method.
     fn jump(&mut self, side: Side, target: &mut Frame, sa: &mut SurfaceAccess);
 
+    /// Anchorizes floating frame.
+    fn anchorize(&mut self, sa: &mut SurfaceAccess);
+
+    /// Deanchorizes frame. Floating frame must be attached to workspace so it will be resettled if
+    /// necessary.
+    fn deanchorize(&mut self, area: Area, sa: &mut SurfaceAccess);
+
     /// Removes frame `self`, relaxes old parent and destroys the frame.
     fn destroy_self(&mut self, sa: &mut SurfaceAccess);
 }
@@ -53,12 +62,20 @@ pub trait Settling {
 // -------------------------------------------------------------------------------------------------
 
 impl Settling for Frame {
-    fn settle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
+    fn settle(&mut self, target: &mut Frame, area: Option<Area>, sa: &mut SurfaceAccess) {
         if let Some(ref mut buildable) = target.find_buildable() {
             if buildable.get_geometry() == Geometry::Stacked {
                 buildable.prepend(self);
+                if let Some(area) = area {
+                    self.set_size(area.size, sa);
+                    self.set_position(area.pos);
+                    self.set_plumbing_is_anchored(false);
+                } else {
+                    self.set_plumbing_is_anchored(true);
+                }
             } else {
                 buildable.append(self);
+                self.set_plumbing_is_anchored(true);
             }
             buildable.relax(sa);
         }
@@ -66,7 +83,7 @@ impl Settling for Frame {
 
     fn resettle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
         self.remove_self(sa);
-        self.settle(target, sa);
+        self.settle(target, None, sa);
     }
 
     fn pop_recursively(&mut self, pop: &mut Frame) {
@@ -103,7 +120,7 @@ impl Settling for Frame {
             Mode::Container
         };
 
-        let frame_mode = if self.get_mode() == Mode::Leaf {
+        let frame_mode = if self.get_mode().is_leaf() {
             self.get_mode()
         } else {
             Mode::Container
@@ -114,7 +131,8 @@ impl Settling for Frame {
                                        geometry,
                                        self.get_position(),
                                        self.get_size(),
-                                       self.get_title());
+                                       self.get_title(),
+                                       true);
         self.prejoin(&mut distancer);
         self.remove();
         self.set_plumbing_mode(frame_mode);
@@ -134,7 +152,7 @@ impl Settling for Frame {
                 self.prepend(&mut second);
                 first.destroy();
             } else if len == 0 {
-                self.set_plumbing_mode(Mode::Leaf);
+                self.set_plumbing_mode(first.get_mode());
                 self.set_plumbing_sid(first.get_sid());
                 first.remove();
                 first.destroy();
@@ -156,13 +174,13 @@ impl Settling for Frame {
                 Side::On => {
                     let mut new_target = if target_parent.count_children() == 1 {
                         target_parent.clone()
-                    } else if target.get_mode() == Mode::Leaf {
+                    } else if target.get_mode().is_leaf() {
                         target.ramify(Geometry::Stacked)
                     } else {
                         target.clone()
                     };
 
-                    self.settle(&mut new_target, sa);
+                    self.settle(&mut new_target, None, sa);
                 }
             }
         }
@@ -171,6 +189,32 @@ impl Settling for Frame {
     fn jump(&mut self, side: Side, target: &mut Frame, sa: &mut SurfaceAccess) {
         self.remove_self(sa);
         self.jumpin(side, target, sa);
+    }
+
+    fn anchorize(&mut self, sa: &mut SurfaceAccess) {
+        if self.get_mode().is_reanchorizable() && !self.is_anchored() {
+            // NOTE: Floating surface must be direct child of workspace.
+            let parent = self.get_parent().expect("should have parent");
+            self.set_size(parent.get_size(), sa);
+            self.set_position(parent.get_position());
+            self.set_plumbing_is_anchored(true);
+        }
+    }
+
+    fn deanchorize(&mut self, area: Area, sa: &mut SurfaceAccess) {
+        if self.get_mode().is_reanchorizable() && self.is_anchored() {
+            let mut workspace = self.find_top().expect("should have toplevel");
+            if workspace.get_mode().is_workspace() {
+                let parent = self.get_parent().expect("should have parent");
+                if !parent.equals_exact(&workspace) {
+                    self.remove_self(sa);
+                    workspace.prepend(self);
+                }
+                self.set_size(area.size, sa);
+                self.set_position(area.pos);
+                self.set_plumbing_is_anchored(false);
+            }
+        }
     }
 
     fn destroy_self(&mut self, sa: &mut SurfaceAccess) {

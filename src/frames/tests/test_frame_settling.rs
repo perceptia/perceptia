@@ -34,7 +34,7 @@ fn test_poping_directed() {
     r.pop_recursively(&mut h2);
 
     let repr = FrameRepresentation {
-        params: Parameters::new_root(),
+        params: Parameters::new_workspace(String::new(), Vertical),
         branches: vec![
             FrameRepresentation {
                 params: Parameters::new_container(Horizontal),
@@ -82,7 +82,7 @@ fn test_poping_stacked() {
     r.pop_recursively(&mut s2);
 
     let spaced_repr = FrameRepresentation {
-        params: Parameters::new_root(),
+        params: Parameters::new_workspace(String::new(), Vertical),
         branches: vec![
             FrameRepresentation {
                 params: Parameters::new_container(Vertical),
@@ -112,7 +112,7 @@ fn test_poping_stacked() {
     };
 
     let timed_repr = FrameRepresentation {
-        params: Parameters::new_root(),
+        params: Parameters::new_workspace(String::new(), Vertical),
         branches: vec![
             FrameRepresentation {
                 params: Parameters::new_container(Stacked),

@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::{Direction, Position, SurfaceId};
-use frame::{Frame, Geometry, Mode};
+use frame::{Frame, Geometry};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -78,7 +78,7 @@ impl Searching for Frame {
 
         for ref frame in self.time_iter() {
             if frame.get_area().contains(&point) {
-                return if self.get_mode() == Mode::Leaf {
+                return if self.get_mode().is_leaf() {
                            frame.clone()
                        } else {
                            frame.find_pointed(point)

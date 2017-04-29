@@ -49,3 +49,41 @@ fn test_homogenizing() {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Test if removing frame with siblings works correctly.
+#[test]
+fn test_removing_self_with_siblings() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (r, _, _, _, _, _, c, d1, mut d2, d3) = layouts::make_simple_for_deramifying();
+
+    d2.remove_self(&mut sa);
+
+    assertions::assert_frame_equal_exact(&d1.get_parent().unwrap(), &c);
+    assertions::assert_frame_equal_exact(&d3.get_parent().unwrap(), &c);
+    assert_eq!(c.count_children(), 2);
+
+    d2.destroy();
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Test if removing frame without siblings works correctly. If removed frame was the only child,
+/// parent should also be removed.
+#[test]
+fn test_removing_self_without_siblings() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (r, a1, a2, a3, mut f, _, _, _, _, _) = layouts::make_simple_for_deramifying();
+
+    f.remove_self(&mut sa);
+
+    assertions::assert_frame_equal_exact(&a2.get_parent().unwrap(), &r);
+    assertions::assert_frame_equal_exact(&a3.get_parent().unwrap(), &r);
+    assert_eq!(r.count_children(), 2);
+
+    a1.destroy();
+    f.destroy();
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------

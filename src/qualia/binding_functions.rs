@@ -175,6 +175,20 @@ pub fn put_backward(context: &mut InputContext) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Sets begin direction in command but do not execute.
+pub fn put_begin(context: &mut InputContext) {
+    put_direction(context, Direction::Begin);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Sets end direction in command but do not execute.
+pub fn put_end(context: &mut InputContext) {
+    put_direction(context, Direction::End);
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Executes command changing selected frame geometry to horizontal.
 pub fn horizontalize(context: &mut InputContext) {
     context.set_action(Action::Configure);

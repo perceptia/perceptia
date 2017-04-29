@@ -90,11 +90,11 @@ impl Default for Config {
             BindingEntry::new(mode_name::NORMAL,
                               uinput_sys::KEY_HOME,
                               modifier::NONE,
-                              binding_functions::exalt),
+                              binding_functions::put_begin),
             BindingEntry::new(mode_name::NORMAL,
                               uinput_sys::KEY_END,
                               modifier::NONE,
-                              binding_functions::ramify),
+                              binding_functions::put_end),
             // directions
             BindingEntry::new(mode_name::NORMAL,
                               uinput_sys::KEY_RIGHT,

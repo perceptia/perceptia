@@ -134,7 +134,12 @@ impl Packing for Frame {
     fn remove_self(&mut self, sa: &mut SurfaceAccess) {
         if let Some(ref mut parent) = self.get_parent() {
             self.remove();
-            parent.relax(sa);
+            let len = parent.count_children();
+            if len > 0 {
+                parent.relax(sa);
+            } else {
+                parent.remove_self(sa);
+            }
         }
     }
 }

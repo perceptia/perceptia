@@ -31,12 +31,15 @@ pub trait Settling {
     /// Changes frames geometry and resizes all subframe accordingly.
     fn change_geometry(&mut self, geometry: Geometry, sa: &mut SurfaceAccess);
 
-    /// Adds another container into given place in frame layout.
+    /// Adds another container into given place in frame layout if needed.
     ///
     /// This method is used when jumping into leaf frame to create container to handle the leaf
     /// and jumped frame.
     ///
-    /// Returns newly created container frame.
+    /// Returns
+    ///  - `self` if it is container with one child,
+    ///  - parent if parent has one child
+    ///  - newly created container frame otherwise
     fn ramify(&mut self, geometry: Geometry) -> Frame;
 
     /// Removes unnecessary layers of container frames containing only one container or leaf frame.
@@ -114,6 +117,14 @@ impl Settling for Frame {
     }
 
     fn ramify(&mut self, geometry: Geometry) -> Frame {
+        let parent = self.get_parent().expect("should have parent");
+        if self.count_children() == 1 {
+            return self.clone();
+        }
+        if parent.count_children() == 1 {
+            return parent;
+        }
+
         let distancer_mode = if self.get_mode().is_top() {
             self.get_mode()
         } else {

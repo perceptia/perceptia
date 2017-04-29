@@ -101,7 +101,7 @@ fn test_find_with_sid() {
 ///  - 0*South from A should be A.
 ///  - 1*South from A should be B.
 ///  - 1*North from B should be A.
-///  - 1*South from B should be NULL.
+///  - 1*South from B should be None.
 ///
 ///     ┌─────┐
 ///     │  A  │
@@ -120,19 +120,19 @@ fn test_find_contiguous_on_the_same_level_one_further() {
     v.append(&mut b);
 
     // 0*South from A should be A
-    let mut p = a.find_contiguous(Direction::South, 0);
+    let p = a.find_contiguous(Direction::South, 0);
     assertions::assert_frame_equal_exact(&p.unwrap(), &a);
 
     // 1*South from A should be B
-    p = a.find_contiguous(Direction::South, 1);
+    let p = a.find_contiguous(Direction::South, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &b);
 
     // 1*North from B should be A
-    p = b.find_contiguous(Direction::North, 1);
+    let p = b.find_contiguous(Direction::North, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &a);
 
     // 1*South from B should be None;
-    p = b.find_contiguous(Direction::South, 1);
+    let p = b.find_contiguous(Direction::South, 1);
     assert!(p.is_none());
 
     r.destroy();
@@ -168,11 +168,11 @@ fn test_find_contiguous_on_the_same_level_many_further() {
     h.append(&mut f);
 
     // 3*West from B should be E
-    let mut p = b.find_contiguous(Direction::East, 3);
+    let p = b.find_contiguous(Direction::East, 3);
     assertions::assert_frame_equal_exact(&p.unwrap(), &e);
 
     // 5*East from F should be A
-    p = f.find_contiguous(Direction::West, 5);
+    let p = f.find_contiguous(Direction::West, 5);
     assertions::assert_frame_equal_exact(&p.unwrap(), &a);
 
     r.destroy();
@@ -214,23 +214,23 @@ fn test_find_contiguous_on_the_second_level_across() {
     abcd.append(&mut d);
 
     // 1*East from B should be D
-    let mut p = b.find_contiguous(Direction::East, 1);
+    let p = b.find_contiguous(Direction::East, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &d);
 
     // 1*West from A should be BC
-    p = a.find_contiguous(Direction::East, 1);
+    let p = a.find_contiguous(Direction::East, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &bc);
 
     // 1*East from C should be A
-    p = c.find_contiguous(Direction::West, 1);
+    let p = c.find_contiguous(Direction::West, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &a);
 
     // 2*West from A should be D
-    p = a.find_contiguous(Direction::East, 2);
+    let p = a.find_contiguous(Direction::East, 2);
     assertions::assert_frame_equal_exact(&p.unwrap(), &d);
 
     // 1*Trunk from C should be BC
-    p = c.find_contiguous(Direction::Up, 1);
+    let p = c.find_contiguous(Direction::Up, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &bc);
 
     r.destroy();
@@ -272,6 +272,50 @@ fn test_find_contiguous_on_the_third_level_along() {
     // 1*East from C should be D
     let p = c.find_contiguous(Direction::East, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &d);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Find contiguous when searching in direction perpendicular to screen.
+///
+///
+///     ┏━━━━━━━━━━━━━━━━━━━━━━━┓
+///     ┃┌───────┬─────────────┐┃
+///     ┃│┌─────┐│┌─────┬─────┐│┃
+///     ┃││ ABC │││  D  │  E  ││┃
+///     ┃│└─────┘│└─────┴─────┘│┃
+///     ┃└───────┴─────────────┘┃
+///     ┠───────────────────────┨
+///     ┃┌─────────────────┐    ┃
+///     ┃│         F       │    ┃
+///     ┃└─────────────────┘    ┃
+///     ┗━━━━━━━━━━━━━━━━━━━━━━━┛
+///
+#[test]
+fn test_find_contiguous_in_perpendicular_direction() {
+    let (r, _, _, _, a, b, c, _, _, _) = layouts::make_positioned_for_searching();
+
+    // 1*End from A should be B
+    let p = a.find_contiguous(Direction::End, 1);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &b);
+
+    // 2*End from A should be C
+    let p = a.find_contiguous(Direction::End, 2);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &c);
+
+    // 1*Begin from C should be B
+    let p = c.find_contiguous(Direction::Begin, 1);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &b);
+
+    // 2*Begin from C should be A
+    let p = c.find_contiguous(Direction::Begin, 2);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &a);
+
+    // 3*End from A should be None
+    let p = a.find_contiguous(Direction::End, 3);
+    assert!(p.is_none());
 
     r.destroy();
 }
@@ -460,7 +504,7 @@ fn test_find_empty_space() {
 /// - 1*South from C should be E
 /// - 2*South from A should be F
 /// - 1*South from CD should be F
-/// - 1*North from AB should be NULL
+/// - 1*North from AB should be None
 ///
 ///
 ///     ┌─────────────────────┐
@@ -513,24 +557,59 @@ fn test_find_adjacent_frames() {
     f. set_plumbing_position_and_size(Position::new(30, 20), Size::new( 70, 10));
 
     // 1*South from A should be C
-    let mut p = a.find_adjacent(Direction::South, 1);
+    let p = a.find_adjacent(Direction::South, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &c);
 
     // 1*South from C should be E
-    p = c.find_adjacent(Direction::South, 1);
+    let p = c.find_adjacent(Direction::South, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &e);
 
     // 2*South from A should be F
-    p = a.find_adjacent(Direction::South, 2);
+    let p = a.find_adjacent(Direction::South, 2);
     assertions::assert_frame_equal_exact(&p.unwrap(), &f);
 
     // 1*South from CD should be F
-    p = cd.find_adjacent(Direction::South, 1);
+    let p = cd.find_adjacent(Direction::South, 1);
     assertions::assert_frame_equal_exact(&p.unwrap(), &f);
 
     // 1*North from AB should be None
-    p = ab.find_adjacent(Direction::North, 1);
+    let p = ab.find_adjacent(Direction::North, 1);
     assert!(p.is_none());
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Find adjacent frames in direction perpendicular to screen.
+///
+/// - 1*End from A should be B
+/// - 2*End from A should be C
+///
+///
+///     ┌───────────────────────┐
+///     │┌───────┬─────────────┐│
+///     ││┌─────┐│┌─────┬─────┐││
+///     │││ ABC │││  D  │  E  │││
+///     ││└─────┘│└─────┴─────┘││
+///     │└───────┴─────────────┘│
+///     ├───────────────────────┤
+///     │┌────────────────┐     │
+///     ││        F       │     │
+///     │└────────────────┘     │
+///     └───────────────────────┘
+///
+#[test]
+fn test_find_adjacent_stacked_frames() {
+    let (r, _, _, _, a, b, c, _, _, _) = layouts::make_positioned_for_searching();
+
+    // 1*End from A should be B
+    let p = a.find_adjacent(Direction::End, 1);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &b);
+
+    // 2*End from A should be C
+    let p = a.find_adjacent(Direction::End, 2);
+    assertions::assert_frame_equal_exact(&p.unwrap(), &c);
 
     r.destroy();
 }

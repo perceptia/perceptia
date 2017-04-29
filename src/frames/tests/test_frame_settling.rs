@@ -200,6 +200,27 @@ fn test_ramifing_nonleaf() {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Check if request to ramify single child will be ignored and parent will be returned.
+///
+/// In this case ramification would be unnecessary because structure need by ramifying operation is
+/// already in place.
+#[test]
+fn test_ramifing_single_child() {
+    let (r, mut a1, _, _, mut f, _, _, _, _, _) = layouts::make_simple_for_deramifying();
+
+    let d = f.ramify(Horizontal);
+    assertions::assert_frame_equal_exact(&d, &a1);
+    assertions::assert_frame_equal_exact(&f.get_parent().unwrap(), &a1);
+
+    let d = a1.ramify(Horizontal);
+    assertions::assert_frame_equal_exact(&d, &a1);
+    assertions::assert_frame_equal_exact(&f.get_parent().unwrap(), &a1);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Should deramify frame with single non-leaf twig.
 #[test]
 fn should_deramify_single_nonleaf() {

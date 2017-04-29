@@ -160,6 +160,10 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
                         self.dive_to_workspace(frame, &command.string);
                         CommandResult::Ok
                     }
+                    Direction::Begin => {
+                        self.exalt(&mut frame);
+                        CommandResult::Ok
+                    }
                     _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
             }
@@ -212,9 +216,14 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     pub fn unmanage_surface(&mut self, sid: SurfaceId) {
         if let Some(ref mut frame) = self.root.find_with_sid(sid) {
             self.history.remove(sid);
-            if frame.get_sid() == self.selection.get_sid() {
-                // TODO: This should be configurable
-                let new_selection = self.selection.find_buildable().unwrap();
+            if self.selection.get_sid() == sid {
+                let new_selection = {
+                    if let Some(previous_sid) = self.history.get_nth(0) {
+                        self.root.find_with_sid(previous_sid).unwrap()
+                    } else {
+                        self.selection.find_buildable().unwrap()
+                    }
+                };
                 self.select(new_selection);
             }
 
@@ -438,19 +447,21 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     fn exalt(&mut self, frame: &mut Frame) {
         // Choose target
         let mut above = frame.get_parent().expect("exalted frame must have parent");
-        let mut target = if above.get_geometry() == Geometry::Stacked {
-            above = above.get_parent().expect("exalted frame must have grand parent");
-            if above.get_geometry() == Geometry::Stacked {
-                above
+        if !above.get_mode().is_top() {
+            let mut target = if above.get_geometry() == Geometry::Stacked {
+                above = above.get_parent().expect("exalted frame must have grand parent");
+                if above.get_geometry() == Geometry::Stacked {
+                    above
+                } else {
+                    above.ramify(Geometry::Stacked)
+                }
             } else {
                 above.ramify(Geometry::Stacked)
-            }
-        } else {
-            above.ramify(Geometry::Stacked)
-        };
+            };
 
-        // Resettle to target
-        frame.resettle(&mut target, &mut self.coordinator);
+            // Resettle to target
+            frame.resettle(&mut target, &mut self.coordinator);
+        }
     }
 }
 

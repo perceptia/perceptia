@@ -112,6 +112,14 @@ impl Searching for Frame {
                 } else {
                     None
                 }
+            } else if parent.get_geometry() == Geometry::Stacked {
+                if direction == Direction::Begin {
+                    self.get_prev_space()
+                } else if direction == Direction::End {
+                    self.get_next_space()
+                } else {
+                    None
+                }
             } else {
                 None
             };
@@ -154,11 +162,13 @@ impl Searching for Frame {
             } else {
                 break;
             };
-            frame = if let Some(ref frame) = frame {
-                Some(frame.find_pointed(point.clone()))
-            } else {
-                break;
-            };
+            if direction != Direction::Begin || direction != Direction::End {
+                frame = if let Some(ref frame) = frame {
+                    Some(frame.find_pointed(point.clone()))
+                } else {
+                    break;
+                };
+            }
         }
         frame
     }

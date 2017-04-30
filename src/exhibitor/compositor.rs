@@ -9,13 +9,15 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Direction, Position, Size, Vector};
-use qualia::{SurfaceId, SurfaceInfo, ExhibitorConfig, ExhibitorCoordinationTrait};
+use qualia::{Action, Area, Command, Direction, Vector};
+use qualia::{SurfaceId, CompositorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
-use frames::{self, Frame, Geometry, Side};
+use frames::{Frame, Geometry, Side};
 use frames::searching::Searching;
 use frames::settling::Settling;
+
+use strategist::Strategist;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -63,38 +65,14 @@ impl std::fmt::Display for CommandResult {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Structure describing strategic decision about how to place floating frame.
-struct FloatingDecision {
-    /// Area of the frame.
-    area: Area,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure describing strategic decision about how to handle new surface.
-struct ManageDecision {
-    /// Target frame where new surface should be settled.
-    target: Frame,
-
-    /// Geometry of new frame.
-    geometry: frames::Geometry,
-
-    /// True if new frame should be selected. False otherwise.
-    selection: bool,
-
-    /// `Some` if frame should be floating. `None` otherwise.
-    floating: Option<FloatingDecision>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Compositor main structure.
 pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
     history: SurfaceHistory,
     coordinator: C,
     root: Frame,
     selection: Frame,
-    config: ExhibitorConfig,
+    strategist: Strategist,
+    config: CompositorConfig,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -102,13 +80,14 @@ pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
 /// Public methods.
 impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// `Compositor` constructor.
-    pub fn new(coordinator: C, config: ExhibitorConfig) -> Self {
+    pub fn new(coordinator: C, strategist: Strategist, config: CompositorConfig) -> Self {
         let root = Frame::new_root();
         Compositor {
             history: SurfaceHistory::new(),
             coordinator: coordinator,
             root: root.clone(),
             selection: root,
+            strategist: strategist,
             config: config,
         }
     }
@@ -196,7 +175,7 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
             let surface = try_get_surface!(self, sid);
 
             // Consult about placement strategy
-            let mut decision = self.choose_target(&surface);
+            let mut decision = self.strategist.choose_target(&self.get_selection(), &surface);
             let area = if let Some(floating) = decision.floating {
                 Some(floating.area)
             } else {
@@ -224,9 +203,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
             if self.selection.get_sid() == sid {
                 let new_selection = {
                     if let Some(previous_sid) = self.history.get_nth(0) {
-                        self.root.find_with_sid(previous_sid).unwrap()
+                        self.root.find_with_sid(previous_sid).expect("Find previous frame")
                     } else {
-                        self.selection.find_buildable().unwrap()
+                        self.selection.find_buildable().expect("Find buildable")
                     }
                 };
                 self.select(new_selection);
@@ -459,10 +438,12 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     }
 
     /// Handles anchorization command.
+    ///
+    /// TODO: Extract preferred size from frame.
     fn anchorize(&mut self, mut frame: Frame) -> CommandResult {
         if frame.is_anchored() {
             let workspace = self.find_current_workspace();
-            let decision = self.choose_floating_parameters(workspace.get_size());
+            let decision = self.strategist.choose_floating(workspace.get_size(), None);
             frame.deanchorize(decision.area, &mut self.coordinator);
         } else {
             frame.anchorize(&mut self.coordinator);
@@ -621,35 +602,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         }
     }
 
-    /// Decide how to handle new surface.
-    ///
-    /// FIXME: Choosing surface target should be configurable.
-    fn choose_target(&self, _surface: &SurfaceInfo) -> ManageDecision {
-        let target = self.find_current_workspace();
-        let floating = self.choose_floating_parameters(target.get_size());
-        ManageDecision {
-            target: target,
-            geometry: frames::Geometry::Vertical,
-            selection: true,
-            floating: Some(floating),
-        }
-    }
-
-    /// Decide where to place floating surface.
-    ///
-    /// FIXME: Placement of floating frame should be configurable.
-    fn choose_floating_parameters(&self, workspace_size: Size) -> FloatingDecision {
-        let size = workspace_size.scaled(0.5);
-        let pos = Position::new((workspace_size.width / 4) as isize,
-                                (workspace_size.height / 4) as isize);
-        FloatingDecision {
-            area: Area::new(pos, size),
-        }
-    }
-
     /// Print frame layout for log file.
     fn log_frames(&self) {
-        let mut timber = timber::lock().unwrap();
+        let mut timber = timber::lock().expect("Lock logger");
         timber.log(format_args!("===============================================\
                                  ===============================================\n"));
         self.log_frames_helper(&self.root, 0, &mut timber);

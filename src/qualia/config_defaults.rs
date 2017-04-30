@@ -10,7 +10,9 @@ use uinput_sys;
 
 use defs::{modifier, mode_name};
 use binding_functions;
-use config::{AestheticsConfig, BindingEntry, Config, ExhibitorConfig, KeyboardConfig, InputConfig};
+use config::{BindingEntry, Config};
+use config::{AestheticsConfig, KeyboardConfig, InputConfig};
+use config::{CompositorConfig, ExhibitorConfig, StrategistConfig};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -24,10 +26,21 @@ impl Default for AestheticsConfig {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Default for CompositorConfig {
+    fn default() -> Self {
+        CompositorConfig {
+            move_step: 10,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 impl Default for ExhibitorConfig {
     fn default() -> Self {
         ExhibitorConfig {
-            move_step: 10,
+            compositor: CompositorConfig::default(),
+            strategist: StrategistConfig::default(),
         }
     }
 }
@@ -40,6 +53,17 @@ impl Default for InputConfig {
             touchpad_scale: 1.0,
             touchpad_pressure_threshold: 50,
             mouse_scale: 1.0,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Default for StrategistConfig {
+    fn default() -> Self {
+        StrategistConfig {
+            choose_target: "always_floating".to_owned(),
+            choose_floating: "random".to_owned(),
         }
     }
 }

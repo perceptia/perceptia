@@ -5,6 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
+extern crate rand;
+
 #[macro_use]
 extern crate timber;
 #[macro_use]
@@ -17,6 +19,11 @@ mod compositor;
 mod pointer;
 mod display;
 
+mod strategies;
+mod strategist;
+
+pub use strategist::Strategist;
+
 // -------------------------------------------------------------------------------------------------
 
 use std::rc::Rc;
@@ -25,7 +32,7 @@ use std::collections::HashMap;
 
 use qualia::{SurfaceId, Button, Command, OptionalPosition, Vector};
 use qualia::{perceptron, Perceptron};
-use qualia::{ExhibitorConfig, ExhibitorCoordinationTrait};
+use qualia::{CompositorConfig, ExhibitorCoordinationTrait};
 use output::Output;
 
 use compositor::Compositor;
@@ -47,9 +54,12 @@ pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
 /// General methods.
 impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
     /// `Exhibitor` constructor.
-    pub fn new(coordinator: C, config: ExhibitorConfig) -> Self {
+    pub fn new(coordinator: C,
+               strategist: Strategist,
+               compositor_config: CompositorConfig)
+               -> Self {
         Exhibitor {
-            compositor: Compositor::new(coordinator.clone(), config),
+            compositor: Compositor::new(coordinator.clone(), strategist, compositor_config),
             pointer: Rc::new(RefCell::new(Pointer::new(coordinator.clone()))),
             displays: HashMap::new(),
             coordinator: coordinator,
@@ -197,7 +207,7 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     pub fn get_root(&self) -> frames::Frame {
         self.compositor.get_root()
     }
-    
+
     /// Returns selected frame.
     pub fn get_selection(&self) -> frames::Frame {
         self.compositor.get_selection()

@@ -214,6 +214,7 @@ dependencies = [
  "frames 0.0.1",
  "output 0.0.1",
  "qualia 0.0.1",
+ "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
  "testing 0.0.1",
  "timber 0.0.1",
 ]

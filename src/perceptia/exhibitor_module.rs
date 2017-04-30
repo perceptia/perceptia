@@ -9,7 +9,7 @@ use dharma::{InitResult, Module, ModuleConstructor};
 use qualia::{DrmBundle, perceptron, Perceptron};
 use output::DrmOutput;
 use coordination::{Context, Coordinator};
-use exhibitor::Exhibitor;
+use exhibitor::{Exhibitor, Strategist};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -24,10 +24,13 @@ pub struct ExhibitorModule {
 impl ExhibitorModule {
     /// Constructs new `ExhibitorModule`.
     pub fn new(context: &mut Context) -> Self {
+        let coordinator = context.get_coordinator().clone();
+        let config = context.get_config().get_exhibitor_config();
         ExhibitorModule {
             last_output_id: 0,
-            exhibitor: Exhibitor::new(context.get_coordinator().clone(),
-                                      context.get_config().get_exhibitor_config().clone()),
+            exhibitor: Exhibitor::new(coordinator,
+                                      Strategist::new_from_config(config.strategist.clone()),
+                                      config.compositor.clone()),
         }
     }
 }

@@ -111,11 +111,23 @@ pub struct AestheticsConfig {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Configuration of compositor.
+#[derive(Clone, Debug, Serialize)]
+pub struct CompositorConfig {
+    /// Distance in pixels by which frames are moved by `move` command.
+    pub move_step: u32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Configuration of exhibitor.
 #[derive(Clone, Debug, Serialize)]
 pub struct ExhibitorConfig {
-    /// Distance in pixels by which frames are moved by `move` command.
-    pub move_step: u32,
+    /// Configuration of compositor.
+    pub compositor: CompositorConfig,
+
+    /// Configuration of strategist.
+    pub strategist: StrategistConfig,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -142,6 +154,18 @@ pub struct InputConfig {
 pub struct KeyboardConfig {
     pub layout: String,
     pub variant: String,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Configuration of strategist.
+#[derive(Clone, Debug, Serialize)]
+pub struct StrategistConfig {
+    /// Strategy used to decide where and how new surface should be placed.
+    pub choose_target: String,
+
+    /// Strategy used to decide position and size of floating surface (new or deanchorized).
+    pub choose_floating: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -193,8 +217,13 @@ impl Config {
                 background_path: PathBuf
             }
 
-            load_config!{self.exhibitor; yaml["exhibitor"];
+            load_config!{self.exhibitor.compositor; yaml["exhibitor"]["compositor"];
                 move_step: u32
+            }
+
+            load_config!{self.exhibitor.strategist; yaml["exhibitor"]["strategist"];
+                choose_target: String,
+                choose_floating: String
             }
 
             load_config!{self.input; yaml["input"];

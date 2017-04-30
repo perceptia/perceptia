@@ -47,7 +47,8 @@ pub use defs::{Axis, Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValu
 pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod config;
-pub use config::{Config, AestheticsConfig, ExhibitorConfig, InputConfig, KeyboardConfig};
+pub use config::{Config, AestheticsConfig, InputConfig, KeyboardConfig};
+pub use config::{CompositorConfig, ExhibitorConfig, StrategistConfig};
 
 pub mod config_defaults;
 

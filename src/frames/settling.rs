@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Area, SurfaceAccess, SurfaceId};
+use qualia::{Area, Position, Vector, SurfaceAccess, SurfaceId};
 
 use frame::{Frame, Geometry, Mode, Side};
 use searching::Searching;
@@ -57,6 +57,12 @@ pub trait Settling {
     /// Deanchorizes frame. Floating frame must be attached to workspace so it will be resettled if
     /// necessary.
     fn deanchorize(&mut self, area: Area, sa: &mut SurfaceAccess);
+
+    /// Set new position for given frame and move it subframes accordingly.
+    fn set_position(&mut self, pos: Position);
+
+    /// Move the frame and all subframes by given vector.
+    fn move_with_contents(&mut self, vector: Vector);
 
     /// Removes frame `self`, relaxes old parent and destroys the frame.
     fn destroy_self(&mut self, sa: &mut SurfaceAccess);
@@ -225,6 +231,22 @@ impl Settling for Frame {
                 self.set_position(area.pos);
                 self.set_plumbing_is_anchored(false);
             }
+        }
+    }
+
+    fn set_position(&mut self, pos: Position) {
+        let vector = pos - self.get_position();
+        self.move_with_contents(vector);
+    }
+
+    fn move_with_contents(&mut self, vector: Vector) {
+        // Update frames position
+        let new_position = self.get_position() + vector.clone();
+        self.set_plumbing_position(new_position);
+
+        // Move all subframes
+        for mut frame in self.space_iter() {
+            frame.move_with_contents(vector.clone());
         }
     }
 

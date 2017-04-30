@@ -28,6 +28,11 @@ macro_rules! load_config {
             $config.$key = Some(PathBuf::from(value));
         }
     };
+    ( _entry_ $config:expr, $section:expr, $key:ident as_u32 ) => {
+        if let Some(value) = $section[stringify!($key)].as_i64() {
+            $config.$key = value as u32;
+        }
+    };
     ( _entry_ $config:expr, $section:expr, $key:ident $cast:ident ) => {
         if let Some(ref value) = $section[stringify!($key)].$cast() {
             $config.$key = *value;
@@ -96,6 +101,15 @@ pub struct AestheticsConfig {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Configuration of exhibitor.
+#[derive(Clone, Debug, Serialize)]
+pub struct ExhibitorConfig {
+    /// Distance in pixels by which frames are moved by `move` command.
+    pub move_step: u32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Configuration of input devices.
 #[derive(Clone, Debug, Serialize)]
 pub struct InputConfig {
@@ -119,6 +133,9 @@ pub struct Config {
     /// Config for aesthetics.
     aesthetics: AestheticsConfig,
 
+    /// Config for exhibitor.
+    exhibitor: ExhibitorConfig,
+
     /// Config for input devices.
     input: InputConfig,
 
@@ -131,11 +148,13 @@ pub struct Config {
 impl Config {
     /// Constructs new `Config`.
     pub fn new(aesthetics: AestheticsConfig,
+               exhibitor: ExhibitorConfig,
                input: InputConfig,
                bindings: Vec<BindingEntry>)
                -> Self {
         Config {
             aesthetics: aesthetics,
+            exhibitor: exhibitor,
             input: input,
             bindings: bindings,
         }
@@ -148,6 +167,10 @@ impl Config {
         for yaml in yamls.iter() {
             load_config!{self.aesthetics, yaml["aesthetics"],
                 background_path as_path_buf
+            }
+
+            load_config!{self.exhibitor, yaml["exhibitor"],
+                move_step as_u32
             }
 
             load_config!{self.input, yaml["input"],
@@ -175,6 +198,11 @@ impl Config {
         &self.aesthetics
     }
 
+    /// Returns config for exhibitor.
+    pub fn get_exhibitor_config(&self) -> &ExhibitorConfig {
+        &self.exhibitor
+    }
+
     /// Returns configuration for input devices.
     pub fn get_input_config(&self) -> &InputConfig {
         &self.input
@@ -192,8 +220,9 @@ impl Serialize for Config {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let mut seq = serializer.serialize_map(Some(2))?;
+        let mut seq = serializer.serialize_map(Some(3))?;
         seq.serialize_entry("aesthetics", &self.aesthetics)?;
+        seq.serialize_entry("exhibitor", &self.exhibitor)?;
         seq.serialize_entry("input", &self.input)?;
         seq.end()
     }

@@ -42,6 +42,8 @@ List of all available options:
 
  * `aesthetics`
    - `background_path` - path to background image file
+ * `exhibitor`
+   - `move_step` - distance in pixels by which frames are moved by `move` command
  * `input`
    - `touchpad_scale` - value by which touchpad move events will be scaled (the smaller the pointer
      moves slower)
@@ -102,7 +104,10 @@ Normal mode:
 
  * `[page up]`, `[page down]` - indicate direction forward/backward in time
 
-For example `[f] [right arrow]` will focus surface on the right from focussed one.
+ * from `[0]` to `[9]` - indicade magnitude of command
+
+For example `[f] [right arrow]` will focus surface on the right from focussed one or `[5] [m] [arrow
+down]` will move floating frame 5 steps down.
 
 Built-ins:
 

@@ -144,6 +144,11 @@ impl Position {
         }
     }
 
+    /// Check if `Position` points at (0,0).
+    pub fn is_zero(&self) -> bool {
+        self.x == 0 && self.y == 0
+    }
+
     /// Check if position is inside given area.
     pub fn is_inside(&self, area: &Area) -> bool {
         area.contains(self)

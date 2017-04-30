@@ -16,6 +16,18 @@ pub type Executor = fn(&mut InputContext);
 
 // -------------------------------------------------------------------------------------------------
 
+/// Enum describing how the command was previously modified.
+#[derive(Clone, Copy, PartialEq)]
+pub enum PreviousModification {
+    Action,
+    Direction,
+    Magnitude,
+    String,
+    None,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Trait for contexts passed for key binding handler functions.
 ///
 /// Context allows to
@@ -33,6 +45,9 @@ pub trait InputContext {
 
     /// Sets command string.
     fn set_string(&mut self, string: String);
+
+    /// Tells how the command was previously modified.
+    fn previous_modification(&self) -> PreviousModification;
 
     /// Gets command action.
     fn get_action(&mut self) -> Action;
@@ -138,6 +153,13 @@ pub fn put_dive(context: &mut InputContext) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Sets move action in command but do not execute.
+pub fn put_move(context: &mut InputContext) {
+    put_action(context, Action::Move);
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Sets north direction in command but do not execute.
 pub fn put_north(context: &mut InputContext) {
     put_direction(context, Direction::North);
@@ -190,6 +212,20 @@ pub fn put_begin(context: &mut InputContext) {
 /// Sets end direction in command but do not execute.
 pub fn put_end(context: &mut InputContext) {
     put_direction(context, Direction::End);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Sets magnitude in command but do not execute.
+pub fn put_magnitude(context: &mut InputContext) {
+    if let Some(number) = context.get_code_as_number() {
+        if context.previous_modification() == PreviousModification::Magnitude {
+            let magnitude = context.get_magnitude();
+            context.set_magnitude(10 * magnitude + number);
+        } else {
+            context.set_magnitude(number);
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

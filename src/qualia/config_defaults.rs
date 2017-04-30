@@ -10,7 +10,7 @@ use uinput_sys;
 
 use defs::{modifier, mode_name};
 use binding_functions;
-use config::{AestheticsConfig, BindingEntry, Config, InputConfig};
+use config::{AestheticsConfig, BindingEntry, Config, ExhibitorConfig, InputConfig};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -18,6 +18,16 @@ impl Default for AestheticsConfig {
     fn default() -> Self {
         AestheticsConfig {
             background_path: None,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Default for ExhibitorConfig {
+    fn default() -> Self {
+        ExhibitorConfig {
+            move_step: 10,
         }
     }
 }
@@ -88,13 +98,9 @@ impl Default for Config {
                               modifier::NONE,
                               binding_functions::put_dive),
             BindingEntry::new(mode_name::NORMAL,
-                              uinput_sys::KEY_HOME,
+                              uinput_sys::KEY_M,
                               modifier::NONE,
-                              binding_functions::put_begin),
-            BindingEntry::new(mode_name::NORMAL,
-                              uinput_sys::KEY_END,
-                              modifier::NONE,
-                              binding_functions::put_end),
+                              binding_functions::put_move),
             // directions
             BindingEntry::new(mode_name::NORMAL,
                               uinput_sys::KEY_RIGHT,
@@ -120,6 +126,55 @@ impl Default for Config {
                               uinput_sys::KEY_PAGEDOWN,
                               modifier::NONE,
                               binding_functions::put_backward),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_HOME,
+                              modifier::NONE,
+                              binding_functions::put_begin),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_END,
+                              modifier::NONE,
+                              binding_functions::put_end),
+            // magnitude
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_1,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_2,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_3,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_4,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_5,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_6,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_7,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_8,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_9,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
+            BindingEntry::new(mode_name::NORMAL,
+                              uinput_sys::KEY_10,
+                              modifier::NONE,
+                              binding_functions::put_magnitude),
 
             // insert
             BindingEntry::new(mode_name::INSERT,
@@ -315,7 +370,10 @@ impl Default for Config {
                               binding_functions::toggle_anchorization),
         ];
 
-        Config::new(AestheticsConfig::default(), InputConfig::default(), bindings)
+        Config::new(AestheticsConfig::default(),
+                    ExhibitorConfig::default(),
+                    InputConfig::default(),
+                    bindings)
     }
 }
 

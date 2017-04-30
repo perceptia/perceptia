@@ -127,6 +127,7 @@ struct InnerInputManager {
     modes: Vec<Mode>,
     code: KeyCode,
     command: Command,
+    previous_modification: binding_functions::PreviousModification,
     signaler: Signaler<Perceptron>,
 }
 
@@ -145,6 +146,7 @@ impl InnerInputManager {
             modes: vec![normal_mode],
             code: 0,
             command: Command::default(),
+            previous_modification: binding_functions::PreviousModification::None,
             signaler: signaler,
         };
 
@@ -269,18 +271,26 @@ impl InputManager {
 impl binding_functions::InputContext for InnerInputManager {
     fn set_action(&mut self, action: Action) {
         self.command.action = action;
+        self.previous_modification = binding_functions::PreviousModification::Action;
     }
 
     fn set_direction(&mut self, direction: Direction) {
         self.command.direction = direction;
+        self.previous_modification = binding_functions::PreviousModification::Direction;
     }
 
     fn set_magnitude(&mut self, magnitude: i32) {
         self.command.magnitude = magnitude;
+        self.previous_modification = binding_functions::PreviousModification::Magnitude;
     }
 
     fn set_string(&mut self, string: String) {
         self.command.string = string;
+        self.previous_modification = binding_functions::PreviousModification::String;
+    }
+
+    fn previous_modification(&self) -> binding_functions::PreviousModification {
+        self.previous_modification
     }
 
     fn get_action(&mut self) -> Action {
@@ -305,6 +315,7 @@ impl binding_functions::InputContext for InnerInputManager {
 
     fn clean_command(&mut self) {
         self.command = Command::default();
+        self.previous_modification = binding_functions::PreviousModification::None;
     }
 
     fn activate_mode(&mut self, mode_name: &'static str, active: bool) {

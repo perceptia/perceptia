@@ -5,10 +5,11 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Position, Size, Vector};
+use qualia::{Size, Vector};
 use qualia::{SurfaceAccess, surface_state};
 
 use frame::{Frame, Geometry};
+use settling::Settling;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -23,12 +24,6 @@ pub trait Packing {
 
     /// Set size of the frame and resize its subframe accordingly.
     fn set_size(&mut self, size: Size, sa: &mut SurfaceAccess);
-
-    /// Set new position for given frame and move it subframes accordingly.
-    fn set_position(&mut self, pos: Position);
-
-    /// Move the frame and all subframes by given vector.
-    fn move_with_contents(&mut self, vector: Vector);
 
     /// Remove given frame and relax old parent.
     fn remove_self(&mut self, sa: &mut SurfaceAccess);
@@ -112,22 +107,6 @@ impl Packing for Frame {
                     frame.set_size(size.clone(), sa);
                 }
             }
-        }
-    }
-
-    fn set_position(&mut self, pos: Position) {
-        let vector = pos - self.get_position();
-        self.move_with_contents(vector);
-    }
-
-    fn move_with_contents(&mut self, vector: Vector) {
-        // Update frames position
-        let new_position = self.get_position() + vector.clone();
-        self.set_plumbing_position(new_position);
-
-        // Move all subframes
-        for mut frame in self.space_iter() {
-            frame.move_with_contents(vector.clone());
         }
     }
 

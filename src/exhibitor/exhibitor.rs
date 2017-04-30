@@ -25,7 +25,7 @@ use std::collections::HashMap;
 
 use qualia::{SurfaceId, Button, Command, OptionalPosition, Vector};
 use qualia::{perceptron, Perceptron};
-use qualia::ExhibitorCoordinationTrait;
+use qualia::{ExhibitorConfig, ExhibitorCoordinationTrait};
 use output::Output;
 
 use compositor::Compositor;
@@ -47,9 +47,9 @@ pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
 /// General methods.
 impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
     /// `Exhibitor` constructor.
-    pub fn new(coordinator: C) -> Self {
+    pub fn new(coordinator: C, config: ExhibitorConfig) -> Self {
         Exhibitor {
-            compositor: Compositor::new(coordinator.clone()),
+            compositor: Compositor::new(coordinator.clone(), config),
             pointer: Rc::new(RefCell::new(Pointer::new(coordinator.clone()))),
             displays: HashMap::new(),
             coordinator: coordinator,

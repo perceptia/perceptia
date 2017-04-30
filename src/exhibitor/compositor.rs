@@ -9,8 +9,8 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Direction, Position, Size};
-use qualia::{SurfaceId, SurfaceInfo, ExhibitorCoordinationTrait};
+use qualia::{Action, Area, Command, Direction, Position, Size, Vector};
+use qualia::{SurfaceId, SurfaceInfo, ExhibitorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
 use frames::{self, Frame, Geometry, Side};
@@ -94,6 +94,7 @@ pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
     coordinator: C,
     root: Frame,
     selection: Frame,
+    config: ExhibitorConfig,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -101,13 +102,14 @@ pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
 /// Public methods.
 impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
     /// `Compositor` constructor.
-    pub fn new(coordinator: C) -> Self {
+    pub fn new(coordinator: C, config: ExhibitorConfig) -> Self {
         let root = Frame::new_root();
         Compositor {
             history: SurfaceHistory::new(),
             coordinator: coordinator,
             root: root.clone(),
             selection: root,
+            config: config,
         }
     }
 
@@ -166,6 +168,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
                     }
                     _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
+            }
+            Action::Move => {
+                self.move_frame(&mut frame, command.direction, command.magnitude)
             }
             Action::Anchor => {
                 self.anchorize(frame)
@@ -392,8 +397,6 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
             mut direction: Direction,
             distance: i32)
             -> CommandResult {
-        log_info2!("Compositor: dive");
-
         // Modify direction if needed
         let distance = if distance < 0 {
             direction = direction.reversed();
@@ -422,6 +425,37 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
             self.select(frame.clone());
             self.root.pop_recursively(&mut frame);
         }
+    }
+
+    /// Moves the frame in given direction.
+    ///
+    /// TODO: If selected frame is anchored but inside floating frame move whole floating frame.
+    fn move_frame(&mut self,
+                  frame: &mut Frame,
+                  direction: Direction,
+                  distance: i32)
+                  -> CommandResult {
+        if !frame.is_anchored() {
+            let distance = distance as isize;
+            let vector = {
+                if direction == Direction::North {
+                    Vector::new(0, -distance)
+                } else if direction == Direction::East {
+                    Vector::new(distance, 0)
+                } else if direction == Direction::South {
+                    Vector::new(0, distance)
+                } else if direction == Direction::West {
+                    Vector::new(-distance, 0)
+                } else {
+                    Vector::default()
+                }
+            }.scaled(self.config.move_step as f32);
+
+            if !vector.is_zero() {
+                frame.move_with_contents(vector);
+            }
+        }
+        CommandResult::Ok
     }
 
     /// Handles anchorization command.

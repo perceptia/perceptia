@@ -26,7 +26,8 @@ impl ExhibitorModule {
     pub fn new(context: &mut Context) -> Self {
         ExhibitorModule {
             last_output_id: 0,
-            exhibitor: Exhibitor::new(context.get_coordinator().clone()),
+            exhibitor: Exhibitor::new(context.get_coordinator().clone(),
+                                      context.get_config().get_exhibitor_config().clone()),
         }
     }
 }

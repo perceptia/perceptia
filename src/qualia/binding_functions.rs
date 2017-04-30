@@ -90,6 +90,11 @@ fn put_direction(context: &mut InputContext, direction: Direction) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Dummy no-op executor.
+pub fn nop(_: &mut InputContext) {}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Cleans compositor command.
 pub fn clean_command(context: &mut InputContext) {
     context.clean_command();

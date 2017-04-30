@@ -71,17 +71,19 @@ pub struct Mode {
     active: bool,
     name: String,
     bindings: HashMap<Binding, Executor>,
+    default_executor: Option<Executor>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Mode {
     /// `Mode` constructor.
-    pub fn new(active: bool, name: String) -> Self {
+    pub fn new(active: bool, name: String, default_executor: Option<Executor>) -> Self {
         Mode {
             active: active,
             name: name,
             bindings: HashMap::new(),
+            default_executor: default_executor,
         }
     }
 
@@ -107,7 +109,11 @@ impl Mode {
 
     /// Returns executor for given binding.
     pub fn get_executor(&self, binding: &Binding) -> Option<&Executor> {
-        self.bindings.get(binding)
+        let mut executor = self.bindings.get(binding);
+        if self.default_executor.is_some() && executor.is_none() {
+            executor = self.default_executor.as_ref();
+        }
+        executor
     }
 }
 
@@ -127,11 +133,16 @@ struct InnerInputManager {
 // -------------------------------------------------------------------------------------------------
 
 impl InnerInputManager {
-    /// `InnerInputManager` constructor.
+    /// Constructs new `InnerInputManager`.
     pub fn new(config: &Config, signaler: Signaler<Perceptron>) -> Self {
+        // Create default modes
+        let normal_mode = Mode::new(false,
+                                    mode_name::NORMAL.to_owned(),
+                                    Some(binding_functions::nop));
+
         // Create manager
         let mut inner = InnerInputManager {
-            modes: Vec::new(),
+            modes: vec![normal_mode],
             code: 0,
             command: Command::default(),
             signaler: signaler,
@@ -203,7 +214,7 @@ impl InnerInputManager {
 
         // If mode not found - create new
         if !added {
-            let mut mode = Mode::new(false, mode_name);
+            let mut mode = Mode::new(false, mode_name, None);
             mode.add_binding(binding, executor);
             self.modes.push(mode);
         }
@@ -290,7 +301,6 @@ impl binding_functions::InputContext for InnerInputManager {
 
     fn execute_command(&mut self) {
         self.signaler.emit(perceptron::COMMAND, Perceptron::Command(self.command.clone()));
-        self.clean_command();
     }
 
     fn clean_command(&mut self) {

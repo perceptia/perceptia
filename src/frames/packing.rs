@@ -135,10 +135,10 @@ impl Packing for Frame {
         if let Some(ref mut parent) = self.get_parent() {
             self.remove();
             let len = parent.count_children();
-            if len > 0 {
-                parent.relax(sa);
-            } else {
+            if len == 0 && !parent.get_mode().is_top() {
                 parent.remove_self(sa);
+            } else {
+                parent.relax(sa);
             }
         }
     }

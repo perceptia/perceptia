@@ -16,8 +16,8 @@ There will be three levels of configuration:
 Build-time
 ----------
 
-Currently there is only a few simple options that can be set in `src/qualia/config.rs` file. In
-future it is planned to add compositor strategies.
+Currently there is only a few simple options that can be set in `src/qualia/config_defaults.rs`
+file. In future it is planned to add compositor strategies.
 
 Static text
 -----------

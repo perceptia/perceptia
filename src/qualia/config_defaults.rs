@@ -10,7 +10,7 @@ use uinput_sys;
 
 use defs::{modifier, mode_name};
 use binding_functions;
-use config::{AestheticsConfig, BindingEntry, Config, ExhibitorConfig, InputConfig};
+use config::{AestheticsConfig, BindingEntry, Config, ExhibitorConfig, KeyboardConfig, InputConfig};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -40,6 +40,17 @@ impl Default for InputConfig {
             touchpad_scale: 1.0,
             touchpad_pressure_threshold: 50,
             mouse_scale: 1.0,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Default for KeyboardConfig {
+    fn default() -> Self {
+        KeyboardConfig {
+            layout: "us".to_owned(),
+            variant: "".to_owned(),
         }
     }
 }
@@ -373,6 +384,7 @@ impl Default for Config {
         Config::new(AestheticsConfig::default(),
                     ExhibitorConfig::default(),
                     InputConfig::default(),
+                    KeyboardConfig::default(),
                     bindings)
     }
 }

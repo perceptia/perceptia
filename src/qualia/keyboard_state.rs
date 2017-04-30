@@ -7,7 +7,10 @@
 
 use xkbcommon::xkb;
 
+use config::KeyboardConfig;
 use defs::{KeyCode, KeyValue};
+use errors::Illusion;
+use keymap::XkbKeymap;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -56,11 +59,17 @@ pub struct KeyboardState {
 
 impl KeyboardState {
     /// Constructs new `KeyboardState`.
-    pub fn new(keymap: &xkb::Keymap) -> Self {
-        KeyboardState {
-            xkb_state: xkb::State::new(&keymap),
-            mods: KeyMods::default(),
-        }
+    pub fn new(config: &KeyboardConfig) -> Result<Self, Illusion> {
+        let xkb_keymap = if let Some(xkb_keymap) = XkbKeymap::new(config) {
+            xkb_keymap
+        } else {
+            return Err(Illusion::General(format!("Failed to create key map")));
+        };
+
+        Ok(KeyboardState {
+                xkb_state: xkb::State::new(&xkb_keymap.keymap),
+                mods: KeyMods::default(),
+            })
     }
 
     /// Updates state with given key. Returns `true` when modifiers changed, false otherwise.

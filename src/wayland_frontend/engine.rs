@@ -11,7 +11,7 @@ use dharma;
 use skylane::server as wl;
 
 use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, KeyMods};
-use qualia::{KeyboardState, XkbKeymap, Perceptron, Settings};
+use qualia::{KeyboardConfig, KeyboardState, Perceptron, Settings};
 use qualia::{surface_state, SurfaceId, SurfaceFocusing};
 use coordination::Coordinator;
 
@@ -49,9 +49,9 @@ pub struct Engine {
 
 impl Engine {
     /// Creates new `Engine`. Sets display socket up.
-    pub fn new(coordinator: Coordinator, settings: Settings) -> Self {
-        let xkb_keymap = XkbKeymap::default().expect("Creating XKB map");
-
+    pub fn new(coordinator: Coordinator,
+               settings: Settings,
+               keyboard_config: KeyboardConfig) -> Self {
         Engine {
             display: wl::DisplaySocket::new_default().expect("Creating display socket"),
             mediator: MediatorRef::new(Mediator::new()),
@@ -60,7 +60,7 @@ impl Engine {
             coordinator: coordinator,
             settings: settings,
             dispatcher: dharma::LocalDispatcher::new(),
-            keyboard_state: KeyboardState::new(&xkb_keymap.keymap),
+            keyboard_state: KeyboardState::new(&keyboard_config).expect("Creating keyboard state"),
         }
     }
 

@@ -9,9 +9,8 @@ use std;
 use std::os::unix::io::{AsRawFd, RawFd};
 use std::io::Write;
 use xkbcommon::xkb;
-use nix;
-use nix::sys::mman;
 
+use config::KeyboardConfig;
 use errors::Illusion;
 use env;
 
@@ -42,16 +41,14 @@ pub struct XkbKeymap {
 
 impl XkbKeymap {
     /// Constructs new `XkbKeymap`.
-    ///
-    /// TODO: Keyboard layout should be customizable.
-    pub fn default() -> Option<Self> {
+    pub fn new(config: &KeyboardConfig) -> Option<Self> {
         let rules = "evdev".to_owned();
         let model = "evdev".to_owned();
-        let layout = "us".to_owned();
-        let variant = "".to_owned();
+        let layout = &config.layout;
+        let variant = &config.variant;
 
         let context = xkb::Context::new(xkb::CONTEXT_NO_FLAGS);
-        let k = xkb::Keymap::new_from_names(&context, &rules, &model, &layout, &variant, None, 0x0);
+        let k = xkb::Keymap::new_from_names(&context, &rules, &model, layout, variant, None, 0x0);
         if let Some(keymap) = k {
             Some(XkbKeymap {
                      context: context,
@@ -67,21 +64,20 @@ impl XkbKeymap {
 
 /// This structure handles creation of file used for communicating clients current keymap using
 /// xkbcommon.
-#[allow(dead_code)]
 pub struct Keymap {
     settings: Settings,
-    file: std::fs::File,
-    xkb_keymap: XkbKeymap,
-    memory: *mut nix::c_void,
+
+    /// Keymap file. It is not referenced here but must be kept open because we will pass file
+    /// descriptor to clients.
+    _file: std::fs::File,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Keymap {
     /// `Keymap` constructor.
-    pub fn new(env: &env::Env) -> Result<Self, Illusion> {
-        let k = XkbKeymap::default();
-        let xkb_keymap = if let Some(xkb_keymap) = k {
+    pub fn new(env: &env::Env, config: &KeyboardConfig) -> Result<Self, Illusion> {
+        let xkb_keymap = if let Some(xkb_keymap) = XkbKeymap::new(config) {
             xkb_keymap
         } else {
             return Err(Illusion::General(format!("Failed to create key map")));
@@ -94,27 +90,14 @@ impl Keymap {
         file.write_all(keymap_str.as_bytes())?;
         file.write_all("\0".as_bytes())?;
 
-        // TODO: Unmap the memory.
-        match mman::mmap(std::ptr::null_mut(),
-                         keymap_str.len() + 1,
-                         mman::PROT_READ | mman::PROT_WRITE,
-                         mman::MAP_SHARED,
-                         file.as_raw_fd(),
-                         0) {
-            Ok(memory) => {
-                Ok(Keymap {
-                       settings: Settings {
-                           format: DEFAULT_FORMAT,
-                           size: keymap_str.len() + 1,
-                           fd: file.as_raw_fd(),
-                       },
-                       file: file,
-                       xkb_keymap: xkb_keymap,
-                       memory: memory,
-                   })
-            }
-            Err(_) => Err(Illusion::General(format!("mmap error"))),
-        }
+        Ok(Keymap {
+               settings: Settings {
+                   format: DEFAULT_FORMAT,
+                   size: keymap_str.len() + 1,
+                   fd: file.as_raw_fd(),
+               },
+               _file: file,
+           })
     }
 
     /// Return key map settings.

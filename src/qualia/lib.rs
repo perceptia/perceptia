@@ -47,7 +47,7 @@ pub use defs::{Axis, Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValu
 pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod config;
-pub use config::{Config, AestheticsConfig, ExhibitorConfig, InputConfig};
+pub use config::{Config, AestheticsConfig, ExhibitorConfig, InputConfig, KeyboardConfig};
 
 pub mod config_defaults;
 
@@ -80,7 +80,7 @@ pub mod keyboard_state;
 pub use keyboard_state::{KeyboardState, KeyMods};
 
 pub mod keymap;
-pub use keymap::{Keymap, Settings as KeymapSettings, XkbKeymap};
+pub use keymap::{Keymap, Settings as KeymapSettings};
 
 pub mod settings;
 pub use settings::Settings;

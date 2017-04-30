@@ -38,7 +38,7 @@ fn main() {
     // Prepare tools
     let env = qualia::Env::create(qualia::LogDestination::LogFile);
     let config = env.read_config();
-    let keymap = qualia::Keymap::new(&env).unwrap();
+    let keymap = qualia::Keymap::new(&env, config.get_keyboard_config()).unwrap();
     let settings = qualia::Settings::new(keymap.get_settings());
 
     // Prepare state

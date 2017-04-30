@@ -18,24 +18,34 @@ use binding_functions;
 // -------------------------------------------------------------------------------------------------
 
 macro_rules! load_config {
-    ( $config:expr, $section:expr, $( $key:ident $cast:ident );* ) => {
+    ( $config:expr; $section:expr; $( $key:ident: $type:ident ),* ) => {
         $(
-            load_config!(_entry_ $config, $section, $key $cast);
+            load_config!(_entry_ $config; $section; $key: $type);
         )*
     };
-    ( _entry_ $config:expr, $section:expr, $key:ident as_path_buf ) => {
-        if let Some(ref value) = $section[stringify!($key)].as_str() {
-            $config.$key = Some(PathBuf::from(value));
+    ( _entry_ $config:expr; $section:expr; $key:ident: i32 ) => {
+        if let Some(value) = $section[stringify!($key)].as_i64() {
+            $config.$key = value as i32;
         }
     };
-    ( _entry_ $config:expr, $section:expr, $key:ident as_u32 ) => {
+    ( _entry_ $config:expr; $section:expr; $key:ident: u32 ) => {
         if let Some(value) = $section[stringify!($key)].as_i64() {
             $config.$key = value as u32;
         }
     };
-    ( _entry_ $config:expr, $section:expr, $key:ident $cast:ident ) => {
-        if let Some(ref value) = $section[stringify!($key)].$cast() {
-            $config.$key = *value;
+    ( _entry_ $config:expr; $section:expr; $key:ident: f32 ) => {
+        if let Some(value) = $section[stringify!($key)].as_f64() {
+            $config.$key = value as f32;
+        }
+    };
+    ( _entry_ $config:expr; $section:expr; $key:ident: String ) => {
+        if let Some(value) = $section[stringify!($key)].as_str() {
+            $config.$key = value.to_owned();
+        }
+    };
+    ( _entry_ $config:expr; $section:expr; $key:ident: PathBuf ) => {
+        if let Some(ref value) = $section[stringify!($key)].as_str() {
+            $config.$key = Some(PathBuf::from(value));
         }
     }
 }
@@ -115,14 +125,23 @@ pub struct ExhibitorConfig {
 pub struct InputConfig {
     /// Scale for touchpad event position values.
     /// In future will be replaced by non-linear scale per dimension.
-    pub touchpad_scale: f64,
+    pub touchpad_scale: f32,
 
     /// Threshold value for touchpad pressure below which move events will be ignored.
-    pub touchpad_pressure_threshold: i64,
+    pub touchpad_pressure_threshold: i32,
 
     /// Scale for mouse event motion values.
     /// In future will be replaced by non-linear scale per dimension.
-    pub mouse_scale: f64,
+    pub mouse_scale: f32,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Configuration of keyboard.
+#[derive(Clone, Debug, Serialize)]
+pub struct KeyboardConfig {
+    pub layout: String,
+    pub variant: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -139,6 +158,9 @@ pub struct Config {
     /// Config for input devices.
     input: InputConfig,
 
+    /// Config for keyboard.
+    keyboard: KeyboardConfig,
+
     /// Set of key bindings.
     bindings: Vec<BindingEntry>,
 }
@@ -150,12 +172,14 @@ impl Config {
     pub fn new(aesthetics: AestheticsConfig,
                exhibitor: ExhibitorConfig,
                input: InputConfig,
+               keyboard: KeyboardConfig,
                bindings: Vec<BindingEntry>)
                -> Self {
         Config {
             aesthetics: aesthetics,
             exhibitor: exhibitor,
             input: input,
+            keyboard: keyboard,
             bindings: bindings,
         }
     }
@@ -165,18 +189,23 @@ impl Config {
     /// TODO: Implement loading key bindings from configuration file.
     pub fn load(&mut self, yamls: &Vec<yaml_rust::Yaml>) {
         for yaml in yamls.iter() {
-            load_config!{self.aesthetics, yaml["aesthetics"],
-                background_path as_path_buf
+            load_config!{self.aesthetics; yaml["aesthetics"];
+                background_path: PathBuf
             }
 
-            load_config!{self.exhibitor, yaml["exhibitor"],
-                move_step as_u32
+            load_config!{self.exhibitor; yaml["exhibitor"];
+                move_step: u32
             }
 
-            load_config!{self.input, yaml["input"],
-                touchpad_scale as_f64;
-                touchpad_pressure_threshold as_i64;
-                mouse_scale as_f64
+            load_config!{self.input; yaml["input"];
+                touchpad_scale: f32,
+                touchpad_pressure_threshold: i32,
+                mouse_scale: f32
+            }
+
+            load_config!{self.keyboard; yaml["keyboard"];
+                layout: String,
+                variant: String
             }
         }
     }
@@ -208,6 +237,11 @@ impl Config {
         &self.input
     }
 
+    /// Returns configuration for keyboard.
+    pub fn get_keyboard_config(&self) -> &KeyboardConfig {
+        &self.keyboard
+    }
+
     /// Returns configuration for key binding.
     pub fn get_key_binding_config(&self) -> &Vec<BindingEntry> {
         &self.bindings
@@ -220,10 +254,11 @@ impl Serialize for Config {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
         where S: Serializer
     {
-        let mut seq = serializer.serialize_map(Some(3))?;
+        let mut seq = serializer.serialize_map(Some(4))?;
         seq.serialize_entry("aesthetics", &self.aesthetics)?;
         seq.serialize_entry("exhibitor", &self.exhibitor)?;
         seq.serialize_entry("input", &self.input)?;
+        seq.serialize_entry("keyboard", &self.keyboard)?;
         seq.end()
     }
 }

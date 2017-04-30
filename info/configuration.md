@@ -36,6 +36,8 @@ input:
   touchpad_scale: 0.5
   touchpad_pressure_threshold: 50
   mouse_scale: 0.5
+keyboard:
+  layout: pl
 ```
 
 List of all available options:
@@ -50,6 +52,9 @@ List of all available options:
    - `touchpad_pressure_threshold` - touchpad events with pressure below this value will be ignored
    - `mouse_scale` - value by which mouse move events will be scaled (the smaller the pointer moves
      slower)
+ * `keyboard` - keyboard configuration for clients
+   - `layout` - keyboard layout (e.g. "us", "pl", "de", etc.)
+   - `variant` - keyboard variant (e.g. "dvorak", "colemak", etc.)
 
 Scripting language
 ------------------

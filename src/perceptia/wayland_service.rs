@@ -41,8 +41,12 @@ impl WaylandService {
     /// Creates new `WaylandService`.
     pub fn new(mut context: Context) -> Self {
         dharma::system::block_signals();
+        let engine = Engine::new(context.get_coordinator().clone(),
+                                 context.get_settings().clone(),
+                                 context.get_config().get_keyboard_config().clone());
+
         WaylandService {
-            engine: Engine::new(context.get_coordinator().clone(), context.get_settings().clone()),
+            engine: engine,
             context: context,
             receiver: dharma::Receiver::new(),
         }

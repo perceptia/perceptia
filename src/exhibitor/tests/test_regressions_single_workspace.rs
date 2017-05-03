@@ -11,10 +11,10 @@ extern crate testing;
 use qualia::{OutputInfo, SurfaceId};
 use qualia::{Area, Position, Size};
 use qualia::{Action, Command, Direction};
-use qualia::ExhibitorConfig;
+use qualia::CompositorConfig;
 use frames::Geometry::{Stacked, Vertical};
 use frames::Parameters;
-use exhibitor::Exhibitor;
+use exhibitor::{Exhibitor, Strategist};
 use testing::frame_representation::FrameRepresentation;
 use testing::output_mock::OutputMock;
 use testing::coordinator_mock::CoordinatorMock;
@@ -39,7 +39,9 @@ impl Environment {
 
         let output = Box::new(OutputMock::new(output_info.clone()));
         let coordinator = CoordinatorMock::new();
-        let mut exhibitor = Exhibitor::new(coordinator.clone(), ExhibitorConfig::default());
+        let mut exhibitor = Exhibitor::new(coordinator.clone(),
+                                           Strategist::default(),
+                                           CompositorConfig::default());
 
         exhibitor.on_output_found(output);
 

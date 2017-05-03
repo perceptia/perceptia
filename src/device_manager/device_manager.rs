@@ -126,9 +126,6 @@ impl<'a> DeviceManager<'a> {
     fn initialize_output_devices(&mut self) {
         let oc = &mut self.output_collector;
         self.udev.iterate_drm_devices(|devnode, _| {
-            // FIXME: Can not do:
-            // self.output_collector.scan_device(devnode);
-            // Is it compiler bug?
             if let Err(err) = oc.scan_device(devnode) {
                 log_error!("{}", err);
             }

@@ -355,25 +355,29 @@ fn test_find_stacked_pointed_inside() {
 /// found.
 ///
 ///
-///     ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
-///     ┃┌───────┬──────────────┐┃
-///     ┃│┌─────┐│ ▛▀▀▀▀▀▜─────┐│┃
-///     ┃││ ABC ││ ▌  D ×▐  E  ││┃
-///     ┃│└─────┘│ ▙▄▄▄▄▄▟─────┘│┃
-///     ┃└───────┴──────────────┘┃
-///     ┠────────────────────────┨
-///     ┃┌────────────────┐      ┃
-///     ┃│        F       │      ┃
-///     ┃└────────────────┘      ┃
-///     ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
+///     ┏━━━━━━━━━━━━━━━━━━━━━━━━┓     ┏━━━━━━━━━━━━━━━━━━━━━━━━┓
+///     ┃┌───────┬──────────────┐┃     ┃┌───────┬──────────────┐┃
+///     ┃│┌─────┐│ ▛▀▀▀▀▀▜─────┐│┃     ┃│┌─────┐│ ┌─────▛▀▀▀▀▀▜│┃
+///     ┃││ ABC ││ ▌  D ×▐  E  ││┃     ┃││ ABC ││ │  D  ▌  E ×▐│┃
+///     ┃│└─────┘│ ▙▄▄▄▄▄▟─────┘│┃     ┃│└─────┘│ └─────▙▄▄▄▄▄▟│┃
+///     ┃└───────┴──────────────┘┃     ┃└───────┴──────────────┘┃
+///     ┠────────────────────────┨     ┠────────────────────────┨
+///     ┃┌────────────────┐      ┃     ┃┌────────────────┐      ┃
+///     ┃│        F       │      ┃     ┃│        F       │      ┃
+///     ┃└────────────────┘      ┃     ┃└────────────────┘      ┃
+///     ┗━━━━━━━━━━━━━━━━━━━━━━━━┛     ┗━━━━━━━━━━━━━━━━━━━━━━━━┛
 ///
 #[test]
 fn test_find_flat_pointed_inside() {
-    let (r, _, _, _, _, _, _, d, _, _) = layouts::make_positioned_for_searching();
+    let (r, _, _, _, _, _, _, d, e, _) = layouts::make_positioned_for_searching();
 
     let point = Position::new(50, 10);
     let p = r.find_pointed(point);
     assertions::assert_frame_equal_exact(&p, &d);
+
+    let point = Position::new(80, 10);
+    let p = r.find_pointed(point);
+    assertions::assert_frame_equal_exact(&p, &e);
 
     r.destroy();
 }
@@ -551,10 +555,10 @@ fn test_find_adjacent_frames() {
     ef.set_plumbing_position_and_size(Position::new( 0, 20), Size::new(100, 10));
     a. set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 70, 10));
     b. set_plumbing_position_and_size(Position::new(70,  0), Size::new( 30, 10));
-    c. set_plumbing_position_and_size(Position::new( 0, 10), Size::new( 50, 10));
-    d. set_plumbing_position_and_size(Position::new(50, 10), Size::new( 50, 10));
-    e. set_plumbing_position_and_size(Position::new( 0, 20), Size::new( 30, 10));
-    f. set_plumbing_position_and_size(Position::new(30, 20), Size::new( 70, 10));
+    c. set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 50, 10));
+    d. set_plumbing_position_and_size(Position::new(50,  0), Size::new( 50, 10));
+    e. set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 30, 10));
+    f. set_plumbing_position_and_size(Position::new(30,  0), Size::new( 70, 10));
 
     // 1*South from A should be C
     let p = a.find_adjacent(Direction::South, 1);

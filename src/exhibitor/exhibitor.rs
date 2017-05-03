@@ -30,7 +30,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use qualia::{SurfaceId, Button, Command, OptionalPosition, Vector};
+use qualia::{SurfaceId, Button, Command, OptionalPosition, Position, Vector};
 use qualia::{perceptron, Perceptron};
 use qualia::{CompositorConfig, ExhibitorCoordinationTrait};
 use output::Output;
@@ -93,8 +93,9 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
     }
 
     /// This method is called when new output was found.
-    pub fn on_output_found(&mut self, output: Box<Output>) {
+    pub fn on_output_found(&mut self, mut output: Box<Output>) {
         log_info1!("Exhibitor: found output");
+        output.set_position(self.choose_new_display_position());
         let info = output.get_info();
         if self.displays.len() == 0 {
             self.pointer.borrow_mut().change_display(info.area);
@@ -211,6 +212,29 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     /// Returns selected frame.
     pub fn get_selection(&self) -> frames::Frame {
         self.compositor.get_selection()
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Helper methods
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+    /// Chooses new display position.
+    ///
+    /// New position is always chosen to be right to most right display.
+    ///
+    /// TODO: Choosing new display position should be configurable, scriptable and cacheable.
+    /// TODO: Handle reposition of displays when display is lost.
+    pub fn choose_new_display_position(&self) -> Position {
+        let mut pos = Position::default();
+        for ref display in self.displays.values() {
+            let area = display.get_info().area;
+            let x = area.pos.x + area.size.width as isize;
+            if x > pos.x {
+                pos.x = x;
+            }
+        }
+        pos
     }
 }
 

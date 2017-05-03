@@ -74,15 +74,19 @@ impl Searching for Frame {
     }
 
     fn find_pointed(&self, mut point: Position) -> Frame {
-        point = point.casted(&self.get_area());
+        let area = self.get_area().rebased();
+        point = point.casted(&area);
 
         for ref frame in self.time_iter() {
-            if frame.get_area().contains(&point) {
-                return if self.get_mode().is_leaf() {
-                           frame.clone()
-                       } else {
-                           frame.find_pointed(point)
-                       };
+            let area = frame.get_area();
+            if area.contains(&point) {
+                return {
+                    if self.get_mode().is_leaf() {
+                        frame.clone()
+                    } else {
+                        frame.find_pointed(point - area.pos)
+                    }
+                };
             }
         }
         self.clone()
@@ -164,7 +168,7 @@ impl Searching for Frame {
             };
             if direction != Direction::Begin || direction != Direction::End {
                 frame = if let Some(ref frame) = frame {
-                    Some(frame.find_pointed(point.clone()))
+                    Some(frame.find_pointed(point - frame.get_area().pos))
                 } else {
                     break;
                 };

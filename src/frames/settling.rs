@@ -153,6 +153,8 @@ impl Settling for Frame {
         self.prejoin(&mut distancer);
         self.remove();
         self.set_plumbing_mode(frame_mode);
+        let opposite = self.get_position().opposite();
+        self.move_with_contents(opposite);
         distancer.prepend(self);
         distancer
     }
@@ -189,12 +191,15 @@ impl Settling for Frame {
                     target_parent.relax(sa);
                 }
                 Side::On => {
-                    let mut new_target = if target_parent.count_children() == 1 {
-                        target_parent.clone()
-                    } else if target.get_mode().is_leaf() {
-                        target.ramify(Geometry::Stacked)
-                    } else {
-                        target.clone()
+                    let mut new_target = {
+                        if !target_parent.get_mode().is_top() &&
+                            target_parent.count_children() == 1 {
+                            target_parent.clone()
+                        } else if target.get_mode().is_leaf() {
+                            target.ramify(Geometry::Stacked)
+                        } else {
+                            target.clone()
+                        }
                     };
 
                     self.settle(&mut new_target, None, sa);
@@ -213,7 +218,7 @@ impl Settling for Frame {
             // NOTE: Floating surface must be direct child of workspace.
             let parent = self.get_parent().expect("should have parent");
             self.set_size(parent.get_size(), sa);
-            self.set_position(parent.get_position());
+            self.set_position(Position::default());
             self.set_plumbing_is_anchored(true);
         }
     }

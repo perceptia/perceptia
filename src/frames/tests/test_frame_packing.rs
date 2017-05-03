@@ -36,14 +36,14 @@ fn test_homogenizing() {
     assertions::assert_area(&ef,        Position::new(  0, 300), Size::new(120,  60));
     assertions::assert_area(&bcd,       Position::new(  0, 120), Size::new(120, 180));
     assertions::assert_area(&a,         Position::new(  0,   0), Size::new(120, 120));
-    assertions::assert_area(&b,         Position::new(  0, 120), Size::new(120, 180));
-    assertions::assert_area(&c,         Position::new(  0, 120), Size::new(120, 180));
-    assertions::assert_area(&d,         Position::new(  0, 120), Size::new(120, 180));
-    assertions::assert_area(&e,         Position::new(  0, 300), Size::new( 60,  60));
-    assertions::assert_area(&f,         Position::new( 60, 300), Size::new( 60,  60));
+    assertions::assert_area(&b,         Position::new(  0,   0), Size::new(120, 180));
+    assertions::assert_area(&c,         Position::new(  0,   0), Size::new(120, 180));
+    assertions::assert_area(&d,         Position::new(  0,   0), Size::new(120, 180));
+    assertions::assert_area(&e,         Position::new(  0,   0), Size::new( 60,  60));
+    assertions::assert_area(&f,         Position::new( 60,   0), Size::new( 60,  60));
     assertions::assert_area(&g,         Position::new(120,   0), Size::new(120, 360));
-    assertions::assert_area(&h,         Position::new(240,   0), Size::new( 80, 360));
-    assertions::assert_area(&i,         Position::new(320,   0), Size::new( 40, 360));
+    assertions::assert_area(&h,         Position::new(  0,   0), Size::new( 80, 360));
+    assertions::assert_area(&i,         Position::new( 80,   0), Size::new( 40, 360));
 
     r.destroy();
 }

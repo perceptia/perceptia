@@ -136,14 +136,6 @@ impl Position {
         Position { x: x, y: y }
     }
 
-    /// Return new position scaled by given factor.
-    pub fn scaled(&self, scale: f32) -> Self {
-        Position {
-            x: (scale * self.x as f32) as _,
-            y: (scale * self.y as f32) as _,
-        }
-    }
-
     /// Check if `Position` points at (0,0).
     pub fn is_zero(&self) -> bool {
         self.x == 0 && self.y == 0
@@ -152,6 +144,22 @@ impl Position {
     /// Check if position is inside given area.
     pub fn is_inside(&self, area: &Area) -> bool {
         area.contains(self)
+    }
+
+    /// Return new position scaled by given factor.
+    pub fn scaled(&self, scale: f32) -> Self {
+        Position {
+            x: (scale * self.x as f32) as _,
+            y: (scale * self.y as f32) as _,
+        }
+    }
+
+    /// Returns opposite position (with negated coordinates).
+    pub fn opposite(&self) -> Self {
+        Position {
+            x: -1 * self.x,
+            y: -1 * self.y,
+        }
     }
 
     /// Return new position casted into given area.
@@ -347,6 +355,14 @@ impl Area {
         Area {
             pos: pos,
             size: size,
+        }
+    }
+
+    /// Return this area but with position set to origin (0,0).
+    pub fn rebased(&self) -> Self {
+        Area {
+            pos: Position::default(),
+            size: self.size,
         }
     }
 

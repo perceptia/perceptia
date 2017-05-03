@@ -35,7 +35,7 @@ pub trait Listener {
     fn outputs_done(&mut self, _outputs: Vec<OutputInfo>) {}
 
     /// Called when screenshot request ended successfully.
-    fn screenshot_done(&mut self, _buffer: &[u8], _width: usize, _height: usize) {}
+    fn screenshot_done(&mut self, _buffer: Vec<u8>) {}
 
     /// Called when screenshot request failed.
     fn screenshot_failed(&mut self) {}

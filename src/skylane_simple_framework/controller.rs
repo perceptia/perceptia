@@ -118,7 +118,6 @@ impl Controller {
                                           store.screenshooter_oid.unwrap(),
                                           output_oid,
                                           buffer_oid));
-
         store.screenshot = Some(ScreenshotStore {
                                     fd: fd,
                                     path: path,

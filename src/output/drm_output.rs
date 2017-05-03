@@ -26,6 +26,9 @@ const INVALID_FRAMEBUFFER: u32 = 0;
 
 /// `DrmOutput` is representation of physical output device.
 pub struct DrmOutput {
+    /// Global position.
+    position: Position,
+
     /// Size of the output in pixels.
     size: Size,
 
@@ -96,6 +99,7 @@ impl DrmOutput {
         // Create output
         let mut mine = DrmOutput {
             id: id,
+            position: Position::default(),
             size: size,
             physical_size: physical_size,
             name: "".to_owned(),
@@ -138,7 +142,7 @@ impl Output for DrmOutput {
     /// Returns info about output.
     fn get_info(&self) -> OutputInfo {
         // TODO: Make Output aware of its position.
-        let area = Area::new(Position::new(0, 0), self.size.clone());
+        let area = Area::new(self.position, self.size);
 
         OutputInfo::new(self.id,
                         area,
@@ -146,6 +150,11 @@ impl Output for DrmOutput {
                         60, // TODO: make output aware of its refresh rate.
                         self.name.clone(),
                         self.name.clone())
+    }
+
+    /// Sets global position.
+    fn set_position(&mut self, position: Position) {
+        self.position = position;
     }
 
     /// Swaps renderers and devices buffers.

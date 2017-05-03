@@ -8,7 +8,7 @@ extern crate output;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use qualia::{OutputInfo, Illusion, Buffer, SurfaceContext, SurfaceViewer};
+use qualia::{OutputInfo, Illusion, Buffer, Position, SurfaceContext, SurfaceViewer};
 use self::output::Output;
 
 // -------------------------------------------------------------------------------------------------
@@ -67,6 +67,8 @@ impl Output for OutputMock {
         let mine = self.mock.borrow();
         mine.info.clone()
     }
+
+    fn set_position(&mut self, _position: Position) {}
 
     fn swap_buffers(&mut self) -> Result<u32, Illusion> {
         Ok(u32::default())

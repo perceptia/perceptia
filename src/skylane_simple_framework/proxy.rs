@@ -86,14 +86,26 @@ impl Proxy {
 
     /// Handles notification that server finished taking screenshot.
     pub fn screenshot_done(&mut self) {
-        let mut store = self.store.borrow_mut();
-        if let Some(ref store) = store.screenshot {
-            let buffer = unsafe { std::slice::from_raw_parts(store.memory, store.size) };
-            self.listener.screenshot_done(buffer, store.width, store.height);
+        let buffer = {
+            let mut store = self.store.borrow_mut();
+            let buffer = if let Some(ref store) = store.screenshot {
+                let slice = unsafe { std::slice::from_raw_parts(store.memory, store.size) };
+                let mut buffer = Vec::with_capacity(store.size);
+                unsafe { buffer.set_len(store.size) };
+                buffer.copy_from_slice(slice);
+                Some(buffer)
+            } else {
+                None
+            };
+            store.screenshot = None;
+            buffer
+        };
+
+        if let Some(buffer) = buffer {
+            self.listener.screenshot_done(buffer);
         } else {
             self.listener.screenshot_failed();
         }
-        store.screenshot = None;
     }
 }
 

@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Size, Vector};
+use qualia::{Position, Size, Vector};
 use qualia::{SurfaceAccess, surface_state};
 
 use frame::{Frame, Geometry};
@@ -62,7 +62,7 @@ impl Packing for Frame {
         }
 
         // Resize and reposition all subframes recursively
-        let mut pos = self.get_position();
+        let mut pos = Position::default();
         for mut frame in self.space_iter() {
             if frame.is_anchored() {
                 frame.set_size(size.clone(), sa);

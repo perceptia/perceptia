@@ -247,10 +247,10 @@ impl RendererGl {
                 texcoords[10] = 0.0;
                 texcoords[11] = 1.0;
             } else {
-                log_error!("Renderer: No buffer for surface {}", context.id);
+                log_warn3!("Renderer: No buffer for surface {}", context.id);
             }
         } else {
-            log_error!("Renderer: No info for surface {}", context.id);
+            log_warn3!("Renderer: No info for surface {}", context.id);
         }
     }
 

@@ -7,13 +7,16 @@
 
 use frame::Frame;
 
-use qualia::{SurfaceListing, SurfaceContext};
+use qualia::{Position, SurfaceListing, SurfaceContext};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Extension trait for `Frame` adding more displaying functionality.
 pub trait Displaying {
-    fn to_array(&self, listing: &SurfaceListing) -> Vec<SurfaceContext>;
+    fn to_array(&self,
+                relative_position: Position,
+                listing: &SurfaceListing)
+                -> Vec<SurfaceContext>;
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -21,18 +24,23 @@ pub trait Displaying {
 impl Displaying for Frame {
     // TODO: Add unit tests.
     // TODO: Maybe make generic over `SurfaceListing`?
-    fn to_array(&self, listing: &SurfaceListing) -> Vec<SurfaceContext> {
+    // TODO: Do not allocate so much. Make benchmarks?
+    fn to_array(&self,
+                relative_position: Position,
+                listing: &SurfaceListing)
+                -> Vec<SurfaceContext> {
         // FIXME: Do not allocate here.
         let mut result = Vec::new();
         for frame in self.space_rev_iter() {
+            let pos = relative_position + frame.get_position();
             if frame.get_sid().is_valid() {
                 if let Some(ref mut array) = listing.get_renderer_context(frame.get_sid()) {
                     for ref mut c in array.iter() {
-                        result.push(c.moved(frame.get_position()));
+                        result.push(c.moved(pos));
                     }
                 }
             } else {
-                result.append(&mut frame.to_array(listing));
+                result.append(&mut frame.to_array(pos, listing));
             }
         }
         result

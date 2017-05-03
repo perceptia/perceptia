@@ -168,7 +168,7 @@ fn test_ramifing_leaf() {
     assert_eq!(d.count_children(), 1);
 
     assertions::assert_area(&d, Position::new(0, 20), Size::new(30, 10));
-    assertions::assert_area(&v3, Position::new(0, 20), Size::new(30, 10));
+    assertions::assert_area(&v3, Position::new(0, 0), Size::new(30, 10));
 
     r.destroy();
 }

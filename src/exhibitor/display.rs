@@ -102,9 +102,9 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
     }
 
     /// Prepare rendering context for layover.
-    pub fn prepare_layover_context(&self) -> Vec<SurfaceContext> {
+    pub fn prepare_layover_context(&self, display_position: Position) -> Vec<SurfaceContext> {
         vec![SurfaceContext::new(self.pointer.borrow().get_cursor_sid(),
-                                 self.pointer.borrow().get_global_position())]
+                                 self.pointer.borrow().get_global_position() - display_position)]
     }
 
     /// Prepare rendering context for layunder.
@@ -120,14 +120,16 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
     ///
     /// TODO: Benchmark drawing.
     fn redraw_all(&mut self) {
+        let info = self.output.get_info();
+
         let surfaces = self.frame
             .get_first_time()
             .expect("display must have at least one workspace")
-            .to_array(&self.coordinator);
+            .to_array(Position::default(), &self.coordinator);
 
-        let layover = self.prepare_layover_context();
+        let layover = self.prepare_layover_context(info.area.pos);
         let layunder = self.prepare_layunder_context();
-        self.pointer.borrow_mut().update_hover_state(self.output.get_info().area, &surfaces);
+        self.pointer.borrow_mut().update_hover_state(info.area, &surfaces);
 
         if let Err(err) = self.output.draw(&layunder, &surfaces, &layover, &self.coordinator) {
             log_error!("Display: {}", err);

@@ -3,7 +3,7 @@
 
 //! This module contains interface for all output devices or mocks.
 
-use qualia::{Buffer, Illusion, OutputInfo, SurfaceContext, SurfaceViewer};
+use qualia::{Buffer, Illusion, OutputInfo, Position, SurfaceContext, SurfaceViewer};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -22,6 +22,9 @@ pub trait Output {
 
     /// Returns info about output.
     fn get_info(&self) -> OutputInfo;
+
+    /// Sets global position.
+    fn set_position(&mut self, position: Position);
 
     /// Swaps buffers.
     fn swap_buffers(&mut self) -> Result<u32, Illusion>;

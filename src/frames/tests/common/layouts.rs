@@ -192,7 +192,7 @@ pub fn make_simple_frames_joining()
 ///
 pub fn make_simple_for_deramifying()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r  = Frame::new_workspace(String::new(), Vertical);
     let mut a1 = Frame::new_container(Stacked);
     let mut a2 = Frame::new_container(Stacked);
     let mut a3 = Frame::new_leaf(SurfaceId::new(1), Stacked);
@@ -270,14 +270,14 @@ pub fn make_sized_for_homogenizing()
     abcdef.   set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 360));
     ef.       set_plumbing_position_and_size(Position::new(  0, 300), Size::new(180,  60));
     bcd.      set_plumbing_position_and_size(Position::new(  0, 120), Size::new(180, 180));
-    i.        set_plumbing_position_and_size(Position::new(320,   0), Size::new( 40, 360));
-    h.        set_plumbing_position_and_size(Position::new(240,   0), Size::new( 80, 360));
+    i.        set_plumbing_position_and_size(Position::new( 80,   0), Size::new( 40, 360));
+    h.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new( 80, 360));
     g.        set_plumbing_position_and_size(Position::new(180,   0), Size::new( 60, 360));
-    f.        set_plumbing_position_and_size(Position::new( 60, 300), Size::new(120,  60));
-    e.        set_plumbing_position_and_size(Position::new(  0, 300), Size::new( 60,  60));
-    d.        set_plumbing_position_and_size(Position::new(  0, 120), Size::new(180, 180));
-    c.        set_plumbing_position_and_size(Position::new(  0, 120), Size::new(180, 180));
-    b.        set_plumbing_position_and_size(Position::new(  0, 120), Size::new(180, 180));
+    f.        set_plumbing_position_and_size(Position::new( 60,   0), Size::new(120,  60));
+    e.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new( 60,  60));
+    d.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 180));
+    c.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 180));
+    b.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 180));
     a.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 120));
     (r, abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i)
 }
@@ -323,9 +323,9 @@ pub fn make_positioned_for_searching()
     a.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
     b.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
     c.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
-    d.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 30,  60));
-    e.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 30,  60));
-    f.    set_plumbing_position_and_size(Position::new( 0, 60), Size::new( 70,  60));
+    d.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 30,  60));
+    e.    set_plumbing_position_and_size(Position::new(30,  0), Size::new( 30,  60));
+    f.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 70,  60));
     r.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(100, 120));
     abc.  set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  60));
     de.   set_plumbing_position_and_size(Position::new(40,  0), Size::new( 60,  60));
@@ -386,18 +386,18 @@ pub fn make_positioned_for_jumping()
     w.    append(&mut fghi);
     r.    append(&mut w);
     a.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
-    b.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
-    c.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
-    d.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
-    e.    set_plumbing_position_and_size(Position::new(80,  0), Size::new( 40,  40));
-    f.    set_plumbing_position_and_size(Position::new( 0, 40), Size::new(120,  40));
-    g.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
-    h.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
-    i.    set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
-    bcd.  set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    b.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
+    c.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
+    d.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
+    e.    set_plumbing_position_and_size(Position::new(40,  0), Size::new( 40,  40));
+    f.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
+    g.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
+    h.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
+    i.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
+    bcd.  set_plumbing_position_and_size(Position::new( 0,  0), Size::new( 40,  40));
     bcde. set_plumbing_position_and_size(Position::new(40,  0), Size::new( 80,  40));
     abcde.set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120,  40));
-    ghi.  set_plumbing_position_and_size(Position::new( 0, 80), Size::new(120,  40));
+    ghi.  set_plumbing_position_and_size(Position::new( 0, 40), Size::new(120,  40));
     fghi. set_plumbing_position_and_size(Position::new( 0, 40), Size::new(120,  80));
     w.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120, 120));
     r.    set_plumbing_position_and_size(Position::new( 0,  0), Size::new(120, 120));

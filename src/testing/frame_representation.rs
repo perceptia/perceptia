@@ -5,8 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use frames::{Frame, Parameters, Geometry};
-use qualia::{Area, SurfaceId};
+use frames::{Frame, Parameters, Geometry, Mode};
+use qualia::{Area, Position, Size, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -15,6 +15,7 @@ use qualia::{Area, SurfaceId};
 pub struct FrameRepresentation {
     pub params: Parameters,
     pub branches: Vec<FrameRepresentation>,
+    pub has_area: bool,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -22,25 +23,43 @@ pub struct FrameRepresentation {
 // Constructing
 impl FrameRepresentation {
     /// Creates representation of leaf `Frame`.
+    pub fn new(params: Parameters, branches: Vec<FrameRepresentation>) -> Self {
+        FrameRepresentation {
+            has_area: (params.mode == Mode::Special),
+            params: params,
+            branches: branches,
+        }
+    }
+
+    /// Creates representation of leaf `Frame`.
     pub fn new_leaf(sid: u64, geometry: Geometry) -> Self {
         FrameRepresentation {
             params: Parameters::new_leaf(SurfaceId::new(sid), geometry),
             branches: Vec::new(),
+            has_area: false
         }
+    }
+
+    /// Sets additional conditions to check frame area.
+    pub fn with_area(mut self, x: isize, y: isize, width: usize, height: usize) -> Self {
+        self.params.pos = Position::new(x, y);
+        self.params.size = Size::new(width, height);
+        self.has_area = true;
+        self
     }
 
     /// Creates representation of whole frame tree with display of given area and with given
     /// workspaces.
     pub fn single_display(area: Area, workspaces: Vec<FrameRepresentation>) -> Self {
-        FrameRepresentation {
-            params: Parameters::new_root(),
-            branches: vec![
-                FrameRepresentation {
-                    params: Parameters::new_display(area, String::default()),
-                    branches: workspaces,
-                },
+        FrameRepresentation::new(
+            Parameters::new_root(),
+            vec![
+                FrameRepresentation::new(
+                    Parameters::new_display(area, String::default()),
+                    workspaces,
+                )
             ]
-        }
+        )
     }
 
     /// Creates representation of whole frame tree with single display of given area and single
@@ -48,20 +67,20 @@ impl FrameRepresentation {
     pub fn single_workspace(area: Area,
                             geometry: Geometry,
                             branches: Vec<FrameRepresentation>) -> Self {
-        FrameRepresentation {
-            params: Parameters::new_root(),
-            branches: vec![
-                FrameRepresentation {
-                    params: Parameters::new_display(area, String::default()),
-                    branches: vec![
-                        FrameRepresentation {
-                            params: Parameters::new_workspace("1".to_owned(), geometry),
-                            branches: branches,
-                        }
-                    ],
-                },
+        FrameRepresentation::new(
+            Parameters::new_root(),
+            vec![
+                FrameRepresentation::new(
+                    Parameters::new_display(area, String::default()),
+                    vec![
+                        FrameRepresentation::new(
+                            Parameters::new_workspace("1".to_owned(), geometry),
+                            branches
+                        )
+                    ]
+                )
             ]
-        }
+        )
     }
 }
 
@@ -74,6 +93,15 @@ impl FrameRepresentation {
         assert_eq!(frame.get_sid(), self.params.sid, "wrong sid");
         assert_eq!(frame.get_mode(), self.params.mode, "wrong mode");
         assert_eq!(frame.get_geometry(), self.params.geometry, "wrong geometry");
+
+        if self.params.mode == Mode::Workspace {
+            assert_eq!(frame.get_title(), self.params.title, "wrong title");
+        }
+
+        if self.has_area {
+            assert_eq!(frame.get_position(), self.params.pos, "wrong position");
+            assert_eq!(frame.get_size(), self.params.size, "wrong size");
+        }
     }
 
     /// Validates whole spaced part of frame tree by comparing with its representation.

@@ -58,32 +58,32 @@ fn test_remove() {
     s3.destroy();
 
     // Prepare representation.
-    let repr = FrameRepresentation {
-        params: Parameters::new_workspace(String::new(), Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+    let repr = FrameRepresentation::new(
+        Parameters::new_workspace(String::new(), Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(13, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(21, Stacked),
                     FrameRepresentation::new_leaf(23, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(31, Stacked),
                     FrameRepresentation::new_leaf(32, Stacked),
                 ]
-            },
+            ),
         ]
-    };
+    );
 
     repr.assert_frames_timed(&r);
     repr.assert_frames_spaced(&r);
@@ -109,35 +109,35 @@ fn test_pop() {
     assertions::assert_simple_frames_spaced(&r);
 
     // Check timed layout.
-    let time_repr = FrameRepresentation {
-        params: Parameters::new_workspace(String::new(), Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+    let time_repr = FrameRepresentation::new(
+        Parameters::new_workspace(String::new(), Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(33, Stacked),
                     FrameRepresentation::new_leaf(31, Stacked),
                     FrameRepresentation::new_leaf(32, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(11, Stacked),
                     FrameRepresentation::new_leaf(13, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(21, Stacked),
                     FrameRepresentation::new_leaf(22, Stacked),
                     FrameRepresentation::new_leaf(23, Stacked),
                 ]
-            },
+            ),
         ]
-    };
+    );
 
     time_repr.assert_frames_timed(&r);
 

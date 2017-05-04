@@ -52,7 +52,7 @@ pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     /// `Exhibitor` constructor.
     pub fn new(coordinator: C,
                strategist: Strategist,
@@ -70,7 +70,7 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait + Clone {
+impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
     /// Handles notification about needed redraw.
     pub fn on_notify(&mut self) {
         for ref mut display in self.displays.values_mut() {

@@ -127,13 +127,13 @@ fn test_diving() {
 
     let repr = FrameRepresentation::single_workspace(e.output_info.area, Vertical,
         vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(3, Vertical),
                     FrameRepresentation::new_leaf(2, Vertical),
                 ]
-            },
+            ),
             FrameRepresentation::new_leaf(1, Vertical),
         ]);
 

@@ -96,6 +96,7 @@ pub trait ExhibitorCoordinationTrait: SurfaceControl +
                                       SurfaceListing +
                                       SurfaceFocusing +
                                       Emiter +
-                                      Screenshooting {}
+                                      Screenshooting +
+                                      Clone {}
 
 // -------------------------------------------------------------------------------------------------

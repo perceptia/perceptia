@@ -358,19 +358,19 @@ impl Area {
         }
     }
 
-    /// Return this area but with position set to origin (0,0).
-    pub fn rebased(&self) -> Self {
-        Area {
-            pos: Position::default(),
-            size: self.size,
-        }
-    }
-
     /// Constructs `Area` from coordinates and dimensions.
     pub fn create(x: isize, y: isize, width: usize, height: usize) -> Self {
         Area {
             pos: Position::new(x, y),
             size: Size::new(width, height),
+        }
+    }
+
+    /// Return this area but with position set to origin (0,0).
+    pub fn rebased(&self) -> Self {
+        Area {
+            pos: Position::default(),
+            size: self.size,
         }
     }
 

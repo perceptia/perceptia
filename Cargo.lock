@@ -688,6 +688,7 @@ dependencies = [
 name = "testing"
 version = "0.0.1"
 dependencies = [
+ "exhibitor 0.0.1",
  "frames 0.0.1",
  "output 0.0.1",
  "qualia 0.0.1",

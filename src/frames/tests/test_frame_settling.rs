@@ -33,35 +33,35 @@ fn test_poping_directed() {
 
     r.pop_recursively(&mut h2);
 
-    let repr = FrameRepresentation {
-        params: Parameters::new_workspace(String::new(), Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+    let repr = FrameRepresentation::new(
+        Parameters::new_workspace(String::new(), Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(22, Stacked),
                     FrameRepresentation::new_leaf(21, Stacked),
                     FrameRepresentation::new_leaf(23, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(11, Stacked),
                     FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(13, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(31, Stacked),
                     FrameRepresentation::new_leaf(32, Stacked),
                     FrameRepresentation::new_leaf(33, Stacked),
                 ]
-            },
+            ),
         ]
-    };
+    );
 
     assertions::assert_simple_frames_spaced(&r);
     repr.assert_frames_timed(&r);
@@ -81,65 +81,65 @@ fn test_poping_stacked() {
 
     r.pop_recursively(&mut s2);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_workspace(String::new(), Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_workspace(String::new(), Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(11, Stacked),
                     FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(13, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(21, Stacked),
                     FrameRepresentation::new_leaf(22, Stacked),
                     FrameRepresentation::new_leaf(23, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(32, Stacked),
                     FrameRepresentation::new_leaf(31, Stacked),
                     FrameRepresentation::new_leaf(33, Stacked),
                 ]
-            },
+            ),
         ]
-    };
+    );
 
-    let timed_repr = FrameRepresentation {
-        params: Parameters::new_workspace(String::new(), Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+    let timed_repr = FrameRepresentation::new(
+        Parameters::new_workspace(String::new(), Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(32, Stacked),
                     FrameRepresentation::new_leaf(31, Stacked),
                     FrameRepresentation::new_leaf(33, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(11, Stacked),
                     FrameRepresentation::new_leaf(12, Stacked),
                     FrameRepresentation::new_leaf(13, Stacked),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(21, Stacked),
                     FrameRepresentation::new_leaf(22, Stacked),
                     FrameRepresentation::new_leaf(23, Stacked),
                 ]
-            },
+            ),
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&r);
     timed_repr.assert_frames_timed(&r);
@@ -334,15 +334,15 @@ fn should_jumpin_before() {
     assert_eq!(h.count_children(), 3);
     assert_eq!(s.count_children(), 3);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_container(Vertical),
-        branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_container(Vertical),
+        vec![
             FrameRepresentation::new_leaf(11, Stacked),
             FrameRepresentation::new_leaf(66, Stacked),
             FrameRepresentation::new_leaf(12, Stacked),
             FrameRepresentation::new_leaf(13, Stacked),
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&v);
 
@@ -371,15 +371,15 @@ fn should_jumpin_after() {
     assert_eq!(h.count_children(), 3);
     assert_eq!(s.count_children(), 3);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_container(Vertical),
-        branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_container(Vertical),
+        vec![
             FrameRepresentation::new_leaf(11, Stacked),
             FrameRepresentation::new_leaf(12, Stacked),
             FrameRepresentation::new_leaf(66, Stacked),
             FrameRepresentation::new_leaf(13, Stacked),
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&v);
 
@@ -407,20 +407,20 @@ fn should_jumpin_on() {
     assert_eq!(s.count_children(), 3);
     assert_eq!(f.get_parent().unwrap().count_children(), 2);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_container(Vertical),
-        branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_container(Vertical),
+        vec![
             FrameRepresentation::new_leaf(11, Stacked),
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(66, Stacked),
                     FrameRepresentation::new_leaf(12, Stacked),
                 ]
-            },
+            ),
             FrameRepresentation::new_leaf(13, Stacked),
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&v);
 
@@ -443,20 +443,20 @@ fn should_jump_after_on_the_same_level() {
 
     assert_eq!(fghi.count_children(), 2);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_container(Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Stacked),
-                branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_container(Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Stacked),
+                vec![
                     FrameRepresentation::new_leaf(7, Stacked),
                     FrameRepresentation::new_leaf(8, Stacked),
                     FrameRepresentation::new_leaf(9, Stacked),
                 ]
-            },
+            ),
             FrameRepresentation::new_leaf(6, Stacked),
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&fghi);
 
@@ -479,45 +479,45 @@ fn should_jump_before_on_the_same_level() {
 
     assert_eq!(w.count_children(), 2);
 
-    let spaced_repr = FrameRepresentation {
-        params: Parameters::new_container(Vertical),
-        branches: vec![
-            FrameRepresentation {
-                params: Parameters::new_container(Vertical),
-                branches: vec![
+    let spaced_repr = FrameRepresentation::new(
+        Parameters::new_container(Vertical),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_container(Vertical),
+                vec![
                     FrameRepresentation::new_leaf(6, Stacked),
-                    FrameRepresentation {
-                        params: Parameters::new_container(Stacked),
-                        branches: vec![
+                    FrameRepresentation::new(
+                        Parameters::new_container(Stacked),
+                        vec![
                             FrameRepresentation::new_leaf(7, Stacked),
                             FrameRepresentation::new_leaf(8, Stacked),
                             FrameRepresentation::new_leaf(9, Stacked),
                         ]
-                    },
+                    ),
                 ]
-            },
-            FrameRepresentation {
-                params: Parameters::new_container(Horizontal),
-                branches: vec![
+            ),
+            FrameRepresentation::new(
+                Parameters::new_container(Horizontal),
+                vec![
                     FrameRepresentation::new_leaf(1, Stacked),
-                    FrameRepresentation {
-                        params: Parameters::new_container(Horizontal),
-                        branches: vec![
-                            FrameRepresentation {
-                                params: Parameters::new_container(Stacked),
-                                branches: vec![
+                    FrameRepresentation::new(
+                        Parameters::new_container(Horizontal),
+                        vec![
+                            FrameRepresentation::new(
+                                Parameters::new_container(Stacked),
+                                vec![
                                     FrameRepresentation::new_leaf(2, Stacked),
                                     FrameRepresentation::new_leaf(3, Stacked),
                                     FrameRepresentation::new_leaf(4, Stacked),
                                 ]
-                            },
+                            ),
                             FrameRepresentation::new_leaf(5, Stacked),
                         ]
-                    }
+                    )
                 ]
-            }
+            )
         ]
-    };
+    );
 
     spaced_repr.assert_frames_spaced(&w);
 

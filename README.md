@@ -2,12 +2,12 @@ Perceptia
 =========
 
 Do you like configurability and lightweightness of tiling window managers? Do you like cutting-edge
-technology and want to try tiling window manager running Wayland? `perceptia` is for you!
+technology and want to try a tiling window manager running on Wayland? `perceptia` is for you!
 `perceptia` tries to merge concepts from most popular tiling window managers like `i3`, `awesome`,
-`ratpoison` or `dwm` with freshness of Wayland.
+`ratpoison` or `dwm` with the freshness of Wayland.
 
-There are still many things to work on. If you are looking for working compositor it is much to
-early to choose `perceptia`, but if you have programming skills and want to join development team,
+There are still many things to work on. If you are looking for a working compositor it is much too
+early to choose `perceptia`, but if you have programming skills and want to join the development team,
 your help will be appreciated.
 
 Getting Started

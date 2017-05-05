@@ -70,15 +70,15 @@ impl Binding {
 pub struct Mode {
     active: bool,
     name: String,
-    bindings: HashMap<Binding, Executor>,
-    default_executor: Option<Executor>,
+    bindings: HashMap<Binding, Box<Executor>>,
+    default_executor: Option<Box<Executor>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Mode {
     /// `Mode` constructor.
-    pub fn new(active: bool, name: String, default_executor: Option<Executor>) -> Self {
+    pub fn new(active: bool, name: String, default_executor: Option<Box<Executor>>) -> Self {
         Mode {
             active: active,
             name: name,
@@ -103,12 +103,12 @@ impl Mode {
     }
 
     /// Add new binding.
-    pub fn add_binding(&mut self, binding: Binding, executor: Executor) {
+    pub fn add_binding(&mut self, binding: Binding, executor: Box<Executor>) {
         self.bindings.insert(binding, executor);
     }
 
     /// Returns executor for given binding.
-    pub fn get_executor(&self, binding: &Binding) -> Option<&Executor> {
+    pub fn get_executor(&self, binding: &Binding) -> Option<&Box<Executor>> {
         let mut executor = self.bindings.get(binding);
         if self.default_executor.is_some() && executor.is_none() {
             executor = self.default_executor.as_ref();
@@ -139,7 +139,7 @@ impl InnerInputManager {
         // Create default modes
         let normal_mode = Mode::new(false,
                                     mode_name::NORMAL.to_owned(),
-                                    Some(binding_functions::nop));
+                                    Some(binding_functions::Nop::new()));
 
         // Create manager
         let mut inner = InnerInputManager {
@@ -153,7 +153,7 @@ impl InnerInputManager {
         // Create binding from configuration
         let bindings = config.get_key_binding_config();
         for b in bindings.iter() {
-            inner.add_binding(b.mode_name.to_owned(), b.binding.clone(), b.executor);
+            inner.add_binding(b.mode_name.to_owned(), b.binding.clone(), b.executor.duplicate());
         }
 
         // Activate default modes
@@ -163,11 +163,11 @@ impl InnerInputManager {
     }
 
     /// Helper method for finding executor for given binding in active modes.
-    fn find_executor(&self, binding: &Binding) -> Option<Executor> {
+    fn find_executor(&self, binding: &Binding) -> Option<Box<Executor>> {
         for ref mode in self.modes.iter() {
             if mode.is_active() {
                 if let Some(executor) = mode.get_executor(binding) {
-                    return Some(*executor);
+                    return Some(executor.duplicate())
                 }
             }
         }
@@ -184,7 +184,7 @@ impl InnerInputManager {
         self.code = code;
         if let Some(executor) = self.find_executor(&Binding::create(code, modifiers)) {
             if value == KeyState::Pressed as KeyValue {
-                executor(self);
+                executor.execute(self);
             }
             KeyCatchResult::Caught
         } else {
@@ -203,12 +203,12 @@ impl InnerInputManager {
     }
 
     /// Adds given binding to mode identified by name.
-    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Executor) {
+    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Box<Executor>) {
         // Try to find mode and add binding to it
         let mut added = false;
         for ref mut mode in self.modes.iter_mut() {
             if mode.get_name() == mode_name {
-                mode.add_binding(binding.clone(), executor);
+                mode.add_binding(binding.clone(), executor.duplicate());
                 added = true;
                 break;
             }
@@ -258,7 +258,7 @@ impl InputManager {
     }
 
     /// Lock and call corresponding method from `InnerInputManager`.
-    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Executor) {
+    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Box<Executor>) {
         let mut mine = self.inner.lock().unwrap();
         mine.add_binding(mode_name, binding, executor)
     }

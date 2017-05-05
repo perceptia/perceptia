@@ -12,7 +12,10 @@ use defs::{KeyCode, mode_name};
 // -------------------------------------------------------------------------------------------------
 
 /// Type definition for functions to be executed as key binding handler.
-pub type Executor = fn(&mut InputContext);
+pub trait Executor: Send + Sync {
+    fn execute(&self, &mut InputContext);
+    fn duplicate(&self) -> Box<Executor>;
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -105,119 +108,137 @@ fn put_direction(context: &mut InputContext, direction: Direction) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Helper macro definig implementation of `Executor`.
+macro_rules! define_simple_executor {
+    ($name:ident($context:ident) $callback:block) => {
+        #[derive(Clone)]
+        pub struct $name {}
+        impl $name {
+            pub fn new() -> Box<Self> { Box::new(Self{}) }
+        }
+        impl Executor for $name {
+            fn duplicate(&self) -> Box<Executor> { Self::new() }
+            fn execute(&self, $context: &mut InputContext) {
+                $callback
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Dummy no-op executor.
-pub fn nop(_: &mut InputContext) {}
+define_simple_executor!(Nop(_context) {});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Cleans compositor command.
-pub fn clean_command(context: &mut InputContext) {
+define_simple_executor!(CleanCommand(context) {
     context.clean_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Shuts down the application by sending `SIGTERM` to itself.
-#[allow(unused_variables)]
-pub fn quit(context: &mut InputContext) {
+define_simple_executor!(Quit(_context) {
     functions::quit();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets focus action in command but do not execute.
-pub fn put_focus(context: &mut InputContext) {
+define_simple_executor!(PutFocus(context) {
     put_action(context, Action::Focus);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets swap action in command but do not execute.
-pub fn put_swap(context: &mut InputContext) {
+define_simple_executor!(PutSwap(context) {
     put_action(context, Action::Swap);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets jump action in command but do not execute.
-pub fn put_jump(context: &mut InputContext) {
+define_simple_executor!(PutJump(context) {
     put_action(context, Action::Jump);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets dive action in command but do not execute.
-pub fn put_dive(context: &mut InputContext) {
+define_simple_executor!(PutDive(context) {
     put_action(context, Action::Dive);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets move action in command but do not execute.
-pub fn put_move(context: &mut InputContext) {
+define_simple_executor!(PutMove(context) {
     put_action(context, Action::Move);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets north direction in command but do not execute.
-pub fn put_north(context: &mut InputContext) {
+define_simple_executor!(PutNorth(context) {
     put_direction(context, Direction::North);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets east direction in command but do not execute.
-pub fn put_east(context: &mut InputContext) {
+define_simple_executor!(PutEast(context) {
     put_direction(context, Direction::East);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets south direction in command but do not execute.
-pub fn put_south(context: &mut InputContext) {
+define_simple_executor!(PutSouth(context) {
     put_direction(context, Direction::South);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets west direction in command but do not execute.
-pub fn put_west(context: &mut InputContext) {
+define_simple_executor!(PutWest(context) {
     put_direction(context, Direction::West);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets forward direction in command but do not execute.
-pub fn put_forward(context: &mut InputContext) {
+define_simple_executor!(PutForward(context) {
     put_direction(context, Direction::Forward);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets backward direction in command but do not execute.
-pub fn put_backward(context: &mut InputContext) {
+define_simple_executor!(PutBackward(context) {
     put_direction(context, Direction::Backward);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets begin direction in command but do not execute.
-pub fn put_begin(context: &mut InputContext) {
+define_simple_executor!(PutBegin(context) {
     put_direction(context, Direction::Begin);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets end direction in command but do not execute.
-pub fn put_end(context: &mut InputContext) {
+define_simple_executor!(PutEnd(context) {
     put_direction(context, Direction::End);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Sets magnitude in command but do not execute.
-pub fn put_magnitude(context: &mut InputContext) {
+define_simple_executor!(PutMagnitude(context) {
     if let Some(number) = context.get_code_as_number() {
         if context.previous_modification() == PreviousModification::Magnitude {
             let magnitude = context.get_magnitude();
@@ -226,208 +247,208 @@ pub fn put_magnitude(context: &mut InputContext) {
             context.set_magnitude(number);
         }
     }
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command changing selected frame geometry to horizontal.
-pub fn horizontalize(context: &mut InputContext) {
+define_simple_executor!(Horizontalize(context) {
     context.set_action(Action::Configure);
     context.set_direction(Direction::East);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command changing selected frame geometry to vertical.
-pub fn verticalize(context: &mut InputContext) {
+define_simple_executor!(Verticalize(context) {
     context.set_action(Action::Configure);
     context.set_direction(Direction::North);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command changing selected frame geometry to stacked.
-pub fn stackize(context: &mut InputContext) {
+define_simple_executor!(Stackize(context) {
     context.set_action(Action::Configure);
     context.set_direction(Direction::End);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command toggling anchorization.
-pub fn toggle_anchorization(context: &mut InputContext) {
+define_simple_executor!(ToggleAnchorization(context) {
     context.set_action(Action::Anchor);
     context.set_direction(Direction::None);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command for circling surfaces forward.
-pub fn cicle_history_forward(context: &mut InputContext) {
+define_simple_executor!(CicleHistoryForward(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::Forward);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command for circling surfaces backward.
-pub fn cicle_history_backward(context: &mut InputContext) {
+define_simple_executor!(CicleHistoryBackward(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::Backward);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command focusing surface on the right.
-pub fn focus_right(context: &mut InputContext) {
+define_simple_executor!(FocusRight(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::East);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command focusing surface below.
-pub fn focus_down(context: &mut InputContext) {
+define_simple_executor!(FocusDown(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::South);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command focusing surface on the left.
-pub fn focus_left(context: &mut InputContext) {
+define_simple_executor!(FocusLeft(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::West);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command focusing surface above.
-pub fn focus_up(context: &mut InputContext) {
+define_simple_executor!(FocusUp(context) {
     context.set_action(Action::Focus);
     context.set_direction(Direction::North);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command jumping over surface on the right.
-pub fn jump_right(context: &mut InputContext) {
+define_simple_executor!(JumpRight(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::East);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command jumping over surface below.
-pub fn jump_down(context: &mut InputContext) {
+define_simple_executor!(JumpDown(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::South);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command jumping over surface on the left.
-pub fn jump_left(context: &mut InputContext) {
+define_simple_executor!(JumpLeft(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::West);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command jumping over surface above.
-pub fn jump_up(context: &mut InputContext) {
+define_simple_executor!(JumpUp(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::North);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Jumps frame one level higher.
-pub fn exalt(context: &mut InputContext) {
+define_simple_executor!(Exalt(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::Begin);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Adds new container just above selection.
-pub fn ramify(context: &mut InputContext) {
+define_simple_executor!(Ramify(context) {
     context.set_action(Action::Jump);
     context.set_direction(Direction::End);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command diving into frame on the right.
-pub fn dive_right(context: &mut InputContext) {
+define_simple_executor!(DiveRight(context) {
     context.set_action(Action::Dive);
     context.set_direction(Direction::East);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command diving into frame below.
-pub fn dive_down(context: &mut InputContext) {
+define_simple_executor!(DiveDown(context) {
     context.set_action(Action::Dive);
     context.set_direction(Direction::South);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command diving into frame on the left.
-pub fn dive_left(context: &mut InputContext) {
+define_simple_executor!(DiveLeft(context) {
     context.set_action(Action::Dive);
     context.set_direction(Direction::West);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Executes command diving into frame above.
-pub fn dive_up(context: &mut InputContext) {
+define_simple_executor!(DiveUp(context) {
     context.set_action(Action::Dive);
     context.set_direction(Direction::North);
     context.set_magnitude(1);
     context.execute_command();
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Jumps selected frame to workspace (does not focus workspace).
 ///
 /// E.g. if key [5] was pressed, will jump into workspace titled "5".
-pub fn jump_to_workspace(context: &mut InputContext) {
+define_simple_executor!(JumpToWorkspace(context) {
     if let Some(number) = context.get_code_as_number() {
         context.set_action(Action::Jump);
         context.set_direction(Direction::Workspace);
@@ -435,14 +456,14 @@ pub fn jump_to_workspace(context: &mut InputContext) {
         context.set_string(number.to_string());
         context.execute_command();
     }
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Jumps selected frame to workspace (focuses workspace).
 ///
 /// E.g. if key [5] was pressed, will dive into workspace titled "5".
-pub fn dive_to_workspace(context: &mut InputContext) {
+define_simple_executor!(DiveToWorkspace(context) {
     if let Some(number) = context.get_code_as_number() {
         context.set_action(Action::Dive);
         context.set_direction(Direction::Workspace);
@@ -450,14 +471,14 @@ pub fn dive_to_workspace(context: &mut InputContext) {
         context.set_string(number.to_string());
         context.execute_command();
     }
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Focuses the workspace basing on key code.
 ///
 /// E.g. if key [5] was pressed, workspace titled "5" will be focused.
-pub fn focus_workspace(context: &mut InputContext) {
+define_simple_executor!(FocusWorkspace(context) {
     if let Some(number) = context.get_code_as_number() {
         context.set_action(Action::Focus);
         context.set_direction(Direction::Workspace);
@@ -465,24 +486,56 @@ pub fn focus_workspace(context: &mut InputContext) {
         context.set_string(number.to_string());
         context.execute_command();
     }
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Switches normal mode off and insert mode on.
-pub fn swap_mode_normal_to_insert(context: &mut InputContext) {
+define_simple_executor!(SwapModeNormalToInsert(context) {
     log_info2!("Swap mode from normal to insert");
     context.activate_mode(mode_name::NORMAL, false);
     context.activate_mode(mode_name::INSERT, true);
-}
+});
 
 // -------------------------------------------------------------------------------------------------
 
 /// Switches insert mode off and normal mode on.
-pub fn swap_mode_insert_to_normal(context: &mut InputContext) {
+define_simple_executor!(SwapModeInsertToNormal(context) {
     log_info2!("Swap mode from insert to normal");
     context.activate_mode(mode_name::INSERT, false);
     context.activate_mode(mode_name::NORMAL, true);
+});
+
+// -------------------------------------------------------------------------------------------------
+
+/// Spawns new process.
+#[derive(Clone)]
+pub struct SpawnProcess {
+    command: Vec<String>,
+}
+
+impl SpawnProcess {
+    pub fn new(command: &[&'static str]) -> Box<Self> {
+        Box::new(SpawnProcess {
+            command: command.iter().map(|s| { s.to_string() }).collect::<Vec<String>>(),
+        })
+    }
+
+    pub fn new_from_vec(command: Vec<String>) -> Box<Self> {
+        Box::new(SpawnProcess {
+            command: command,
+        })
+    }
+}
+
+impl Executor for SpawnProcess {
+    fn execute(&self, _context: &mut InputContext) {
+        functions::spawn_process(&self.command);
+    }
+
+    fn duplicate(&self) -> Box<Executor> {
+        Self::new_from_vec(self.command.clone())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

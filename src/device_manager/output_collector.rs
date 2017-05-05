@@ -42,7 +42,7 @@ impl OutputCollector {
     pub fn scan_device(&mut self, path: &Path) -> Result<(), Illusion> {
         // Open device
         log_info1!("OutputCollector: scan device '{:?}'", path);
-        let fd = match fcntl::open(path, fcntl::O_RDWR, stat::Mode::empty()) {
+        let fd = match fcntl::open(path, fcntl::O_RDWR | fcntl::O_CLOEXEC, stat::Mode::empty()) {
             Ok(fd) => fd,
             Err(err) => {
                 let text = format!("Could open output device {:?}: {}", path, err);

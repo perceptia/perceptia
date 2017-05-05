@@ -177,7 +177,7 @@ fn print_devices() {
         print_properties_and_attributes(&device);
 
         // Open device
-        match open(devnode, fcntl::O_RDWR, Mode::empty()) {
+        match open(devnode, fcntl::O_RDWR | fcntl::O_CLOEXEC, Mode::empty()) {
             Ok(fd) => {
                 print_drm_info(fd);
                 print_egl_info(fd);

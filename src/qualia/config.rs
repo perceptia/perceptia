@@ -56,7 +56,7 @@ macro_rules! load_config {
 pub struct BindingEntry {
     pub mode_name: &'static str,
     pub binding: Binding,
-    pub executor: binding_functions::Executor,
+    pub executor: Box<binding_functions::Executor>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -70,7 +70,7 @@ impl Clone for BindingEntry {
         BindingEntry {
             mode_name: self.mode_name,
             binding: self.binding.clone(),
-            executor: self.executor,
+            executor: self.executor.duplicate(),
         }
     }
 }
@@ -90,7 +90,7 @@ impl BindingEntry {
     pub fn new(mode_name: &'static str,
                code: i32,
                modifiers: modifier::ModifierType,
-               executor: binding_functions::Executor)
+               executor: Box<binding_functions::Executor>)
                -> Self {
         BindingEntry {
             mode_name: mode_name,

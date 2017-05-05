@@ -41,7 +41,7 @@ impl drivers::InputDriver for Evdev {
                          gateway: InputGateway,
                          ro: &RestrictedOpener)
                          -> Result<Box<Self>, Illusion> {
-        let r = ro.open(devnode, fcntl::O_RDONLY, stat::Mode::empty());
+        let r = ro.open(devnode, fcntl::O_RDONLY | fcntl::O_CLOEXEC, stat::Mode::empty());
         match r {
             Ok(fd) => Ok(Box::new(Evdev::new(fd, device_kind, config, gateway))),
             Err(err) => Err(err),

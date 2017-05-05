@@ -186,7 +186,9 @@ pub struct VirtualTerminal {
 impl VirtualTerminal {
     /// Constructs new `VirtualTerminal`.
     pub fn new(ro: &RestrictedOpener) -> Result<Self, Illusion> {
-        match ro.open(&Path::new(DEFAULT_TTY_PATH), fcntl::O_WRONLY, stat::Mode::empty()) {
+        match ro.open(&Path::new(DEFAULT_TTY_PATH),
+                      fcntl::O_WRONLY | fcntl::O_CLOEXEC,
+                      stat::Mode::empty()) {
             Ok(tty_fd) => Ok(VirtualTerminal { fd: tty_fd }),
             Err(err) => {
                 let text = format!("Failed to open VT device {:?}: {:?}", DEFAULT_TTY_PATH, err);
@@ -228,7 +230,7 @@ fn subscribe(path: &Path,
              signaler: Signaler<Perceptron>,
              ro: &RestrictedOpener)
              -> Result<(), Illusion> {
-    match ro.open(path, fcntl::O_WRONLY, stat::Mode::empty()) {
+    match ro.open(path, fcntl::O_WRONLY | fcntl::O_CLOEXEC, stat::Mode::empty()) {
         Ok(tty_fd) => {
             let mut mode = VtMode::new(true, signal::SIGUSR1, signal::SIGUSR2);
             let data = unsafe { mem::transmute::<&mut VtMode, &mut u8>(&mut mode) as *mut u8 };

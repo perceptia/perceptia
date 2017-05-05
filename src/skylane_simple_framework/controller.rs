@@ -151,7 +151,7 @@ fn create_anonymous_file(size: Option<usize>, seed: u32) -> nix::Result<(RawFd, 
     path.push(format!("perceptiactl-screenshot-{}", seed));
 
     match nix::fcntl::open(&path,
-                           nix::fcntl::O_RDWR | nix::fcntl::O_CREAT,
+                           nix::fcntl::O_RDWR | nix::fcntl::O_CREAT | nix::fcntl::O_CLOEXEC,
                            nix::sys::stat::Mode::empty()) {
         Ok(fd) => {
             if let Some(size) = size {

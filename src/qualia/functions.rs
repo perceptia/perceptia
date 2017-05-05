@@ -58,3 +58,19 @@ pub fn panic_hook(info: &std::panic::PanicInfo) {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Spawns new process.
+pub fn spawn_process(command: &Vec<String>) {
+    if command.len() > 0 {
+        let mut builder = std::process::Command::new(&command[0]);
+        for arg in command.iter().skip(1) {
+            builder.arg(&arg);
+        }
+        match builder.spawn() {
+            Ok(_) => log_info1!("Spawned '{}' process", command[0]),
+            Err(err) => log_error!("Failed to spawn process ({:?}): {}", command, err),
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------

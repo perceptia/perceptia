@@ -7,7 +7,8 @@
 
 use skylane::server as wl;
 
-use qualia::{Area, MappedMemory, Size, SurfaceId, Vector, MemoryPoolId, MemoryViewId, show_reason};
+use qualia::{Area, PixelFormat, Size, SurfaceId, Vector};
+use qualia::{MappedMemory, MemoryPoolId, MemoryViewId, show_reason};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -61,6 +62,7 @@ pub trait Facade {
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
                           buffer_oid: wl::ObjectId,
+                          format: PixelFormat,
                           offset: usize,
                           width: usize,
                           height: usize,

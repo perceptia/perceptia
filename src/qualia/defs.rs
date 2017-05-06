@@ -567,3 +567,28 @@ impl std::default::Default for Command {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Format of a pixel.
+#[derive(Clone, Copy, Debug)]
+pub enum PixelFormat {
+    XRGB8888,
+    ARGB8888,
+    XBGR8888,
+    ABGR8888,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl PixelFormat {
+    /// Returns size in bytes of pixel encoded in given format.
+    pub fn get_size(&self) -> usize {
+        match *self {
+            PixelFormat::XBGR8888 => 3,
+            PixelFormat::ABGR8888 => 4,
+            PixelFormat::XRGB8888 => 3,
+            PixelFormat::ARGB8888 => 4,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------

@@ -5,11 +5,11 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Buffer, SurfaceId, AestheticsCoordinationTrait};
+use qualia::{Buffer, PixelFormat, SurfaceId, AestheticsCoordinationTrait};
 
 // -------------------------------------------------------------------------------------------------
 
-const DEFAULT_CURSOR_SIZE: usize = 15;
+const CURSOR_SIZE: usize = 15;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -41,20 +41,20 @@ impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
     ///
     /// Sets default cursor to be white semitransparent rectangle.
     pub fn initialize(&mut self) {
-        let mut data = vec![200; 4 * DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE];
-        for z in 0..(DEFAULT_CURSOR_SIZE * DEFAULT_CURSOR_SIZE) {
-            data[4 * z + 3] = 100;
+        let w = CURSOR_SIZE;
+        let h = CURSOR_SIZE;
+        let format = PixelFormat::ABGR8888;
+        let pixel_size = format.get_size();
+        let stride = w * pixel_size;
+        let mut data = vec![200; stride * h];
+        for z in 0..(w * h) {
+            data[pixel_size * z + 3] = 100;
         }
 
         self.default_csid = self.coordinator.create_surface();
-        let b =
-            Buffer::new(DEFAULT_CURSOR_SIZE, DEFAULT_CURSOR_SIZE, 4 * DEFAULT_CURSOR_SIZE, data);
+        let b = Buffer::new(format, w, h, stride, data);
         let bid = self.coordinator.create_pool_from_buffer(b);
-        if let Some(mvid) = self.coordinator.create_memory_view(bid,
-                                                                0,
-                                                                DEFAULT_CURSOR_SIZE,
-                                                                DEFAULT_CURSOR_SIZE,
-                                                                4 * DEFAULT_CURSOR_SIZE) {
+        if let Some(mvid) = self.coordinator.create_memory_view(bid, format, 0, w, h, stride) {
             self.coordinator.attach_surface(mvid, self.default_csid);
             self.coordinator.commit_surface(self.default_csid);
             self.coordinator.set_surface_as_cursor(self.default_csid);

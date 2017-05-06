@@ -9,7 +9,7 @@ use std;
 use gl;
 use egl;
 
-use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, Buffer, Pixmap};
+use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, Buffer, Pixmap, PixelFormat};
 
 use gl_tools;
 use egl_tools;
@@ -146,7 +146,8 @@ impl RendererGl {
     pub fn take_screenshot(&self) -> Result<Buffer, Illusion> {
         let _context = self.egl.make_current()?;
 
-        let stride = 4 * self.size.width;
+        let format = PixelFormat::ARGB8888;
+        let stride = format.get_size() * self.size.width;
         let size = stride * self.size.height;
         let mut dst: Vec<u8> = Vec::with_capacity(size);
         unsafe { dst.set_len(size) };
@@ -168,7 +169,7 @@ impl RendererGl {
             data.extend(chunk);
         }
 
-        Ok(Buffer::new(self.size.width, self.size.height, stride, data))
+        Ok(Buffer::new(format, self.size.width, self.size.height, stride, data))
     }
 }
 
@@ -202,6 +203,17 @@ impl RendererGl {
                                          index: usize) {
         if let Some(ref surface) = viewer.get_surface(context.id) {
             if let Some(ref buffer) = surface.buffer {
+                let format = {
+                    match buffer.get_format() {
+                        // NOTE: Mixing channels is intentional. In `PixelFormat` one reads it from
+                        // right to left, and in `gl` from left to right.
+                        PixelFormat::XBGR8888 => gl::RGBA,
+                        PixelFormat::ABGR8888 => gl::RGBA,
+                        PixelFormat::XRGB8888 => gl::BGRA,
+                        PixelFormat::ARGB8888 => gl::BGRA,
+                    }
+                };
+
                 unsafe {
                     gl::ActiveTexture(gl::TEXTURE0 + index as u32);
                     gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
@@ -211,7 +223,7 @@ impl RendererGl {
                                    (*buffer).get_width() as gl::types::GLint, // width
                                    (*buffer).get_height() as gl::types::GLint, // height
                                    0, // always 0 in OpenGL ES
-                                   gl::RGBA, // format
+                                   format, // format
                                    gl::UNSIGNED_BYTE, // type
                                    (*buffer).as_ptr() as *const _);
                 }

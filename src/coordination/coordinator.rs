@@ -12,7 +12,7 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
-use qualia::{Position, Size, Vector, MemoryPoolId, MemoryViewId};
+use qualia::{Position, Size, Vector, MemoryPoolId, MemoryViewId, PixelFormat};
 use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView};
 use qualia::{perceptron, Perceptron};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo};
@@ -408,6 +408,7 @@ impl InnerCoordinator {
     /// Creates new memory view from mapped memory.
     pub fn create_memory_view(&mut self,
                               mpid: MemoryPoolId,
+                              format: PixelFormat,
                               offset: usize,
                               width: usize,
                               height: usize,
@@ -415,8 +416,8 @@ impl InnerCoordinator {
                               -> Option<MemoryViewId> {
         let id = self.generate_next_memory_view_id();
         if let Some(mut memory_pool) = self.memory_pools.get_mut(&mpid) {
-            let memory_view = memory_pool.pool.get_memory_view(offset, width, height, stride);
-            self.memory_views.insert(id, MemoryViewBundle::new(memory_view, mpid));
+            let view = memory_pool.pool.get_memory_view(format, offset, width, height, stride);
+            self.memory_views.insert(id, MemoryViewBundle::new(view, mpid));
             memory_pool.views.insert(id);
             Some(id)
         } else {
@@ -702,13 +703,14 @@ impl MemoryManagement for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
+                          format: PixelFormat,
                           offset: usize,
                           width: usize,
                           height: usize,
                           stride: usize)
                           -> Option<MemoryViewId> {
         let mut mine = self.inner.lock().unwrap();
-        mine.create_memory_view(mpid, offset, width, height, stride)
+        mine.create_memory_view(mpid, format, offset, width, height, stride)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

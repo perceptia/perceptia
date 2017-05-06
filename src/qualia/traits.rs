@@ -4,7 +4,7 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
-use defs::{MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
+use defs::{MemoryPoolId, MemoryViewId, PixelFormat, SignalId, SurfaceId};
 use memory::{Buffer, MappedMemory};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
@@ -55,6 +55,7 @@ pub trait MemoryManagement {
     /// Creates new memory view from mapped memory.
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
+                          format: PixelFormat,
                           offset: usize,
                           width: usize,
                           height: usize,

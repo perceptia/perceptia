@@ -15,7 +15,7 @@ use skylane_protocols::server::wayland::wl_shm;
 use skylane_protocols::server::wayland::wl_shm_pool;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{MappedMemory, MemoryPoolId, MemoryViewId, PixelFormat};
 
 use global::Global;
 use proxy::ProxyRef;
@@ -128,9 +128,23 @@ impl wl_shm_pool::Interface for ShmPool {
                      stride: i32,
                      format: u32)
                      -> Task {
+        let pixel_format = {
+            match format {
+                wl_shm::format::XRGB8888 => PixelFormat::XRGB8888,
+                wl_shm::format::ARGB8888 => PixelFormat::XRGB8888,
+                wl_shm::format::XBGR8888 => PixelFormat::XBGR8888,
+                wl_shm::format::ABGR8888 => PixelFormat::XBGR8888,
+                _ => {
+                    log_warn3!("Unsupported format: {}", format);
+                    return Task::None;
+                }
+            }
+        };
+
         let mut proxy = self.proxy.borrow_mut();
         if let Some(mvid) = proxy.create_memory_view(self.mpid,
                                                      new_buffer_id,
+                                                     pixel_format,
                                                      offset as usize,
                                                      width as usize,
                                                      height as usize,

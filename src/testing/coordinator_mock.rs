@@ -6,7 +6,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use qualia::{Perceptron, Position, SignalId, Size, Vector};
+use qualia::{Perceptron, PixelFormat, Position, SignalId, Size, Vector};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
 use qualia::{Buffer, MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
@@ -142,6 +142,7 @@ impl MemoryManagement for CoordinatorMock {
     fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {}
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
+                          format: PixelFormat,
                           offset: usize,
                           width: usize,
                           height: usize,

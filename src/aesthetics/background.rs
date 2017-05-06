@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 use image;
 
-use qualia::{AestheticsConfig, Buffer, SurfaceId, AestheticsCoordinationTrait};
+use qualia::{AestheticsConfig, Buffer, PixelFormat, SurfaceId, AestheticsCoordinationTrait};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -41,21 +41,24 @@ impl<C> Background<C> where C: AestheticsCoordinationTrait {
     ///
     /// TODO: Background currently is placed at top left corner. Make it configurable to be
     /// centred, stretched, etc...
+    ///
+    /// NOTE: `image::open` spawns four threads when opening JPEG images and does not close them.
     pub fn set_background(&mut self) {
         if let Some(ref path) = self.background_path {
             match image::open(&path) {
                 Ok(img) => {
                     let rgba = img.to_rgba();
+                    let f = PixelFormat::ABGR8888;
                     let w = rgba.width() as usize;
                     let h = rgba.height() as usize;
-                    let s = 4 * w;
+                    let s = w * f.get_size();
                     let d = rgba.into_raw();
 
                     let background_sid = self.coordinator.create_surface();
-                    let buffer = Buffer::new(w, h, s, d);
+                    let buffer = Buffer::new(f, w, h, s, d);
                     let bid = self.coordinator.create_pool_from_buffer(buffer);
 
-                    if let Some(mvid) = self.coordinator.create_memory_view(bid, 0, w, h, s) {
+                    if let Some(mvid) = self.coordinator.create_memory_view(bid, f, 0, w, h, s) {
                         self.coordinator.attach_surface(mvid, background_sid);
                         self.coordinator.commit_surface(background_sid);
                         self.coordinator.set_surface_as_background(background_sid);

@@ -17,7 +17,8 @@ use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_su
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
 use qualia::Settings;
-use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, Vector};
+use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
+use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
@@ -297,12 +298,14 @@ impl Facade for Proxy {
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
                           buffer_oid: wl::ObjectId,
+                          format: PixelFormat,
                           offset: usize,
                           width: usize,
                           height: usize,
                           stride: usize)
                           -> Option<MemoryViewId> {
-        let result = self.coordinator.create_memory_view(mpid, offset, width, height, stride);
+        let result =
+            self.coordinator.create_memory_view(mpid, format, offset, width, height, stride);
         if let Some(mvid) = result {
             let info = BufferInfo::new(mpid, mvid);
             self.buffer_oid_to_buffer_info_dictionary.insert(buffer_oid, info);

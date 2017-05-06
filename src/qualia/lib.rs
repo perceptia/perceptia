@@ -42,8 +42,8 @@ pub mod timing;
 pub use timing::Milliseconds;
 
 pub mod defs;
-pub use defs::{Area, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Axis, Button, Command, DrmBundle, modifier, Key, KeyCode, KeyValue, OutputInfo};
+pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
+pub use defs::{Command, DrmBundle, modifier, Key, KeyCode, KeyValue, OutputInfo, PixelFormat};
 pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod config;

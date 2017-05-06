@@ -24,20 +24,23 @@ use std::sync::Arc;
 use nix::sys::mman;
 
 use errors;
-use defs::Size;
+use defs::{PixelFormat, Size};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Trait priding interface for image storing objects.
 pub trait Pixmap {
-    /// Get width and height of pixmap.
+    /// Get width and height of the pixmap.
     fn get_size(&self) -> Size;
 
-    /// Return width of pixmap.
+    /// Return width of the pixmap.
     fn get_width(&self) -> usize;
 
-    /// Returns height of pixmap.
+    /// Returns height of the pixmap.
     fn get_height(&self) -> usize;
+
+    /// Returns pixel format of the pixmap.
+    fn get_format(&self) -> PixelFormat;
 
     /// Returns data as slice.
     fn as_slice(&self) -> &[u8];
@@ -51,6 +54,7 @@ pub trait Pixmap {
 /// Container for all data required to draw an image.
 #[derive(Clone, Debug)]
 pub struct Buffer {
+    format: PixelFormat,
     width: usize,
     height: usize,
     stride: usize,
@@ -63,7 +67,12 @@ impl Buffer {
     /// Constructors `Buffer`.
     ///
     /// Will panic if passed data size does not match declared size.
-    pub fn new(width: usize, height: usize, stride: usize, data: Vec<u8>) -> Self {
+    pub fn new(format: PixelFormat,
+               width: usize,
+               height: usize,
+               stride: usize,
+               data: Vec<u8>)
+               -> Self {
         if (stride * height) != data.len() {
             panic!("Data size ({}) does not match declaration ({} * {})",
                    data.len(),
@@ -72,6 +81,7 @@ impl Buffer {
         }
 
         Buffer {
+            format: format,
             width: width,
             height: height,
             stride: stride,
@@ -82,6 +92,7 @@ impl Buffer {
     /// Constructs empty `Buffer`.
     pub fn empty() -> Self {
         Buffer {
+            format: PixelFormat::XRGB8888,
             width: 0,
             height: 0,
             stride: 0,
@@ -91,6 +102,7 @@ impl Buffer {
 
     /// Copies data from `other` buffer to `self`.
     pub fn assign_from(&mut self, other: &Buffer) {
+        self.format = other.format;
         self.width = other.width;
         self.height = other.height;
         self.stride = other.stride;
@@ -122,6 +134,11 @@ impl Pixmap for Buffer {
     #[inline]
     fn get_height(&self) -> usize {
         self.height
+    }
+
+    #[inline]
+    fn get_format(&self) -> PixelFormat {
+        self.format
     }
 
     #[inline]
@@ -197,6 +214,7 @@ pub struct MemoryView {
     width: usize,
     height: usize,
     stride: usize,
+    format: PixelFormat,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -228,6 +246,11 @@ impl Pixmap for MemoryView {
     }
 
     #[inline]
+    fn get_format(&self) -> PixelFormat {
+        self.format
+    }
+
+    #[inline]
     fn as_slice(&self) -> &[u8] {
         unsafe { std::slice::from_raw_parts(self.data.offset(0), self.height * self.stride) }
     }
@@ -248,6 +271,7 @@ impl Clone for MemoryView {
             width: self.width,
             height: self.height,
             stride: self.stride,
+            format: self.format,
         }
     }
 }
@@ -283,6 +307,7 @@ impl MemoryPool {
 
     /// Returns `MemoryView`s into `Buffer`s and `MappedMemory`s stored in `MemoryPool`.
     pub fn get_memory_view(&self,
+                           format: PixelFormat,
                            offset: usize,
                            width: usize,
                            height: usize,
@@ -297,6 +322,7 @@ impl MemoryPool {
                     width: width,
                     height: height,
                     stride: stride,
+                    format: format,
                 }
             }
             MemoryKind::Buffered(ref buffer) => {
@@ -306,6 +332,7 @@ impl MemoryPool {
                     width: width,
                     height: height,
                     stride: stride,
+                    format: format,
                 }
             }
         }

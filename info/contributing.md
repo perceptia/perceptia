@@ -35,6 +35,14 @@ You probably have read [installation.md](./installation.md) and know how to buil
 
    If you need quick overview of architecture see [concepts.md](./concepts.md).
 
+Future
+------
+
+List of features planed for nearest releases can be found on [wiki TODO
+page](https://github.com/perceptia/perceptia/wiki/TODO).
+
+---
+
 Later parts of this file focus on tips for developers.
 
 Directories
@@ -87,18 +95,17 @@ Run unit tests
 
 Running unit test is as simple as
 ```
-cargo test
+cargo test --all
 ```
-in module directory you want to test.
 
 Generate documentation
 ----------------------
 
 Command
 ```
-cargo doc
+cargo doc --all
 ```
-run in module directory will produce documentation.
+will produce documentation for whole program and its dependencies.
 
 Code conventions
 ----------------
@@ -139,15 +146,9 @@ Version string consists of three numbers: EPOCH.MAJOR.MINOR
 Make sure every commit compiles - this may make life easier when searching for commit that
 introduced bug.
 
-Future
-------
-
-List of features planed for nearest releases can be found on [wiki TODO
-page](https://github.com/perceptia/perceptia/wiki/TODO).
-
 Related projects
 ----------------
 
 [`skylane`](https://github.com/perceptia/skylane) is implementation of Wayland protocol written from
 scratch in Rust. It originated in `perceptia` but was moved away as separate crate and repository
-to be able to used independently from `perceptia`.
+to be able to be used independently from `perceptia`.

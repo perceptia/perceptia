@@ -46,7 +46,7 @@ fn main() {
     let mut dispatcher = Dispatcher::new();
     let mut dispatcher_controller = dispatcher.get_controller();
     let coordinator = Coordinator::new(signaler.clone());
-    let input_manager = InputManager::new(&config, signaler.clone());
+    let input_manager = InputManager::new(&config.get_keybindings_config(), signaler.clone());
     let context = Context::new(config.clone(),
                                settings.clone(),
                                signaler.clone(),

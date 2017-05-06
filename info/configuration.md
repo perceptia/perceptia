@@ -38,6 +38,17 @@ input:
   mouse_scale: 0.5
 keyboard:
   layout: pl
+keybindings:
+  insert:
+    - key: W
+      mods: [LCTL, LALT]
+      execute: [epiphany]
+    - key: S
+      mods: [LCTL, LALT]
+      execute: ["perceptiactl", "screenshot"]
+    - key: SPACE
+      mods: [LMETA]
+      action: toggle_anchorization
 ```
 
 List of all available options:
@@ -55,6 +66,18 @@ List of all available options:
  * `keyboard` - keyboard configuration for clients
    - `layout` - keyboard layout (e.g. "us", "pl", "de", etc.)
    - `variant` - keyboard variant (e.g. "dvorak", "colemak", etc.)
+ * `keybindings`
+   - `insert` - list of key bindings in `insert` mode (only this mode can be modified via
+     configuration file)
+
+Key binding entry consists of `key`, `mods` and either `action` or `execute`:
+ * `key` - name of the key (currently only numbers, letters and `SPACE`). `key` is case insensitive
+ * `mods` - list of modifiers: `LCTL`, `RCTL`, `LSHIFT`, `RSHIFT`, `LALT`, `RALT`, `LMETA`, `RMETA`.
+   `mods` are case insensitive
+ * `action` - name of predefined action
+ * `execute` - command in form of list to be executed
+
+TODO: Add more information about actions.
 
 Scripting language
 ------------------
@@ -93,6 +116,8 @@ Insert mode:
 
  * `[meta]+[home]`, `[meta]+[end]` - exalt/ramify focused frame
 
+ * `[ctrl]+[meta]+T` - spawn `weston-terminal`
+
 Normal mode:
 
  * `[esc]` - clean the command
@@ -109,7 +134,7 @@ Normal mode:
 
  * `[page up]`, `[page down]` - indicate direction forward/backward in time
 
- * from `[0]` to `[9]` - indicade magnitude of command
+ * from `[0]` to `[9]` - indicate magnitude of command
 
 For example `[f] [right arrow]` will focus surface on the right from focussed one or `[5] [m] [arrow
 down]` will move floating frame 5 steps down.

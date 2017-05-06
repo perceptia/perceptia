@@ -17,7 +17,7 @@ use dharma::Signaler;
 
 use defs::{modifier, mode_name, Command, KeyCode, KeyValue};
 use enums::{Action, Direction, KeyState};
-use config::Config;
+use config::KeybindingsConfig;
 use binding_functions::{self, Executor};
 use perceptron::{self, Perceptron};
 
@@ -135,31 +135,49 @@ struct InnerInputManager {
 
 impl InnerInputManager {
     /// Constructs new `InnerInputManager`.
-    pub fn new(config: &Config, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(config: &KeybindingsConfig, signaler: Signaler<Perceptron>) -> Self {
         // Create default modes
+        let common_mode = Mode::new(true, mode_name::COMMON.to_owned(), None);
+        let insert_mode = Mode::new(true, mode_name::INSERT.to_owned(), None);
         let normal_mode = Mode::new(false,
                                     mode_name::NORMAL.to_owned(),
                                     Some(binding_functions::Nop::new()));
 
         // Create manager
         let mut inner = InnerInputManager {
-            modes: vec![normal_mode],
+            modes: vec![common_mode, insert_mode, normal_mode],
             code: 0,
             command: Command::default(),
             previous_modification: binding_functions::PreviousModification::None,
             signaler: signaler,
         };
 
-        // Create binding from configuration
-        let bindings = config.get_key_binding_config();
-        for b in bindings.iter() {
-            inner.add_binding(b.mode_name.to_owned(), b.binding.clone(), b.executor.duplicate());
+        inner.apply_configuration(config);
+        inner
+    }
+
+    /// Applies the configuration.
+    pub fn apply_configuration(&mut self, config: &KeybindingsConfig) {
+        // Apply common mode bindings
+        for b in config.common.iter() {
+            self.add_binding(mode_name::COMMON.to_owned(),
+                             b.binding.clone(),
+                             b.executor.duplicate());
         }
 
-        // Activate default modes
-        inner.make_mode_active(mode_name::COMMON.to_string(), true);
-        inner.make_mode_active(mode_name::INSERT.to_string(), true);
-        inner
+        // Apply insert mode bindings
+        for b in config.insert.iter() {
+            self.add_binding(mode_name::INSERT.to_owned(),
+                             b.binding.clone(),
+                             b.executor.duplicate());
+        }
+
+        // Apply  mode bindings
+        for b in config.normal.iter() {
+            self.add_binding(mode_name::NORMAL.to_owned(),
+                             b.binding.clone(),
+                             b.executor.duplicate());
+        }
     }
 
     /// Helper method for finding executor for given binding in active modes.
@@ -237,7 +255,7 @@ pub struct InputManager {
 
 impl InputManager {
     /// `InputManager` constructor.
-    pub fn new(config: &Config, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(config: &KeybindingsConfig, signaler: Signaler<Perceptron>) -> Self {
         InputManager { inner: Arc::new(Mutex::new(InnerInputManager::new(config, signaler))) }
     }
 

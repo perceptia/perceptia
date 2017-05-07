@@ -10,8 +10,9 @@ use std;
 use dharma::SignalId;
 
 use timing::Milliseconds;
-use defs::{Command, DrmBundle, OutputInfo, SurfaceId};
+use defs::{Command, OutputInfo, SurfaceId};
 use defs::{Axis, Position, OptionalPosition, Vector, Button, Key};
+use graphics::{DrmBundle};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -45,6 +46,8 @@ pub const SCREENSHOT_DONE: SignalId = 102;
 
 /// Data passed along with signals. Convention it to use enum values only with corresponding signal
 /// identifies.
+///
+/// TODO: Describe all `perceptrons`.
 #[repr(C)]
 #[derive(Clone)]
 pub enum Perceptron {

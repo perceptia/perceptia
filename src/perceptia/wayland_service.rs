@@ -71,6 +71,7 @@ impl WaylandService {
     fn initialize(&mut self) {
         self.context.get_signaler().register(&self.receiver);
         for s in vec![perceptron::DISPLAY_CREATED,
+                      perceptron::OUTPUT_FOUND,
                       perceptron::INPUT_KEYBOARD,
                       perceptron::INPUT_POINTER_BUTTON,
                       perceptron::INPUT_POINTER_AXIS,
@@ -169,6 +170,7 @@ impl WaylandService {
             Perceptron::ScreenshotDone => {
                 self.engine.on_screenshot_done();
             }
+            Perceptron::OutputFound(bundle) => self.engine.on_output_found(bundle),
             _ => {}
         }
     }

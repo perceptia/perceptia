@@ -4,10 +4,12 @@ version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
+libc = "0.2.18"
 egl = "0.2.6"
 gl = "0.6.0"
 timber = { path = "../timber" }
 qualia = { path = "../qualia" }
+graphics = { path = "../graphics" }
 
 [lib]
 name = "renderer_gl"

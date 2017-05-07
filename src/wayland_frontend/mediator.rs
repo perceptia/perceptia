@@ -7,6 +7,10 @@
 
 use std;
 use std::collections::HashMap;
+use std::os::unix::io::RawFd;
+use std::path::PathBuf;
+
+use libdrm;
 
 use dharma;
 use qualia::SurfaceId;
@@ -19,6 +23,8 @@ use qualia::SurfaceId;
 pub struct Mediator {
     sid_to_cid_dictionary: HashMap<SurfaceId, dharma::EventHandlerId>,
     screenshoter_cid: Option<dharma::EventHandlerId>,
+    drm_device_path: Option<PathBuf>,
+    drm_device_fd: Option<RawFd>,
 }
 
 define_ref!(struct Mediator as MediatorRef);
@@ -30,6 +36,8 @@ impl Mediator {
         Mediator {
             sid_to_cid_dictionary: HashMap::new(),
             screenshoter_cid: None,
+            drm_device_fd: None,
+            drm_device_path: None,
         }
     }
 }
@@ -55,6 +63,22 @@ impl Mediator {
 
     pub fn get_screenshooter(&self) -> Option<dharma::EventHandlerId> {
         self.screenshoter_cid
+    }
+
+    pub fn set_drm_device(&mut self, fd: RawFd, path: PathBuf) {
+        self.drm_device_fd = Some(fd);
+        self.drm_device_path = Some(path);
+    }
+
+    pub fn get_drm_device_path(&self) -> Option<PathBuf> {
+        self.drm_device_path.clone()
+    }
+
+    pub fn authenticate_drm_device(&self, magic: u32) {
+        if let Some(fd) = self.drm_device_fd {
+            // TODO: Add safe `drmAuthMagic` to lidrm bindings.
+            unsafe { libdrm::ffi::xf86drm::drmAuthMagic(fd, magic); }
+        }
     }
 }
 

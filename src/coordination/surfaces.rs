@@ -5,9 +5,9 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{MemoryView, Pixmap};
+use qualia::{DmabufAttributes, EglAttributes, HwImage, MemoryView};
 use qualia::{Position, Size, Vector};
-use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
+use qualia::{DataSource, SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -36,10 +36,10 @@ pub struct Surface {
     relative_position: Position,
 
     /// Data required for draw.
-    buffer: Option<MemoryView>,
+    buffer: DataSource,
 
     /// Data to be used after commit.
-    pending_buffer: Option<MemoryView>,
+    pending_buffer: DataSource,
 
     /// Flags describing logical state of surface
     state_flags: surface_state::SurfaceState,
@@ -61,8 +61,8 @@ impl Surface {
             parent_sid: SurfaceId::invalid(),
             satellites: vec![*id],
             relative_position: Position::default(),
-            buffer: None,
-            pending_buffer: None,
+            buffer: DataSource::None,
+            pending_buffer: DataSource::None,
             show_reasons: show_reason::NONE,
             state_flags: surface_state::REGULAR,
         }
@@ -161,8 +161,20 @@ impl Surface {
 
     /// Sets given buffer as pending.
     #[inline]
-    pub fn attach(&mut self, buffer: MemoryView) {
-        self.pending_buffer = Some(buffer);
+    pub fn attach_shm(&mut self, buffer: MemoryView) {
+        self.pending_buffer = DataSource::Shm(buffer);
+    }
+
+    /// Sets given hardware image as pending.
+    #[inline]
+    pub fn attach_hw_image(&mut self, image: HwImage, attrs: EglAttributes) {
+        self.pending_buffer = DataSource::HwImage(image, attrs);
+    }
+
+    /// Sets given dmabuf as pending.
+    #[inline]
+    pub fn attach_dmabuf(&mut self, image: HwImage, attrs: DmabufAttributes) {
+        self.pending_buffer = DataSource::Dmabuf(image, attrs);
     }
 
     /// Sets pending buffer as current. If surface was committed for the first time and sizes are
@@ -172,18 +184,18 @@ impl Surface {
         let is_first_time_committed = self.buffer.is_none();
         self.buffer = self.pending_buffer.clone();
 
-        if let Some(ref buffer) = self.buffer {
+        if let Some(ref image) = self.buffer.as_image() {
             // If surface was just created...
             if is_first_time_committed {
                 // ... size was not yet requested by surface ...
                 if (self.requested_size.width == 0) || (self.requested_size.height == 0) {
-                    // ... use its buffer size as requested size ...
-                    self.requested_size = buffer.get_size();
+                    // ... use its image size as requested size ...
+                    self.requested_size = image.get_size();
                 }
                 // ... and if it is subsurface ...
                 if self.parent_sid.is_valid() {
                     // ... set its desired size.
-                    self.desired_size = buffer.get_size();
+                    self.desired_size = image.get_size();
                 }
             }
         }
@@ -200,12 +212,12 @@ impl Surface {
             desired_size: self.desired_size,
             requested_size: self.requested_size,
             state_flags: self.state_flags,
-            buffer: self.buffer.clone(),
+            data_source: self.buffer.clone(),
         }
     }
 
     /// Returns surfaces buffer.
-    pub fn get_buffer(&self) -> Option<MemoryView> {
+    pub fn get_data_source(&self) -> DataSource {
         self.buffer.clone()
     }
 

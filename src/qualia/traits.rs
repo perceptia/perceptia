@@ -4,8 +4,10 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
-use defs::{MemoryPoolId, MemoryViewId, PixelFormat, SignalId, SurfaceId};
+use defs::{HwImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
+use image::PixelFormat;
 use memory::{Buffer, MappedMemory};
+use graphics::{EglAttributes, DmabufAttributes, GraphicsManagement};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -64,6 +66,26 @@ pub trait MemoryManagement {
 
     /// Destroys memory view.
     fn destroy_memory_view(&mut self, mpid: MemoryViewId);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Hardware accelerated graphics functionality.
+pub trait HwGraphics {
+    /// Sets graphics manager.
+    fn set_graphics_manager(&mut self, graphics_manager: Box<GraphicsManagement + Send>);
+
+    /// Checks if hardware acceleration support is available.
+    fn has_hardware_acceleration_support(&self) -> bool;
+
+    /// Makes request to create EGL buffer.
+    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId>;
+
+    /// Makes request to create EGL buffer from dmabuf.
+    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId>;
+
+    /// Destroys hardware image.
+    fn destroy_hw_image(&mut self, hwiid: HwImageId);
 }
 
 // -------------------------------------------------------------------------------------------------

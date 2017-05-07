@@ -12,10 +12,8 @@ extern crate drm as libdrm;
 extern crate gbm_rs as libgbm;
 
 extern crate qualia;
-extern crate dharma;
+extern crate graphics;
 extern crate renderer_gl;
-
-pub mod gbm_tools;
 
 mod output;
 pub use output::Output;

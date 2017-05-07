@@ -39,7 +39,7 @@ pub fn get_global() -> Global {
 // -------------------------------------------------------------------------------------------------
 
 impl Shm {
-    /// Creates new `Shm` and posts supprted formats.
+    /// Creates new `Shm` and posts supported formats.
     fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
         {
             let mut socket = proxy_ref.borrow().get_socket();
@@ -53,7 +53,7 @@ impl Shm {
         }
     }
 
-    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
+    fn new_object(oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_shm::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }

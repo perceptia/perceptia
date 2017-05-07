@@ -55,7 +55,7 @@ impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
         let b = Buffer::new(format, w, h, stride, data);
         let bid = self.coordinator.create_pool_from_buffer(b);
         if let Some(mvid) = self.coordinator.create_memory_view(bid, format, 0, w, h, stride) {
-            self.coordinator.attach_surface(mvid, self.default_csid);
+            self.coordinator.attach_shm(mvid, self.default_csid);
             self.coordinator.commit_surface(self.default_csid);
             self.coordinator.set_surface_as_cursor(self.default_csid);
         }

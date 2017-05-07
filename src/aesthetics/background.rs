@@ -59,7 +59,7 @@ impl<C> Background<C> where C: AestheticsCoordinationTrait {
                     let bid = self.coordinator.create_pool_from_buffer(buffer);
 
                     if let Some(mvid) = self.coordinator.create_memory_view(bid, f, 0, w, h, s) {
-                        self.coordinator.attach_surface(mvid, background_sid);
+                        self.coordinator.attach_shm(mvid, background_sid);
                         self.coordinator.commit_surface(background_sid);
                         self.coordinator.set_surface_as_background(background_sid);
                     } else {

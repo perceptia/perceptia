@@ -5,8 +5,10 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use defs::MemoryViewId;
+use defs::{HwImageId, MemoryViewId};
+use image::Image;
 use memory::MemoryView;
+use graphics::{HwImage, EglAttributes, DmabufAttributes};
 use defs::{Position, Size, Vector};
 pub use defs::{SurfaceId, SurfaceIdType};
 
@@ -63,6 +65,57 @@ pub mod surface_state {
 
 // -------------------------------------------------------------------------------------------------
 
+/// This enum gathers information about source of data to be used when drawing surface.
+///
+/// Must be easy to copy and ensure data is not destroyed during use.
+#[derive(Clone)]
+pub enum DataSource {
+    /// View on shared memory pool or buffer.
+    Shm(MemoryView),
+
+    /// EGL image stored in graphic card memory.
+    HwImage(HwImage, EglAttributes),
+
+    /// Image stored in some graphic device (webcam, GPU, etc...).
+    Dmabuf(HwImage, DmabufAttributes),
+
+    /// Source unspecified.
+    None,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl DataSource {
+    /// Returns true if data source is unspecified, false otherwise.
+    pub fn is_none(&self) -> bool {
+        if let DataSource::None = *self {
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Returns data as `Image` if available.
+    pub fn as_image(&self) -> Option<&Image> {
+        match *self {
+            DataSource::Shm(ref memory_view) => {
+                Some(memory_view)
+            }
+            DataSource::HwImage(ref image, _) => {
+                Some(image)
+            }
+            DataSource::Dmabuf(ref image, _) => {
+                Some(image)
+            }
+            DataSource::None => {
+                None
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Structure containing public information about surface.
 pub struct SurfaceInfo {
     pub id: SurfaceId,
@@ -71,7 +124,7 @@ pub struct SurfaceInfo {
     pub desired_size: Size,
     pub requested_size: Size,
     pub state_flags: surface_state::SurfaceState,
-    pub buffer: Option<MemoryView>,
+    pub data_source: DataSource,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -82,7 +135,13 @@ pub trait SurfaceManagement {
     fn create_surface(&mut self) -> SurfaceId;
 
     /// Sets given buffer as pending for given surface.
-    fn attach_surface(&self, mvid: MemoryViewId, sid: SurfaceId);
+    fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId);
+
+    /// Sets given hardware image as pending for given surface.
+    fn attach_hw_image(&self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId);
+
+    /// Sets given dmabuf as pending for given surface.
+    fn attach_dmabuf(&self, image: HwImageId, attrs: DmabufAttributes, sid: SurfaceId);
 
     /// Informs other parts of application the surface is now not visible.
     fn detach_surface(&self, sid: SurfaceId);

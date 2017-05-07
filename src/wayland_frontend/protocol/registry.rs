@@ -74,7 +74,7 @@ impl wl_registry::Interface for Registry {
             }
         } {
             Ok(global) => {
-                let object = global.construct(new_object_id, self.proxy.clone());
+                let object = global.construct(new_object_id, version, self.proxy.clone());
                 Task::Create {
                     id: new_object_id,
                     object: object,

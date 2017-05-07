@@ -13,9 +13,8 @@ extern crate image;
 
 extern crate timber;
 extern crate qualia;
+extern crate graphics;
 extern crate device_manager;
-extern crate output;
-extern crate renderer_gl;
 extern crate skylane_simple_framework;
 
 mod info;

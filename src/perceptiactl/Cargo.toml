@@ -13,9 +13,8 @@ drm-rs = "0.1.2"
 image = "0.12.3"
 timber                   = { path = "../timber" }
 qualia                   = { path = "../qualia" }
+graphics                 = { path = "../graphics" }
 device_manager           = { path = "../device_manager" }
-renderer_gl              = { path = "../renderer_gl" }
-output                   = { path = "../output" }
 skylane_simple_framework = { path = "../skylane_simple_framework" }
 
 [[bin]]

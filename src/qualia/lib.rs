@@ -43,8 +43,18 @@ pub use timing::Milliseconds;
 
 pub mod defs;
 pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Command, DrmBundle, modifier, Key, KeyCode, KeyValue, OutputInfo, PixelFormat};
-pub use defs::{MemoryPoolId, MemoryViewId, SignalId};
+pub use defs::{Command, modifier, Key, KeyCode, KeyValue, OutputInfo};
+pub use defs::{HwImageId, MemoryPoolId, MemoryViewId, SignalId};
+
+pub mod image;
+pub use image::{Image, Pixmap, PixelFormat};
+
+pub mod graphics;
+pub use graphics::{DrmBundle, EglAttributes, DmabufAttributes, ValidationResult};
+pub use graphics::{GraphicsManagement, HwImage, RawHwImage};
+
+pub mod memory;
+pub use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
 
 pub mod config;
 pub use config::{Config, AestheticsConfig, InputConfig, KeyboardConfig};
@@ -52,11 +62,8 @@ pub use config::{CompositorConfig, ExhibitorConfig, StrategistConfig};
 
 pub mod config_defaults;
 
-pub mod memory;
-pub use memory::{Buffer, Pixmap, MappedMemory, MemoryPool, MemoryView};
-
 pub mod surface;
-pub use surface::{SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo};
+pub use surface::{SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, DataSource};
 pub use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 pub use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 pub use surface::{show_reason, surface_state};
@@ -65,7 +72,7 @@ pub mod perceptron;
 pub use perceptron::Perceptron;
 
 pub mod traits;
-pub use traits::{AppearanceManagement, Emiter, Screenshooting, MemoryManagement};
+pub use traits::{AppearanceManagement, Emiter, Screenshooting, MemoryManagement, HwGraphics};
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 
 #[macro_use]

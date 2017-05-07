@@ -7,6 +7,7 @@
 
 use std;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::path::PathBuf;
 
 use dharma;
 use skylane::server as wl;
@@ -19,10 +20,11 @@ use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 use qualia::Settings;
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
-use qualia::{MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{DrmBundle, EglAttributes, DmabufAttributes, MappedMemory};
+use qualia::{HwImageId, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
-use qualia::{AppearanceManagement, Screenshooting, MemoryManagement};
+use qualia::{AppearanceManagement, HwGraphics, Screenshooting, MemoryManagement};
 
 use coordination::Coordinator;
 
@@ -69,6 +71,7 @@ macro_rules! unrelate_sid_with {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper structure for aggregating information about surface.
+#[derive(Debug)]
 struct SurfaceInfo {
     // For sending keyboard `enter` and `leave`.
     surface_oid: Option<wl::ObjectId>,
@@ -99,19 +102,43 @@ impl SurfaceInfo {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper structure for aggregating information about buffers.
-#[derive(Clone, Copy)]
-struct BufferInfo {
-    mpid: MemoryPoolId,
-    mvid: MemoryViewId,
+#[derive(Clone)]
+enum  BufferInfo {
+    Shm {
+        mpid: MemoryPoolId,
+        mvid: MemoryViewId,
+    },
+    HwImage {
+        hwiid: HwImageId,
+        attrs: EglAttributes,
+    },
+    Dmabuf {
+        hwiid: HwImageId,
+        attrs: DmabufAttributes,
+    },
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl BufferInfo {
-    pub fn new(mpid: MemoryPoolId, mvid: MemoryViewId) -> Self {
-        BufferInfo {
+    pub fn new_shm(mpid: MemoryPoolId, mvid: MemoryViewId) -> Self {
+        BufferInfo::Shm {
             mpid: mpid,
             mvid: mvid,
+        }
+    }
+
+    pub fn new_hw_image(hwiid: HwImageId, attrs: EglAttributes) -> Self {
+        BufferInfo::HwImage {
+            hwiid: hwiid,
+            attrs: attrs,
+        }
+    }
+
+    pub fn new_dmabuf(hwiid: HwImageId, attrs: DmabufAttributes) -> Self {
+        BufferInfo::Dmabuf {
+            hwiid: hwiid,
+            attrs: attrs,
         }
     }
 }
@@ -122,6 +149,8 @@ impl BufferInfo {
 /// for rest of the crate/application and gateway from `Engine` to clients.
 ///
 /// For information about its place among other structures see crate-level documentation.
+///
+/// TODO: Add more information about members of `Proxy`.
 pub struct Proxy {
     id: dharma::EventHandlerId,
     coordinator: Coordinator,
@@ -141,9 +170,12 @@ pub struct Proxy {
     pointer_oids: HashSet<wl::ObjectId>,
     keyboard_oids: HashSet<wl::ObjectId>,
     memory_pools: HashSet<MemoryPoolId>,
-    surface_oid_to_sid_dictionary: HashMap<wl::ObjectId, SurfaceId>,
-    sid_to_surface_info_dictionary: HashMap<SurfaceId, SurfaceInfo>,
-    buffer_oid_to_buffer_info_dictionary: HashMap<wl::ObjectId, BufferInfo>,
+    surface_oid_to_sid_dict: HashMap<wl::ObjectId, SurfaceId>,
+    sid_to_surface_info_dict: HashMap<SurfaceId, SurfaceInfo>,
+
+    /// Surface object does not know if its buffer is memory shared or hardware image. It can only
+    /// tell its buffer object ID, so we map this ID to structure defining how it can be attached.
+    buffer_oid_to_info_dict: HashMap<wl::ObjectId, BufferInfo>,
     output_oid_to_id: HashMap<wl::ObjectId, i32>,
     screenshooter_oid: Option<wl::ObjectId>,
     screenshot_memory: Option<MappedMemory>,
@@ -174,9 +206,9 @@ impl Proxy {
             pointer_oids: HashSet::new(),
             keyboard_oids: HashSet::new(),
             memory_pools: HashSet::new(),
-            surface_oid_to_sid_dictionary: HashMap::new(),
-            sid_to_surface_info_dictionary: HashMap::new(),
-            buffer_oid_to_buffer_info_dictionary: HashMap::new(),
+            surface_oid_to_sid_dict: HashMap::new(),
+            sid_to_surface_info_dict: HashMap::new(),
+            buffer_oid_to_info_dict: HashMap::new(),
             output_oid_to_id: HashMap::new(),
             screenshooter_oid: None,
             screenshot_memory: None,
@@ -212,7 +244,7 @@ impl Proxy {
             self.coordinator.destroy_memory_pool(*mpid);
         }
 
-        for (_, sid) in self.surface_oid_to_sid_dictionary.iter() {
+        for (_, sid) in self.surface_oid_to_sid_dict.iter() {
             self.mediator.borrow_mut().remove(*sid);
             self.coordinator.destroy_surface(*sid);
         }
@@ -224,23 +256,23 @@ impl Proxy {
 impl Proxy {
     /// Helper method for setting surface information for surface.
     fn relate_sid_with_surface(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
-        self.surface_oid_to_sid_dictionary.insert(oid, sid);
-        relate_sid_with!(surface_oid, self.sid_to_surface_info_dictionary, sid, oid);
+        self.surface_oid_to_sid_dict.insert(oid, sid);
+        relate_sid_with!(surface_oid, self.sid_to_surface_info_dict, sid, oid);
     }
 
     /// Helper method for setting shell information for surface.
     fn relate_sid_with_shell_surface(&mut self, sid: SurfaceId, oid: ShellSurfaceOid) {
-        relate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dictionary, sid, oid);
+        relate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dict, sid, oid);
     }
 
     /// Helper method for setting buffer information for surface.
     fn relate_sid_with_buffer(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
-        relate_sid_with!(buffer_oid, self.sid_to_surface_info_dictionary, sid, oid);
+        relate_sid_with!(buffer_oid, self.sid_to_surface_info_dict, sid, oid);
     }
 
     /// Helper method for setting frame callback ID information for surface.
     fn relate_sid_with_frame(&mut self, sid: SurfaceId, oid: wl::ObjectId) {
-        relate_sid_with!(frame_oid, self.sid_to_surface_info_dictionary, sid, oid);
+        relate_sid_with!(frame_oid, self.sid_to_surface_info_dict, sid, oid);
     }
 }
 
@@ -249,7 +281,7 @@ impl Proxy {
 impl Proxy {
     /// Helper method for unsetting shell information for surface.
     fn unrelate_sid_with_shell_surface(&mut self, sid: SurfaceId) {
-        unrelate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dictionary, sid);
+        unrelate_sid_with!(shell_surface_oid, self.sid_to_surface_info_dict, sid);
     }
 }
 
@@ -260,7 +292,7 @@ impl Proxy {
     pub fn get_surface_oid_for_shell(&self,
                                      parent_shell_surface_oid: wl::ObjectId)
                                      -> Option<wl::ObjectId> {
-        for info in self.sid_to_surface_info_dictionary.values() {
+        for info in self.sid_to_surface_info_dict.values() {
             if let Some(shell_surface_oid) = info.shell_surface_oid {
                 match shell_surface_oid {
                     ShellSurfaceOid::ZxdgToplevelV6(shell_surface_oid, _) => {
@@ -307,14 +339,42 @@ impl Facade for Proxy {
         let result =
             self.coordinator.create_memory_view(mpid, format, offset, width, height, stride);
         if let Some(mvid) = result {
-            let info = BufferInfo::new(mpid, mvid);
-            self.buffer_oid_to_buffer_info_dictionary.insert(buffer_oid, info);
+            let info = BufferInfo::new_shm(mpid, mvid);
+            self.buffer_oid_to_info_dict.insert(buffer_oid, info);
         }
         result
     }
 
     fn destroy_memory_view(&mut self, mvid: MemoryViewId) {
         self.coordinator.destroy_memory_view(mvid);
+    }
+
+    fn create_egl_buffer(&mut self,
+                         buffer_oid: wl::ObjectId,
+                         attrs: EglAttributes)
+                         -> Option<HwImageId> {
+        let hwiid = self.coordinator.create_egl_buffer(&attrs);
+        if let Some(hwiid) = hwiid {
+            let info = BufferInfo::new_hw_image(hwiid, attrs);
+            self.buffer_oid_to_info_dict.insert(buffer_oid, info);
+        }
+        hwiid
+    }
+
+    fn import_dmabuf(&mut self,
+                     buffer_oid: wl::ObjectId,
+                     attrs: DmabufAttributes)
+                     -> Option<HwImageId> {
+        let hwiid = self.coordinator.import_dmabuf(&attrs);
+        if let Some(hwiid) = hwiid {
+            let info = BufferInfo::new_dmabuf(hwiid, attrs);
+            self.buffer_oid_to_info_dict.insert(buffer_oid, info);
+        }
+        hwiid
+    }
+
+    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
+        self.coordinator.destroy_hw_image(hwiid);
     }
 
     fn define_region(&mut self, region_oid: wl::ObjectId, region: Area) {
@@ -383,9 +443,19 @@ impl Facade for Proxy {
             // TODO: This should be done on commit
             self.coordinator.unrelate_surface(sid);
             self.coordinator.detach_surface(sid)
-        } else if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
+        } else if let Some(info) = self.buffer_oid_to_info_dict.get(&buffer_oid).cloned() {
             self.relate_sid_with_buffer(sid, buffer_oid);
-            self.coordinator.attach_surface(info.mvid, sid);
+            match info {
+                BufferInfo::Shm{mpid, mvid} => {
+                    self.coordinator.attach_shm(mvid, sid);
+                }
+                BufferInfo::HwImage{hwiid, ref attrs} => {
+                    self.coordinator.attach_hw_image(hwiid, attrs.clone(), sid);
+                }
+                BufferInfo::Dmabuf{hwiid, ref attrs} => {
+                    self.coordinator.attach_dmabuf(hwiid, attrs.clone(), sid);
+                }
+            }
         } else {
             log_error!("Unknown buffer object ID: {}", buffer_oid);
         }
@@ -403,7 +473,7 @@ impl Facade for Proxy {
             surface_oid: wl::ObjectId,
             shell_surface_oid: ShellSurfaceOid,
             reason: show_reason::ShowReason) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
             self.relate_sid_with_shell_surface(sid, shell_surface_oid);
             self.coordinator.show_surface(sid, reason);
         } else {
@@ -412,7 +482,7 @@ impl Facade for Proxy {
     }
 
     fn hide(&mut self, surface_oid: wl::ObjectId, reason: show_reason::ShowReason) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
             self.coordinator.hide_surface(sid, reason);
             self.unrelate_sid_with_shell_surface(sid);
         } else {
@@ -429,15 +499,15 @@ impl Facade for Proxy {
     }
 
     fn set_relative_position(&self, surface_oid: wl::ObjectId, x: isize, y: isize) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
             let position = Position::new(x, y);
             self.coordinator.set_surface_relative_position(sid, position);
         }
     }
 
     fn relate(&self, surface_oid: wl::ObjectId, parent_surface_oid: wl::ObjectId) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
-            if let Some(&parent_sid) = self.surface_oid_to_sid_dictionary.get(&parent_surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
+            if let Some(&parent_sid) = self.surface_oid_to_sid_dict.get(&parent_surface_oid) {
                 self.coordinator.relate_surfaces(sid, parent_sid);
             }
             self.coordinator.set_surface_relative_position(sid, Position::default());
@@ -445,13 +515,13 @@ impl Facade for Proxy {
     }
 
     fn unrelate(&self, surface_oid: wl::ObjectId) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
             self.coordinator.unrelate_surface(sid);
         }
     }
 
     fn set_as_cursor(&self, surface_oid: wl::ObjectId, hotspot_x: isize, hotspot_y: isize) {
-        if let Some(&sid) = self.surface_oid_to_sid_dictionary.get(&surface_oid) {
+        if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
             self.coordinator.set_surface_offset(sid, Position { x: hotspot_x, y: hotspot_y });
             self.coordinator.set_surface_as_cursor(sid);
         }
@@ -466,8 +536,8 @@ impl Facade for Proxy {
                        output_oid: wl::ObjectId,
                        buffer_oid: wl::ObjectId) {
         // Destroy memory pool to be used to transfer screenshot.
-        if let Some(&info) = self.buffer_oid_to_buffer_info_dictionary.get(&buffer_oid) {
-            self.screenshot_memory = self.coordinator.destroy_memory_pool(info.mpid);
+        if let Some(&BufferInfo::Shm{mpid, mvid}) = self.buffer_oid_to_info_dict.get(&buffer_oid) {
+            self.screenshot_memory = self.coordinator.destroy_memory_pool(mpid);
         }
 
         // If the memory was not in use the mapped memory will be returned.
@@ -489,12 +559,22 @@ impl Facade for Proxy {
             log_warn1!("Could not set buffer up for screenshot");
         }
     }
+
+    fn authenticate_drm_device(&mut self, magic: u32) {
+        self.mediator.borrow().authenticate_drm_device(magic);
+    }
+
+    fn get_drm_device_path(&self) -> Option<PathBuf> {
+        self.mediator.borrow().get_drm_device_path()
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 #[allow(unused_variables)]
 impl Gateway for Proxy {
+    fn on_output_found(&mut self, _bundle: DrmBundle) {}
+
     fn on_display_created(&mut self, output_info: OutputInfo) {
         self.register_global(protocol::output::get_global(output_info));
     }
@@ -523,7 +603,7 @@ impl Gateway for Proxy {
     }
 
     fn on_surface_frame(&mut self, sid: SurfaceId, milliseconds: Milliseconds) {
-        if let Some(info) = self.sid_to_surface_info_dictionary.get_mut(&sid) {
+        if let Some(info) = self.sid_to_surface_info_dict.get_mut(&sid) {
             if let Some(frame_oid) = info.frame_oid {
                 send!(wl_callback::done(&self.socket, frame_oid, milliseconds.get_value() as u32));
                 send!(wl_display::delete_id(&self.socket, wl::DISPLAY_ID, frame_oid.get_value()));
@@ -539,7 +619,7 @@ impl Gateway for Proxy {
 
     fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position) {
         if old_sid != SurfaceId::invalid() {
-            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&old_sid) {
+            if let Some(surface_info) = self.sid_to_surface_info_dict.get(&old_sid) {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for pointer_oid in self.pointer_oids.iter() {
                         let serial = self.socket.get_next_serial();
@@ -550,7 +630,7 @@ impl Gateway for Proxy {
         }
 
         if new_sid != SurfaceId::invalid() {
-            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&new_sid) {
+            if let Some(surface_info) = self.sid_to_surface_info_dict.get(&new_sid) {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for pointer_oid in self.pointer_oids.iter() {
                         let serial = self.socket.get_next_serial();
@@ -655,7 +735,7 @@ impl Gateway for Proxy {
 
     fn on_keyboard_focus_changed(&mut self, old_sid: SurfaceId, new_sid: SurfaceId) {
         if old_sid != SurfaceId::invalid() {
-            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&old_sid) {
+            if let Some(surface_info) = self.sid_to_surface_info_dict.get(&old_sid) {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for keyboard_oid in self.keyboard_oids.iter() {
                         let serial = self.socket.get_next_serial();
@@ -672,7 +752,7 @@ impl Gateway for Proxy {
         }
 
         if new_sid != SurfaceId::invalid() {
-            if let Some(surface_info) = self.sid_to_surface_info_dictionary.get(&new_sid) {
+            if let Some(surface_info) = self.sid_to_surface_info_dict.get(&new_sid) {
                 if let Some(surface_oid) = surface_info.surface_oid {
                     for keyboard_oid in self.keyboard_oids.iter() {
                         let serial = self.socket.get_next_serial();
@@ -701,7 +781,7 @@ impl Gateway for Proxy {
                                sid: SurfaceId,
                                size: Size,
                                state_flags: surface_state::SurfaceState) {
-        if let Some(info) = self.sid_to_surface_info_dictionary.get(&sid) {
+        if let Some(info) = self.sid_to_surface_info_dict.get(&sid) {
             if let Some(shell_surface) = info.shell_surface_oid {
                 match shell_surface {
                     ShellSurfaceOid::Shell(shell_surface_oid) => {

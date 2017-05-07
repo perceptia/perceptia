@@ -9,10 +9,11 @@ use std;
 use gl;
 use egl;
 
-use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, Buffer, Pixmap, PixelFormat};
+use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size};
+use qualia::{Buffer, Pixmap, PixelFormat, DataSource, Image};
+use graphics::egl_tools;
 
 use gl_tools;
-use egl_tools;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -46,6 +47,9 @@ pub struct RendererGl {
     vbo_vertices: gl::types::GLuint,
     vbo_texcoords: gl::types::GLuint,
     vbo_texture: [gl::types::GLuint; MAX_TEXTURES as usize],
+
+    // Pointers to extension functions
+    image_target_texture: Option<egl_tools::ImageTargetTexture2DOesFunc>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -64,6 +68,7 @@ impl RendererGl {
             vbo_vertices: gl::types::GLuint::default(),
             vbo_texcoords: gl::types::GLuint::default(),
             vbo_texture: [0; MAX_TEXTURES as usize],
+            image_target_texture: None,
         }
     }
 
@@ -116,6 +121,8 @@ impl RendererGl {
             }
         }
 
+        self.image_target_texture = egl_tools::get_proc_address_of_image_target_texture_2d_oes();
+
         Ok(())
     }
 
@@ -128,7 +135,6 @@ impl RendererGl {
                 -> Result<(), Illusion> {
         let _context = self.egl.make_current()?;
         self.prepare_view();
-        self.draw_bg_image();
         self.draw_surfaces(layunder, viewer);
         self.draw_surfaces(surfaces, viewer);
         self.draw_surfaces(layover, viewer);
@@ -191,9 +197,6 @@ impl RendererGl {
         }
     }
 
-    /// Draw background image.
-    fn draw_bg_image(&self) {}
-
     /// Load textures and prepare vertices.
     fn load_texture_and_prepare_vertices(&self,
                                          viewer: &SurfaceViewer,
@@ -202,7 +205,8 @@ impl RendererGl {
                                          texcoords: &mut [gl::types::GLfloat],
                                          index: usize) {
         if let Some(ref surface) = viewer.get_surface(context.id) {
-            if let Some(ref buffer) = surface.buffer {
+            let mut size = None;
+            if let DataSource::Shm(ref buffer) = surface.data_source {
                 let format = {
                     match buffer.get_format() {
                         // NOTE: Mixing channels is intentional. In `PixelFormat` one reads it from
@@ -217,21 +221,60 @@ impl RendererGl {
                 unsafe {
                     gl::ActiveTexture(gl::TEXTURE0 + index as u32);
                     gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
+
                     gl::TexImage2D(gl::TEXTURE_2D, // target
                                    0, // level, 0 = no mipmap
                                    gl::RGBA as gl::types::GLint, // internal format
-                                   (*buffer).get_width() as gl::types::GLint, // width
-                                   (*buffer).get_height() as gl::types::GLint, // height
+                                   buffer.get_width() as gl::types::GLint, // width
+                                   buffer.get_height() as gl::types::GLint, // height
                                    0, // always 0 in OpenGL ES
                                    format, // format
                                    gl::UNSIGNED_BYTE, // type
-                                   (*buffer).as_ptr() as *const _);
+                                   buffer.as_ptr() as *const _);
                 }
 
+                size = Some(buffer.get_size());
+            } else if let DataSource::HwImage(ref image, ref attrs) = surface.data_source {
+                if let Some(image_target_texture) = self.image_target_texture {
+                    // TODO: Reimport images only when it is really needed.
+                    // FIXME: Destroy images created here.
+                    let img = egl_tools::create_image(self.egl.display, attrs);
+                    if let Some(img) = img {
+                        unsafe {
+                            let target = gl::TEXTURE_2D;
+
+                            gl::ActiveTexture(gl::TEXTURE0 + index as u32);
+                            gl::BindTexture(target, self.vbo_texture[index]);
+
+                            image_target_texture(target, img.as_raw());
+                            size = Some(image.get_size());
+                        }
+                    }
+                }
+            } else if let DataSource::Dmabuf(ref image, ref attrs) = surface.data_source {
+                if let Some(image_target_texture) = self.image_target_texture {
+                    // TODO: Reimport images only when it is really needed.
+                    // FIXME: Destroy images created here.
+                    let img = egl_tools::import_dmabuf(self.egl.display, attrs);
+                    if let Some(img) = img {
+                        unsafe {
+                            let target = gl::TEXTURE_2D;
+
+                            gl::ActiveTexture(gl::TEXTURE0 + index as u32);
+                            gl::BindTexture(target, self.vbo_texture[index]);
+
+                            image_target_texture(target, img.as_raw());
+                            size = Some(image.get_size());
+                        }
+                    }
+                }
+            }
+
+            if let Some(size) = size {
                 let left = (context.pos.x - surface.offset.x) as gl::types::GLfloat;
                 let top = (context.pos.y - surface.offset.y) as gl::types::GLfloat;
-                let right = left + (*buffer).get_width() as gl::types::GLfloat;
-                let bottom = top + (*buffer).get_height() as gl::types::GLfloat;
+                let right = left + size.width as gl::types::GLfloat;
+                let bottom = top + size.height as gl::types::GLfloat;
 
                 vertices[0] = left;
                 vertices[1] = top;

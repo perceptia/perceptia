@@ -12,13 +12,14 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
-use qualia::{Position, Size, Vector, MemoryPoolId, MemoryViewId, PixelFormat};
-use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView};
+use qualia::{Position, Size, Vector, HwImageId, MemoryPoolId, MemoryViewId, PixelFormat};
+use qualia::{Buffer, HwImage, MappedMemory, MemoryPool, MemoryView};
+use qualia::{EglAttributes, DmabufAttributes, GraphicsManagement};
 use qualia::{perceptron, Perceptron};
-use qualia::{SurfaceContext, SurfaceId, SurfaceInfo};
+use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use qualia::{AppearanceManagement, Emiter, MemoryManagement, Screenshooting};
+use qualia::{AppearanceManagement, Emiter, MemoryManagement, HwGraphics, Screenshooting};
 use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 use qualia::{show_reason, surface_state};
 
@@ -73,6 +74,7 @@ impl MemoryViewBundle {
 type SurfaceMap = std::collections::HashMap<SurfaceId, Surface>;
 type MemoryViewMap = std::collections::HashMap<MemoryViewId, MemoryViewBundle>;
 type MemoryPoolMap = std::collections::HashMap<MemoryPoolId, MemoryPoolBundle>;
+type HwImagesMap = std::collections::HashMap<HwImageId, HwImage>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -96,6 +98,20 @@ macro_rules! try_get_memory_view {
             Some(buffer) => buffer,
             None => {
                 log_warn2!("Buffer {:?} not found!", $bid);
+                return
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+macro_rules! try_get_hw_image {
+    ($coordinator:expr, $hwiid:ident) => {
+        match $coordinator.hw_images.get_mut(&$hwiid) {
+            Some(image) => image,
+            None => {
+                log_warn2!("Image {:?} not found!", $hwiid);
                 return
             }
         }
@@ -133,6 +149,12 @@ struct InnerCoordinator {
     /// Storage for all memory pools.
     memory_pools: MemoryPoolMap,
 
+    /// Storage for all hardware images.
+    hw_images: HwImagesMap,
+
+    /// Graphics manager.
+    graphics_manager: Option<Box<GraphicsManagement + Send>>,
+
     /// Screenshot buffer to be shared between threads.
     screenshot_buffer: Option<Buffer>,
 
@@ -144,6 +166,9 @@ struct InnerCoordinator {
 
     /// Counter of memory pool IDs
     last_memory_pool_id: MemoryPoolId,
+
+    /// Counter of hardware image IDs
+    last_hw_image_id: HwImageId,
 
     /// Currently keyboard-focused surface ID
     kfsid: SurfaceId,
@@ -162,19 +187,24 @@ impl InnerCoordinator {
             surfaces: SurfaceMap::new(),
             memory_views: MemoryViewMap::new(),
             memory_pools: MemoryPoolMap::new(),
+            hw_images: HwImagesMap::new(),
+            graphics_manager: None,
             screenshot_buffer: None,
             last_surface_id: SurfaceId::invalid(),
             last_memory_view_id: MemoryViewId::initial(),
             last_memory_pool_id: MemoryPoolId::initial(),
+            last_hw_image_id: HwImageId::initial(),
             kfsid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
         }
     }
 
     /// Returns buffer of the surface.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
-        let surface = try_get_surface_or_none!(self, sid);
-        surface.get_buffer()
+    pub fn get_data_source(&self, sid: SurfaceId) -> DataSource {
+        match self.surfaces.get(&sid) {
+            Some(surface) => surface.get_data_source(),
+            None => DataSource::None,
+        }
     }
 
     /// Creates new surface with newly generated unique ID.
@@ -185,10 +215,24 @@ impl InnerCoordinator {
     }
 
     /// Sets given buffer as pending for given surface.
-    pub fn attach_surface(&mut self, mvid: MemoryViewId, sid: SurfaceId) {
+    pub fn attach_shm(&mut self, mvid: MemoryViewId, sid: SurfaceId) {
         let surface = try_get_surface!(self, sid);
         let view = try_get_memory_view!(self, mvid);
-        surface.attach(view.view.clone());
+        surface.attach_shm(view.view.clone());
+    }
+
+    /// Sets given hardware image as pending for given surface.
+    pub fn attach_hw_image(&mut self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId) {
+        let surface = try_get_surface!(self, sid);
+        let image = try_get_hw_image!(self, hwiid);
+        surface.attach_hw_image(image.clone(), attrs);
+    }
+
+    /// Sets given dmabuf as pending for given surface.
+    pub fn attach_dmabuf(&mut self, hwiid: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {
+        let surface = try_get_surface!(self, sid);
+        let image = try_get_hw_image!(self, hwiid);
+        surface.attach_dmabuf(image.clone(), attrs);
     }
 
     /// Informs other parts of application the surface is now not visible.
@@ -446,6 +490,43 @@ impl InnerCoordinator {
         self.signaler.emit(perceptron::SCREENSHOT_DONE, Perceptron::ScreenshotDone);
     }
 
+    /// Makes request to create EGL buffer.
+    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId> {
+        let id = self.generate_next_hw_image_id();
+        if let Some(ref mut graphics_manager) = self.graphics_manager {
+            let image = graphics_manager.create_egl_buffer(attrs);
+            if let Some(image) = image {
+                self.hw_images.insert(id, image);
+                Some(id)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Makes request to import dmabuf.
+    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId> {
+        let id = self.generate_next_hw_image_id();
+        if let Some(ref mut graphics_manager) = self.graphics_manager {
+            let image = graphics_manager.import_dmabuf(attrs);
+            if let Some(image) = image {
+                self.hw_images.insert(id, image);
+                Some(id)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
+    /// Destroys hardware image.
+    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
+        self.hw_images.remove(&hwiid);
+    }
+
     /// Returns and forgets screenshot buffer.
     pub fn take_screenshot_buffer(&mut self) -> Option<Buffer> {
         self.screenshot_buffer.take()
@@ -456,18 +537,23 @@ impl InnerCoordinator {
 
 // Helper functions
 impl InnerCoordinator {
-    // FIXME: Finish implementation of Coordinator (counter)
+    /// Generates next surface ID.
     fn generate_next_surface_id(&mut self) -> SurfaceId {
         self.last_surface_id = SurfaceId::new(self.last_surface_id.as_number() as u64 + 1);
         self.last_surface_id
     }
-    // FIXME: Finish implementation of Coordinator
+    /// Generates next memory pool ID.
     fn generate_next_memory_pool_id(&mut self) -> MemoryPoolId {
         self.last_memory_pool_id.increment()
     }
-    // FIXME: Finish implementation of Coordinator
+    /// Generates next memory view ID.
     fn generate_next_memory_view_id(&mut self) -> MemoryViewId {
         self.last_memory_view_id.increment()
+    }
+
+    /// Generates next hardware image ID.
+    fn generate_next_hw_image_id(&mut self) -> HwImageId {
+        self.last_hw_image_id.increment()
     }
 }
 
@@ -493,9 +579,9 @@ impl Coordinator {
 // TODO: Finish refactoring `Coordinator`: all method should be provided by some trait.
 impl Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
-    pub fn get_buffer(&self, sid: SurfaceId) -> Option<MemoryView> {
+    pub fn get_data_source(&self, sid: SurfaceId) -> DataSource {
         let mine = self.inner.lock().unwrap();
-        mine.get_buffer(sid)
+        mine.get_data_source(sid)
     }
 }
 
@@ -509,9 +595,21 @@ impl SurfaceManagement for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn attach_surface(&self, mvid: MemoryViewId, sid: SurfaceId) {
+    fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.attach_surface(mvid, sid);
+        mine.attach_shm(mvid, sid);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn attach_hw_image(&self, image: HwImageId, attrs: EglAttributes, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.attach_hw_image(image, attrs, sid);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn attach_dmabuf(&self, image: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.attach_dmabuf(image, attrs, sid);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
@@ -615,7 +713,7 @@ impl SurfaceListing for Coordinator {
 
 // -------------------------------------------------------------------------------------------------
 
-impl SurfaceFocusing for Coordinator { 
+impl SurfaceFocusing for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     fn get_keyboard_focused_sid(&self) -> SurfaceId {
         let mine = self.inner.lock().unwrap();
@@ -717,6 +815,44 @@ impl MemoryManagement for Coordinator {
     fn destroy_memory_view(&mut self, mpid: MemoryViewId) {
         let mut mine = self.inner.lock().unwrap();
         mine.destroy_memory_view(mpid);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl HwGraphics for Coordinator {
+    /// Sets graphics manager.
+    ///
+    /// During initialization or device discovery device manager should set this manager.
+    ///
+    /// FIXME: It is open point how to handle graphics manager in case of multi GPU setup.
+    fn set_graphics_manager(&mut self, graphics_manager: Box<GraphicsManagement + Send>) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.graphics_manager = Some(graphics_manager)
+    }
+
+    /// Checks if hardware acceleration support is available.
+    fn has_hardware_acceleration_support(&self) -> bool {
+        let mine = self.inner.lock().unwrap();
+        mine.graphics_manager.is_some()
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.create_egl_buffer(attrs)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId> {
+        let mut mine = self.inner.lock().unwrap();
+        mine.import_dmabuf(attrs)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.destroy_hw_image(hwiid)
     }
 }
 

@@ -25,7 +25,7 @@ struct Output {}
 pub fn get_global(info: OutputInfo) -> Global {
     Global::new(wl_output::NAME,
                 wl_output::VERSION,
-                Rc::new(move |oid, proxy| Output::new_object(oid, proxy, info.clone())))
+                Rc::new(move |oid, _version, proxy| Output::new_object(oid, proxy, info.clone())))
 }
 
 // -------------------------------------------------------------------------------------------------

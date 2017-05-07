@@ -47,7 +47,7 @@ impl ZxdgShellV6 {
         }
     }
 
-    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
+    fn new_object(oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, zxdg_shell_v6::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }

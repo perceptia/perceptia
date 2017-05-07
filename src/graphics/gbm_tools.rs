@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::os::unix::io;
+use std::os::unix::io::RawFd;
 use libgbm;
 
 use qualia::{Illusion, Size};
@@ -23,15 +23,21 @@ pub struct GbmBucket {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Helper function for getting device.
+pub fn get_device(fd: RawFd) -> Result<libgbm::Device, Illusion> {
+    if let Some(device) = libgbm::Device::from_fd(fd) {
+        Ok(device)
+    } else {
+        Err(Illusion::General(format!("Failed to create GBM device")))
+    }
+}
+// -------------------------------------------------------------------------------------------------
+
 impl GbmBucket {
     /// `GbmBucket` constructor.
-    pub fn new(fd: io::RawFd, size: Size) -> Result<Self, Illusion> {
+    pub fn new(fd: RawFd, size: Size) -> Result<Self, Illusion> {
         // Create device
-        let device = if let Some(device) = libgbm::Device::from_fd(fd) {
-            device
-        } else {
-            return Err(Illusion::General(format!("Failed to create GBM device")));
-        };
+        let device =  self::get_device(fd)?;
 
         // Create surface
         let surface = if let Some(surface) = libgbm::Surface::new(&device,

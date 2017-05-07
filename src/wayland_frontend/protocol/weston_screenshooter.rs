@@ -35,7 +35,7 @@ impl Screenshooter {
         Screenshooter { proxy: proxy_ref }
     }
 
-    fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
+    fn new_object(_oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, weston_screenshooter::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }

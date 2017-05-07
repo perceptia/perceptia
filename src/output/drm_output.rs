@@ -13,9 +13,9 @@ use std::collections::VecDeque;
 
 use qualia::{Buffer, DrmBundle, Illusion, SurfaceContext, SurfaceViewer};
 use qualia::{Area, OutputInfo, Position, Size};
-use renderer_gl::{egl_tools, RendererGl};
+use graphics::{egl_tools, gbm_tools};
+use renderer_gl::RendererGl;
 
-use gbm_tools::GbmBucket;
 use output::Output;
 
 // -------------------------------------------------------------------------------------------------
@@ -45,7 +45,7 @@ pub struct DrmOutput {
     buffers: HashMap<u32, u32>,
 
     /// Collection of GBM-related data.
-    gbm: GbmBucket,
+    gbm: gbm_tools::GbmBucket,
 
     /// Collection of DRM-related data.
     drm: DrmBundle,
@@ -87,7 +87,7 @@ impl DrmOutput {
         }
 
         // GBM
-        let gbm = GbmBucket::new(drm.fd, size.clone())?;
+        let gbm = gbm_tools::GbmBucket::new(drm.fd, size.clone())?;
 
         // EGL
         let egl = egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
@@ -183,9 +183,8 @@ impl Output for DrmOutput {
 
     /// Reinitializes the output.
     fn recreate(&self) -> Result<Box<Output>, Illusion> {
-        DrmOutput::new(self.drm, self.id)
+        DrmOutput::new(self.drm.clone(), self.id)
     }
-
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -64,7 +64,7 @@ impl Module for ExhibitorModule {
     fn execute(&mut self, package: &Self::T) {
         match *package {
             Perceptron::Notify => self.exhibitor.on_notify(),
-            Perceptron::OutputFound(bundle) => self.on_output_found(bundle),
+            Perceptron::OutputFound(ref bundle) => self.on_output_found(bundle.clone()),
             Perceptron::PageFlip(id) => self.exhibitor.on_pageflip(id),
             Perceptron::Command(ref command) => self.exhibitor.on_command(command.clone()),
 
@@ -81,6 +81,7 @@ impl Module for ExhibitorModule {
             Perceptron::KeyboardFocusChanged(_, sid) => {
                 self.exhibitor.on_keyboard_focus_changed(sid)
             }
+
             Perceptron::Suspend => self.exhibitor.on_suspend(),
             Perceptron::WakeUp => self.exhibitor.on_wakeup(),
             Perceptron::TakeScreenshot(id) => self.exhibitor.take_screenshot(id),

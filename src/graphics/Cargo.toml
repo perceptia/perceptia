@@ -1,20 +1,15 @@
 [package]
-name = "output"
+name = "graphics"
 version = "0.0.1"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 libc = "0.2.18"
-drm-rs = "0.1.2"
 gbm-rs = "0.2.0"
 egl = "0.2.6"
-timber = { path = "../timber" }
-dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
-graphics = { path = "../graphics" }
-renderer_gl = { path = "../renderer_gl" }
 
 [lib]
-name = "output"
+name = "graphics"
 path = "lib.rs"
 

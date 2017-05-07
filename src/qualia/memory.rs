@@ -24,30 +24,8 @@ use std::sync::Arc;
 use nix::sys::mman;
 
 use errors;
-use defs::{PixelFormat, Size};
-
-// -------------------------------------------------------------------------------------------------
-
-/// Trait priding interface for image storing objects.
-pub trait Pixmap {
-    /// Get width and height of the pixmap.
-    fn get_size(&self) -> Size;
-
-    /// Return width of the pixmap.
-    fn get_width(&self) -> usize;
-
-    /// Returns height of the pixmap.
-    fn get_height(&self) -> usize;
-
-    /// Returns pixel format of the pixmap.
-    fn get_format(&self) -> PixelFormat;
-
-    /// Returns data as slice.
-    fn as_slice(&self) -> &[u8];
-
-    /// Returns data as pointer to `u8`.
-    unsafe fn as_ptr(&self) -> *const u8;
-}
+use defs::Size;
+use image::{Image, Pixmap, PixelFormat};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -117,7 +95,7 @@ impl Buffer {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Pixmap for Buffer {
+impl Image for Buffer {
     #[inline]
     fn get_size(&self) -> Size {
         Size {
@@ -135,7 +113,11 @@ impl Pixmap for Buffer {
     fn get_height(&self) -> usize {
         self.height
     }
+}
 
+// -------------------------------------------------------------------------------------------------
+
+impl Pixmap for Buffer {
     #[inline]
     fn get_format(&self) -> PixelFormat {
         self.format
@@ -226,7 +208,7 @@ unsafe impl Sync for MemoryView {}
 
 // -------------------------------------------------------------------------------------------------
 
-impl Pixmap for MemoryView {
+impl Image for MemoryView {
     #[inline]
     fn get_size(&self) -> Size {
         Size {
@@ -244,7 +226,11 @@ impl Pixmap for MemoryView {
     fn get_height(&self) -> usize {
         self.height
     }
+}
 
+// -------------------------------------------------------------------------------------------------
+
+impl Pixmap for MemoryView {
     #[inline]
     fn get_format(&self) -> PixelFormat {
         self.format

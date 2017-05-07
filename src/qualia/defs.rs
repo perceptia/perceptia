@@ -19,8 +19,6 @@ pub type Key = Button;
 /// Type of surface ID.
 pub type SurfaceIdType = u64;
 
-pub type Fd = i32;
-
 pub type KeyCode = u16;
 pub type KeyValue = i32;
 
@@ -37,6 +35,7 @@ pub struct SurfaceId(SurfaceIdType);
 
 define_id!(pub MemoryPoolId: usize);
 define_id!(pub MemoryViewId: usize);
+define_id!(pub HwImageId: usize);
 
 /// Type alias for signal IDs.
 pub type SignalId = usize;
@@ -534,16 +533,6 @@ impl OutputInfo {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Structure containing all data needed to initialize DRM output.
-#[derive(Clone, Copy, Debug)]
-pub struct DrmBundle {
-    pub fd: Fd,
-    pub crtc_id: u32,
-    pub connector_id: u32,
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Command context for compositor.
 #[derive(Clone, Debug)]
 pub struct Command {
@@ -562,31 +551,6 @@ impl std::default::Default for Command {
             direction: enums::Direction::None,
             magnitude: 0,
             string: "".to_owned(),
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Format of a pixel.
-#[derive(Clone, Copy, Debug)]
-pub enum PixelFormat {
-    XRGB8888,
-    ARGB8888,
-    XBGR8888,
-    ABGR8888,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl PixelFormat {
-    /// Returns size in bytes of pixel encoded in given format.
-    pub fn get_size(&self) -> usize {
-        match *self {
-            PixelFormat::XBGR8888 => 3,
-            PixelFormat::ABGR8888 => 4,
-            PixelFormat::XRGB8888 => 3,
-            PixelFormat::ARGB8888 => 4,
         }
     }
 }

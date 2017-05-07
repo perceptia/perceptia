@@ -5,15 +5,17 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::path::PathBuf;
+
 use skylane::server as wl;
 
-use qualia::{Area, PixelFormat, Size, SurfaceId, Vector};
-use qualia::{MappedMemory, MemoryPoolId, MemoryViewId, show_reason};
+use qualia::{Area, PixelFormat, Size, SurfaceId, Vector, show_reason};
+use qualia::{EglAttributes, DmabufAttributes, HwImageId, MappedMemory, MemoryPoolId, MemoryViewId};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Enum describing type of shell and related object IDs.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ShellSurfaceOid {
     Shell(wl::ObjectId),
     ZxdgToplevelV6(wl::ObjectId, wl::ObjectId),
@@ -71,6 +73,21 @@ pub trait Facade {
 
     /// Requests destruction of memory view.
     fn destroy_memory_view(&mut self, mvid: MemoryViewId);
+
+    /// Requests creation of EGL buffer.
+    fn create_egl_buffer(&mut self,
+                         buffer_oid: wl::ObjectId,
+                         attrs: EglAttributes)
+                         -> Option<HwImageId>;
+
+    /// Requests creation of dmabuf.
+    fn import_dmabuf(&mut self,
+                     buffer_oid: wl::ObjectId,
+                     attrs: DmabufAttributes)
+                     -> Option<HwImageId>;
+
+    /// Destroys hardware image.
+    fn destroy_hw_image(&mut self, hwiid: HwImageId);
 
     /// Defines region. Regions may be used to define input area of surface.
     fn define_region(&mut self, region_oid: wl::ObjectId, region: Area);
@@ -154,6 +171,12 @@ pub trait Facade {
                        screenshoter_oid: wl::ObjectId,
                        output_oid: wl::ObjectId,
                        output_oid: wl::ObjectId);
+
+    /// Authenticates DRM device.
+    fn authenticate_drm_device(&mut self, magic: u32);
+
+    /// Returns path of current DRM device.
+    fn get_drm_device_path(&self) -> Option<PathBuf>;
 }
 
 // -------------------------------------------------------------------------------------------------

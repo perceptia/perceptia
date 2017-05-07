@@ -8,7 +8,7 @@ extern crate output;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use qualia::{OutputInfo, Illusion, Buffer, Position, SurfaceContext, SurfaceViewer};
+use qualia::{Buffer, Illusion, OutputInfo, Position, SurfaceContext, SurfaceViewer};
 use self::output::Output;
 
 // -------------------------------------------------------------------------------------------------

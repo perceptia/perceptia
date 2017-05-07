@@ -14,7 +14,9 @@ use nix::sys::stat;
 use libdrm::drm_mode;
 
 use dharma::{DispatcherController, Signaler, event_kind};
-use qualia::{DrmBundle, Illusion, perceptron, Perceptron};
+use qualia::{DrmBundle, Illusion, perceptron, Perceptron, HwGraphics};
+use graphics::GraphicsManager;
+use coordination::Coordinator;
 
 use pageflip::PageFlipEventHandler;
 
@@ -25,20 +27,26 @@ use pageflip::PageFlipEventHandler;
 pub struct OutputCollector {
     dispatcher: DispatcherController,
     signaler: Signaler<Perceptron>,
+    coordinator: Coordinator,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl OutputCollector {
     /// `OutputCollector` constructor.
-    pub fn new(dispatcher: DispatcherController, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(dispatcher: DispatcherController,
+               signaler: Signaler<Perceptron>,
+               coordinator: Coordinator) -> Self {
         OutputCollector {
             dispatcher: dispatcher,
             signaler: signaler,
+            coordinator: coordinator,
         }
     }
 
     /// Scan DRM devices to find outputs. When the output is found emits `OutputFound` signal.
+    ///
+    /// TODO: Add unit tests.
     pub fn scan_device(&mut self, path: &Path) -> Result<(), Illusion> {
         // Open device
         log_info1!("OutputCollector: scan device '{:?}'", path);
@@ -54,7 +62,7 @@ impl OutputCollector {
         if let Some(resources) = drm_mode::get_resources(fd) {
             for id in resources.get_connectors() {
                 if let Some(connector) = drm_mode::get_connector(fd, id) {
-                    self.process_connector(fd, &connector);
+                    self.process_connector(fd, path, &connector);
                 } else {
                     log_warn1!("Failed to get connector info!");
                 }
@@ -67,16 +75,28 @@ impl OutputCollector {
         let pageflip_event_handler = Box::new(PageFlipEventHandler::new(fd, self.signaler.clone()));
         self.dispatcher.add_source(pageflip_event_handler, event_kind::READ);
 
+        // Create graphics manager
+        // FIXME: How to handle many graphic cards?
+        match GraphicsManager::new(fd) {
+            Ok(graphics_manager) => {
+                self.coordinator.set_graphics_manager(Box::new(graphics_manager));
+            }
+            Err(err) => {
+                log_warn1!("Failed to initialize graphics manager: {}", err);
+            }
+        }
+
         Ok(())
     }
 
     /// Helper method for `scan_devices`.
-    fn process_connector(&mut self, fd: io::RawFd, connector: &drm_mode::Connector) {
+    fn process_connector(&mut self, fd: io::RawFd, path: &Path, connector: &drm_mode::Connector) {
         log_info1!("{:?}", connector);
 
         if connector.get_connection() == drm_mode::Connection::Connected {
             if let Some(encoder) = drm_mode::get_encoder(fd, connector.get_encoder_id()) {
                 let bundle = DrmBundle {
+                    path: path.to_owned(),
                     fd: fd,
                     connector_id: connector.get_connector_id(),
                     crtc_id: encoder.get_crtc_id(),

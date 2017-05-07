@@ -32,20 +32,24 @@ pub fn get_global() -> Global {
 // -------------------------------------------------------------------------------------------------
 
 impl Seat {
-    fn new(oid: ObjectId, proxy_ref: ProxyRef) -> Self {
+    fn new(oid: ObjectId, version: u32, proxy_ref: ProxyRef) -> Self {
         {
             // TODO: Add more capabilities
             let proxy = proxy_ref.borrow();
             let socket = proxy.get_socket();
             let caps = wl_seat::capability::POINTER | wl_seat::capability::KEYBOARD;
             send!(wl_seat::capabilities(&socket, oid, caps));
-            send!(wl_seat::name(&socket, oid, "seat0"));
+
+            // FIXME: Add support for versions in `skylane`.
+            if version >= 2 {
+                send!(wl_seat::name(&socket, oid, "seat0"));
+            }
         }
         Seat { proxy: proxy_ref }
     }
 
-    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
-        Box::new(Handler::<_, wl_seat::Dispatcher>::new(Self::new(oid, proxy_ref)))
+    fn new_object(oid: ObjectId, version: u32, proxy_ref: ProxyRef) -> Box<Object> {
+        Box::new(Handler::<_, wl_seat::Dispatcher>::new(Self::new(oid, version, proxy_ref)))
     }
 }
 

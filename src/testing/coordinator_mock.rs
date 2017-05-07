@@ -8,7 +8,8 @@ use std::rc::Rc;
 
 use qualia::{Perceptron, PixelFormat, Position, SignalId, Size, Vector};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
-use qualia::{Buffer, MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{Buffer, DataSource, HwImageId, MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{DmabufAttributes, EglAttributes};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 use qualia::{Emiter, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
@@ -49,7 +50,9 @@ impl CoordinatorMock {
 #[allow(unused_variables)]
 impl SurfaceManagement for CoordinatorMock {
     fn create_surface(&mut self) -> SurfaceId { SurfaceId::new(0) }
-    fn attach_surface(&self, mvid: MemoryViewId, sid: SurfaceId) {}
+    fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId) {}
+    fn attach_hw_image(&self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId) {}
+    fn attach_dmabuf(&self, hwiid: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {}
     fn detach_surface(&self, sid: SurfaceId) {}
     fn commit_surface(&self, sid: SurfaceId) {}
     fn destroy_surface(&self, sid: SurfaceId) {}
@@ -80,7 +83,7 @@ impl SurfaceViewer for CoordinatorMock {
             desired_size: Size::default(),
             requested_size: Size::default(),
             state_flags: surface_state::REGULAR,
-            buffer: None,
+            data_source: DataSource::None,
         })
     }
 }

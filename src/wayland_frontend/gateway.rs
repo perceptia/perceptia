@@ -5,13 +5,16 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Axis, Button, Key, KeyMods, Milliseconds, OutputInfo, Position, Size, SurfaceId};
-use qualia::surface_state;
+use qualia::{Axis, Button, DrmBundle, Key, KeyMods, Milliseconds, OutputInfo, Position, Size};
+use qualia::{SurfaceId, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 
 pub trait Gateway {
     /// Notifies output was found.
+    fn on_output_found(&mut self, bundle: DrmBundle);
+
+    /// Notifies display was created.
     fn on_display_created(&mut self, output_info: OutputInfo);
 
     /// Notifies keyboard key was pressed.

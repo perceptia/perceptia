@@ -17,3 +17,6 @@ pub mod subcompositor;
 pub mod output;
 
 pub mod weston_screenshooter;
+
+pub mod linux_dmabuf_v1;
+pub mod mesa_drm;

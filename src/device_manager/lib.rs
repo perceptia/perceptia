@@ -15,6 +15,7 @@ extern crate timber;
 #[macro_use]
 extern crate qualia;
 extern crate dharma;
+extern crate graphics;
 
 // TODO: Get rid of dependency from `coordination` and `dharma` in `device_manager`. See
 // description of `coordination` crate. Provide unit tests.

@@ -32,6 +32,8 @@
 //! `ClientEventHandler` as it may require mutating `dharma::Dispatcher`, so handling is decoupled
 //! from processing using `dharma::DirectSender`.
 
+// TODO: Move common DRM functionality to module.
+extern crate drm as libdrm;
 extern crate nix;
 
 extern crate skylane;

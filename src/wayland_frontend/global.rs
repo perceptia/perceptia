@@ -14,7 +14,7 @@ use proxy::ProxyRef;
 // -------------------------------------------------------------------------------------------------
 
 /// Type alias for constructor of Wayland global objects.
-type GlobalContructor = Fn(wl::ObjectId, ProxyRef) -> Box<wl::Object>;
+type GlobalContructor = Fn(wl::ObjectId, u32, ProxyRef) -> Box<wl::Object>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -40,8 +40,8 @@ impl Global {
         }
     }
 
-    pub fn construct(&self, id: wl::ObjectId, proxy: ProxyRef) -> Box<wl::Object> {
-        (self.constructor)(id, proxy)
+    pub fn construct(&self, id: wl::ObjectId, version: u32, proxy: ProxyRef) -> Box<wl::Object> {
+        (self.constructor)(id, version, proxy)
     }
 }
 

@@ -12,6 +12,7 @@ uinput-sys = "0.1.5"
 timber = { path = "../timber" }
 dharma = { path = "../dharma" }
 qualia = { path = "../qualia" }
+graphics = { path = "../graphics" }
 coordination = { path = "../coordination" }
 
 [lib]

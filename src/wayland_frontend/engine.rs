@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use dharma;
 use skylane::server as wl;
 
-use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, Position, Size, KeyMods};
-use qualia::{KeyboardConfig, KeyboardState, Perceptron, Settings};
+use qualia::{Axis, Button, DrmBundle, Milliseconds, OutputInfo, Position, Size};
+use qualia::{Key, KeyMods, KeyboardConfig, KeyboardState, Perceptron, Settings};
 use qualia::{surface_state, SurfaceId, SurfaceFocusing};
 use coordination::Coordinator;
 
@@ -120,6 +120,8 @@ impl Engine {
         proxy.register_global(protocol::seat::get_global());
         proxy.register_global(protocol::subcompositor::get_global());
         proxy.register_global(protocol::weston_screenshooter::get_global());
+        proxy.register_global(protocol::linux_dmabuf_v1::get_global());
+        proxy.register_global(protocol::mesa_drm::get_global());
         for info in self.output_infos.iter() {
             proxy.register_global(protocol::output::get_global(info.clone()));
         }
@@ -160,11 +162,8 @@ impl Engine {
     /// Handles request from client associated with given `id`.
     pub fn process_events(&mut self, id: dharma::EventHandlerId) {
         if let Some(ref mut client) = self.clients.get_mut(&id) {
-            match client.connection.process_events() {
-                Ok(_) => {}
-                Err(err) => {
-                    log_warn3!("Wayland Engine: ERROR: {:?}", err);
-                }
+            if let Err(err) = client.connection.process_events() {
+                log_warn3!("Wayland Engine: ERROR: {:?}", err);
             }
         } else {
             log_warn1!("Wayland Engine: No client: {}", id);
@@ -184,6 +183,10 @@ impl Engine {
 // -------------------------------------------------------------------------------------------------
 
 impl Gateway for Engine {
+    fn on_output_found(&mut self, bundle: DrmBundle) {
+        self.mediator.borrow_mut().set_drm_device(bundle.fd, bundle.path);
+    }
+
     fn on_display_created(&mut self, output_info: OutputInfo) {
         self.output_infos.push(output_info.clone());
         for (_, client) in self.clients.iter() {

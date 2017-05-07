@@ -33,7 +33,7 @@ impl DataDeviceManager {
         DataDeviceManager {}
     }
 
-    fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
+    fn new_object(oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_data_device_manager::Dispatcher>::new(Self::new(oid, proxy_ref)))
     }
 }

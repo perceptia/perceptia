@@ -16,8 +16,7 @@ use libdrm::drm_mode;
 
 use qualia;
 use device_manager;
-use renderer_gl;
-use output;
+use graphics::{gbm_tools, egl_tools};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -113,7 +112,7 @@ fn print_egl_info(fd: io::RawFd) {
 
     // Prepare GBM device and create surface
     let size = qualia::Size::new(16, 16);
-    let gbm = match output::gbm_tools::GbmBucket::new(fd, size) {
+    let gbm = match gbm_tools::GbmBucket::new(fd, size) {
         Ok(gbm) => gbm,
         Err(err) => {
             println!("\t\tError: {}", err);
@@ -122,8 +121,8 @@ fn print_egl_info(fd: io::RawFd) {
     };
 
     // Create on-screen EGL
-    let egl = match renderer_gl::egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
-                                                           gbm.surface.c_struct() as *mut _) {
+    let egl = match egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
+                                              gbm.surface.c_struct() as *mut _) {
         Ok(egl) => egl,
         Err(err) => {
             println!("\t\tError {}", err);
@@ -136,6 +135,11 @@ fn print_egl_info(fd: io::RawFd) {
              egl::query_string(egl.display, egl::EGL_VERSION).unwrap());
     println!("\t\tEGL vendor:   {:?}",
              egl::query_string(egl.display, egl::EGL_VENDOR).unwrap());
+    println!("\t\tEGL extensions:");
+    for e in vec![egl_tools::ext::IMAGE_BASE_EXT] {
+        let has = if egl_tools::has_extension(egl.display, e) { "yes" } else { "NO" };
+        println!("\t\t\t{}: {}", e, has);
+    }
 
     // Make EGL context current
     let _ctx = match egl.make_current() {

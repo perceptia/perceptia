@@ -38,7 +38,7 @@ impl Subcompositor {
         Subcompositor { proxy: proxy_ref }
     }
 
-    fn new_object(_oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
+    fn new_object(_oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
         Box::new(Handler::<_, wl_subcompositor::Dispatcher>::new(Self::new(proxy_ref)))
     }
 }

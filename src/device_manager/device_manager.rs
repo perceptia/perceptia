@@ -42,7 +42,8 @@ impl<'a> DeviceManager<'a> {
             restricted_opener: restricted_opener,
             vt: None,
             output_collector: OutputCollector::new(context.get_dispatcher().clone(),
-                                                   context.get_signaler().clone()),
+                                                   context.get_signaler().clone(),
+                                                   context.get_coordinator().clone()),
             context: context.clone(),
         };
 

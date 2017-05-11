@@ -4,7 +4,7 @@
 //! This module contains code responsible for gluing all other parts of crate together.
 
 // -------------------------------------------------------------------------------------------------
-
+use std;
 use std::collections::HashMap;
 
 use dharma;
@@ -20,6 +20,7 @@ use gateway::Gateway;
 use proxy::{Proxy, ProxyRef};
 use mediator::{Mediator, MediatorRef};
 use event_handlers::{ClientEventHandler, DisplayEventHandler};
+use std::path::PathBuf;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -52,8 +53,19 @@ impl Engine {
     pub fn new(coordinator: Coordinator,
                settings: Settings,
                keyboard_config: KeyboardConfig) -> Self {
+        let mut partial_socket_path = PathBuf::from(std::env::var("XDG_RUNTIME_DIR").expect("XDG_RUNTIME_DIR must be defined!"));
+        let mut socket = None;
+        for i in 0..10{
+            partial_socket_path.push(format!("wayland-{}", i));
+            let try_sock = wl::DisplaySocket::new(&partial_socket_path);
+            if let Ok(sock) = try_sock{
+                socket = Some(sock);
+                break;
+            }
+            partial_socket_path.pop();
+        }
         Engine {
-            display: wl::DisplaySocket::new_default().expect("Creating display socket"),
+            display: socket.expect("wayland engine ERROR: cannot create a DisplaySocket."),
             mediator: MediatorRef::new(Mediator::new()),
             clients: HashMap::new(),
             output_infos: Vec::new(),

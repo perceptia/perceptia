@@ -77,7 +77,10 @@ impl Mediator {
     pub fn authenticate_drm_device(&self, magic: u32) {
         if let Some(fd) = self.drm_device_fd {
             // TODO: Add safe `drmAuthMagic` to lidrm bindings.
-            unsafe { libdrm::ffi::xf86drm::drmAuthMagic(fd, magic); }
+            let result = unsafe { libdrm::ffi::xf86drm::drmAuthMagic(fd, magic) };
+            if result != 0 {
+                log_warn3!("Failed to authenticate clients DRM device");
+            }
         }
     }
 }

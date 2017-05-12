@@ -23,5 +23,10 @@ pub mod registry;
 
 pub mod output;
 pub mod shm;
+pub mod drm;
+pub mod linux_dmabuf_v1;
+
+pub mod compositor;
+pub mod shell;
 
 pub mod screenshooter;

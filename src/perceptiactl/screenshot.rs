@@ -142,7 +142,7 @@ impl Screenshooter {
 // -------------------------------------------------------------------------------------------------
 
 impl Listener for Screenshooter {
-    fn init_done(&mut self, globals: HashSet<String>) {
+    fn globals_done(&mut self, globals: HashSet<String>) {
         println!("Init done");
         for global in vec![GLOBAL_OUTPUT, GLOBAL_SHM, GLOBAL_SCREENSHOOTER] {
             if !globals.contains(global) {
@@ -155,6 +155,7 @@ impl Listener for Screenshooter {
     fn outputs_done(&mut self, outputs: Vec<OutputInfo>) {
         self.outputs = outputs;
         self.prepare_image();
+        self.controller.initialize_screenshoter();
         self.controller.take_screenshot(&self.outputs.last().expect("get output"));
     }
 

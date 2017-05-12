@@ -15,61 +15,59 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-//! Store shared between proxies and controller.
+//! Implementation of Wayland `wl_callback` object.
 
-use std;
-use std::os::unix::io::RawFd;
-use std::path::PathBuf;
+use skylane::client::{Bundle, Object, ObjectId, Task};
+use skylane_protocols::client::Handler;
+use skylane_protocols::client::wayland::wl_callback;
 
-use nix;
-
-use skylane::client as wl;
+use proxy::{Action, ProxyRef};
+use protocol::display::Display;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure for storing data related to screenshot.
-pub struct ScreenshotStore {
-    pub fd: RawFd,
-    pub path: PathBuf,
-    pub memory: *mut u8,
-    pub size: usize,
-    pub width: usize,
-    pub height: usize,
+/// Wayland `wl_callback` object.
+pub struct Callback {
+    action: Action,
+    proxy: ProxyRef,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl Drop for ScreenshotStore {
-    fn drop(&mut self) {
-        nix::unistd::close(self.fd).expect("Closing screenshot file");
-        nix::unistd::unlink(&self.path).expect("Removing screenshot file");
+impl Callback {
+    fn new(proxy: ProxyRef, action: Action) -> Self {
+        Callback {
+            action: action,
+            proxy: proxy,
+        }
+    }
+
+    pub fn new_object(proxy: ProxyRef, action: Action) -> Box<Object> {
+        Box::new(Handler::<_, wl_callback::Dispatcher>::new(Self::new(proxy, action)))
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Store shared between proxies and controller for cases when this data can not be shared via
-/// `skylane` objects.
-pub struct Store {
-    pub shm_oid: Option<wl::ObjectId>,
-    pub screenshooter_oid: Option<wl::ObjectId>,
-    pub screenshot: Option<ScreenshotStore>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Store {
-    pub fn new() -> Self {
-        Store {
-            shm_oid: None,
-            screenshooter_oid: None,
-            screenshot: None,
+impl wl_callback::Interface for Callback {
+    fn done(&mut self,
+            _this_object_id: ObjectId,
+            bundle: &mut Bundle,
+            _callback_data: u32)
+            -> Task {
+        match self.action {
+            Action::GlobalsDone => {
+                self.proxy.borrow_mut().globals_done();
+                let id = bundle.get_next_available_client_object_id();
+                let object = Display::synchronize(self.proxy.clone(), id, Action::InitDone);
+                Task::Create { id, object }
+            }
+            Action::InitDone => {
+                self.proxy.borrow_mut().init_done();
+                Task::None
+            }
         }
     }
 }
-
-// -------------------------------------------------------------------------------------------------
-
-define_ref!(struct Store as StoreRef);
 
 // -------------------------------------------------------------------------------------------------

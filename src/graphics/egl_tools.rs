@@ -22,7 +22,11 @@ pub mod ext {
     pub const IMAGE_BASE_EXT: &'static str = "EGL_KHR_image_base";
     pub const IMAGE_EXTERNAL_EXT: &'static str = "GL_OES_EGL_image_external";
 
+    pub const DRM_BUFFER_USE_SHARE_MESA: egl::EGLint = 0x00000002;
+    pub const OPENGL_ES3_BIT_KHR: egl::EGLint = 0x00000040;
+
     pub const DRM_BUFFER_FORMAT_MESA: egl::EGLint = 0x31D0;
+    pub const DRM_BUFFER_USE_MESA: egl::EGLint = 0x31D1;
     pub const DRM_BUFFER_FORMAT_ARGB32_MESA: egl::EGLint = 0x31D2;
     pub const DRM_BUFFER_MESA: egl::EGLenum = 0x31D3;
     pub const DRM_BUFFER_STRIDE_MESA: egl::EGLint = 0x31D4;
@@ -61,13 +65,20 @@ const SURFACE_ATTRIB_LIST: [egl::EGLint; 0] = [];
 
 // -------------------------------------------------------------------------------------------------
 
-/// Type definition got `eglGetPlatformDisplayEXT` function.
+/// Type definition for `eglGetPlatformDisplayEXT` function.
 pub type GetPlatformDisplayFunc = extern fn(egl::EGLenum,
                                             egl::EGLNativeDisplayType,
                                             *const egl::EGLint)
                                             -> egl::EGLDisplay;
 
-/// Type definition got `eglCreateImageKHR` function.
+/// Type definition for `eglGetPlatformDisplayEXT` function.
+pub type CreatePlatformSurfaceFunc = extern fn(egl::EGLDisplay,
+                                               egl::EGLConfig,
+                                               egl::EGLNativeWindowType,
+                                               *const egl::EGLint)
+                                               -> egl::EGLSurface;
+
+/// Type definition for `eglCreateImageKHR` function.
 pub type CreateImageKhrFunc = extern fn(egl::EGLDisplay,
                                         egl::EGLContext,
                                         egl::EGLenum,
@@ -75,8 +86,24 @@ pub type CreateImageKhrFunc = extern fn(egl::EGLDisplay,
                                         *const egl::EGLint)
                                         -> RawHwImage;
 
-/// Type definition got `glEGLImageTargetTexture2DOES` function.
+/// Type definition for `eglCreateDRMImageMESA` function.
+pub type CreateDrmImageMesaFunc = extern fn(egl::EGLDisplay,
+                                            *const egl::EGLint)
+                                            -> RawHwImage;
+
+/// Type definition for `eglExportDRMImageMESA` function.
+pub type ExportDrmImageFunc = extern fn(egl::EGLDisplay,
+                                        RawHwImage,
+                                        *mut egl::EGLint,
+                                        *mut egl::EGLint,
+                                        *mut egl::EGLint)
+                                        -> egl::EGLBoolean;
+
+/// Type definition for `glEGLImageTargetTexture2DOES` function.
 pub type ImageTargetTexture2DOesFunc = extern fn(egl::EGLenum, RawHwImage);
+
+/// Type definition for `glEGLImageTargetRenderbufferStorageOES` function.
+pub type ImageTargetRenderbufferStorageFunc = extern fn(egl::EGLenum, RawHwImage);
 
 // -------------------------------------------------------------------------------------------------
 
@@ -86,6 +113,18 @@ pub fn get_proc_address_of_get_platform_display() -> Option<GetPlatformDisplayFu
         let func = egl::get_proc_address("eglGetPlatformDisplayEXT") as *const ();
         if !func.is_null() {
             Some(std::mem::transmute::<_, GetPlatformDisplayFunc>(func))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns address of extension function.
+pub fn get_proc_address_of_create_platform_surface() -> Option<CreatePlatformSurfaceFunc> {
+    unsafe {
+        let func = egl::get_proc_address("eglCreatePlatformWindowSurfaceEXT") as *const ();
+        if !func.is_null() {
+            Some(std::mem::transmute::<_, CreatePlatformSurfaceFunc>(func))
         } else {
             None
         }
@@ -105,11 +144,47 @@ pub fn get_proc_address_of_create_image_khr() -> Option<CreateImageKhrFunc> {
 }
 
 /// Returns address of extension function.
+pub fn get_proc_address_of_create_drm_image_mesa() -> Option<CreateDrmImageMesaFunc> {
+    unsafe {
+        let func = egl::get_proc_address("eglCreateDRMImageMESA") as *const ();
+        if !func.is_null() {
+            Some(std::mem::transmute::<_, CreateDrmImageMesaFunc>(func))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns address of extension function.
+pub fn get_proc_address_of_export_drm_image_mesa() -> Option<ExportDrmImageFunc> {
+    unsafe {
+        let func = egl::get_proc_address("eglExportDRMImageMESA") as *const ();
+        if !func.is_null() {
+            Some(std::mem::transmute::<_, ExportDrmImageFunc>(func))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns address of extension function.
 pub fn get_proc_address_of_image_target_texture_2d_oes() -> Option<ImageTargetTexture2DOesFunc> {
     unsafe {
         let func = egl::get_proc_address("glEGLImageTargetTexture2DOES") as *const ();
         if !func.is_null() {
             Some(std::mem::transmute::<_, ImageTargetTexture2DOesFunc>(func))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns address of extension function.
+pub fn get_proc_address_of_image_target_renderbuffer_storage_oes() -> Option<ImageTargetRenderbufferStorageFunc> {
+    unsafe {
+        let func = egl::get_proc_address("glEGLImageTargetRenderbufferStorageOES") as *const ();
+        if !func.is_null() {
+            Some(std::mem::transmute::<_, ImageTargetRenderbufferStorageFunc>(func))
         } else {
             None
         }

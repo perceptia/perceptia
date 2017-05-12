@@ -83,13 +83,14 @@ impl Application {
         // Initiate communication
         let display_object = display::Display::new_object(proxy_ref.clone());
         let registry_object = registry::Registry::new_object(proxy_ref.clone());
-        let callback_object = callback::Callback::new_object(proxy_ref.clone(), Action::InitDone);
+        let callback_object = callback::Callback::new_object(proxy_ref.clone(), Action::GlobalsDone);
 
         connection_controller.add_next_client_object(display_object);
-        let registry_lid = connection_controller.add_next_client_object(registry_object);
-        let callback_lid = connection_controller.add_next_client_object(callback_object);
-        send!(wl_display::get_registry(&socket, wl::DISPLAY_ID, registry_lid));
-        send!(wl_display::sync(&socket, wl::DISPLAY_ID, callback_lid));
+        let registry_oid = connection_controller.add_next_client_object(registry_object);
+        let callback_oid = connection_controller.add_next_client_object(callback_object);
+        store.borrow_mut().registry_oid = Some(registry_oid);
+        send!(wl_display::get_registry(&socket, wl::DISPLAY_ID, registry_oid));
+        send!(wl_display::sync(&socket, wl::DISPLAY_ID, callback_oid));
 
         // Run application
         dispatcher.run();

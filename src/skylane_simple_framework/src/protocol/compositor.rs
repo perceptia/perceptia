@@ -15,58 +15,75 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-//! Implementation of Wayland `wl_callback` object.
+//! Implementation of Wayland `wl_compositor` object.
 
 use skylane::client::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::client::Handler;
-use skylane_protocols::client::wayland::wl_callback;
+use skylane_protocols::client::wayland::{wl_compositor, wl_surface};
 
-use proxy::{Action, ProxyRef};
-use protocol::display::Display;
-
-// -------------------------------------------------------------------------------------------------
-
-/// Wayland `wl_callback` object.
-pub struct Callback {
-    action: Action,
-    proxy: ProxyRef,
-}
+use proxy::ProxyRef;
 
 // -------------------------------------------------------------------------------------------------
 
-impl Callback {
-    fn new(proxy: ProxyRef, action: Action) -> Self {
-        Callback {
-            action: action,
-            proxy: proxy,
-        }
+/// Wayland `wl_compositor` object.
+pub struct Compositor {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Compositor {
+    fn new() -> Self {
+        Compositor {}
     }
 
-    pub fn new_object(proxy: ProxyRef, action: Action) -> Box<Object> {
-        Box::new(Handler::<_, wl_callback::Dispatcher>::new(Self::new(proxy, action)))
+    pub fn new_object() -> Box<Object> {
+        Box::new(Handler::<_, wl_compositor::Dispatcher>::new(Self::new()))
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl wl_callback::Interface for Callback {
-    fn done(&mut self,
-            _this_object_id: ObjectId,
-            bundle: &mut Bundle,
-            _callback_data: u32)
-            -> Task {
-        match self.action {
-            Action::InitDone => {
-                self.proxy.borrow_mut().init_done();
-                let id = bundle.get_next_available_client_object_id();
-                let object = Display::synchronize(self.proxy.clone(), id, Action::OutputsDone);
-                Task::Create { id, object }
-            }
-            Action::OutputsDone => {
-                self.proxy.borrow_mut().outputs_done();
-                Task::None
-            }
+impl wl_compositor::Interface for Compositor {}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Wayland `wl_surface` object.
+pub struct Surface {
+    _proxy: ProxyRef,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Surface {
+    fn new(proxy: ProxyRef) -> Self {
+        Surface {
+            _proxy: proxy,
         }
+    }
+
+    pub fn new_object(proxy: ProxyRef) -> Box<Object> {
+        Box::new(Handler::<_, wl_surface::Dispatcher>::new(Self::new(proxy)))
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl wl_surface::Interface for Surface {
+    fn enter(&mut self,
+             _this_object_id: ObjectId,
+             _bundle: &mut Bundle,
+             _output: ObjectId)
+             -> Task {
+        // Nothing to do so far
+        Task::None
+    }
+
+    fn leave(&mut self,
+             _this_object_id: ObjectId,
+             _bundle: &mut Bundle,
+             _output: ObjectId)
+             -> Task {
+        // Nothing to do so far
+        Task::None
     }
 }
 

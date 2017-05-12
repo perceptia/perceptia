@@ -6,13 +6,15 @@
 // -------------------------------------------------------------------------------------------------
 
 extern crate libc;
-extern crate egl;
 extern crate gbm_rs as libgbm;
+extern crate egl;
+extern crate gl;
 
 extern crate qualia;
 
 pub mod gbm_tools;
 pub mod egl_tools;
+pub mod gl_tools;
 
 mod graphics_manager;
 pub use graphics_manager::GraphicsManager;

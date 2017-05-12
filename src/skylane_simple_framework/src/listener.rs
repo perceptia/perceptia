@@ -25,14 +25,24 @@ use controller::Controller;
 // -------------------------------------------------------------------------------------------------
 
 pub trait Listener {
-    /// Called when initialization is done.
+    /// Called after all globals were received during initialization.
     ///
     /// List of globals advertised by server is passed. If needed interface is not supported
     /// application can now warn and exit.
-    fn init_done(&mut self, _globals: HashSet<String>) {}
+    fn globals_done(&mut self, _globals: HashSet<String>) {}
 
     /// Called when list of available outputs was updated.
     fn outputs_done(&mut self, _outputs: Vec<OutputInfo>) {}
+
+    /// Called after all requests after all request send to server durring initialization were
+    /// handled.
+    fn init_done(&mut self) {}
+
+    /// Called after authorization of DRM device by server successed.
+    fn graphics_done(&mut self, _device_name: String) {}
+
+    /// Called after authorization of DRM device by server failed.
+    fn graphics_failed(&mut self) {}
 
     /// Called when screenshot request ended successfully.
     fn screenshot_done(&mut self, _buffer: Vec<u8>) {}

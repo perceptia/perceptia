@@ -20,11 +20,14 @@
 use skylane::client::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::client::Handler;
 use skylane_protocols::client::wayland::{wl_registry, wl_output, wl_shm};
+use skylane_protocols::client::wayland::{wl_compositor, wl_shell};
+use skylane_protocols::client::drm::wl_drm;
+use skylane_protocols::client::linux_dmabuf_unstable_v1::zwp_linux_dmabuf_v1;
 use skylane_protocols::client::weston_screenshooter::weston_screenshooter;
 
 use proxy::ProxyRef;
 
-use protocol::{output, shm, screenshooter};
+use protocol::{compositor, drm, linux_dmabuf_v1, output, shell, shm};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -67,6 +70,38 @@ impl wl_registry::Interface for Registry {
                 id: id,
                 object: object,
             }
+        } else if interface == wl_compositor::NAME {
+            proxy.set_compositor_oid(id);
+            send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
+            let object = compositor::Compositor::new_object();
+            Task::Create {
+                id: id,
+                object: object,
+            }
+        } else if interface == wl_shell::NAME {
+            proxy.set_shell_oid(id);
+            send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
+            let object = shell::Shell::new_object(self.proxy.clone());
+            Task::Create {
+                id: id,
+                object: object,
+            }
+        } else if interface == wl_drm::NAME {
+            proxy.set_drm_oid(id);
+            send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
+            let object = drm::Drm::new_object(self.proxy.clone());
+            Task::Create {
+                id: id,
+                object: object,
+            }
+        } else if interface == zwp_linux_dmabuf_v1::NAME {
+            proxy.set_dmabuf_oid(id);
+            send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
+            let object = linux_dmabuf_v1::Dmabuf::new_object();
+            Task::Create {
+                id: id,
+                object: object,
+            }
         } else if interface == wl_shm::NAME {
             proxy.set_shm_oid(id);
             send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
@@ -76,13 +111,8 @@ impl wl_registry::Interface for Registry {
                 object: object,
             }
         } else if interface == weston_screenshooter::NAME {
-            send!(wl_registry::bind(&s, this_object_id, name, &interface, version, id));
-            proxy.set_screenshooter_oid(id);
-            let object = screenshooter::Screenshooter::new_object(self.proxy.clone());
-            Task::Create {
-                id: id,
-                object: object,
-            }
+            proxy.set_screenshooter_name(name);
+            Task::None
         } else {
             Task::None
         }

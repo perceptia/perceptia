@@ -21,15 +21,20 @@
 //! This crate is used by `perceptiactl` for taking screenshots.
 
 extern crate nix;
+extern crate gl;
+extern crate egl;
+extern crate gbm_rs as libgbm;
+extern crate drm as libdrm;
+
+extern crate skylane;
+extern crate skylane_protocols;
 
 extern crate dharma;
 #[macro_use]
 extern crate timber;
 #[macro_use]
 extern crate qualia;
-
-extern crate skylane;
-extern crate skylane_protocols;
+extern crate graphics;
 
 #[macro_use]
 mod defs;
@@ -42,6 +47,7 @@ mod listener;
 pub use listener::{Listener, ListenerConstructor};
 
 mod protocol;
+mod common;
 
 mod controller;
 pub use controller::Controller;

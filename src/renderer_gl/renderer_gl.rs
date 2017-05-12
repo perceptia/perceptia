@@ -9,11 +9,11 @@ use std;
 use gl;
 use egl;
 
+use graphics::egl_tools;
+use graphics::gl_tools;
+
 use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size};
 use qualia::{Buffer, Pixmap, PixelFormat, DataSource, Image};
-use graphics::egl_tools;
-
-use gl_tools;
 
 // -------------------------------------------------------------------------------------------------
 

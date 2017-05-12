@@ -58,3 +58,11 @@ impl std::convert::From<libudev::Error> for Illusion {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+impl std::convert::From<String> for Illusion {
+    fn from(error: String) -> Self {
+        Illusion::General(error)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------

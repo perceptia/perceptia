@@ -58,6 +58,7 @@ impl dharma::EventHandler for DisplayEventHandler {
 
     fn process_event(&mut self, event_kind: dharma::EventKind) {
         if event_kind.intersects(dharma::event_kind::HANGUP) {
+            println!("Server hung the connection up");
             self.dispatcher.stop();
         } else if event_kind.intersects(dharma::event_kind::READ) {
             self.connection.process_events().expect("Processing Wayland events");

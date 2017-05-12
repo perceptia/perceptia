@@ -272,6 +272,7 @@ version = "0.0.1"
 dependencies = [
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "gbm-rs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gl 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.22 (registry+https://github.com/rust-lang/crates.io-index)",
  "qualia 0.0.1",
 ]
@@ -635,6 +636,15 @@ dependencies = [
 [[package]]
 name = "skylane_protocols"
 version = "0.1.2"
+dependencies = [
+ "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skylane_scanner 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "skylane_protocols"
+version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -655,10 +665,15 @@ name = "skylane_simple_framework"
 version = "0.0.1"
 dependencies = [
  "dharma 0.0.1",
+ "drm-rs 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gbm-rs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gl 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "graphics 0.0.1",
  "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "qualia 0.0.1",
  "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane_protocols 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skylane_protocols 0.1.2",
  "timber 0.0.1",
 ]
 

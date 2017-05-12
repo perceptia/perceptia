@@ -8,26 +8,12 @@
 use std;
 use gl;
 
-use qualia::Illusion;
-
 // -------------------------------------------------------------------------------------------------
 
 pub enum GlslVersion {
     Unknown,
     Glsl100,
     Glsl300,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Log GL error.
-pub fn log_status() {
-    let framebuffer_complete =
-        unsafe { gl::CheckFramebufferStatus(gl::FRAMEBUFFER) == gl::FRAMEBUFFER_COMPLETE };
-
-    log_info1!("Status - GL: 0x{:x}, framebuffer: {}complete",
-               unsafe { gl::GetError() },
-               if framebuffer_complete { "" } else { "NOT " });
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -85,9 +71,9 @@ pub fn get_shading_lang_version() -> GlslVersion {
 // -------------------------------------------------------------------------------------------------
 
 /// Create and compile shader.
-fn create_shader(source: String,
-                 shader_type: gl::types::GLenum)
-                 -> Result<gl::types::GLuint, Illusion> {
+pub fn create_shader(source: String,
+                     shader_type: gl::types::GLenum)
+                     -> Result<gl::types::GLuint, String> {
     unsafe {
         let shader = gl::CreateShader(shader_type);
         let cstr = std::ffi::CString::new(source.as_bytes()).unwrap();
@@ -99,7 +85,7 @@ fn create_shader(source: String,
         if status != (gl::TRUE as gl::types::GLint) {
             let info_log = get_info_log(shader);
             gl::DeleteShader(shader);
-            Err(Illusion::General(info_log))
+            Err(info_log)
         } else {
             Ok(shader)
         }
@@ -109,9 +95,9 @@ fn create_shader(source: String,
 // -------------------------------------------------------------------------------------------------
 
 /// Create and link shader program.
-fn create_program(vertex_shader: gl::types::GLenum,
-                  fragment_shader: gl::types::GLenum)
-                  -> Result<gl::types::GLuint, Illusion> {
+pub fn create_program(vertex_shader: gl::types::GLenum,
+                      fragment_shader: gl::types::GLenum)
+                      -> Result<gl::types::GLuint, String> {
     unsafe {
         // Create program
         let shader_program = gl::CreateProgram();
@@ -129,7 +115,7 @@ fn create_program(vertex_shader: gl::types::GLenum,
         } else {
             let info_log = get_info_log(shader_program);
             gl::DeleteProgram(shader_program);
-            Err(Illusion::General(info_log))
+            Err(info_log)
         }
     }
 }
@@ -139,7 +125,7 @@ fn create_program(vertex_shader: gl::types::GLenum,
 /// Create program and link with shaders.
 pub fn prepare_shader_program(vertex_source: String,
                               fragment_source: String)
-                              -> Result<gl::types::GLuint, Illusion> {
+                              -> Result<gl::types::GLuint, String> {
     // Create vertex shader
     let vertex_shader = create_shader(vertex_source, gl::VERTEX_SHADER)?;
 
@@ -155,13 +141,13 @@ pub fn prepare_shader_program(vertex_source: String,
 /// Get location attribute variable in linked program.
 pub fn get_attrib_location(program: gl::types::GLuint,
                            name: String)
-                           -> Result<gl::types::GLint, Illusion> {
+                           -> Result<gl::types::GLint, String> {
     let cstr = std::ffi::CString::new(name.as_bytes()).unwrap();
     let location =
         unsafe { gl::GetAttribLocation(program, cstr.as_bytes_with_nul().as_ptr() as *const i8) };
 
     if location < 0 {
-        Err(Illusion::General(format!("Could not get location for attribute '{}'", name)))
+        Err(format!("Could not get location for attribute '{}'", name))
     } else {
         Ok(location)
     }
@@ -172,13 +158,13 @@ pub fn get_attrib_location(program: gl::types::GLuint,
 /// Get location of uniform variable in linked program.
 pub fn get_uniform_location(program: gl::types::GLuint,
                             name: String)
-                            -> Result<gl::types::GLint, Illusion> {
+                            -> Result<gl::types::GLint, String> {
     let cstr = std::ffi::CString::new(name.as_bytes()).unwrap();
     let location =
         unsafe { gl::GetUniformLocation(program, cstr.as_bytes_with_nul().as_ptr() as *const i8) };
 
     if location < 0 {
-        Err(Illusion::General(format!("Could not get location for uniform '{}'", name)))
+        Err(format!("Could not get location for uniform '{}'", name))
     } else {
         Ok(location)
     }

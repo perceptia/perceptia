@@ -15,70 +15,83 @@
 // DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-//! Implementation of Wayland `wl_shm`, `wl_shm_pool` and `wl_buffer` objects.
+//! Implementation of Wayland `wl_drm` object.
 
 use skylane::client::{Bundle, Object, ObjectId, Task};
 use skylane_protocols::client::Handler;
-use skylane_protocols::client::wayland::{wl_shm, wl_shm_pool, wl_buffer};
+use skylane_protocols::client::drm::wl_drm;
+use skylane_protocols::client::wayland::wl_buffer;
 
 use proxy::ProxyRef;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Wayland `wl_shm` object.
-pub struct Shm {}
+/// Wayland `wl_drm` object.
+pub struct Drm {
+    proxy: ProxyRef,
+}
 
 // -------------------------------------------------------------------------------------------------
 
-impl Shm {
-    fn new(_proxy: ProxyRef) -> Self {
-        Shm {}
+impl Drm {
+    fn new(proxy: ProxyRef) -> Self {
+        Drm { proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
-        Box::new(Handler::<_, wl_shm::Dispatcher>::new(Self::new(proxy)))
+        Box::new(Handler::<_, wl_drm::Dispatcher>::new(Self::new(proxy)))
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl wl_shm::Interface for Shm {
-    fn format(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _format: u32) -> Task {
+impl wl_drm::Interface for Drm {
+    fn device(&mut self,
+              _this_object_id: ObjectId,
+              _bundle: &mut Bundle,
+              name: String)
+              -> Task {
+        self.proxy.borrow_mut().set_drm_device_name(name);
+        Task::None
+    }
+
+    fn format(&mut self,
+              _this_object_id: ObjectId,
+              _bundle: &mut Bundle,
+              _format: u32)
+              -> Task {
+        // Nothing to do so far
+        Task::None
+    }
+
+    fn authenticated(&mut self,
+                     _this_object_id: ObjectId,
+                     _bundle: &mut Bundle)
+                     -> Task {
+        self.proxy.borrow_mut().drm_authenticated();
+        Task::None
+    }
+
+    fn capabilities(&mut self,
+                    _this_object_id: ObjectId,
+                    _bundle: &mut Bundle,
+                    _value: u32)
+                    -> Task {
+        // Nothing to do so far
         Task::None
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// Wayland `wl_shm_pool` object.
-pub struct ShmPool {}
-
-// -------------------------------------------------------------------------------------------------
-
-impl ShmPool {
-    fn new(_proxy: ProxyRef) -> Self {
-        ShmPool {}
-    }
-
-    pub fn new_object(proxy: ProxyRef) -> Box<Object> {
-        Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy)))
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl wl_shm_pool::Interface for ShmPool {}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Wayland `wl_buffer` object.
-pub struct Buffer {}
+pub struct DrmBuffer {}
 
 // -------------------------------------------------------------------------------------------------
 
-impl Buffer {
+impl DrmBuffer {
     fn new(_proxy: ProxyRef) -> Self {
-        Buffer {}
+        DrmBuffer {}
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
@@ -88,7 +101,7 @@ impl Buffer {
 
 // -------------------------------------------------------------------------------------------------
 
-impl wl_buffer::Interface for Buffer {
+impl wl_buffer::Interface for DrmBuffer {
     fn release(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::None
     }

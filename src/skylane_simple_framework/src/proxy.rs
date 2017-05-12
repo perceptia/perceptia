@@ -30,8 +30,8 @@ use listener::{Dummy, Listener};
 
 /// Enumeration to implement very simple state machine using `wl_callback`.
 pub enum Action {
+    GlobalsDone,
     InitDone,
-    OutputsDone,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -75,13 +75,28 @@ impl Proxy {
 // Notification handling.
 impl Proxy {
     /// Handles notification that server finished advertising globals.
-    pub fn init_done(&mut self) {
-        self.listener.init_done(self.globals.clone());
+    pub fn globals_done(&mut self) {
+        self.listener.globals_done(self.globals.clone());
     }
 
     /// Handles notification that server finished advertising outputs.
-    pub fn outputs_done(&mut self) {
+    pub fn init_done(&mut self) {
         self.listener.outputs_done(self.outputs.clone());
+        self.listener.init_done();
+    }
+
+    /// Handles notification about successful authentication of DRM device.
+    pub fn drm_authenticated(&mut self) {
+        let device_name = {
+            let store = self.store.borrow();
+            store.drm_device_name.clone()
+        };
+
+        if let Some(device_name) = device_name {
+            self.listener.graphics_done(device_name);
+        } else {
+            self.listener.graphics_failed();
+        }
     }
 
     /// Handles notification that server finished taking screenshot.
@@ -123,14 +138,39 @@ impl Proxy {
         self.outputs.push(output);
     }
 
+    /// Set DRM device name
+    pub fn set_drm_device_name(&mut self, name: String) {
+        self.store.borrow_mut().drm_device_name = Some(name);
+    }
+
+    /// Sets ID of compositor object.
+    pub fn set_compositor_oid(&mut self, oid: wl::ObjectId) {
+        self.store.borrow_mut().compositor_oid = Some(oid);
+    }
+
+    /// Sets ID of shell object.
+    pub fn set_shell_oid(&mut self, oid: wl::ObjectId) {
+        self.store.borrow_mut().shell_oid = Some(oid);
+    }
+
+    /// Sets ID of DRM object.
+    pub fn set_drm_oid(&mut self, oid: wl::ObjectId) {
+        self.store.borrow_mut().drm_oid = Some(oid);
+    }
+
+    /// Sets ID of `dmabuf` object.
+    pub fn set_dmabuf_oid(&mut self, oid: wl::ObjectId) {
+        self.store.borrow_mut().dmabuf_oid = Some(oid);
+    }
+
     /// Sets ID of shared memory object.
     pub fn set_shm_oid(&mut self, oid: wl::ObjectId) {
         self.store.borrow_mut().shm_oid = Some(oid);
     }
 
     /// Sets ID of screenshooter object.
-    pub fn set_screenshooter_oid(&mut self, oid: wl::ObjectId) {
-        self.store.borrow_mut().screenshooter_oid = Some(oid);
+    pub fn set_screenshooter_name(&mut self, name: u32) {
+        self.store.borrow_mut().screenshooter_name = Some(name);
     }
 }
 

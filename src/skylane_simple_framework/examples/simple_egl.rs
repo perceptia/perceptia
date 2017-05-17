@@ -20,7 +20,6 @@
 //! FIXME: This example shows only one frame. More work needs to be done.
 
 extern crate nix;
-extern crate opengles;
 extern crate gl;
 extern crate egl;
 extern crate gbm_rs as libgbm;

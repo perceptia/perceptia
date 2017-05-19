@@ -1,0 +1,15 @@
+[package]
+name = "graphics"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+libc = "0.2.18"
+gbm-rs = "0.2.0"
+egl = "0.2.6"
+gl = "0.6.0"
+qualia = { path = "../qualia" }
+
+[lib]
+name = "graphics"
+path = "lib.rs"

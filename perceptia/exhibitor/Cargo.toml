@@ -1,0 +1,18 @@
+[package]
+name = "exhibitor"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
+timber = "0.0.1"
+qualia = { path = "../qualia" }
+frames = { path = "../frames" }
+output = { path = "../output" }
+
+[dev-dependencies]
+testing = { path = "../testing" }
+
+[lib]
+name = "exhibitor"
+path = "exhibitor.rs"

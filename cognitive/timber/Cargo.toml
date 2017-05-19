@@ -1,0 +1,17 @@
+[package]
+name = "timber"
+version = "0.0.1"
+description = "Simple configurable logging"
+documentation = "https://docs.rs/timber"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["log", "logs", "logging", "timber"]
+license = "MIT"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+time = "0.1"
+
+[lib]
+name = "timber"
+path = "timber.rs"

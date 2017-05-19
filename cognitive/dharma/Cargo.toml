@@ -1,0 +1,18 @@
+[package]
+name = "dharma"
+version = "0.0.1"
+description = "High-level framework for multi-thread applications"
+documentation = "https://docs.rs/dharma"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["threads", "signals", "framework", "epoll"]
+license = "MIT"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+bitflags = "0.8"
+nix = { version = "0.8", features = ["signalfd"] }
+
+[lib]
+name = "dharma"
+path = "src/dharma.rs"

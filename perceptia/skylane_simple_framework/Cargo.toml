@@ -1,0 +1,29 @@
+[package]
+name = "skylane_simple_framework"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+nix = "0.8.0"
+gl = "0.6.0"
+egl = "0.2.6"
+gbm-rs = "0.2.0"
+drm-rs = "0.1.2"
+skylane = "0.1.2"
+skylane_protocols = "0.1.2"
+dharma = "0.0.1"
+timber = "0.0.1"
+qualia = { path = "../qualia" }
+graphics = { path = "../graphics" }
+
+[lib]
+name = "skylane_simple_framework"
+path = "src/lib.rs"
+
+[[example]]
+name = "simple_egl"
+path = "examples/simple_egl.rs"
+
+[[example]]
+name = "simple_dmabuf_intel"
+path = "examples/simple_dmabuf_intel.rs"

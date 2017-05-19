@@ -1,0 +1,14 @@
+[package]
+name = "aesthetics"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+image = "0.12.3"
+rusttype = "0.2.1"
+timber = "0.0.1"
+qualia = { path = "../qualia" }
+
+[lib]
+name = "aesthetics"
+path = "aesthetics.rs"

@@ -1,0 +1,13 @@
+[package]
+name = "coordination"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+dharma = "0.0.1"
+timber = "0.0.1"
+qualia = { path = "../qualia" }
+
+[lib]
+name = "coordination"
+path = "lib.rs"

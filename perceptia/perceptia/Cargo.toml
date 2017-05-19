@@ -1,0 +1,19 @@
+[package]
+name = "perceptia"
+version = "0.0.1"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+dharma = "0.0.1"
+timber = "0.0.1"
+qualia           = { path = "../qualia" }
+output           = { path = "../output" }
+coordination     = { path = "../coordination" }
+aesthetics       = { path = "../aesthetics" }
+device_manager   = { path = "../device_manager" }
+exhibitor        = { path = "../exhibitor" }
+wayland_frontend = { path = "../wayland_frontend" }
+
+[[bin]]
+name = "perceptia"
+path = "perceptia.rs"

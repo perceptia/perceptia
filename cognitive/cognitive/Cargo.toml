@@ -1,0 +1,18 @@
+[package]
+name = "cognitive"
+version = "0.0.1"
+description = "Curate package for crates related to building display compositors or window managers"
+documentation = "https://docs.rs/cognitive"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["display-compositor", "window-manager", "cognitive"]
+license = "MPL-2.0"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+timber = "0.0.1"
+dharma = "0.0.1"
+
+[lib]
+name = "cognitive"
+path = "cognitive.rs"

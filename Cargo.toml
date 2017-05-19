@@ -1,21 +1,25 @@
 [workspace]
 
 members = [
-        "src/dharma",
-        "src/timber",
-        "src/qualia",
-        "src/testing",
-        "src/graphics",
-        "src/renderer_gl",
-        "src/output",
-        "src/frames",
-        "src/exhibitor",
-        "src/aesthetics",
-        "src/coordination",
-        "src/device_manager",
-        "src/wayland_frontend",
-        "src/skylane_simple_framework",
-        "src/perceptia",
-        "src/perceptiactl",
+        "cognitive/dharma",
+        "cognitive/timber",
+        "cognitive/cognitive",
+        "perceptia/qualia",
+        "perceptia/testing",
+        "perceptia/graphics",
+        "perceptia/renderer_gl",
+        "perceptia/frames",
+        "perceptia/exhibitor",
+        "perceptia/aesthetics",
+        "perceptia/coordination",
+        "perceptia/device_manager",
+        "perceptia/wayland_frontend",
+        "perceptia/skylane_simple_framework",
+        "perceptia/perceptia",
+        "perceptia/perceptiactl",
     ]
+
+[replace]
+"dharma:0.0.1" = { path = "cognitive/dharma" }
+"timber:0.0.1" = { path = "cognitive/timber" }
 

@@ -8,7 +8,7 @@ use std::time::Instant;
 
 use gl;
 
-use qualia::SurfaceId;
+use qualia::{HwImage, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -17,6 +17,9 @@ use qualia::SurfaceId;
 pub struct TextureInfo {
     /// Texture ID.
     texture: gl::types::GLuint,
+
+    /// Current hardware image
+    image: Option<HwImage>,
 
     /// Time when texture was updated.
     time_stamp: Option<Instant>,
@@ -29,6 +32,7 @@ impl TextureInfo {
     pub fn new(texture: gl::types::GLuint) -> Self {
         TextureInfo {
             texture: texture,
+            image: None,
             time_stamp: None,
         }
     }
@@ -39,10 +43,17 @@ impl TextureInfo {
         self.texture
     }
 
+    /// Returns hardware image.
+    #[inline]
+    pub fn get_image(&self) -> Option<HwImage> {
+        self.image.clone()
+    }
+
     /// Updates time stamp of texture. Should be called whenever new data was loaded.
     #[inline]
-    pub fn touch(&mut self) {
+    pub fn update(&mut self, image: Option<HwImage>) {
         self.time_stamp = Some(Instant::now());
+        self.image = image;
     }
 
     /// Checks if texture was loaded before given instant in time.
@@ -92,10 +103,11 @@ impl CacheGl {
         }
     }
 
-    /// Updates time stamp of texture. Should be called whenever new data was loaded.
-    pub fn touch(&mut self, sid: SurfaceId) {
+    /// Updates time stamp of texture and optionally stores image. Should be called whenever new
+    /// data was loaded.
+    pub fn update(&mut self, sid: SurfaceId, image: Option<HwImage>) {
         if let Some(ref mut info) = self.textures.get_mut(&sid) {
-            info.touch();
+            info.update(image);
         }
     }
 }

@@ -222,7 +222,7 @@ impl RendererGl {
                                gl::UNSIGNED_BYTE, // type
                                buffer.as_ptr() as *const _);
             }
-            self.cache.touch(sid);
+            self.cache.update(sid, None);
         }
 
         Some(buffer.get_size())
@@ -240,13 +240,18 @@ impl RendererGl {
 
         // If buffer was updated recently - load it to GPU memory
         if texinfo.is_younger(time_stamp) {
+            // Destroy image if it was created previously
+            if let Some(image) = texinfo.get_image() {
+                let _ = egl_tools::destroy_image(self.egl.display, image);
+            }
+
+            // Create the image
             if let Some(image_target_texture) = self.image_target_texture {
-                // Create the image
-                // FIXME: Destroy images created here.
-                let img = egl_tools::create_image(self.egl.display, attrs);
-                if let Some(img) = img {
+                let image = egl_tools::create_image(self.egl.display, attrs);
+                if let Some(ref img) = image {
+                    // Set image as texture target and update cache
                     image_target_texture(gl::TEXTURE_2D, img.as_raw());
-                    self.cache.touch(sid);
+                    self.cache.update(sid, image.clone());
                     Some(attrs.get_size())
                 } else {
                     None
@@ -271,13 +276,18 @@ impl RendererGl {
 
         // If buffer was updated recently - load it to GPU memory
         if texinfo.is_younger(time_stamp) {
+            // Destroy image if it was created previously
+            if let Some(image) = texinfo.get_image() {
+                let _ = egl_tools::destroy_image(self.egl.display, image);
+            }
+
+            // Create the image
             if let Some(image_target_texture) = self.image_target_texture {
-                // Create the image
-                // FIXME: Destroy images created here.
-                let img = egl_tools::import_dmabuf(self.egl.display, attrs);
-                if let Some(img) = img {
+                let image = egl_tools::import_dmabuf(self.egl.display, attrs);
+                if let Some(ref img) = image {
+                    // Set image as texture target and update cache
                     image_target_texture(gl::TEXTURE_2D, img.as_raw());
-                    self.cache.touch(sid);
+                    self.cache.update(sid, image.clone());
                     Some(attrs.get_size())
                 } else {
                     None

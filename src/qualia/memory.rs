@@ -189,6 +189,14 @@ impl MappedMemory {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Drop for MappedMemory {
+    fn drop(&mut self) {
+        let _ = mman::munmap(self.data as *mut _, self.size);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Represents view into memory shared with client.
 pub struct MemoryView {
     memory: Arc<MemoryKind>,

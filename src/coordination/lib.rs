@@ -16,6 +16,9 @@ extern crate dharma;
 
 mod surfaces;
 
+pub mod resource_storage;
+pub use resource_storage::ResourceStorage;
+
 pub mod coordinator;
 pub use coordinator::Coordinator;
 

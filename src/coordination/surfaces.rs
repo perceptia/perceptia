@@ -162,19 +162,19 @@ impl Surface {
     /// Sets given buffer as pending.
     #[inline]
     pub fn attach_shm(&mut self, buffer: MemoryView) {
-        self.pending_buffer = DataSource::Shm(buffer);
+        self.pending_buffer = DataSource::new_shm(buffer);
     }
 
     /// Sets given EGL image as pending.
     #[inline]
     pub fn attach_egl_image(&mut self, attrs: EglAttributes) {
-        self.pending_buffer = DataSource::EglImage(attrs);
+        self.pending_buffer = DataSource::new_egl_image(attrs);
     }
 
     /// Sets given dmabuf as pending.
     #[inline]
     pub fn attach_dmabuf(&mut self, attrs: DmabufAttributes) {
-        self.pending_buffer = DataSource::Dmabuf(attrs);
+        self.pending_buffer = DataSource::new_dmabuf(attrs);
     }
 
     /// Sets pending buffer as current. If surface was committed for the first time and sizes are

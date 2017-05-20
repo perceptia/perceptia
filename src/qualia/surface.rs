@@ -5,10 +5,12 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use defs::{DmabufId, EglImageId, MemoryViewId};
+use std::time::Instant;
+
 use image::Image;
 use memory::MemoryView;
 use graphics::{EglAttributes, DmabufAttributes};
+use defs::{DmabufId, EglImageId, MemoryViewId};
 use defs::{Position, Size, Vector};
 pub use defs::{SurfaceId, SurfaceIdType};
 
@@ -71,13 +73,22 @@ pub mod surface_state {
 #[derive(Clone)]
 pub enum DataSource {
     /// View on shared memory pool or buffer.
-    Shm(MemoryView),
+    Shm {
+        source: MemoryView,
+        time_stamp: Instant,
+    },
 
     /// EGL image stored in graphic card memory.
-    EglImage(EglAttributes),
+    EglImage {
+        source: EglAttributes,
+        time_stamp: Instant,
+    },
 
     /// Image stored in some graphic device (webcam, GPU, etc...).
-    Dmabuf(DmabufAttributes),
+    Dmabuf {
+        source: DmabufAttributes,
+        time_stamp: Instant,
+    },
 
     /// Source unspecified.
     None,
@@ -86,6 +97,30 @@ pub enum DataSource {
 // -------------------------------------------------------------------------------------------------
 
 impl DataSource {
+    /// Constructs new shared memory `DataSource`.
+    pub fn new_shm(buffer: MemoryView) -> Self {
+        DataSource::Shm {
+            source: buffer,
+            time_stamp: Instant::now(),
+        }
+    }
+
+    /// Constructs new EGL image `DataSource`.
+    pub fn new_egl_image(attrs: EglAttributes) -> Self {
+        DataSource::EglImage {
+            source: attrs,
+            time_stamp: Instant::now(),
+        }
+    }
+
+    /// Constructs new dmabuf `DataSource`.
+    pub fn new_dmabuf(attrs: DmabufAttributes) -> Self {
+        DataSource::Dmabuf {
+            source: attrs,
+            time_stamp: Instant::now(),
+        }
+    }
+
     /// Returns true if data source is unspecified, false otherwise.
     pub fn is_none(&self) -> bool {
         if let DataSource::None = *self {
@@ -98,13 +133,13 @@ impl DataSource {
     /// Returns data as `Image` if available.
     pub fn as_image(&self) -> Option<&Image> {
         match *self {
-            DataSource::Shm(ref memory_view) => {
+            DataSource::Shm { source: ref memory_view, time_stamp: _ } => {
                 Some(memory_view)
             }
-            DataSource::EglImage(ref attrs) => {
+            DataSource::EglImage { source: ref attrs, time_stamp: _ } => {
                 Some(attrs)
             }
-            DataSource::Dmabuf(ref attrs) => {
+            DataSource::Dmabuf { source: ref attrs, time_stamp: _ } => {
                 Some(attrs)
             }
             DataSource::None => {

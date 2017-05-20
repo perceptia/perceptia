@@ -6,18 +6,20 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
+use std::time::Instant;
+
 use gl;
 use egl;
 
 use graphics::egl_tools;
 use graphics::gl_tools;
 
-use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, PixelFormat};
+use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, PixelFormat, SurfaceId};
 use qualia::{Buffer, DataSource, DmabufAttributes, EglAttributes, Image, MemoryView, Pixmap};
 
-// -------------------------------------------------------------------------------------------------
+use cache_gl::CacheGl;
 
-const MAX_TEXTURES: u32 = 32;
+// -------------------------------------------------------------------------------------------------
 
 /// Vertex shader source code for OpenGL ES 2.0 (GLSL ES 100)
 const VERTEX_SHADER_100: &'static str = include_str!("vertex.100.glsl");
@@ -37,6 +39,7 @@ const FRAGMENT_SHADER_300: &'static str = include_str!("fragment.300.glsl");
 pub struct RendererGl {
     egl: egl_tools::EglBucket,
     size: Size,
+    cache: CacheGl,
 
     // GL rendering
     program: gl::types::GLuint,
@@ -46,7 +49,6 @@ pub struct RendererGl {
     loc_screen_size: gl::types::GLint,
     vbo_vertices: gl::types::GLuint,
     vbo_texcoords: gl::types::GLuint,
-    vbo_texture: [gl::types::GLuint; MAX_TEXTURES as usize],
 
     // Pointers to extension functions
     image_target_texture: Option<egl_tools::ImageTargetTexture2DOesFunc>,
@@ -60,6 +62,7 @@ impl RendererGl {
         RendererGl {
             egl: egl,
             size: size,
+            cache: CacheGl::new(),
             program: gl::types::GLuint::default(),
             loc_vertices: gl::types::GLint::default(),
             loc_texcoords: gl::types::GLint::default(),
@@ -67,7 +70,6 @@ impl RendererGl {
             loc_screen_size: gl::types::GLint::default(),
             vbo_vertices: gl::types::GLuint::default(),
             vbo_texcoords: gl::types::GLuint::default(),
-            vbo_texture: [0; MAX_TEXTURES as usize],
             image_target_texture: None,
         }
     }
@@ -109,18 +111,7 @@ impl RendererGl {
             gl::GenBuffers(1, &mut self.vbo_texcoords);
         }
 
-        // Create texture buffer
-        // FIXME: Implement support for more textures.
-        unsafe {
-            gl::GenTextures(MAX_TEXTURES as i32, (&mut self.vbo_texture).as_mut_ptr());
-            for i in 0..MAX_TEXTURES {
-                gl::ActiveTexture(gl::TEXTURE0 + 1);
-                gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[i as usize]);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, gl::NEAREST as i32);
-                gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, gl::NEAREST as i32);
-            }
-        }
-
+        // Get needed extension functions
         self.image_target_texture = egl_tools::get_proc_address_of_image_target_texture_2d_oes();
 
         Ok(())
@@ -198,7 +189,11 @@ impl RendererGl {
     }
 
     /// Loads memory buffer as texture. Returns dimensions of the buffer.
-    fn load_buffer_as_texture(&self, index: usize, buffer: &MemoryView) -> Option<Size> {
+    fn load_buffer_as_texture(&mut self,
+                              sid: SurfaceId,
+                              buffer: &MemoryView,
+                              time_stamp: Instant)
+                              -> Option<Size> {
         let format = {
             match buffer.get_format() {
                 // NOTE: Mixing channels is intentional. In `PixelFormat` one reads it from
@@ -210,90 +205,108 @@ impl RendererGl {
             }
         };
 
-        unsafe {
-            gl::ActiveTexture(gl::TEXTURE0 + index as u32);
-            gl::BindTexture(gl::TEXTURE_2D, self.vbo_texture[index]);
+        // Get or generate texture info
+        let texinfo = self.cache.get_or_generate_info(sid);
+        unsafe { gl::BindTexture(gl::TEXTURE_2D, texinfo.get_texture()) };
 
-            gl::TexImage2D(gl::TEXTURE_2D, // target
-                           0, // level, 0 = no mipmap
-                           gl::RGBA as gl::types::GLint, // internal format
-                           buffer.get_width() as gl::types::GLint, // width
-                           buffer.get_height() as gl::types::GLint, // height
-                           0, // always 0 in OpenGL ES
-                           format, // format
-                           gl::UNSIGNED_BYTE, // type
-                           buffer.as_ptr() as *const _);
+        // If buffer was updated recently - load it to GPU memory
+        if texinfo.is_younger(time_stamp) {
+            unsafe {
+                gl::TexImage2D(gl::TEXTURE_2D, // target
+                               0, // level, 0 = no mipmap
+                               gl::RGBA as gl::types::GLint, // internal format
+                               buffer.get_width() as gl::types::GLint, // width
+                               buffer.get_height() as gl::types::GLint, // height
+                               0, // always 0 in OpenGL ES
+                               format, // format
+                               gl::UNSIGNED_BYTE, // type
+                               buffer.as_ptr() as *const _);
+            }
+            self.cache.touch(sid);
         }
 
         Some(buffer.get_size())
     }
 
     /// Loads hardware image as texture. Returns dimensions of the image.
-    fn load_image_as_texture(&self, index: usize, attrs: &EglAttributes) -> Option<Size> {
-        if let Some(image_target_texture) = self.image_target_texture {
-            // TODO: Reimport images only when it is really needed.
-            // FIXME: Destroy images created here.
-            let img = egl_tools::create_image(self.egl.display, attrs);
-            if let Some(img) = img {
-                unsafe {
-                    let target = gl::TEXTURE_2D;
+    fn load_image_as_texture(&mut self,
+                             sid: SurfaceId,
+                             attrs: &EglAttributes,
+                             time_stamp: Instant)
+                             -> Option<Size> {
+        // Get or generate texture info
+        let texinfo = self.cache.get_or_generate_info(sid);
+        unsafe { gl::BindTexture(gl::TEXTURE_2D, texinfo.get_texture()) };
 
-                    gl::ActiveTexture(gl::TEXTURE0 + index as u32);
-                    gl::BindTexture(target, self.vbo_texture[index]);
-
-                    image_target_texture(target, img.as_raw());
+        // If buffer was updated recently - load it to GPU memory
+        if texinfo.is_younger(time_stamp) {
+            if let Some(image_target_texture) = self.image_target_texture {
+                // Create the image
+                // FIXME: Destroy images created here.
+                let img = egl_tools::create_image(self.egl.display, attrs);
+                if let Some(img) = img {
+                    image_target_texture(gl::TEXTURE_2D, img.as_raw());
+                    self.cache.touch(sid);
+                    Some(attrs.get_size())
+                } else {
+                    None
                 }
-                Some(attrs.get_size())
             } else {
                 None
             }
         } else {
-            None
+            Some(attrs.get_size())
         }
     }
 
     /// Loads dmabuf as texture. Returns dimensions of the dmabuf.
-    fn load_dmabuf_as_texture(&self, index: usize, attrs: &DmabufAttributes) -> Option<Size> {
-        if let Some(image_target_texture) = self.image_target_texture {
-            // TODO: Reimport images only when it is really needed.
-            // FIXME: Destroy images created here.
-            let img = egl_tools::import_dmabuf(self.egl.display, attrs);
-            if let Some(img) = img {
-                unsafe {
-                    let target = gl::TEXTURE_2D;
+    fn load_dmabuf_as_texture(&mut self,
+                             sid: SurfaceId,
+                             attrs: &DmabufAttributes,
+                             time_stamp: Instant)
+                             -> Option<Size> {
+        // Get or generate texture info
+        let texinfo = self.cache.get_or_generate_info(sid);
+        unsafe { gl::BindTexture(gl::TEXTURE_2D, texinfo.get_texture()) };
 
-                    gl::ActiveTexture(gl::TEXTURE0 + index as u32);
-                    gl::BindTexture(target, self.vbo_texture[index]);
-
-                    image_target_texture(target, img.as_raw());
+        // If buffer was updated recently - load it to GPU memory
+        if texinfo.is_younger(time_stamp) {
+            if let Some(image_target_texture) = self.image_target_texture {
+                // Create the image
+                // FIXME: Destroy images created here.
+                let img = egl_tools::import_dmabuf(self.egl.display, attrs);
+                if let Some(img) = img {
+                    image_target_texture(gl::TEXTURE_2D, img.as_raw());
+                    self.cache.touch(sid);
+                    Some(attrs.get_size())
+                } else {
+                    None
                 }
-                Some(attrs.get_size())
             } else {
                 None
             }
         } else {
-            None
+            Some(attrs.get_size())
         }
     }
 
     /// Load textures and prepare vertices.
-    fn load_texture_and_prepare_vertices(&self,
+    fn load_texture_and_prepare_vertices(&mut self,
                                          viewer: &SurfaceViewer,
                                          context: &SurfaceContext,
                                          vertices: &mut [gl::types::GLfloat],
-                                         texcoords: &mut [gl::types::GLfloat],
-                                         index: usize) {
+                                         texcoords: &mut [gl::types::GLfloat]) {
         if let Some(ref surface) = viewer.get_surface(context.id) {
             let size = {
                 match surface.data_source {
-                    DataSource::Shm(ref buffer) => {
-                        self.load_buffer_as_texture(index, buffer)
+                    DataSource::Shm { ref source, time_stamp } => {
+                        self.load_buffer_as_texture(context.id, source, time_stamp)
                     }
-                    DataSource::EglImage(ref attrs) => {
-                        self.load_image_as_texture(index, attrs)
+                    DataSource::EglImage { ref source, time_stamp } => {
+                        self.load_image_as_texture(context.id, source, time_stamp)
                     }
-                    DataSource::Dmabuf(ref attrs) => {
-                        self.load_dmabuf_as_texture(index, attrs)
+                    DataSource::Dmabuf { ref source, time_stamp } => {
+                        self.load_dmabuf_as_texture(context.id, source, time_stamp)
                     }
                     DataSource::None => {
                         None
@@ -342,7 +355,7 @@ impl RendererGl {
     }
 
     /// Draws surfaces.
-    fn draw_surfaces(&self, surfaces: &Vec<SurfaceContext>, viewer: &SurfaceViewer) {
+    fn draw_surfaces(&mut self, surfaces: &Vec<SurfaceContext>, viewer: &SurfaceViewer) {
         if surfaces.len() == 0 {
             return;
         }
@@ -354,11 +367,14 @@ impl RendererGl {
         let mut texcoords = vec![0.0; vertices_len];
 
         for i in 0..surfaces.len() {
+            // Activate the target texture
+            unsafe { gl::ActiveTexture(gl::TEXTURE0 + i as u32) };
+
+            // Bind data to texture and prepare vertices
             self.load_texture_and_prepare_vertices(viewer,
                                                    &surfaces[i],
                                                    &mut vertices[12 * i..12 * i + 12],
-                                                   &mut texcoords[12 * i..12 * i + 12],
-                                                   i);
+                                                   &mut texcoords[12 * i..12 * i + 12]);
         }
 
         unsafe {

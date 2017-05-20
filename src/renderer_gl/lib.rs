@@ -17,6 +17,8 @@ extern crate timber;
 extern crate qualia;
 extern crate graphics;
 
+mod cache_gl;
+
 pub mod renderer_gl;
 
 pub use renderer_gl::RendererGl;

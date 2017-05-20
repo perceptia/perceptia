@@ -532,3 +532,54 @@ impl ResourceStorage {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+#[cfg(test)]
+mod tests {
+    fn assert_storage_size(resources: &super::ResourceStorage) {
+        assert!(resources.surfaces.len() == 0);
+        assert!(resources.memory_views.len() == 0);
+        assert!(resources.memory_pools.len() == 0);
+        assert!(resources.egl_images.len() == 0);
+        assert!(resources.dmabufs.len() == 0);
+    }
+
+    /// Check if newly created `ResourceStorage` is empty.
+    #[test]
+    fn test_empty_resources() {
+        let signaler = super::dharma::Signaler::new();
+        let resources = super::ResourceStorage::new(signaler);
+        assert_storage_size(&resources);
+    }
+
+    /// Check if pool and view are removed when removed when destroyed explicitly and when only
+    /// pool is destroyed.
+    #[test]
+    fn test_leaks_after_creating_pool_and_view() {
+        let signaler = super::dharma::Signaler::new();
+        let mut resources = super::ResourceStorage::new(signaler);
+
+        let width = 10;
+        let height = 10;
+        let format = super::PixelFormat::XRGB8888;
+        let stride = format.get_size() * width;
+
+        let data1 = vec![0; stride * height];
+        let buffer1 = super::Buffer::new(format, width, height, stride, data1);
+        let data2 = vec![0; stride * height];
+        let buffer2 = super::Buffer::new(format, width, height, stride, data2);
+
+        let mpid1 = resources.create_pool_from_buffer(buffer1);
+        let mvid1 = resources.create_memory_view(mpid1, format, 0, width, height, stride).unwrap();
+
+        let mpid2 = resources.create_pool_from_buffer(buffer2);
+        resources.create_memory_view(mpid2, format, 0, width, height, stride).unwrap();
+
+        resources.destroy_memory_view(mvid1);
+        resources.destroy_memory_pool(mpid1);
+        resources.destroy_memory_pool(mpid2);
+
+        assert_storage_size(&resources);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------

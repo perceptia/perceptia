@@ -70,13 +70,18 @@ impl GraphicsManager {
 
 impl GraphicsManagement for GraphicsManager {
     /// Creates EGL image from given parameters.
-    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImage> {
+    fn create_egl_image(&mut self, attrs: &EglAttributes) -> Option<HwImage> {
         egl_tools::create_image(self.display, attrs)
     }
 
     /// Imports dmabuf as EGL image.
     fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImage> {
         egl_tools::import_dmabuf(self.display, attrs)
+    }
+
+    /// Destroys given hardware image.
+    fn destroy_hw_image(&mut self, image: HwImage) -> Result<(), ()> {
+        egl_tools::destroy_image(self.display, image)
     }
 }
 

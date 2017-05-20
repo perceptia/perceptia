@@ -18,7 +18,7 @@ use skylane_protocols::server::linux_dmabuf_unstable_v1::zwp_linux_dmabuf_v1;
 use skylane_protocols::server::linux_dmabuf_unstable_v1::zwp_linux_buffer_params_v1;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{DmabufAttributes, HwImageId, ValidationResult};
+use qualia::{DmabufAttributes, DmabufId, ValidationResult};
 
 use global::Global;
 use facade::Facade;
@@ -136,8 +136,8 @@ impl zwp_linux_buffer_params_v1::Interface for DmabufParams {
         if result == ValidationResult::Ok {
             let mut proxy = self.proxy.borrow_mut();
             let oid = bundle.get_next_available_server_object_id();
-            if let Some(hwiid) = proxy.import_dmabuf(oid, self.attributes.clone()) {
-                let buffer = DmabufBuffer::new_object(hwiid, self.proxy.clone());
+            if let Some(dbid) = proxy.import_dmabuf(oid, self.attributes.clone()) {
+                let buffer = DmabufBuffer::new_object(dbid, self.proxy.clone());
                 bundle.add_object(oid, buffer);
 
                 send!(zwp_linux_buffer_params_v1::created(&proxy.get_socket(),
@@ -159,21 +159,21 @@ impl zwp_linux_buffer_params_v1::Interface for DmabufParams {
 /// Wayland `wl_buffer` object.
 struct DmabufBuffer {
     proxy: ProxyRef,
-    hwiid: HwImageId,
+    dbid: DmabufId,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl DmabufBuffer {
-    fn new(hwiid: HwImageId, proxy_ref: ProxyRef) -> Self {
+    fn new(dbid: DmabufId, proxy_ref: ProxyRef) -> Self {
         DmabufBuffer {
             proxy: proxy_ref,
-            hwiid: hwiid,
+            dbid: dbid,
         }
     }
 
-    fn new_object(hwiid: HwImageId, proxy_ref: ProxyRef) -> Box<Object> {
-        Box::new(Handler::<_, wl_buffer::Dispatcher>::new(Self::new(hwiid, proxy_ref)))
+    fn new_object(dbid: DmabufId, proxy_ref: ProxyRef) -> Box<Object> {
+        Box::new(Handler::<_, wl_buffer::Dispatcher>::new(Self::new(dbid, proxy_ref)))
     }
 }
 
@@ -182,7 +182,7 @@ impl DmabufBuffer {
 impl wl_buffer::Interface for DmabufBuffer {
     fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
-        proxy.destroy_hw_image(self.hwiid);
+        proxy.destroy_dmabuf(self.dbid);
         bundle.remove_object(this_object_id);
         Task::None
     }

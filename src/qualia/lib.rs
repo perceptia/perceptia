@@ -44,7 +44,7 @@ pub use timing::Milliseconds;
 pub mod defs;
 pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
 pub use defs::{Command, modifier, Key, KeyCode, KeyValue, OutputInfo};
-pub use defs::{HwImageId, MemoryPoolId, MemoryViewId, SignalId};
+pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod image;
 pub use image::{Image, Pixmap, PixelFormat};

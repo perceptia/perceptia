@@ -86,6 +86,11 @@ pub type CreateImageKhrFunc = extern fn(egl::EGLDisplay,
                                         *const egl::EGLint)
                                         -> RawHwImage;
 
+/// Type definition for `eglCreateImageKHR` function.
+pub type DestroyImageKhrFunc = extern fn(egl::EGLDisplay,
+                                         RawHwImage)
+                                         -> egl::EGLBoolean;
+
 /// Type definition for `eglCreateDRMImageMESA` function.
 pub type CreateDrmImageMesaFunc = extern fn(egl::EGLDisplay,
                                             *const egl::EGLint)
@@ -137,6 +142,18 @@ pub fn get_proc_address_of_create_image_khr() -> Option<CreateImageKhrFunc> {
         let func = egl::get_proc_address("eglCreateImageKHR") as *const ();
         if !func.is_null() {
             Some(std::mem::transmute::<_, CreateImageKhrFunc>(func))
+        } else {
+            None
+        }
+    }
+}
+
+/// Returns address of extension function.
+pub fn get_proc_address_of_destroy_image_khr() -> Option<DestroyImageKhrFunc> {
+    unsafe {
+        let func = egl::get_proc_address("eglDestroyImageKHR") as *const ();
+        if !func.is_null() {
+            Some(std::mem::transmute::<_, DestroyImageKhrFunc>(func))
         } else {
             None
         }
@@ -304,6 +321,23 @@ pub fn import_dmabuf(display: egl::EGLDisplay, attrs: &DmabufAttributes) -> Opti
         }
     } else {
         None
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Destroys given EGL image.
+pub fn destroy_image(display: egl::EGLDisplay, image: HwImage) -> Result<(), ()> {
+    if let Some(destroy_image) = get_proc_address_of_destroy_image_khr() {
+        // Create image
+        let result = destroy_image(display, image.as_raw());
+        if result == egl::EGL_TRUE {
+            Ok(())
+        } else {
+            Err(())
+        }
+    } else {
+        Err(())
     }
 }
 

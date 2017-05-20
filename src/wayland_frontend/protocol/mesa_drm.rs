@@ -14,7 +14,7 @@ use skylane_protocols::server::Handler;
 use skylane_protocols::server::drm::wl_drm;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{EglAttributes, PixelFormat, HwImageId};
+use qualia::{EglAttributes, PixelFormat, EglImageId};
 
 use global::Global;
 use facade::Facade;
@@ -91,14 +91,14 @@ impl wl_drm::Interface for Drm {
             }
         };
 
-        let hwiid = {
+        let eiid = {
             let mut proxy = self.proxy.borrow_mut();
             let attrs = EglAttributes::new(name, width, height, stride, pixel_format);
-            proxy.create_egl_buffer(buffer_oid, attrs)
+            proxy.create_egl_image(buffer_oid, attrs)
         };
 
-        if let Some(hwiid) = hwiid {
-            let buffer = DrmBuffer::new_object(hwiid, self.proxy.clone());
+        if let Some(eiid) = eiid {
+            let buffer = DrmBuffer::new_object(eiid, self.proxy.clone());
             bundle.add_object(buffer_oid, buffer);
         }
 
@@ -151,21 +151,21 @@ impl wl_drm::Interface for Drm {
 /// Wayland `wl_buffer` object.
 struct DrmBuffer {
     proxy: ProxyRef,
-    hwiid: HwImageId,
+    eiid: EglImageId,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl DrmBuffer {
-    fn new(hwiid: HwImageId, proxy_ref: ProxyRef) -> Self {
+    fn new(eiid: EglImageId, proxy_ref: ProxyRef) -> Self {
         DrmBuffer {
             proxy: proxy_ref,
-            hwiid: hwiid,
+            eiid: eiid,
         }
     }
 
-    fn new_object(hwiid: HwImageId, proxy_ref: ProxyRef) -> Box<Object> {
-        Box::new(Handler::<_, wl_buffer::Dispatcher>::new(Self::new(hwiid, proxy_ref)))
+    fn new_object(eiid: EglImageId, proxy_ref: ProxyRef) -> Box<Object> {
+        Box::new(Handler::<_, wl_buffer::Dispatcher>::new(Self::new(eiid, proxy_ref)))
     }
 }
 
@@ -174,7 +174,7 @@ impl DrmBuffer {
 impl wl_buffer::Interface for DrmBuffer {
     fn destroy(&mut self, this_object_id: ObjectId, bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy.borrow_mut();
-        proxy.destroy_hw_image(self.hwiid);
+        proxy.destroy_egl_image(self.eiid);
         bundle.remove_object(this_object_id);
         Task::None
     }

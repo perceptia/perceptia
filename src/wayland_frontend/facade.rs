@@ -10,7 +10,8 @@ use std::path::PathBuf;
 use skylane::server as wl;
 
 use qualia::{Area, PixelFormat, Size, SurfaceId, Vector, show_reason};
-use qualia::{EglAttributes, DmabufAttributes, HwImageId, MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{EglAttributes, DmabufAttributes, MappedMemory};
+use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -57,7 +58,7 @@ pub trait Facade {
     /// last view goes out of the scope.
     fn destroy_memory_pool(&mut self, mpid: MemoryPoolId);
 
-    /// Requests replacement of mapped memory after resize request afrom client.
+    /// Requests replacement of mapped memory after resize request from client.
     fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory);
 
     /// Requests creation of memory view.
@@ -74,20 +75,23 @@ pub trait Facade {
     /// Requests destruction of memory view.
     fn destroy_memory_view(&mut self, mvid: MemoryViewId);
 
-    /// Requests creation of EGL buffer.
-    fn create_egl_buffer(&mut self,
-                         buffer_oid: wl::ObjectId,
-                         attrs: EglAttributes)
-                         -> Option<HwImageId>;
+    /// Requests creation of EGL image.
+    fn create_egl_image(&mut self,
+                        buffer_oid: wl::ObjectId,
+                        attrs: EglAttributes)
+                        -> Option<EglImageId>;
+
+    /// Requests destruction of EGL image.
+    fn destroy_egl_image(&mut self, eiid: EglImageId);
 
     /// Requests creation of dmabuf.
     fn import_dmabuf(&mut self,
                      buffer_oid: wl::ObjectId,
                      attrs: DmabufAttributes)
-                     -> Option<HwImageId>;
+                     -> Option<DmabufId>;
 
-    /// Destroys hardware image.
-    fn destroy_hw_image(&mut self, hwiid: HwImageId);
+    /// Requests destruction of dmabuf.
+    fn destroy_dmabuf(&mut self, dbid: DmabufId);
 
     /// Defines region. Regions may be used to define input area of surface.
     fn define_region(&mut self, region_oid: wl::ObjectId, region: Area);

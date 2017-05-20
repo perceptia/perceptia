@@ -130,6 +130,25 @@ impl EglAttributes {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Image for EglAttributes {
+    /// Get width and height of the underlying hardware image.
+    fn get_size(&self) -> Size {
+        Size::new(self.width as usize, self.height as usize)
+    }
+
+    /// Return width of the underlying hardware image.
+    fn get_width(&self) -> usize {
+        self.width as usize
+    }
+
+    /// Returns height of the underlying hardware image.
+    fn get_height(&self) -> usize {
+        self.height as usize
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Attributes for creation of plane for EGL image from dmabuf.
 #[derive(Debug, Copy, Clone)]
 pub struct DmabufPlane {
@@ -255,15 +274,37 @@ impl DmabufAttributes {
 
 // -------------------------------------------------------------------------------------------------
 
+impl Image for DmabufAttributes {
+    /// Get width and height of the underlying hardware image.
+    fn get_size(&self) -> Size {
+        Size::new(self.width as usize, self.height as usize)
+    }
+
+    /// Return width of the underlying hardware image.
+    fn get_width(&self) -> usize {
+        self.width as usize
+    }
+
+    /// Returns height of the underlying hardware image.
+    fn get_height(&self) -> usize {
+        self.height as usize
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Trait every graphics manager should implement.
 ///
 /// Graphics manager is peace of code abstracting hardware image creation.
 pub trait GraphicsManagement {
     /// Creates EGL image from given parameters.
-    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImage>;
+    fn create_egl_image(&mut self, attrs: &EglAttributes) -> Option<HwImage>;
 
     /// Imports dmabuf as EGL image.
     fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImage>;
+
+    /// Destroys given hardware image.
+    fn destroy_hw_image(&mut self, image: HwImage) -> Result<(), ()>;
 }
 
 // -------------------------------------------------------------------------------------------------

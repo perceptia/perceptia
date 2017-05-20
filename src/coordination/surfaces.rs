@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{DmabufAttributes, EglAttributes, HwImage, MemoryView};
+use qualia::{DmabufAttributes, EglAttributes, MemoryView};
 use qualia::{Position, Size, Vector};
 use qualia::{DataSource, SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
 
@@ -165,16 +165,16 @@ impl Surface {
         self.pending_buffer = DataSource::Shm(buffer);
     }
 
-    /// Sets given hardware image as pending.
+    /// Sets given EGL image as pending.
     #[inline]
-    pub fn attach_hw_image(&mut self, image: HwImage, attrs: EglAttributes) {
-        self.pending_buffer = DataSource::HwImage(image, attrs);
+    pub fn attach_egl_image(&mut self, attrs: EglAttributes) {
+        self.pending_buffer = DataSource::EglImage(attrs);
     }
 
     /// Sets given dmabuf as pending.
     #[inline]
-    pub fn attach_dmabuf(&mut self, image: HwImage, attrs: DmabufAttributes) {
-        self.pending_buffer = DataSource::Dmabuf(image, attrs);
+    pub fn attach_dmabuf(&mut self, attrs: DmabufAttributes) {
+        self.pending_buffer = DataSource::Dmabuf(attrs);
     }
 
     /// Sets pending buffer as current. If surface was committed for the first time and sizes are

@@ -21,7 +21,7 @@ use qualia::Settings;
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{DrmBundle, EglAttributes, DmabufAttributes, MappedMemory};
-use qualia::{HwImageId, MemoryPoolId, MemoryViewId};
+use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
 use qualia::{AppearanceManagement, HwGraphics, Screenshooting, MemoryManagement};
@@ -108,13 +108,11 @@ enum  BufferInfo {
         mpid: MemoryPoolId,
         mvid: MemoryViewId,
     },
-    HwImage {
-        hwiid: HwImageId,
-        attrs: EglAttributes,
+    EglImage {
+        eiid: EglImageId,
     },
     Dmabuf {
-        hwiid: HwImageId,
-        attrs: DmabufAttributes,
+        dbid: DmabufId,
     },
 }
 
@@ -128,18 +126,12 @@ impl BufferInfo {
         }
     }
 
-    pub fn new_hw_image(hwiid: HwImageId, attrs: EglAttributes) -> Self {
-        BufferInfo::HwImage {
-            hwiid: hwiid,
-            attrs: attrs,
-        }
+    pub fn new_egl_image(eiid: EglImageId) -> Self {
+        BufferInfo::EglImage { eiid: eiid }
     }
 
-    pub fn new_dmabuf(hwiid: HwImageId, attrs: DmabufAttributes) -> Self {
-        BufferInfo::Dmabuf {
-            hwiid: hwiid,
-            attrs: attrs,
-        }
+    pub fn new_dmabuf(dbid: DmabufId) -> Self {
+        BufferInfo::Dmabuf { dbid: dbid }
     }
 }
 
@@ -349,32 +341,36 @@ impl Facade for Proxy {
         self.coordinator.destroy_memory_view(mvid);
     }
 
-    fn create_egl_buffer(&mut self,
-                         buffer_oid: wl::ObjectId,
-                         attrs: EglAttributes)
-                         -> Option<HwImageId> {
-        let hwiid = self.coordinator.create_egl_buffer(&attrs);
-        if let Some(hwiid) = hwiid {
-            let info = BufferInfo::new_hw_image(hwiid, attrs);
+    fn create_egl_image(&mut self,
+                        buffer_oid: wl::ObjectId,
+                        attrs: EglAttributes)
+                        -> Option<EglImageId> {
+        let eiid = self.coordinator.create_egl_image(attrs);
+        if let Some(eiid) = eiid {
+            let info = BufferInfo::new_egl_image(eiid);
             self.buffer_oid_to_info_dict.insert(buffer_oid, info);
         }
-        hwiid
+        eiid
+    }
+
+    fn destroy_egl_image(&mut self, eiid: EglImageId) {
+        self.coordinator.destroy_egl_image(eiid);
     }
 
     fn import_dmabuf(&mut self,
                      buffer_oid: wl::ObjectId,
                      attrs: DmabufAttributes)
-                     -> Option<HwImageId> {
-        let hwiid = self.coordinator.import_dmabuf(&attrs);
-        if let Some(hwiid) = hwiid {
-            let info = BufferInfo::new_dmabuf(hwiid, attrs);
+                     -> Option<DmabufId> {
+        let dbid = self.coordinator.import_dmabuf(attrs);
+        if let Some(dbid) = dbid {
+            let info = BufferInfo::new_dmabuf(dbid);
             self.buffer_oid_to_info_dict.insert(buffer_oid, info);
         }
-        hwiid
+        dbid
     }
 
-    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
-        self.coordinator.destroy_hw_image(hwiid);
+    fn destroy_dmabuf(&mut self, dbid: DmabufId) {
+        self.coordinator.destroy_dmabuf(dbid);
     }
 
     fn define_region(&mut self, region_oid: wl::ObjectId, region: Area) {
@@ -449,11 +445,11 @@ impl Facade for Proxy {
                 BufferInfo::Shm{mpid, mvid} => {
                     self.coordinator.attach_shm(mvid, sid);
                 }
-                BufferInfo::HwImage{hwiid, ref attrs} => {
-                    self.coordinator.attach_hw_image(hwiid, attrs.clone(), sid);
+                BufferInfo::EglImage{eiid} => {
+                    self.coordinator.attach_egl_image(eiid, sid);
                 }
-                BufferInfo::Dmabuf{hwiid, ref attrs} => {
-                    self.coordinator.attach_dmabuf(hwiid, attrs.clone(), sid);
+                BufferInfo::Dmabuf{dbid} => {
+                    self.coordinator.attach_dmabuf(dbid, sid);
                 }
             }
         } else {

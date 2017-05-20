@@ -12,8 +12,8 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
-use qualia::{Position, Size, Vector, HwImageId, MemoryPoolId, MemoryViewId, PixelFormat};
-use qualia::{Buffer, HwImage, MappedMemory, MemoryPool, MemoryView};
+use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
+use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView, PixelFormat};
 use qualia::{EglAttributes, DmabufAttributes, GraphicsManagement};
 use qualia::{perceptron, Perceptron};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
@@ -74,7 +74,8 @@ impl MemoryViewBundle {
 type SurfaceMap = std::collections::HashMap<SurfaceId, Surface>;
 type MemoryViewMap = std::collections::HashMap<MemoryViewId, MemoryViewBundle>;
 type MemoryPoolMap = std::collections::HashMap<MemoryPoolId, MemoryPoolBundle>;
-type HwImagesMap = std::collections::HashMap<HwImageId, HwImage>;
+type EglImagesMap = std::collections::HashMap<EglImageId, EglAttributes>;
+type DmabufsMap = std::collections::HashMap<DmabufId, DmabufAttributes>;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -84,34 +85,6 @@ macro_rules! try_get_surface {
             Some(surface) => surface,
             None => {
                 log_warn2!("Surface {} not found!", $sid);
-                return
-            }
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-macro_rules! try_get_memory_view {
-    ($coordinator:expr, $bid:ident) => {
-        match $coordinator.memory_views.get_mut(&$bid) {
-            Some(buffer) => buffer,
-            None => {
-                log_warn2!("Buffer {:?} not found!", $bid);
-                return
-            }
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-macro_rules! try_get_hw_image {
-    ($coordinator:expr, $hwiid:ident) => {
-        match $coordinator.hw_images.get_mut(&$hwiid) {
-            Some(image) => image,
-            None => {
-                log_warn2!("Image {:?} not found!", $hwiid);
                 return
             }
         }
@@ -134,6 +107,48 @@ macro_rules! try_get_surface_or_none {
 
 // -------------------------------------------------------------------------------------------------
 
+macro_rules! try_get_memory_view {
+    ($coordinator:expr, $bid:ident) => {
+        match $coordinator.memory_views.get_mut(&$bid) {
+            Some(buffer) => buffer,
+            None => {
+                log_warn2!("Buffer {:?} not found!", $bid);
+                return
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+macro_rules! try_get_egl_image_attrs {
+    ($coordinator:expr, $ebid:ident) => {
+        match $coordinator.egl_images.get_mut(&$ebid) {
+            Some(image) => image,
+            None => {
+                log_warn2!("Image {:?} not found!", $ebid);
+                return
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+macro_rules! try_get_dmabuf_attrs {
+    ($coordinator:expr, $dbid:ident) => {
+        match $coordinator.dmabufs.get_mut(&$dbid) {
+            Some(image) => image,
+            None => {
+                log_warn2!("Dmabuf {:?} not found!", $dbid);
+                return
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// This structure contains logic related to maintaining shared application state about surfaces.
 /// For thread-safe public version see `Coordinator`.
 struct InnerCoordinator {
@@ -149,8 +164,11 @@ struct InnerCoordinator {
     /// Storage for all memory pools.
     memory_pools: MemoryPoolMap,
 
-    /// Storage for all hardware images.
-    hw_images: HwImagesMap,
+    /// Storage for EGL images.
+    egl_images: EglImagesMap,
+
+    /// Storage for dmabuf images.
+    dmabufs: DmabufsMap,
 
     /// Graphics manager.
     graphics_manager: Option<Box<GraphicsManagement + Send>>,
@@ -168,7 +186,10 @@ struct InnerCoordinator {
     last_memory_pool_id: MemoryPoolId,
 
     /// Counter of hardware image IDs
-    last_hw_image_id: HwImageId,
+    last_egl_image_id: EglImageId,
+
+    /// Counter of dmabuf IDs
+    last_dmabuf_id: DmabufId,
 
     /// Currently keyboard-focused surface ID
     kfsid: SurfaceId,
@@ -187,13 +208,15 @@ impl InnerCoordinator {
             surfaces: SurfaceMap::new(),
             memory_views: MemoryViewMap::new(),
             memory_pools: MemoryPoolMap::new(),
-            hw_images: HwImagesMap::new(),
+            egl_images: EglImagesMap::new(),
+            dmabufs: DmabufsMap::new(),
             graphics_manager: None,
             screenshot_buffer: None,
             last_surface_id: SurfaceId::invalid(),
             last_memory_view_id: MemoryViewId::initial(),
             last_memory_pool_id: MemoryPoolId::initial(),
-            last_hw_image_id: HwImageId::initial(),
+            last_egl_image_id: EglImageId::initial(),
+            last_dmabuf_id: DmabufId::initial(),
             kfsid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
         }
@@ -222,17 +245,17 @@ impl InnerCoordinator {
     }
 
     /// Sets given hardware image as pending for given surface.
-    pub fn attach_hw_image(&mut self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId) {
+    pub fn attach_egl_image(&mut self, ebid: EglImageId, sid: SurfaceId) {
         let surface = try_get_surface!(self, sid);
-        let image = try_get_hw_image!(self, hwiid);
-        surface.attach_hw_image(image.clone(), attrs);
+        let attrs = try_get_egl_image_attrs!(self, ebid);
+        surface.attach_egl_image(attrs.clone());
     }
 
     /// Sets given dmabuf as pending for given surface.
-    pub fn attach_dmabuf(&mut self, hwiid: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {
+    pub fn attach_dmabuf(&mut self, dbid: DmabufId, sid: SurfaceId) {
         let surface = try_get_surface!(self, sid);
-        let image = try_get_hw_image!(self, hwiid);
-        surface.attach_dmabuf(image.clone(), attrs);
+        let attrs = try_get_dmabuf_attrs!(self, dbid);
+        surface.attach_dmabuf(attrs.clone());
     }
 
     /// Informs other parts of application the surface is now not visible.
@@ -490,13 +513,15 @@ impl InnerCoordinator {
         self.signaler.emit(perceptron::SCREENSHOT_DONE, Perceptron::ScreenshotDone);
     }
 
-    /// Makes request to create EGL buffer.
-    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId> {
-        let id = self.generate_next_hw_image_id();
+    /// Checks if it is possible to create EGL image with given attributes. If so, then stores
+    /// attributes and returns ID assigned to them.
+    fn create_egl_image(&mut self, attrs: EglAttributes) -> Option<EglImageId> {
+        let id = self.generate_next_egl_image_id();
         if let Some(ref mut graphics_manager) = self.graphics_manager {
-            let image = graphics_manager.create_egl_buffer(attrs);
+            let image = graphics_manager.create_egl_image(&attrs);
             if let Some(image) = image {
-                self.hw_images.insert(id, image);
+                let _ = graphics_manager.destroy_hw_image(image);
+                self.egl_images.insert(id, attrs);
                 Some(id)
             } else {
                 None
@@ -506,13 +531,15 @@ impl InnerCoordinator {
         }
     }
 
-    /// Makes request to import dmabuf.
-    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId> {
-        let id = self.generate_next_hw_image_id();
+    /// Checks if it is possible to import dmabuf with given attributes. If so, then stores
+    /// attributes and returns ID assigned to them.
+    fn import_dmabuf(&mut self, attrs: DmabufAttributes) -> Option<DmabufId> {
+        let id = self.generate_next_dmabuf_id();
         if let Some(ref mut graphics_manager) = self.graphics_manager {
-            let image = graphics_manager.import_dmabuf(attrs);
+            let image = graphics_manager.import_dmabuf(&attrs);
             if let Some(image) = image {
-                self.hw_images.insert(id, image);
+                let _ = graphics_manager.destroy_hw_image(image);
+                self.dmabufs.insert(id, attrs);
                 Some(id)
             } else {
                 None
@@ -522,9 +549,14 @@ impl InnerCoordinator {
         }
     }
 
-    /// Destroys hardware image.
-    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
-        self.hw_images.remove(&hwiid);
+    /// Removes EGL attributes.
+    fn destroy_egl_image(&mut self, ebid: EglImageId) {
+        self.egl_images.remove(&ebid);
+    }
+
+    /// Removes dmabuf attributes.
+    fn destroy_dmabuf(&mut self, dbid: DmabufId) {
+        self.dmabufs.remove(&dbid);
     }
 
     /// Returns and forgets screenshot buffer.
@@ -552,8 +584,13 @@ impl InnerCoordinator {
     }
 
     /// Generates next hardware image ID.
-    fn generate_next_hw_image_id(&mut self) -> HwImageId {
-        self.last_hw_image_id.increment()
+    fn generate_next_egl_image_id(&mut self) -> EglImageId {
+        self.last_egl_image_id.increment()
+    }
+
+    /// Generates next dmabuf ID.
+    fn generate_next_dmabuf_id(&mut self) -> DmabufId {
+        self.last_dmabuf_id.increment()
     }
 }
 
@@ -601,15 +638,15 @@ impl SurfaceManagement for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn attach_hw_image(&self, image: HwImageId, attrs: EglAttributes, sid: SurfaceId) {
+    fn attach_egl_image(&self, ebid: EglImageId, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.attach_hw_image(image, attrs, sid);
+        mine.attach_egl_image(ebid, sid);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn attach_dmabuf(&self, image: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {
+    fn attach_dmabuf(&self, dbid: DmabufId, sid: SurfaceId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.attach_dmabuf(image, attrs, sid);
+        mine.attach_dmabuf(dbid, sid);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
@@ -838,21 +875,27 @@ impl HwGraphics for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId> {
+    fn create_egl_image(&mut self, attrs: EglAttributes) -> Option<EglImageId> {
         let mut mine = self.inner.lock().unwrap();
-        mine.create_egl_buffer(attrs)
+        mine.create_egl_image(attrs)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId> {
+    fn destroy_egl_image(&mut self, ebid: EglImageId) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.destroy_egl_image(ebid)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn import_dmabuf(&mut self, attrs: DmabufAttributes) -> Option<DmabufId> {
         let mut mine = self.inner.lock().unwrap();
         mine.import_dmabuf(attrs)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn destroy_hw_image(&mut self, hwiid: HwImageId) {
+    fn destroy_dmabuf(&mut self, dbid: DmabufId) {
         let mut mine = self.inner.lock().unwrap();
-        mine.destroy_hw_image(hwiid)
+        mine.destroy_dmabuf(dbid)
     }
 }
 

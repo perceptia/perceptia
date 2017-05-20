@@ -4,7 +4,7 @@
 //! Traits implementing interfaces to `Coordinator` functionality used to decouple crates using
 //! `Coordinator` from its implementation (mainly useful for mocking in unit test).
 
-use defs::{HwImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
+use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
 use memory::{Buffer, MappedMemory};
 use graphics::{EglAttributes, DmabufAttributes, GraphicsManagement};
@@ -79,13 +79,16 @@ pub trait HwGraphics {
     fn has_hardware_acceleration_support(&self) -> bool;
 
     /// Makes request to create EGL buffer.
-    fn create_egl_buffer(&mut self, attrs: &EglAttributes) -> Option<HwImageId>;
+    fn create_egl_image(&mut self, attrs: EglAttributes) -> Option<EglImageId>;
+
+    /// Requests destruction of hardware image.
+    fn destroy_egl_image(&mut self, eiid: EglImageId);
 
     /// Makes request to create EGL buffer from dmabuf.
-    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImageId>;
+    fn import_dmabuf(&mut self, attrs: DmabufAttributes) -> Option<DmabufId>;
 
-    /// Destroys hardware image.
-    fn destroy_hw_image(&mut self, hwiid: HwImageId);
+    /// Requests destruction of dmabuf.
+    fn destroy_dmabuf(&mut self, dbid: DmabufId);
 }
 
 // -------------------------------------------------------------------------------------------------

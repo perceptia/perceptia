@@ -8,8 +8,7 @@ use std::rc::Rc;
 
 use qualia::{Perceptron, PixelFormat, Position, SignalId, Size, Vector};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
-use qualia::{Buffer, DataSource, HwImageId, MappedMemory, MemoryPoolId, MemoryViewId};
-use qualia::{DmabufAttributes, EglAttributes};
+use qualia::{Buffer, DataSource, DmabufId, EglImageId, MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 use qualia::{Emiter, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
@@ -51,8 +50,8 @@ impl CoordinatorMock {
 impl SurfaceManagement for CoordinatorMock {
     fn create_surface(&mut self) -> SurfaceId { SurfaceId::new(0) }
     fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId) {}
-    fn attach_hw_image(&self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId) {}
-    fn attach_dmabuf(&self, hwiid: HwImageId, attrs: DmabufAttributes, sid: SurfaceId) {}
+    fn attach_egl_image(&self, eiid: EglImageId, sid: SurfaceId) {}
+    fn attach_dmabuf(&self, dbid: DmabufId, sid: SurfaceId) {}
     fn detach_surface(&self, sid: SurfaceId) {}
     fn commit_surface(&self, sid: SurfaceId) {}
     fn destroy_surface(&self, sid: SurfaceId) {}

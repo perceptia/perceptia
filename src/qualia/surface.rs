@@ -5,10 +5,10 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use defs::{HwImageId, MemoryViewId};
+use defs::{DmabufId, EglImageId, MemoryViewId};
 use image::Image;
 use memory::MemoryView;
-use graphics::{HwImage, EglAttributes, DmabufAttributes};
+use graphics::{EglAttributes, DmabufAttributes};
 use defs::{Position, Size, Vector};
 pub use defs::{SurfaceId, SurfaceIdType};
 
@@ -74,10 +74,10 @@ pub enum DataSource {
     Shm(MemoryView),
 
     /// EGL image stored in graphic card memory.
-    HwImage(HwImage, EglAttributes),
+    EglImage(EglAttributes),
 
     /// Image stored in some graphic device (webcam, GPU, etc...).
-    Dmabuf(HwImage, DmabufAttributes),
+    Dmabuf(DmabufAttributes),
 
     /// Source unspecified.
     None,
@@ -101,11 +101,11 @@ impl DataSource {
             DataSource::Shm(ref memory_view) => {
                 Some(memory_view)
             }
-            DataSource::HwImage(ref image, _) => {
-                Some(image)
+            DataSource::EglImage(ref attrs) => {
+                Some(attrs)
             }
-            DataSource::Dmabuf(ref image, _) => {
-                Some(image)
+            DataSource::Dmabuf(ref attrs) => {
+                Some(attrs)
             }
             DataSource::None => {
                 None
@@ -138,10 +138,10 @@ pub trait SurfaceManagement {
     fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId);
 
     /// Sets given hardware image as pending for given surface.
-    fn attach_hw_image(&self, hwiid: HwImageId, attrs: EglAttributes, sid: SurfaceId);
+    fn attach_egl_image(&self, eiid: EglImageId, sid: SurfaceId);
 
     /// Sets given dmabuf as pending for given surface.
-    fn attach_dmabuf(&self, image: HwImageId, attrs: DmabufAttributes, sid: SurfaceId);
+    fn attach_dmabuf(&self, dmid: DmabufId, sid: SurfaceId);
 
     /// Informs other parts of application the surface is now not visible.
     fn detach_surface(&self, sid: SurfaceId);

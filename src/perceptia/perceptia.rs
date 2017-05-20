@@ -90,8 +90,10 @@ fn main() {
     log_info1!("Stopped dispatcher!");
 
     // Join threads
-    for jh in join_handles.pop_front() {
-        jh.join().unwrap();
+    while join_handles.len() > 0 {
+        if join_handles.pop_front().unwrap().join().is_err() {
+            log_warn2!("Error while joining thread");
+        }
     }
     log_info1!("Joined all threads!");
 }

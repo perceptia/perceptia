@@ -11,13 +11,6 @@ use std::{thread, time};
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper macro producing `ReceiveResult` for assertions.
-macro_rules! make_resp {
-    ($num:expr, $str:expr) => { ReceiveResult::Defined($num, String::from($str)) }
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Type of receiver used in tests.
 type EventReceiver = dharma::Receiver<String>;
 

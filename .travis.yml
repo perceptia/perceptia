@@ -1,0 +1,28 @@
+language: rust
+dist: trusty
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+matrix:
+  allow_failures:
+    - rust: beta
+    - rust: nightly
+
+before_install:
+  - sudo apt-get update
+
+addons:
+  apt:
+    packages:
+      - libdrm-dev
+      - libgbm-dev
+      - libudev-dev
+      - libdbus-1-dev
+      - libegl1-mesa-dev
+      - libxkbcommon-dev
+
+script: |
+    cargo build --all && cargo test --all

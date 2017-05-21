@@ -202,8 +202,7 @@ fn do_wait_and_process<E>(state: &mut Arc<State<E>>, epfd: RawFd, timeout: isize
     where E: EventHandler + ?Sized
 {
     // We will process epoll events one by one.
-    let mut events: [epoll::EpollEvent; 1] =
-        [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
+    let mut events = [epoll::EpollEvent::new(epoll::EpollFlags::empty(), 0)];
 
     let wait_result = epoll::epoll_wait(epfd, &mut events[0..1], timeout);
 

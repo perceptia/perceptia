@@ -47,7 +47,7 @@ pub trait Image {
 // -------------------------------------------------------------------------------------------------
 
 /// Trait providing interface for pixmap storing objects.
-pub trait Pixmap : Image {
+pub trait Pixmap: Image {
     /// Returns pixel format of the pixmap.
     fn get_format(&self) -> PixelFormat;
 

@@ -50,7 +50,7 @@ impl wl_registry::Interface for Registry {
             version: u32,
             new_object_id: ObjectId)
             -> Task {
-        match {
+        let result = {
             let proxy = self.proxy.borrow();
             if let Some(global) = proxy.get_globals().get(&name) {
                 if global.interface != interface {
@@ -72,7 +72,9 @@ impl wl_registry::Interface for Registry {
             } else {
                 Err(format!("Requested for not registered global '{}' ({})", interface, name))
             }
-        } {
+        };
+
+        match result {
             Ok(global) => {
                 let object = global.construct(new_object_id, version, self.proxy.clone());
                 Task::Create {

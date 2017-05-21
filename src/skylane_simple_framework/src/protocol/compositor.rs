@@ -55,9 +55,7 @@ pub struct Surface {
 
 impl Surface {
     fn new(proxy: ProxyRef) -> Self {
-        Surface {
-            _proxy: proxy,
-        }
+        Surface { _proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {

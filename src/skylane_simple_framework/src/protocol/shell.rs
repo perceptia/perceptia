@@ -34,9 +34,7 @@ pub struct Shell {
 
 impl Shell {
     fn new(proxy: ProxyRef) -> Self {
-        Shell {
-            _proxy: proxy,
-        }
+        Shell { _proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
@@ -59,9 +57,7 @@ pub struct ShellSurface {
 
 impl ShellSurface {
     fn new(proxy: ProxyRef) -> Self {
-        ShellSurface {
-            _proxy: proxy,
-        }
+        ShellSurface { _proxy: proxy }
     }
 
     pub fn new_object(proxy: ProxyRef) -> Box<Object> {
@@ -72,11 +68,7 @@ impl ShellSurface {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_shell_surface::Interface for ShellSurface {
-    fn ping(&mut self,
-            _this_object_id: ObjectId,
-            _bundle: &mut Bundle,
-            _serial: u32)
-            -> Task {
+    fn ping(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _serial: u32) -> Task {
         // Nothing to do so far
         Task::None
     }
@@ -92,10 +84,7 @@ impl wl_shell_surface::Interface for ShellSurface {
         Task::None
     }
 
-    fn popup_done(&mut self,
-                  _this_object_id: ObjectId,
-                  _bundle: &mut Bundle)
-                  -> Task {
+    fn popup_done(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         // Nothing to do so far
         Task::None
     }

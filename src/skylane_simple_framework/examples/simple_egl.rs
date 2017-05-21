@@ -75,7 +75,7 @@ struct SimpleEglConstructor {}
 
 impl SimpleEglConstructor {
     fn new() -> Self {
-        SimpleEglConstructor{}
+        SimpleEglConstructor {}
     }
 }
 
@@ -130,9 +130,7 @@ impl SimpleEgl {
         match nix::fcntl::open(&PathBuf::from("/dev/dri/card0"),
                                nix::fcntl::O_RDWR | nix::fcntl::O_CLOEXEC,
                                nix::sys::stat::Mode::empty()) {
-            Ok(fd) => {
-                Ok(fd)
-            }
+            Ok(fd) => Ok(fd),
             Err(err) => {
                 return Err(format!("Failed to open device: {}", err));
             }
@@ -146,7 +144,7 @@ impl SimpleEgl {
                       image: *const std::os::raw::c_void)
                       -> Result<(), String> {
         if let Some(target_texture) =
-                egl_tools::get_proc_address_of_image_target_renderbuffer_storage_oes() {
+            egl_tools::get_proc_addr_of_image_target_render_storage_oes() {
             target_texture(target, image);
             Ok(())
         } else {
@@ -196,6 +194,7 @@ impl SimpleEgl {
         }
 
         // Choose config
+        #[cfg_attr(rustfmt, rustfmt_skip)]
         const CONFIG_ATTRIB_LIST: [egl::EGLint; 13] = [
                 egl::EGL_RENDERABLE_TYPE, egl::EGL_OPENGL_BIT,
                 egl::EGL_SURFACE_TYPE,    egl::EGL_WINDOW_BIT,
@@ -224,23 +223,22 @@ impl SimpleEgl {
         };
 
         // Create surface
-        let gbm_surface = if let Some(gbm_surface) = libgbm::Surface::new(&device,
-                                                                          width,
-                                                                          height,
-                                                                          libgbm::format::XRGB8888,
-                                                                          libgbm::USE_RENDERING) {
+        let gbm_surface = if let Some(gbm_surface) =
+            libgbm::Surface::new(&device,
+                                 width,
+                                 height,
+                                 libgbm::format::XRGB8888,
+                                 libgbm::USE_RENDERING) {
             gbm_surface
         } else {
             return Err(format!("Failed to create GBM surface"));
         };
 
         // Create window surface
-        let create_surface = egl_tools::get_proc_address_of_create_platform_surface();
+        let create_surface = egl_tools::get_proc_addr_of_create_platform_surface();
         let surface = if let Some(create_surface) = create_surface {
-            let surface = create_surface(display,
-                                         config,
-                                         gbm_surface.c_struct() as *mut _,
-                                         std::ptr::null());
+            let surface =
+                create_surface(display, config, gbm_surface.c_struct() as *mut _, std::ptr::null());
             if !surface.is_null() {
                 surface
             } else {
@@ -256,7 +254,8 @@ impl SimpleEgl {
         }
 
         // Create EGL DRM image
-        let img = if let Some(create_img) = egl_tools::get_proc_address_of_create_drm_image_mesa() {
+        let img = if let Some(create_img) =
+            egl_tools::get_proc_addr_of_create_drm_image_mesa() {
             let mut attribs = [egl::EGL_NONE; 9];
 
             attribs[0] = egl::EGL_WIDTH;
@@ -333,7 +332,7 @@ impl SimpleEgl {
             gl::UseProgram(program);
 
             // Setup data
-            let vertices: [gl::types::GLfloat; 6] = [ -0.5, -0.5, 0.5, -0.5, 0.0, 0.5];
+            let vertices: [gl::types::GLfloat; 6] = [-0.5, -0.5, 0.5, -0.5, 0.0, 0.5];
             let colors: [gl::types::GLfloat; 9] = [1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0];
 
             let float_size = std::mem::size_of::<gl::types::GLfloat>();
@@ -377,7 +376,7 @@ impl SimpleEgl {
         let mut name: i32 = 0;
         let mut stride: i32 = 0;
         let mut handle: i32 = 0;
-        if let Some(export_img) = egl_tools::get_proc_address_of_export_drm_image_mesa() {
+        if let Some(export_img) = egl_tools::get_proc_addr_of_export_drm_image_mesa() {
             let result = export_img(display,
                                     img,
                                     &mut name as *mut _,

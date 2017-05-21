@@ -16,9 +16,7 @@ pub struct Transfer {
 impl Transfer {
     /// Constructs new `Transfer`.
     pub fn new() -> Self {
-        Transfer {
-            mime_types: Vec::new(),
-        }
+        Transfer { mime_types: Vec::new() }
     }
 
     /// Adds offered mime type.

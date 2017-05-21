@@ -133,18 +133,10 @@ impl DataSource {
     /// Returns data as `Image` if available.
     pub fn as_image(&self) -> Option<&Image> {
         match *self {
-            DataSource::Shm { source: ref memory_view, time_stamp: _ } => {
-                Some(memory_view)
-            }
-            DataSource::EglImage { source: ref attrs, time_stamp: _ } => {
-                Some(attrs)
-            }
-            DataSource::Dmabuf { source: ref attrs, time_stamp: _ } => {
-                Some(attrs)
-            }
-            DataSource::None => {
-                None
-            }
+            DataSource::Shm { source: ref memory_view, time_stamp: _ } => Some(memory_view),
+            DataSource::EglImage { source: ref attrs, time_stamp: _ } => Some(attrs),
+            DataSource::Dmabuf { source: ref attrs, time_stamp: _ } => Some(attrs),
+            DataSource::None => None,
         }
     }
 }

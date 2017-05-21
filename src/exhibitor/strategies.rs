@@ -9,6 +9,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::cmp::max;
+
 use rand;
 use rand::distributions::{IndependentSample, Range};
 
@@ -84,9 +86,7 @@ pub fn choose_floating_always_centered(_strategist: &Strategist,
     };
     let pos = Position::new((workspace_size.width / 4) as isize,
                             (workspace_size.height / 4) as isize);
-    FloatingDecision {
-        area: Area::new(pos, size),
-    }
+    FloatingDecision { area: Area::new(pos, size) }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -107,13 +107,11 @@ pub fn choose_floating_random(_strategist: &Strategist,
         workspace_size.scaled(0.5)
     };
 
-    let x_range = Range::new(0, workspace_size.width - size.width);
-    let y_range = Range::new(0, workspace_size.height - size.height);
+    let x_range = Range::new(0, max(1, workspace_size.width - size.width));
+    let y_range = Range::new(0, max(1, workspace_size.height - size.height));
     let pos = Position::new(x_range.ind_sample(&mut rng) as isize,
                             y_range.ind_sample(&mut rng) as isize);
-    FloatingDecision {
-        area: Area::new(pos, size),
-    }
+    FloatingDecision { area: Area::new(pos, size) }
 }
 
 // -------------------------------------------------------------------------------------------------

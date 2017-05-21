@@ -36,7 +36,8 @@ impl OutputCollector {
     /// `OutputCollector` constructor.
     pub fn new(dispatcher: DispatcherController,
                signaler: Signaler<Perceptron>,
-               coordinator: Coordinator) -> Self {
+               coordinator: Coordinator)
+               -> Self {
         OutputCollector {
             dispatcher: dispatcher,
             signaler: signaler,

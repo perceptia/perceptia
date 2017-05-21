@@ -54,10 +54,7 @@ impl Dmabuf {
 // -------------------------------------------------------------------------------------------------
 
 impl zwp_linux_dmabuf_v1::Interface for Dmabuf {
-    fn destroy(&mut self,
-               _this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::None
     }
 
@@ -98,10 +95,7 @@ impl DmabufParams {
 // -------------------------------------------------------------------------------------------------
 
 impl zwp_linux_buffer_params_v1::Interface for DmabufParams {
-    fn destroy(&mut self,
-               _this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         // Nothing to do
         Task::None
     }

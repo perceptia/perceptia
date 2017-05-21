@@ -66,7 +66,9 @@ impl std::fmt::Display for CommandResult {
 // -------------------------------------------------------------------------------------------------
 
 /// Compositor main structure.
-pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
+pub struct Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     history: SurfaceHistory,
     coordinator: C,
     root: Frame,
@@ -78,7 +80,9 @@ pub struct Compositor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Public methods.
-impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Compositor` constructor.
     pub fn new(coordinator: C, strategist: Strategist, config: CompositorConfig) -> Self {
         let root = Frame::new_root();
@@ -148,12 +152,8 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
                     _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
             }
-            Action::Move => {
-                self.move_frame(&mut frame, command.direction, command.magnitude)
-            }
-            Action::Anchor => {
-                self.anchorize(frame)
-            }
+            Action::Move => self.move_frame(&mut frame, command.direction, command.magnitude),
+            Action::Anchor => self.anchorize(frame),
             _ => CommandResult::NotHandled,
         };
 
@@ -247,7 +247,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Private methods related to handling commands.
-impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Reconfigure frame to have different geometry.
     ///
     /// Only `Container`, `Leaf` or `Workspace` can be reconfigured (from this follows that
@@ -417,18 +419,19 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
         if !frame.is_anchored() {
             let distance = distance as isize;
             let vector = {
-                if direction == Direction::North {
-                    Vector::new(0, -distance)
-                } else if direction == Direction::East {
-                    Vector::new(distance, 0)
-                } else if direction == Direction::South {
-                    Vector::new(0, distance)
-                } else if direction == Direction::West {
-                    Vector::new(-distance, 0)
-                } else {
-                    Vector::default()
+                    if direction == Direction::North {
+                        Vector::new(0, -distance)
+                    } else if direction == Direction::East {
+                        Vector::new(distance, 0)
+                    } else if direction == Direction::South {
+                        Vector::new(0, distance)
+                    } else if direction == Direction::West {
+                        Vector::new(-distance, 0)
+                    } else {
+                        Vector::default()
+                    }
                 }
-            }.scaled(self.config.move_step as f32);
+                .scaled(self.config.move_step as f32);
 
             if !vector.is_zero() {
                 frame.move_with_contents(vector);
@@ -483,7 +486,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Miscellaneous private methods.
-impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Find most recently focused frame inside given frame. This function is used to find most
     /// recently used frame when focusing to workspace or when currently focussed frame jumps from
     /// workspace.
@@ -506,7 +511,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Private methods related to workspaces.
-impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Search for existing workspace with given title.
     fn find_workspace(&self, title: &String) -> Option<Frame> {
         for display_frame in self.root.time_iter() {
@@ -592,7 +599,9 @@ impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Miscellaneous private methods.
-impl<C> Compositor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Compositor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Set given frame as selected.
     fn select(&mut self, mut frame: Frame) {
         self.root.pop_recursively(&mut frame);

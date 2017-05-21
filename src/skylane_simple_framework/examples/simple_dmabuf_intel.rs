@@ -53,7 +53,7 @@ mod ffi {
     }
 
     #[link(name="drm_intel")]
-    extern {
+    extern "C" {
         pub fn drm_intel_bufmgr_gem_init(fd: c_int, batch_size: c_int) -> *mut DrmIntelBufmgr;
 
         pub fn drm_intel_bo_alloc_tiled(bufmgr: *mut DrmIntelBufmgr,
@@ -69,7 +69,8 @@ mod ffi {
         pub fn drm_intel_gem_bo_map_gtt(bo: *mut DrmIntelBo) -> c_int;
 
         pub fn drm_intel_bo_gem_export_to_prime(bo: *mut DrmIntelBo,
-                                                prime_fd: *mut c_int) -> c_int;
+                                                prime_fd: *mut c_int)
+                                                -> c_int;
     }
 }
 
@@ -91,7 +92,7 @@ struct SimpleDmabufConstructor {}
 
 impl SimpleDmabufConstructor {
     fn new() -> Self {
-        SimpleDmabufConstructor{}
+        SimpleDmabufConstructor {}
     }
 }
 
@@ -143,9 +144,7 @@ impl SimpleDmabuf {
             match nix::fcntl::open(&PathBuf::from(device_name),
                                    nix::fcntl::O_RDWR | nix::fcntl::O_CLOEXEC,
                                    nix::sys::stat::Mode::empty()) {
-                Ok(fd) => {
-                    fd
-                }
+                Ok(fd) => fd,
                 Err(err) => {
                     return Err(format!("Failed to open device: {}", err));
                 }

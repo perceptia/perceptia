@@ -25,7 +25,9 @@ use background::Background;
 
 /// `Aesthetics` manages tasks related to visual appearance. It uses the same API as exposed to
 /// client frontends.
-pub struct Aesthetics<C> where C: AestheticsCoordinationTrait {
+pub struct Aesthetics<C>
+    where C: AestheticsCoordinationTrait
+{
     cursor: Cursor<C>,
     background: Background<C>,
 }
@@ -33,7 +35,9 @@ pub struct Aesthetics<C> where C: AestheticsCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone{
+impl<C> Aesthetics<C>
+    where C: AestheticsCoordinationTrait + Clone
+{
     /// Constructs new `Aesthetics`.
     pub fn new(coordinator: C, config: AestheticsConfig) -> Self {
         Aesthetics {
@@ -46,7 +50,9 @@ impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone{
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
-impl<C> Aesthetics<C> where C: AestheticsCoordinationTrait + Clone {
+impl<C> Aesthetics<C>
+    where C: AestheticsCoordinationTrait + Clone
+{
     /// This method is called when changing cursor surface was requested.
     pub fn on_cursor_surface_change(&mut self, sid: SurfaceId) {
         self.cursor.on_surface_change(sid);

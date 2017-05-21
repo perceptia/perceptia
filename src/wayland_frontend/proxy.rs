@@ -105,17 +105,13 @@ impl SurfaceInfo {
 
 /// Helper structure for aggregating information about buffers.
 #[derive(Clone)]
-enum  BufferInfo {
+enum BufferInfo {
     Shm {
         mpid: MemoryPoolId,
         mvid: MemoryViewId,
     },
-    EglImage {
-        eiid: EglImageId,
-    },
-    Dmabuf {
-        dbid: DmabufId,
-    },
+    EglImage { eiid: EglImageId },
+    Dmabuf { dbid: DmabufId },
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -508,13 +504,13 @@ impl Facade for Proxy {
         } else if let Some(info) = self.buffer_oid_to_info_dict.get(&buffer_oid).cloned() {
             self.relate_sid_with_buffer(sid, buffer_oid);
             match info {
-                BufferInfo::Shm{mpid, mvid} => {
+                BufferInfo::Shm { mpid, mvid } => {
                     self.coordinator.attach_shm(mvid, sid);
                 }
-                BufferInfo::EglImage{eiid} => {
+                BufferInfo::EglImage { eiid } => {
                     self.coordinator.attach_egl_image(eiid, sid);
                 }
-                BufferInfo::Dmabuf{dbid} => {
+                BufferInfo::Dmabuf { dbid } => {
                     self.coordinator.attach_dmabuf(dbid, sid);
                 }
             }
@@ -584,7 +580,8 @@ impl Facade for Proxy {
 
     fn set_as_cursor(&self, surface_oid: wl::ObjectId, hotspot_x: isize, hotspot_y: isize) {
         if let Some(&sid) = self.surface_oid_to_sid_dict.get(&surface_oid) {
-            self.coordinator.set_surface_offset(sid, Position { x: hotspot_x, y: hotspot_y });
+            let position = Position::new(hotspot_x, hotspot_y);
+            self.coordinator.set_surface_offset(sid, position);
             self.coordinator.set_surface_as_cursor(sid);
         }
     }
@@ -598,7 +595,8 @@ impl Facade for Proxy {
                        output_oid: wl::ObjectId,
                        buffer_oid: wl::ObjectId) {
         // Destroy memory pool to be used to transfer screenshot.
-        if let Some(&BufferInfo::Shm{mpid, mvid}) = self.buffer_oid_to_info_dict.get(&buffer_oid) {
+        if let Some(&BufferInfo::Shm { mpid, mvid }) =
+            self.buffer_oid_to_info_dict.get(&buffer_oid) {
             self.screenshot_memory = self.coordinator.destroy_memory_pool(mpid);
         }
 
@@ -678,7 +676,10 @@ impl Gateway for Proxy {
         }
     }
 
-    fn on_pointer_focus_changed(&self, old_sid: SurfaceId, new_sid: SurfaceId, position: Position) {
+    fn on_pointer_focus_changed(&self,
+                                old_sid: SurfaceId,
+                                new_sid: SurfaceId,
+                                position: Position) {
         if old_sid != SurfaceId::invalid() {
             if let Some(surface_info) = self.sid_to_surface_info_dict.get(&old_sid) {
                 if let Some(surface_oid) = surface_info.surface_oid {

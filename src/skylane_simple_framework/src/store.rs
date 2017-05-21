@@ -86,7 +86,7 @@ impl Store {
         if let Some(compositor_oid) = self.compositor_oid {
             if let Some(shell_oid) = self.shell_oid {
                 if let Some(dmabuf_oid) = self.dmabuf_oid {
-                    return Some((compositor_oid, shell_oid, dmabuf_oid))
+                    return Some((compositor_oid, shell_oid, dmabuf_oid));
                 }
             }
         }
@@ -98,7 +98,7 @@ impl Store {
         if let Some(compositor_oid) = self.compositor_oid {
             if let Some(shell_oid) = self.shell_oid {
                 if let Some(drm_oid) = self.drm_oid {
-                    return Some((compositor_oid, shell_oid, drm_oid))
+                    return Some((compositor_oid, shell_oid, drm_oid));
                 }
             }
         }

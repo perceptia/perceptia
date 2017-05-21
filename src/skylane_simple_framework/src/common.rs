@@ -58,8 +58,7 @@ pub fn create_shell_surface(connection_controller: &mut wl::Controller,
                                       surface_oid));
 
     // Show surface
-    send!(wl_shell_surface::set_toplevel(&connection_controller.get_socket(),
-                                         shell_surface_oid));
+    send!(wl_shell_surface::set_toplevel(&connection_controller.get_socket(), shell_surface_oid));
 
     // Perform first redraw
     send!(wl_surface::attach(&connection_controller.get_socket(),
@@ -68,18 +67,17 @@ pub fn create_shell_surface(connection_controller: &mut wl::Controller,
                              width as i32,
                              height as i32));
 
-    send!(wl_surface::commit(&connection_controller.get_socket(),
-                             surface_oid));
+    send!(wl_surface::commit(&connection_controller.get_socket(), surface_oid));
 }
 
 /// Requests creation of surface and shows it in shell.
 pub fn create_shell_surface2(connection_controller: &mut wl::Bundle,
-                            proxy: ProxyRef,
-                            compositor_oid: wl::ObjectId,
-                            shell_oid: wl::ObjectId,
-                            buffer_oid: wl::ObjectId,
-                            width: usize,
-                            height: usize) {
+                             proxy: ProxyRef,
+                             compositor_oid: wl::ObjectId,
+                             shell_oid: wl::ObjectId,
+                             buffer_oid: wl::ObjectId,
+                             width: usize,
+                             height: usize) {
     // Create surface
     let surface_oid = connection_controller.get_next_available_client_object_id();
     let surface_object = compositor::Surface::new_object(proxy.clone());
@@ -100,8 +98,7 @@ pub fn create_shell_surface2(connection_controller: &mut wl::Bundle,
                                       surface_oid));
 
     // Show surface
-    send!(wl_shell_surface::set_toplevel(&connection_controller.get_socket(),
-                                         shell_surface_oid));
+    send!(wl_shell_surface::set_toplevel(&connection_controller.get_socket(), shell_surface_oid));
 
     // Perform first redraw
     send!(wl_surface::attach(&connection_controller.get_socket(),
@@ -110,8 +107,7 @@ pub fn create_shell_surface2(connection_controller: &mut wl::Bundle,
                              width as i32,
                              height as i32));
 
-    send!(wl_surface::commit(&connection_controller.get_socket(),
-                             surface_oid));
+    send!(wl_surface::commit(&connection_controller.get_socket(), surface_oid));
 }
 
 // -------------------------------------------------------------------------------------------------

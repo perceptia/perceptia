@@ -130,7 +130,11 @@ impl Controller {
     /// Requests creation of `dmabuf` surface.
     ///
     /// After successful import server will send back buffer object ID via `dmabuf` protocol.
-    pub fn create_dmabuf_surface(&mut self, fd: RawFd, width: usize, height: usize, stride: usize) {
+    pub fn create_dmabuf_surface(&mut self,
+                                 fd: RawFd,
+                                 width: usize,
+                                 height: usize,
+                                 stride: usize) {
         let oids = self.store.borrow().ensure_dmabuf().clone();
         if let Some((compositor_oid, shell_oid, dmabuf_oid)) = oids {
             self.create_dmabuf_buffer(compositor_oid,

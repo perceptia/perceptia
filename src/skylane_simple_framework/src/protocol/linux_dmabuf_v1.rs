@@ -46,11 +46,7 @@ impl Dmabuf {
 // -------------------------------------------------------------------------------------------------
 
 impl zwp_linux_dmabuf_v1::Interface for Dmabuf {
-    fn format(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle,
-              _format: u32)
-              -> Task {
+    fn format(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _format: u32) -> Task {
         Task::None
     }
 }
@@ -106,19 +102,16 @@ impl zwp_linux_buffer_params_v1::Interface for DmabufParams {
         let buffer_object = DmabufBuffer::new_object(self.proxy.clone());
         bundle.add_object(buffer_oid, buffer_object);
         common::create_shell_surface2(bundle,
-                                     self.proxy.clone(),
-                                     self.compositor_oid,
-                                     self.shell_oid,
-                                     buffer_oid,
-                                     self.width,
-                                     self.height);
+                                      self.proxy.clone(),
+                                      self.compositor_oid,
+                                      self.shell_oid,
+                                      buffer_oid,
+                                      self.width,
+                                      self.height);
         Task::None
     }
 
-    fn failed(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle)
-              -> Task {
+    fn failed(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::None
     }
 }

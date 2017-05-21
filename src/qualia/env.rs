@@ -149,13 +149,19 @@ impl Env {
 
     /// Opens file in predefined directory.
     pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, Illusion> {
-        let mut dir = if let Some(dir) = match dir {
-               Directory::Data => self.data_dir.clone(),
-               Directory::Runtime => self.runtime_dir.clone(),
-        } {
-            dir
-        } else {
-            return Err(Illusion::General(format!("Requested directory is not available")));
+        let mut dir = {
+            let dir = {
+                match dir {
+                    Directory::Data => self.data_dir.clone(),
+                    Directory::Runtime => self.runtime_dir.clone(),
+                }
+            };
+
+            if let Some(dir) = dir {
+                dir
+            } else {
+                return Err(Illusion::General(format!("Requested directory is not available")));
+            }
         };
 
         dir.set_file_name(name);

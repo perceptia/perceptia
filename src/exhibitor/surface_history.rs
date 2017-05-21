@@ -42,15 +42,11 @@ impl SurfaceHistory {
 
     /// Return `n`th element from begin. If `n` is negative, return `n`th element from end.
     pub fn get_nth(&self, n: isize) -> Option<SurfaceId> {
-        if let Some(sid) = if n < 0 {
+        if n < 0 {
             let m = -n as usize;
-            self.history.get(self.history.len() - m)
+            self.history.get(self.history.len() - m).cloned()
         } else {
-            self.history.get(n as usize)
-        } {
-            Some(*sid)
-        } else {
-            None
+            self.history.get(n as usize).cloned()
         }
     }
 

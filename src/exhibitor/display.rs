@@ -19,7 +19,9 @@ use pointer::Pointer;
 // -------------------------------------------------------------------------------------------------
 
 /// `Display`
-pub struct Display<C> where C: ExhibitorCoordinationTrait {
+pub struct Display<C>
+    where C: ExhibitorCoordinationTrait
+{
     coordinator: C,
     pointer: Rc<RefCell<Pointer<C>>>,
     output: Box<Output>,
@@ -31,7 +33,9 @@ pub struct Display<C> where C: ExhibitorCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Display<C> where C: ExhibitorCoordinationTrait {
+impl<C> Display<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Display` constructor.
     pub fn new(coordinator: C,
                pointer: Rc<RefCell<Pointer<C>>>,
@@ -45,7 +49,7 @@ impl<C> Display<C> where C: ExhibitorCoordinationTrait {
             frame: frame,
             redraw_needed: true,
             page_flip_scheduled: false,
-            background_sid: SurfaceId::invalid()
+            background_sid: SurfaceId::invalid(),
         };
         d.redraw_all(); // TODO: Remove when notifications are supported in Wayland module.
         d

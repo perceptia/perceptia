@@ -121,8 +121,9 @@ fn print_egl_info(fd: io::RawFd) {
     };
 
     // Create on-screen EGL
-    let egl = match egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
-                                              gbm.surface.c_struct() as *mut _) {
+    let egl = egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,
+                                        gbm.surface.c_struct() as *mut _);
+    let egl = match egl {
         Ok(egl) => egl,
         Err(err) => {
             println!("\t\tError {}", err);
@@ -131,13 +132,15 @@ fn print_egl_info(fd: io::RawFd) {
     };
 
     // Print EGL info
-    println!("\t\tEGL version:  {:?}",
-             egl::query_string(egl.display, egl::EGL_VERSION).unwrap());
-    println!("\t\tEGL vendor:   {:?}",
-             egl::query_string(egl.display, egl::EGL_VENDOR).unwrap());
+    println!("\t\tEGL version:  {:?}", egl::query_string(egl.display, egl::EGL_VERSION).unwrap());
+    println!("\t\tEGL vendor:   {:?}", egl::query_string(egl.display, egl::EGL_VENDOR).unwrap());
     println!("\t\tEGL extensions:");
     for e in vec![egl_tools::ext::IMAGE_BASE_EXT] {
-        let has = if egl_tools::has_extension(egl.display, e) { "yes" } else { "NO" };
+        let has = if egl_tools::has_extension(egl.display, e) {
+            "yes"
+        } else {
+            "NO"
+        };
         println!("\t\t\t{}: {}", e, has);
     }
 
@@ -153,12 +156,9 @@ fn print_egl_info(fd: io::RawFd) {
     // Print GL info
     gl::load_with(|s| egl::get_proc_address(s) as *const std::os::raw::c_void);
     unsafe {
-        println!("\t\tGL vendor:    {:?}",
-                 ptr_to_string(gl::GetString(gl::VENDOR)));
-        println!("\t\tGL renderer:  {:?}",
-                 ptr_to_string(gl::GetString(gl::RENDERER)));
-        println!("\t\tGL version:   {:?}",
-                 ptr_to_string(gl::GetString(gl::VERSION)));
+        println!("\t\tGL vendor:    {:?}", ptr_to_string(gl::GetString(gl::VENDOR)));
+        println!("\t\tGL renderer:  {:?}", ptr_to_string(gl::GetString(gl::RENDERER)));
+        println!("\t\tGL version:   {:?}", ptr_to_string(gl::GetString(gl::VERSION)));
         println!("\t\tGLSL version: {:?}",
                  ptr_to_string(gl::GetString(gl::SHADING_LANGUAGE_VERSION)));
     }
@@ -171,10 +171,10 @@ fn print_egl_info(fd: io::RawFd) {
 fn print_devices() {
     let udev = device_manager::udev::Udev::new();
     udev.iterate_event_devices(|devnode, device_kind, device| {
-        println!("{:?}: ({:?})", device_kind, devnode);
-        print_properties_and_attributes(&device);
-        println!("");
-    });
+                                   println!("{:?}: ({:?})", device_kind, devnode);
+                                   print_properties_and_attributes(&device);
+                                   println!("");
+                               });
 
     udev.iterate_drm_devices(|devnode, device| {
         println!("display: ({:?})", devnode);

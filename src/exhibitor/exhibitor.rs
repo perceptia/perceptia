@@ -42,7 +42,9 @@ use display::Display;
 // -------------------------------------------------------------------------------------------------
 
 /// `Exhibitor` manages tasks related to drawing and compositing surfaces.
-pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
+pub struct Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     compositor: Compositor<C>,
     pointer: Rc<RefCell<Pointer<C>>>,
     displays: HashMap<i32, Display<C>>,
@@ -52,7 +54,9 @@ pub struct Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Exhibitor` constructor.
     pub fn new(coordinator: C,
                strategist: Strategist,
@@ -70,7 +74,9 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Handles notification about needed redraw.
     pub fn on_notify(&mut self) {
         for ref mut display in self.displays.values_mut() {
@@ -103,10 +109,8 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
 
         log_info1!("Exhibitor: creating display");
         let display_frame = self.compositor.create_display(info.area, info.make.clone());
-        let display = Display::new(self.coordinator.clone(),
-                                   self.pointer.clone(),
-                                   output,
-                                   display_frame);
+        let display =
+            Display::new(self.coordinator.clone(), self.pointer.clone(), output, display_frame);
         self.displays.insert(info.id, display);
 
         self.coordinator.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));
@@ -170,7 +174,9 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Input handlers.
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Handle pointer motion event.
     pub fn on_motion(&mut self, vector: Vector) {
         self.pointer.borrow_mut().move_and_cast(vector, &self.displays);
@@ -203,7 +209,9 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Getters
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Returns root frame.
     pub fn get_root(&self) -> frames::Frame {
         self.compositor.get_root()
@@ -218,7 +226,9 @@ impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper methods
-impl<C> Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Chooses new display position.
     ///
     /// New position is always chosen to be right to most right display.

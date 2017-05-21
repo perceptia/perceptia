@@ -67,9 +67,9 @@ impl KeyboardState {
         };
 
         Ok(KeyboardState {
-                xkb_state: xkb::State::new(&xkb_keymap.keymap),
-                mods: KeyMods::default(),
-            })
+               xkb_state: xkb::State::new(&xkb_keymap.keymap),
+               mods: KeyMods::default(),
+           })
     }
 
     /// Updates state with given key. Returns `true` when modifiers changed, false otherwise.

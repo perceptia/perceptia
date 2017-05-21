@@ -57,11 +57,7 @@ impl Drm {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_drm::Interface for Drm {
-    fn authenticate(&mut self,
-                    this_object_id: ObjectId,
-                    _bundle: &mut Bundle,
-                    id: u32)
-                    -> Task {
+    fn authenticate(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle, id: u32) -> Task {
         let mut proxy = self.proxy.borrow_mut();
         proxy.authenticate_drm_device(id);
         send!(wl_drm::authenticated(&proxy.get_socket(), this_object_id));

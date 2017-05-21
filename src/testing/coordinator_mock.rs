@@ -38,9 +38,7 @@ pub struct CoordinatorMock {
 
 impl CoordinatorMock {
     pub fn new() -> Self {
-        CoordinatorMock {
-            mock: Rc::new(RefCell::new(InnerCoordinatorMock::new())),
-        }
+        CoordinatorMock { mock: Rc::new(RefCell::new(InnerCoordinatorMock::new())) }
     }
 }
 
@@ -48,7 +46,9 @@ impl CoordinatorMock {
 
 #[allow(unused_variables)]
 impl SurfaceManagement for CoordinatorMock {
-    fn create_surface(&mut self) -> SurfaceId { SurfaceId::new(0) }
+    fn create_surface(&mut self) -> SurfaceId {
+        SurfaceId::new(0)
+    }
     fn attach_shm(&self, mvid: MemoryViewId, sid: SurfaceId) {}
     fn attach_egl_image(&self, eiid: EglImageId, sid: SurfaceId) {}
     fn attach_dmabuf(&self, dbid: DmabufId, sid: SurfaceId) {}
@@ -75,15 +75,15 @@ impl SurfaceControl for CoordinatorMock {
 #[allow(unused_variables)]
 impl SurfaceViewer for CoordinatorMock {
     fn get_surface(&self, sid: SurfaceId) -> Option<SurfaceInfo> {
-        Some( SurfaceInfo {
-            id: sid,
-            offset: Vector::default(),
-            parent_sid: SurfaceId::invalid(),
-            desired_size: Size::default(),
-            requested_size: Size::default(),
-            state_flags: surface_state::REGULAR,
-            data_source: DataSource::None,
-        })
+        Some(SurfaceInfo {
+                 id: sid,
+                 offset: Vector::default(),
+                 parent_sid: SurfaceId::invalid(),
+                 desired_size: Size::default(),
+                 requested_size: Size::default(),
+                 state_flags: surface_state::REGULAR,
+                 data_source: DataSource::None,
+             })
     }
 }
 
@@ -94,7 +94,8 @@ impl SurfaceAccess for CoordinatorMock {
     fn reconfigure(&mut self,
                    sid: SurfaceId,
                    size: Size,
-                   state_flags: surface_state::SurfaceState) {}
+                   state_flags: surface_state::SurfaceState) {
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

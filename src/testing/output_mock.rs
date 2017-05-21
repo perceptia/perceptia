@@ -22,9 +22,7 @@ pub struct InnerOutputMock {
 
 impl InnerOutputMock {
     pub fn new(info: OutputInfo) -> Self {
-        InnerOutputMock {
-            info: info,
-        }
+        InnerOutputMock { info: info }
     }
 }
 
@@ -40,9 +38,7 @@ pub struct OutputMock {
 
 impl OutputMock {
     pub fn new(info: OutputInfo) -> Self {
-        OutputMock {
-            mock: Rc::new(RefCell::new(InnerOutputMock::new(info))),
-        }
+        OutputMock { mock: Rc::new(RefCell::new(InnerOutputMock::new(info))) }
     }
 }
 

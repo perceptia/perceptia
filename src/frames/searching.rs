@@ -80,13 +80,11 @@ impl Searching for Frame {
         for ref frame in self.time_iter() {
             let area = frame.get_area();
             if area.contains(&point) {
-                return {
-                    if self.get_mode().is_leaf() {
-                        frame.clone()
-                    } else {
-                        frame.find_pointed(point - area.pos)
-                    }
-                };
+                return if self.get_mode().is_leaf() {
+                           frame.clone()
+                       } else {
+                           frame.find_pointed(point - area.pos)
+                       };
             }
         }
         self.clone()

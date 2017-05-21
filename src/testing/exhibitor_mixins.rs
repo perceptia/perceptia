@@ -52,135 +52,163 @@ pub trait ExhibitorCommandShorthands {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> ExhibitorCommandShorthands for Exhibitor<C> where C: ExhibitorCoordinationTrait {
+impl<C> ExhibitorCommandShorthands for Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Executes exalt command.
     fn exalt(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Jump,
             direction: Direction::Begin,
             magnitude: 0,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes ramify command.
     fn ramify(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Jump,
             direction: Direction::End,
             magnitude: 0,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes verticalize command.
     fn verticalize(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Configure,
             direction: Direction::North,
             magnitude: 0,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes horizontalize command.
     fn horizontalize(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Configure,
             direction: Direction::West,
             magnitude: 0,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes focus left command.
     fn focus_left(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Focus,
             direction: Direction::West,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes focus up command.
     fn focus_up(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Focus,
             direction: Direction::North,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes focus right command.
     fn focus_right(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Focus,
             direction: Direction::East,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes focus down command.
     fn focus_down(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Focus,
             direction: Direction::South,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes dive left command.
     fn dive_left(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Dive,
             direction: Direction::West,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes dive up command.
     fn dive_up(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Dive,
             direction: Direction::North,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes dive right command.
     fn dive_right(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Dive,
             direction: Direction::East,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes dive down command.
     fn dive_down(&mut self) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Dive,
             direction: Direction::South,
             magnitude: 1,
             string: String::default(),
-        });
+        };
+
+        self.on_command(command);
     }
 
     /// Executes jump to workspace command.
     fn jump_to_workspace(&mut self, workspace_name: &str) {
-        self.on_command(Command {
+        let command = Command {
             action: Action::Jump,
             direction: Direction::Workspace,
             magnitude: 0,
             string: workspace_name.to_owned(),
-        });
+        };
+
+        self.on_command(command);
     }
 }
 

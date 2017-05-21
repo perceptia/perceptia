@@ -51,7 +51,7 @@ pub struct RendererGl {
     vbo_texcoords: gl::types::GLuint,
 
     // Pointers to extension functions
-    image_target_texture: Option<egl_tools::ImageTargetTexture2DOesFunc>,
+    image_target_texture: Option<egl_tools::ImageTargetTexture2DOesFn>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -112,7 +112,7 @@ impl RendererGl {
         }
 
         // Get needed extension functions
-        self.image_target_texture = egl_tools::get_proc_address_of_image_target_texture_2d_oes();
+        self.image_target_texture = egl_tools::get_proc_addr_of_image_target_texture_2d_oes();
 
         Ok(())
     }
@@ -266,10 +266,10 @@ impl RendererGl {
 
     /// Loads dmabuf as texture. Returns dimensions of the dmabuf.
     fn load_dmabuf_as_texture(&mut self,
-                             sid: SurfaceId,
-                             attrs: &DmabufAttributes,
-                             time_stamp: Instant)
-                             -> Option<Size> {
+                              sid: SurfaceId,
+                              attrs: &DmabufAttributes,
+                              time_stamp: Instant)
+                              -> Option<Size> {
         // Get or generate texture info
         let texinfo = self.cache.get_or_generate_info(sid);
         unsafe { gl::BindTexture(gl::TEXTURE_2D, texinfo.get_texture()) };
@@ -318,9 +318,7 @@ impl RendererGl {
                     DataSource::Dmabuf { ref source, time_stamp } => {
                         self.load_dmabuf_as_texture(context.id, source, time_stamp)
                     }
-                    DataSource::None => {
-                        None
-                    }
+                    DataSource::None => None,
                 }
             };
 

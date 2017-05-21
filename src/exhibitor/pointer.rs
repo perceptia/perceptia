@@ -15,7 +15,9 @@ use display::Display;
 // -------------------------------------------------------------------------------------------------
 
 /// State of the pointer.
-pub struct Pointer<C> where C: ExhibitorCoordinationTrait {
+pub struct Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Position in global coordinates.
     position: Position,
 
@@ -43,7 +45,9 @@ pub struct Pointer<C> where C: ExhibitorCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+impl<C> Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Pointer` constructor.
     pub fn new(coordinator: C) -> Self {
         Pointer {
@@ -67,7 +71,9 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 // Getters
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait { 
+impl<C> Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Pointer` constructor.
     /// Returns pointer position in global coordinates.
     pub fn get_global_position(&self) -> Position {
@@ -93,7 +99,9 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Input handlers.
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+impl<C> Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Pointer` constructor.
     /// Move pointer and cast to correct output.
     pub fn move_and_cast(&mut self, vector: Vector, displays: &HashMap<i32, Display<C>>) {
@@ -173,7 +181,9 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Other requests.
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+impl<C> Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// Handles destruction of cursor surface.
     pub fn on_surface_destroyed(&mut self, sid: SurfaceId) {
         if self.csid == sid {
@@ -195,7 +205,9 @@ impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper methods
-impl<C> Pointer<C> where C: ExhibitorCoordinationTrait {
+impl<C> Pointer<C>
+    where C: ExhibitorCoordinationTrait
+{
     /// `Pointer` constructor.
     /// Cast position to one of available displays:
     /// - if position is in one of the displays - return it without change

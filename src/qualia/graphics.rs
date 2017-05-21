@@ -163,12 +163,7 @@ pub struct DmabufPlane {
 
 impl DmabufPlane {
     /// Constructs new `DmabufPlane`.
-    fn new(fd: RawFd,
-           offset: u32,
-           stride: u32,
-           modifier_hi: u32,
-           modifier_lo: u32)
-           -> Self {
+    fn new(fd: RawFd, offset: u32, stride: u32, modifier_hi: u32, modifier_lo: u32) -> Self {
         DmabufPlane {
             fd: fd,
             offset: offset,
@@ -216,7 +211,7 @@ impl DmabufAttributes {
             format: 0,
             flags: 0x0,
             num_planes: 0,
-            planes: [DmabufPlane::default(), DmabufPlane::default(), DmabufPlane::default()]
+            planes: [DmabufPlane::default(), DmabufPlane::default(), DmabufPlane::default()],
         }
     }
 
@@ -243,11 +238,7 @@ impl DmabufAttributes {
     }
 
     /// Sets image parameters.
-    pub fn create(&mut self,
-                  width: i32,
-                  height: i32,
-                  format: u32,
-                  flags: u32) {
+    pub fn create(&mut self, width: i32, height: i32, format: u32, flags: u32) {
         self.width = width;
         self.height = height;
         self.format = format;

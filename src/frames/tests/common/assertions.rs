@@ -4,6 +4,8 @@
 //! This module contains assertions for checking validity of frame layouts contained in module
 //! `layouts`.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 // -------------------------------------------------------------------------------------------------
 
 use frames::{Frame, Parameters};

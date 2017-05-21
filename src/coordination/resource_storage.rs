@@ -78,7 +78,7 @@ macro_rules! try_get_surface {
         match $coordinator.surfaces.get_mut(&$sid) {
             Some(surface) => surface,
             None => {
-                log_warn2!("Surface {} not found!", $sid);
+                log_warn3!("Surface {} not found!", $sid);
                 return
             }
         }
@@ -247,10 +247,11 @@ impl ResourceStorage {
 
     /// Sets pending buffer of given surface as current. Corrects sizes adds `drawable` show reason.
     pub fn commit_surface(&mut self, sid: SurfaceId) {
-        if {
+        let is_first_time_commited = {
             let surface = try_get_surface!(self, sid);
             surface.commit()
-        } {
+        };
+        if is_first_time_commited {
             self.show_surface(sid, show_reason::DRAWABLE);
         }
         self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
@@ -307,7 +308,8 @@ impl ResourceStorage {
             surface.set_parent_sid(parent_sid);
             surface.set_relative_position(Vector::default());
             surface.hide(show_reason::IN_SHELL);
-        } {
+        }
+        {
             let mut parent_surface = try_get_surface!(self, parent_sid);
             parent_surface.add_satellite(sid);
         }

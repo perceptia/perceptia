@@ -3,6 +3,8 @@
 
 //! Tests for packing `Frame` functionality.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 // -------------------------------------------------------------------------------------------------
 
 extern crate frames;

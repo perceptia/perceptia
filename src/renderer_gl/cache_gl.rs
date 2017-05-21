@@ -81,9 +81,7 @@ pub struct CacheGl {
 impl CacheGl {
     /// Constructs new `CacheGl`.
     pub fn new() -> Self {
-        CacheGl {
-            textures: HashMap::new(),
-        }
+        CacheGl { textures: HashMap::new() }
     }
 
     /// Tries to get texture for given surface. If surface was never drawn before creates new

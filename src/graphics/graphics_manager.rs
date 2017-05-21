@@ -51,7 +51,7 @@ impl GraphicsManager {
 
         // Check for image base extension and related functions
         if egl_tools::has_extension(display, egl_tools::ext::IMAGE_BASE_EXT) {
-            if egl_tools::get_proc_address_of_create_image_khr().is_none() {
+            if egl_tools::get_proc_addr_of_create_image_khr().is_none() {
                 return Err(Illusion::General(format!("Failed to get function address")));
             }
         } else {

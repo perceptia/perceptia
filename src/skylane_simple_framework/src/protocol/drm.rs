@@ -46,28 +46,17 @@ impl Drm {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_drm::Interface for Drm {
-    fn device(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle,
-              name: String)
-              -> Task {
+    fn device(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, name: String) -> Task {
         self.proxy.borrow_mut().set_drm_device_name(name);
         Task::None
     }
 
-    fn format(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle,
-              _format: u32)
-              -> Task {
+    fn format(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle, _format: u32) -> Task {
         // Nothing to do so far
         Task::None
     }
 
-    fn authenticated(&mut self,
-                     _this_object_id: ObjectId,
-                     _bundle: &mut Bundle)
-                     -> Task {
+    fn authenticated(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         self.proxy.borrow_mut().drm_authenticated();
         Task::None
     }

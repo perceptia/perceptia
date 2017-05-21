@@ -3,6 +3,8 @@
 
 //! Unit test of simple Exhibitor scenarios.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 extern crate qualia;
 extern crate frames;
 extern crate exhibitor;

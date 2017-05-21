@@ -3,6 +3,8 @@
 
 //! Tests for basic `Frame` functionality like appending, prepending, joining, popping and removing.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 // -------------------------------------------------------------------------------------------------
 
 extern crate frames;

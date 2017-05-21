@@ -50,30 +50,25 @@ pub struct Engine {
 // -------------------------------------------------------------------------------------------------
 
 impl Engine {
-    /// Creates new `Engine`. Sets display socket up.
+    /// Constructs new `Engine`.
+    ///
+    /// Sets display socket up. First tries default `skylane` socket, if that fails tries
+    /// `$XDG_RUNTIME_DIR/wayland-X` where `X` is number from 0 to 9.
+    ///
+    /// Panics if failed to set display socket up or to initialize keyboard state.
     pub fn new(coordinator: Coordinator,
                settings: Settings,
-               keyboard_config: KeyboardConfig) -> Self {
-        let mut partial_socket_path = PathBuf::from(std::env::var("XDG_RUNTIME_DIR").expect("XDG_RUNTIME_DIR must be defined!"));
-        let mut socket = None;
-        for i in 0..10{
-            partial_socket_path.push(format!("wayland-{}", i));
-            let try_sock = wl::DisplaySocket::new(&partial_socket_path);
-            if let Ok(sock) = try_sock{
-                socket = Some(sock);
-                break;
-            }
-            partial_socket_path.pop();
-        }
+               keyboard_config: KeyboardConfig)
+               -> Self {
         Engine {
-            display: socket.expect("wayland engine ERROR: cannot create a DisplaySocket."),
+            display: Self::create_display_socket().expect("creating display socket"),
             mediator: MediatorRef::new(Mediator::new()),
             clients: HashMap::new(),
             output_infos: Vec::new(),
             coordinator: coordinator,
             settings: settings,
             dispatcher: dharma::LocalDispatcher::new(),
-            keyboard_state: KeyboardState::new(&keyboard_config).expect("Creating keyboard state"),
+            keyboard_state: KeyboardState::new(&keyboard_config).expect("creating keyboard state"),
         }
     }
 
@@ -176,8 +171,32 @@ impl Engine {
 
 /// Private helper methods.
 impl Engine {
+    /// Logs `skylane` debugs.
     fn logger(s: String) {
         log_wayl4!("Skylane: {}", s);
+    }
+
+    /// Creates new display socket.
+    fn create_display_socket() -> Option<wl::DisplaySocket> {
+        match wl::DisplaySocket::new_default() {
+            Ok(socket) => Some(socket),
+            Err(err) => {
+                log_warn1!("Failed to create default display socket: {:?}", err);
+                let runtime_dir = std::env::var("XDG_RUNTIME_DIR").expect("reading runtime dir");
+                let mut socket_path = PathBuf::from(runtime_dir);
+                let mut socket = None;
+                for i in 0..10 {
+                    socket_path.push(format!("wayland-{}", i));
+                    socket = wl::DisplaySocket::new(&socket_path).ok();
+                    if socket.is_some() {
+                        log_info1!("Using {:?} as display socket", socket_path);
+                        break;
+                    }
+                    socket_path.pop();
+                }
+                socket
+            }
+        }
     }
 }
 
@@ -339,10 +358,12 @@ impl Gateway for Engine {
     }
 
     fn on_screenshot_done(&mut self) {
-        if let Some(id) = {
+        let id = {
             let mediator = self.mediator.borrow();
             mediator.get_screenshooter()
-        } {
+        };
+
+        if let Some(id) = id {
             if let Some(client) = self.clients.get_mut(&id) {
                 client.proxy.borrow_mut().on_screenshot_done();
             }

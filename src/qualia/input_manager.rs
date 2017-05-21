@@ -139,9 +139,8 @@ impl InnerInputManager {
         // Create default modes
         let common_mode = Mode::new(true, mode_name::COMMON.to_owned(), None);
         let insert_mode = Mode::new(true, mode_name::INSERT.to_owned(), None);
-        let normal_mode = Mode::new(false,
-                                    mode_name::NORMAL.to_owned(),
-                                    Some(binding_functions::Nop::new()));
+        let normal_mode =
+            Mode::new(false, mode_name::NORMAL.to_owned(), Some(binding_functions::Nop::new()));
 
         // Create manager
         let mut inner = InnerInputManager {
@@ -185,7 +184,7 @@ impl InnerInputManager {
         for ref mode in self.modes.iter() {
             if mode.is_active() {
                 if let Some(executor) = mode.get_executor(binding) {
-                    return Some(executor.duplicate())
+                    return Some(executor.duplicate());
                 }
             }
         }

@@ -517,14 +517,12 @@ pub struct SpawnProcess {
 impl SpawnProcess {
     pub fn new(command: &[&'static str]) -> Box<Self> {
         Box::new(SpawnProcess {
-            command: command.iter().map(|s| { s.to_string() }).collect::<Vec<String>>(),
-        })
+                     command: command.iter().map(|s| s.to_string()).collect::<Vec<String>>(),
+                 })
     }
 
     pub fn new_from_vec(command: Vec<String>) -> Box<Self> {
-        Box::new(SpawnProcess {
-            command: command,
-        })
+        Box::new(SpawnProcess { command: command })
     }
 }
 

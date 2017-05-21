@@ -3,6 +3,8 @@
 
 //! Regression tests for single workspace cases.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 extern crate qualia;
 extern crate frames;
 extern crate exhibitor;
@@ -39,9 +41,8 @@ impl Environment {
 
         let output = Box::new(OutputMock::new(output_info.clone()));
         let coordinator = CoordinatorMock::new();
-        let mut exhibitor = Exhibitor::new(coordinator.clone(),
-                                           strategist,
-                                           CompositorConfig::default());
+        let mut exhibitor =
+            Exhibitor::new(coordinator.clone(), strategist, CompositorConfig::default());
 
         exhibitor.on_output_found(output);
 

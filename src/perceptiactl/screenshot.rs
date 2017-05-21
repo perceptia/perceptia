@@ -69,15 +69,14 @@ impl Screenshooter {
         let output = self.outputs.pop().expect("pop outputs");
         println!(" => Output {} done", output.id);
 
-        let image = image::RgbaImage::from_raw(output.width as u32,
-                                               output.height as u32,
-                                               buffer).expect("create subimage");
+        let image = image::RgbaImage::from_raw(output.width as u32, output.height as u32, buffer)
+            .expect("create subimage");
         {
             let pos_x = output.x + self.x_offset;
             let pos_y = output.y + self.y_offset;
-            self.image.as_mut()
-                      .expect("borrow image")
-                      .copy_from(&image, pos_x as u32, pos_y as u32);
+            self.image.as_mut().expect("borrow image").copy_from(&image,
+                                                                 pos_x as u32,
+                                                                 pos_y as u32);
         }
     }
 

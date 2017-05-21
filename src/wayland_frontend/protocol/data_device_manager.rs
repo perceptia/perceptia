@@ -41,9 +41,7 @@ pub fn get_global() -> Global {
 impl DataDeviceManager {
     /// Creates new `DataDeviceManager`.
     fn new(_oid: ObjectId, proxy_ref: ProxyRef) -> Self {
-        DataDeviceManager {
-            proxy_ref: proxy_ref,
-        }
+        DataDeviceManager { proxy_ref: proxy_ref }
     }
 
     fn new_object(oid: ObjectId, _version: u32, proxy_ref: ProxyRef) -> Box<Object> {
@@ -96,9 +94,7 @@ impl DataSource {
             proxy.set_transfer(oid, transfer);
         }
 
-        DataSource {
-            proxy_ref: proxy_ref,
-        }
+        DataSource { proxy_ref: proxy_ref }
     }
 
     fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
@@ -109,11 +105,7 @@ impl DataSource {
 // -------------------------------------------------------------------------------------------------
 
 impl wl_data_source::Interface for DataSource {
-    fn offer(&mut self,
-             this_object_id: ObjectId,
-             _bundle: &mut Bundle,
-             mime_type: String)
-             -> Task {
+    fn offer(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle, mime_type: String) -> Task {
         let mut proxy = self.proxy_ref.borrow_mut();
         if let Some(ref mut transfer) = proxy.get_transfer(this_object_id) {
             transfer.add_mime_type(mime_type);
@@ -122,10 +114,7 @@ impl wl_data_source::Interface for DataSource {
         Task::None
     }
 
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy_ref.borrow_mut();
         proxy.remove_transfer(this_object_id);
         Task::Destroy { id: this_object_id }
@@ -157,9 +146,7 @@ impl DataDevice {
             proxy.add_data_device_oid(oid);
         }
 
-        DataDevice {
-            proxy_ref: proxy_ref,
-        }
+        DataDevice { proxy_ref: proxy_ref }
     }
 
     fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
@@ -193,10 +180,7 @@ impl wl_data_device::Interface for DataDevice {
         Task::None
     }
 
-    fn release(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn release(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         let mut proxy = self.proxy_ref.borrow_mut();
         proxy.remove_data_device_oid(this_object_id);
         Task::Destroy { id: this_object_id }
@@ -215,9 +199,7 @@ pub struct DataOffer {
 impl DataOffer {
     /// Creates new `DataOffer`.
     fn new(_oid: ObjectId, proxy_ref: ProxyRef) -> Self {
-        DataOffer {
-            proxy_ref: proxy_ref,
-        }
+        DataOffer { proxy_ref: proxy_ref }
     }
 
     pub fn new_object(oid: ObjectId, proxy_ref: ProxyRef) -> Box<Object> {
@@ -248,17 +230,11 @@ impl wl_data_offer::Interface for DataOffer {
         Task::None
     }
 
-    fn destroy(&mut self,
-               this_object_id: ObjectId,
-               _bundle: &mut Bundle)
-               -> Task {
+    fn destroy(&mut self, this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::Destroy { id: this_object_id }
     }
 
-    fn finish(&mut self,
-              _this_object_id: ObjectId,
-              _bundle: &mut Bundle)
-              -> Task {
+    fn finish(&mut self, _this_object_id: ObjectId, _bundle: &mut Bundle) -> Task {
         Task::None
     }
 

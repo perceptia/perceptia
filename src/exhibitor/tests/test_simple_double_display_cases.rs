@@ -3,6 +3,8 @@
 
 //! Regression tests for double display cases.
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 extern crate qualia;
 extern crate frames;
 extern crate exhibitor;

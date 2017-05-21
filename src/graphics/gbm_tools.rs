@@ -37,7 +37,7 @@ impl GbmBucket {
     /// `GbmBucket` constructor.
     pub fn new(fd: RawFd, size: Size) -> Result<Self, Illusion> {
         // Create device
-        let device =  self::get_device(fd)?;
+        let device = self::get_device(fd)?;
 
         // Create surface
         let surface = if let Some(surface) = libgbm::Surface::new(&device,

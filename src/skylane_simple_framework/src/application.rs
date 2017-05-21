@@ -83,7 +83,8 @@ impl Application {
         // Initiate communication
         let display_object = display::Display::new_object(proxy_ref.clone());
         let registry_object = registry::Registry::new_object(proxy_ref.clone());
-        let callback_object = callback::Callback::new_object(proxy_ref.clone(), Action::GlobalsDone);
+        let callback_object = callback::Callback::new_object(proxy_ref.clone(),
+                                                             Action::GlobalsDone);
 
         connection_controller.add_next_client_object(display_object);
         let registry_oid = connection_controller.add_next_client_object(registry_object);

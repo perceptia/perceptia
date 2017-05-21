@@ -14,7 +14,9 @@ use qualia::{AestheticsConfig, Buffer, PixelFormat, SurfaceId, AestheticsCoordin
 // -------------------------------------------------------------------------------------------------
 
 /// State of the background.
-pub struct Background<C> where C: AestheticsCoordinationTrait {
+pub struct Background<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Surface ID of the background.
     background_sid: SurfaceId,
 
@@ -27,7 +29,9 @@ pub struct Background<C> where C: AestheticsCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Background<C> where C: AestheticsCoordinationTrait {
+impl<C> Background<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Constructs new `Background`.
     pub fn new(coordinator: C, config: AestheticsConfig) -> Self {
         Background {
@@ -74,7 +78,9 @@ impl<C> Background<C> where C: AestheticsCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Background<C> where C: AestheticsCoordinationTrait {
+impl<C> Background<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Handles background surface change request.
     pub fn on_surface_change(&mut self, sid: SurfaceId) {
         self.background_sid = sid;

@@ -36,7 +36,7 @@ impl FrameRepresentation {
         FrameRepresentation {
             params: Parameters::new_leaf(SurfaceId::new(sid), geometry),
             branches: Vec::new(),
-            has_area: false
+            has_area: false,
         }
     }
 
@@ -51,6 +51,7 @@ impl FrameRepresentation {
     /// Creates representation of whole frame tree with display of given area and with given
     /// workspaces.
     pub fn single_display(area: Area, workspaces: Vec<FrameRepresentation>) -> Self {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
         FrameRepresentation::new(
             Parameters::new_root(),
             vec![
@@ -66,7 +67,9 @@ impl FrameRepresentation {
     /// workspaces with given geometry and branches.
     pub fn single_workspace(area: Area,
                             geometry: Geometry,
-                            branches: Vec<FrameRepresentation>) -> Self {
+                            branches: Vec<FrameRepresentation>)
+                            -> Self {
+        #[cfg_attr(rustfmt, rustfmt_skip)]
         FrameRepresentation::new(
             Parameters::new_root(),
             vec![

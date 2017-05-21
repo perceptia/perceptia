@@ -193,7 +193,7 @@ impl Settling for Frame {
                 Side::On => {
                     let mut new_target = {
                         if !target_parent.get_mode().is_top() &&
-                            target_parent.count_children() == 1 {
+                           target_parent.count_children() == 1 {
                             target_parent.clone()
                         } else if target.get_mode().is_leaf() {
                             target.ramify(Geometry::Stacked)

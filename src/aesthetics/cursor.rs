@@ -14,7 +14,9 @@ const CURSOR_SIZE: usize = 15;
 // -------------------------------------------------------------------------------------------------
 
 /// State of the cursor.
-pub struct Cursor<C> where C: AestheticsCoordinationTrait {
+pub struct Cursor<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Surface ID of cursor surface.
     csid: SurfaceId,
 
@@ -27,7 +29,9 @@ pub struct Cursor<C> where C: AestheticsCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
+impl<C> Cursor<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Constructs new `Cursor`.
     pub fn new(coordinator: C) -> Self {
         Cursor {
@@ -64,7 +68,9 @@ impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> Cursor<C> where C: AestheticsCoordinationTrait {
+impl<C> Cursor<C>
+    where C: AestheticsCoordinationTrait
+{
     /// Handles cursor surface change notification.
     pub fn on_surface_change(&mut self, sid: SurfaceId) {
         self.csid = sid;

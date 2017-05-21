@@ -13,7 +13,7 @@ use dharma::SignalId;
 use timing::Milliseconds;
 use defs::{Command, OutputInfo, SurfaceId};
 use defs::{Axis, Position, OptionalPosition, Vector, Button, Key};
-use graphics::{DrmBundle};
+use graphics::DrmBundle;
 
 // -------------------------------------------------------------------------------------------------
 

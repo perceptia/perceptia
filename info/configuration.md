@@ -32,6 +32,11 @@ Here is example configuration:
 ```
 aesthetics:
   background_path: /home/user/bg.jpg
+exhibitor:
+  compositor:
+    move_step: 10
+  strategist:
+    choose_target: anchored_but_popups
 input:
   touchpad_scale: 0.5
   touchpad_pressure_threshold: 50
@@ -41,41 +46,54 @@ keyboard:
 keybindings:
   insert:
     - key: W
-      mods: [LCTL, LALT]
+      mods: [lctl, lalt]
       execute: [epiphany]
     - key: S
-      mods: [LCTL, LALT]
+      mods: [lctl, lalt]
       execute: ["perceptiactl", "screenshot"]
-    - key: SPACE
-      mods: [LMETA]
+    - key: space
+      mods: [lalt]
       action: toggle_anchorization
 ```
 
 List of all available options:
 
  * `aesthetics`
-   - `background_path` - path to background image file
+    - `background_path` - path to background image file
  * `exhibitor`
-   - `move_step` - distance in pixels by which frames are moved by `move` command
+    * `compositor`
+       - `move_step` - distance in pixels by which frames are moved by `move` command
+    * `strategist` - changes strategies `compositor` uses to manager surfaces
+       - `choose_target` - decides if new surface should be anchored or not and where to be placed.
+         Possible values:
+          - `always_floating` - (default) every surface will be floating
+          - `anchored_but_popups` - every surface except popups should be anchored
+       - `choose_floating` - is surface is mean to be floating - decide where to place it. Possible
+         values:
+          - `always_centered` - always at the center of current worspace
+          - `random` - (default) random place on current workspace
  * `input`
-   - `touchpad_scale` - value by which touchpad move events will be scaled (the smaller the pointer
-     moves slower)
-   - `touchpad_pressure_threshold` - touchpad events with pressure below this value will be ignored
-   - `mouse_scale` - value by which mouse move events will be scaled (the smaller the pointer moves
-     slower)
+    - `touchpad_scale` - value by which touchpad move events will be scaled (the smaller the pointer
+      moves slower)
+    - `touchpad_pressure_threshold` - touchpad events with pressure below this value will be ignored
+    - `mouse_scale` - value by which mouse move events will be scaled (the smaller the pointer moves
+      slower)
  * `keyboard` - keyboard configuration for clients
-   - `layout` - keyboard layout (e.g. "us", "pl", "de", etc.)
-   - `variant` - keyboard variant (e.g. "dvorak", "colemak", etc.)
+    - `layout` - keyboard layout (e.g. "us", "pl", "de", etc.)
+    - `variant` - keyboard variant (e.g. "dvorak", "colemak", etc.)
  * `keybindings`
-   - `insert` - list of key bindings in `insert` mode (only this mode can be modified via
-     configuration file)
+    - `insert` - list of key bindings in `insert` mode (only this mode can be modified via
+      configuration file)
 
 Key binding entry consists of `key`, `mods` and either `action` or `execute`:
- * `key` - name of the key (currently only numbers, letters and `SPACE`). `key` is case insensitive
- * `mods` - list of modifiers: `LCTL`, `RCTL`, `LSHIFT`, `RSHIFT`, `LALT`, `RALT`, `LMETA`, `RMETA`.
+ * `key` - name of the key (currently only numbers, letters and `space`). `key` is case insensitive
+ * `mods` - list of modifiers: `lctl`, `rctl`, `lshift`, `rshift`, `lalt`, `ralt`, `lmeta`, `rmeta`.
    `mods` are case insensitive
  * `action` - name of predefined action
- * `execute` - command in form of list to be executed
+ * `execute` - command to be executed (in form of list)
+
+Note that `perceptia` differentiates between left and right mod keys (`lctl`, `lalt`, `lshift`,
+`lmeta` vs. `rctl`, `ralt`, `rshift`, `rmeta`)
 
 TODO: Add more information about actions.
 
@@ -92,31 +110,33 @@ This section presents set of default settings. Reader should be familiar with
 
 Global bindings:
 
- * `[meta]+[ctrl]+[esc]` - quit application
+ * `[lmeta]+[lctrl]+[esc]` - quit application
 
 Insert mode:
 
- * `[meta]+[esc]` - swap to normal mode
+ * `[lmeta]+[esc]` - swap to normal mode
 
- * `[meta]+[_X_ arrow]` - focus frame in `_X_` direction from currently focused one
+ * `[lmeta]+[space]` - toggles anchorization
 
- * `[meta]+[tab]` - circle history forward
+ * `[lmeta]+[_X_ arrow]` - focus frame in `_X_` direction from currently focused one
 
- * `[meta]+[shift]+[tab]` - circle history backward
+ * `[lmeta]+[tab]` - circle history forward
 
- * `[meta]+[_N_]` - focus workspace number `_N_`
+ * `[lmeta]+[lshift]+[tab]` - circle history backward
 
- * `[meta]+[shift]+[_X_ arrow]` - jump focused frame in `_X_` direction
+ * `[lmeta]+[_N_]` - focus workspace number `_N_`
 
- * `[meta]+[shift]+[ctrl]+[_N_]` - jump focused frame to workspace number `_N_`
+ * `[lmeta]+[lshift]+[_X_ arrow]` - jump focused frame in `_X_` direction
 
- * `[meta]+[alt]+[_X_ arrow]` - dive focused frame in `_X_` direction
+ * `[lmeta]+[lshift]+[lctrl]+[_N_]` - jump focused frame to workspace number `_N_`
 
- * `[meta]+[alt]+[shift]+[ctrl]+[_N_]` - dive focused frame to workspace number `_N_`
+ * `[lmeta]+[lalt]+[_X_ arrow]` - dive focused frame in `_X_` direction
 
- * `[meta]+[home]`, `[meta]+[end]` - exalt/ramify focused frame
+ * `[lmeta]+[lalt]+[lshift]+[lctrl]+[_N_]` - dive focused frame to workspace number `_N_`
 
- * `[ctrl]+[meta]+T` - spawn `weston-terminal`
+ * `[lmeta]+[home]`, `[lmeta]+[end]` - exalt/ramify focused frame
+
+ * `[lctrl]+[lmeta]+T` - spawn `weston-terminal`
 
 Normal mode:
 
@@ -126,7 +146,7 @@ Normal mode:
 
  * `[h]`, `[v]`, `[s]` - make layout of focused frame horizontal, vertical or stacked
 
- * `[f]`, `[shift]+[f]`, `[j]`, `[d]` - indicate focus/swap/jump/dive action
+ * `[f]`, `[lshift]+[f]`, `[j]`, `[d]` - indicate focus/swap/jump/dive action
 
  * `[home]`, `[end]` - indicate begin/end directions
 
@@ -141,4 +161,4 @@ down]` will move floating frame 5 steps down.
 
 Built-ins:
 
- * `[ctrl]+[alt]+[F_X_]` - switch to virtual terminal `_X_`
+ * `[lctrl]+[lalt]+[F_X_]` - switch to virtual terminal `_X_`

@@ -1,0 +1,37 @@
+= PERCEPTIACTL(1)
+:doctype: manpage
+
+== NAME
+
+perceptiactl - controls `perceptia` and provides useful information about system.
+
+== SYNOPSIS
+
+ perceptiactl <command> [<args>]
+
+== DESCRIPTION
+
+`perceptiactl` - is simple helper and diagnostic tool for `perceptia` surface compositor.
+
+== COMMANDS
+
+about::            Prints information about `perceptia`
+help::             Prints general help or the help of the given subcommand(s)
+info::             Prints basic information about system
+screenshot::       Takes screenshot
+verify-config::    Verifies validity of configurations files(s)
+
+== ENVIRONMENT
+
+$XDG_CONFIG_HOME:: Directory for user configuration.
+
+== FILES
+
+$XDG_CONFIG_HOME/perceptia/*.{conf,yaml}:: User configuration files.
+
+/etc/perceptia/*.{conf,yaml}:: System configuration files.
+
+== BUGS
+
+Bugs should be reported to https://github.com/perceptia/perceptia/issues
+

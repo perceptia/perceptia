@@ -5,11 +5,14 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::{self, fs};
+use std;
+use std::fs;
 use std::io::Read;
 use std::ops::BitAnd;
 use std::error::Error;
 use std::default::Default;
+use std::path::{Path, PathBuf};
+
 use libc;
 use time;
 use nix::sys::signal;
@@ -23,13 +26,17 @@ use log;
 
 // -------------------------------------------------------------------------------------------------
 
-const DATA_DIR_VAR: &'static str = "XDG_DATA_HOME";
 const RUNTIME_DIR_VAR: &'static str = "XDG_RUNTIME_DIR";
+const DATA_DIR_VAR: &'static str = "XDG_DATA_HOME";
+const CACHE_DIR_VAR: &'static str = "XDG_CACHE_HOME";
 const CONFIG_DIR_VAR: &'static str = "XDG_CONFIG_HOME";
 
-const DEFAULT_DATA_DIR: &'static str = "/tmp/perceptia";
 const DEFAULT_RUNTIME_DIR: &'static str = "/tmp";
 const DEFAULT_GLOBAL_CONFIG_DIR: &'static str = "/etc/perceptia";
+
+const DEFAULT_DATA_DIR_FRAGMENT: &'static str = ".local/share";
+const DEFAULT_CACHE_DIR_FRAGMENT: &'static str = ".cache";
+const DEFAULT_CONFIG_DIR_FRAGMENT: &'static str = ".config";
 
 // -------------------------------------------------------------------------------------------------
 
@@ -43,18 +50,19 @@ pub enum LogDestination {
 
 pub enum Directory {
     Data,
+    Cache,
     Runtime,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-// TODO: Directories should not be optional.
 // FIXME: Do not keep log in runtime directory, as it is removed at exit.
 pub struct Env {
-    data_dir: Option<std::path::PathBuf>,
-    runtime_dir: Option<std::path::PathBuf>,
-    local_config_dir: Option<std::path::PathBuf>,
-    global_config_dir: Option<std::path::PathBuf>,
+    runtime_dir: PathBuf,
+    data_dir: PathBuf,
+    cache_dir: PathBuf,
+    local_config_dir: Option<PathBuf>,
+    global_config_dir: Option<PathBuf>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -68,44 +76,36 @@ impl Env {
     ///  - initialize logger
     ///  - clean old files
     pub fn create(log_destination: LogDestination) -> Self {
-        let mut mine = Env {
-            data_dir: None,
-            runtime_dir: None,
-            local_config_dir: None,
-            global_config_dir: None,
-        };
-
         // Register signals
-        mine.register_signal_handler();
+        Self::register_signal_handler();
 
-        // Create data directory and initialize logger
-        if let Err(err) = mine.create_data_dir() {
-            log_warn1!("Failed to create data directory: {}", err);
-        } else if let Err(err) = mine.initialize_logger(log_destination) {
+        // Create cache directory and initialize logger
+        let cache_dir = Self::create_cache_dir().unwrap();
+        if let Err(err) = Self::initialize_logger(log_destination, &cache_dir) {
             log_warn1!("{}", err);
         }
 
         // Create runtime directory
-        if let Err(err) = mine.create_runtime_dir() {
-            log_warn1!("Failed to create runtime directory: {}", err);
-        }
+        let data_dir = Self::create_data_dir().unwrap();
+
+        // Create runtime directory
+        let runtime_dir = Self::create_runtime_dir().unwrap();
 
         // Check if configuration directories exist and remember them if so.
-        mine.check_config_dirs();
+        let (global_config_dir, local_config_dir) = Self::check_config_dirs();
+
+        // Construct `Env`
+        let mine = Env {
+            runtime_dir: runtime_dir,
+            data_dir: data_dir,
+            cache_dir: cache_dir,
+            local_config_dir: local_config_dir,
+            global_config_dir: global_config_dir,
+        };
 
         // Remove unneeded files
-        Self::remove_old_logs();
-
+        mine.remove_old_logs();
         mine
-    }
-
-    /// Cleans up environment: remove runtime directory.
-    fn cleanup(&mut self) {
-        if let Some(ref path) = self.runtime_dir {
-            if let Err(err) = fs::remove_dir_all(path) {
-                log_warn1!("Failed to remove runtime directory: {:?}", err);
-            }
-        }
     }
 
     /// Loads configuration.
@@ -150,17 +150,10 @@ impl Env {
     /// Opens file in predefined directory.
     pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, Illusion> {
         let mut dir = {
-            let dir = {
-                match dir {
-                    Directory::Data => self.data_dir.clone(),
-                    Directory::Runtime => self.runtime_dir.clone(),
-                }
-            };
-
-            if let Some(dir) = dir {
-                dir
-            } else {
-                return Err(Illusion::General(format!("Requested directory is not available")));
+            match dir {
+                Directory::Data => self.data_dir.clone(),
+                Directory::Cache => self.cache_dir.clone(),
+                Directory::Runtime => self.runtime_dir.clone(),
             }
         };
 
@@ -174,117 +167,135 @@ impl Env {
 
 // -------------------------------------------------------------------------------------------------
 
-// Helper methods associated with `Env`.
+// Initializing logger
 impl Env {
-    /// Registers handler for signals `SIGINT`, `SIGTERM`, `SIGSEGV` and `SIGABRT`. Panics if
-    /// something goes wrong.
-    fn register_signal_handler(&self) {
-        let flags = signal::SaFlags::empty().bitand(signal::SA_SIGINFO);
-        let handler = signal::SigHandler::Handler(signal_handler);
-        let sa = signal::SigAction::new(handler, flags, signal::SigSet::empty());
-
-        unsafe {
-            signal::sigaction(signal::SIGINT, &sa).unwrap();
-            signal::sigaction(signal::SIGTERM, &sa).unwrap();
-            signal::sigaction(signal::SIGSEGV, &sa).unwrap();
-            signal::sigaction(signal::SIGABRT, &sa).unwrap();
-        }
-    }
-
-    /// Create data directory.
-    fn create_data_dir(&mut self) -> Result<(), Illusion> {
-        let path = Self::read_path(DATA_DIR_VAR, DEFAULT_DATA_DIR);
-        let result = Self::mkdir(&path);
-        if result.is_ok() {
-            self.data_dir = Some(path);
-        }
-        result
-    }
-
-    /// Create runtime directory.
-    fn create_runtime_dir(&mut self) -> Result<(), Illusion> {
-        let path = Self::read_path(RUNTIME_DIR_VAR, DEFAULT_RUNTIME_DIR);
-        let path = path.join(format!("perceptia-{}", Self::get_time_representation()));
-        let result = Self::mkdir(&path);
-        if result.is_ok() {
-            self.runtime_dir = Some(path);
-        }
-        result
-    }
-
-    /// Check if config files exist is store paths.
-    ///
-    /// Global config directory is `/etc/perceptia/`.
-    ///
-    /// Local config directory is `$XDG_CONFIG_HOME/perceptia` if the variable exists, else
-    /// `~/.config/perceptia`.
-    fn check_config_dirs(&mut self) {
-        if let Some(mut home_dir) = std::env::home_dir() {
-            home_dir.push(".config");
-            let mut local = Self::read_path(CONFIG_DIR_VAR, home_dir.to_str().unwrap());
-            local.push("perceptia");
-            if local.exists() && local.is_dir() {
-                self.local_config_dir = Some(local);
-            }
-        }
-
-        let global = std::path::PathBuf::from(DEFAULT_GLOBAL_CONFIG_DIR);
-        if global.exists() && global.is_dir() {
-            self.global_config_dir = Some(global);
-        }
-    }
-
     /// Initializes logger to write log to given destination.
-    fn initialize_logger(&mut self, destination: LogDestination) -> Result<(), Illusion> {
+    fn initialize_logger(destination: LogDestination, dir: &Path) -> Result<(), Illusion> {
         match destination {
-            LogDestination::LogFile => self.initialize_logger_for_log_file(),
-            LogDestination::Disabled => self.disable_logger(),
-            // Nothing to do. `timber` prints to `stdout` by default.
-            LogDestination::StdOut => Ok(()),
+            LogDestination::LogFile => Self::initialize_logger_for_log_file(dir),
+            LogDestination::StdOut => Self::initialize_logger_for_stdout(),
+            LogDestination::Disabled => Self::disable_logger(),
         }
     }
 
     /// Chose log file path and sets logger up to use it.
-    fn initialize_logger_for_log_file(&mut self) -> Result<(), Illusion> {
-        if let Some(ref data_dir) = self.data_dir {
-            let path = data_dir.join(format!("log-{}", Self::get_time_representation()));
-            match timber::init(&path) {
-                Ok(ok) => {
-                    println!("Welcome to perceptia");
-                    println!("Log file in {:?}", path);
-                    Ok(ok)
-                }
-                Err(err) => Err(Illusion::General(err.description().to_owned())),
+    fn initialize_logger_for_log_file(dir: &Path) -> Result<(), Illusion> {
+        let path = dir.join(format!("log-{}", Self::get_time_representation()));
+        match timber::init(&path) {
+            Ok(ok) => {
+                println!("Welcome to perceptia");
+                println!("Log file in {:?}", path);
+                Ok(ok)
             }
-        } else {
-            let text = "Could not create log file! Data directory not available!".to_owned();
-            Err(Illusion::General(text))
+            Err(err) => Err(Illusion::General(err.description().to_owned())),
         }
     }
 
     /// Sets logger to write logs to `/dev/null`.
-    fn disable_logger(&mut self) -> Result<(), Illusion> {
-        if let Err(err) = timber::init(std::path::Path::new("/dev/null")) {
+    fn disable_logger() -> Result<(), Illusion> {
+        if let Err(err) = timber::init(Path::new("/dev/null")) {
             Err(Illusion::General(format!("Failed to disable logger: {}", err)))
         } else {
             Ok(())
         }
     }
+
+    /// Sets logger to write logs to `stdout`.
+    fn initialize_logger_for_stdout() -> Result<(), Illusion> {
+        // Nothing to do. `timber` prints to `stdout` by default.
+        Ok(())
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-// Static functions associated with `Env`.
+// Cleaning up
 impl Env {
+    /// Cleans up environment: remove runtime directory.
+    fn cleanup(&mut self) {
+        if let Err(err) = fs::remove_dir_all(&self.runtime_dir) {
+            log_warn1!("Failed to remove runtime directory: {:?}", err);
+        }
+    }
+
+    /// Removes logs older than one day.
+    fn remove_old_logs(&self) {
+        // FIXME: Implement removing old log files.
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// Creating directories
+impl Env {
+    /// Create runtime directory.
+    fn create_runtime_dir() -> Result<PathBuf, Illusion> {
+        let mut path = Self::read_path(RUNTIME_DIR_VAR, DEFAULT_RUNTIME_DIR);
+        path.push(format!("perceptia-{}", Self::get_time_representation()));
+        Self::mkdir(&path).and(Ok(path))
+    }
+
+    /// Create data directory.
+    fn create_data_dir() -> Result<PathBuf, Illusion> {
+        let mut default_path = std::env::home_dir().unwrap();
+        default_path.push(DEFAULT_DATA_DIR_FRAGMENT);
+        let mut path = Self::read_path(DATA_DIR_VAR, default_path.to_str().unwrap());
+        path.push("perceptia");
+        Self::mkdir(&path).and(Ok(path))
+    }
+
+    /// Create cache directory.
+    fn create_cache_dir() -> Result<PathBuf, Illusion> {
+        let mut default_path = std::env::home_dir().unwrap();
+        default_path.push(DEFAULT_CACHE_DIR_FRAGMENT);
+        let mut path = Self::read_path(CACHE_DIR_VAR, default_path.to_str().unwrap());
+        path.push("perceptia");
+        Self::mkdir(&path).and(Ok(path))
+    }
+
+    /// Checks if config directories exist.
+    ///
+    /// Global config directory is `/etc/perceptia/`.
+    ///
+    /// Local config directory is `$XDG_CONFIG_HOME/perceptia` if the variable exists, else
+    /// `~/.config/perceptia`.
+    fn check_config_dirs() -> (Option<PathBuf>, Option<PathBuf>) {
+        // Check if local config directory exists
+        let local_config_dir = {
+            let mut default_path = std::env::home_dir().unwrap();
+            default_path.push(DEFAULT_CONFIG_DIR_FRAGMENT);
+            let mut local = Self::read_path(CONFIG_DIR_VAR, default_path.to_str().unwrap());
+            local.push("perceptia");
+            if local.exists() && local.is_dir() {
+                Some(local)
+            } else {
+                None
+            }
+        };
+
+        // Check if global config directory exists
+        let global_config_dir = {
+            let global = PathBuf::from(DEFAULT_GLOBAL_CONFIG_DIR);
+            if global.exists() && global.is_dir() {
+                Some(global)
+            } else {
+                None
+            }
+        };
+
+        // Return results
+        (global_config_dir, local_config_dir)
+    }
+
     /// Reads given environment variable and if exists returns its value or default value otherwise.
-    fn read_path(var: &str, default_path: &str) -> std::path::PathBuf {
-        let mut path = std::path::PathBuf::new();
-        path.push(std::env::var(var).unwrap_or(default_path.to_owned()));
+    fn read_path(var: &str, default_path: &str) -> PathBuf {
+        let mut path = PathBuf::new();
+        path.push(std::env::var(var).unwrap_or(default_path.to_string()));
         path
     }
 
     /// Helper function for creating directory.
-    fn mkdir(path: &std::path::PathBuf) -> Result<(), Illusion> {
+    fn mkdir(path: &PathBuf) -> Result<(), Illusion> {
         if path.exists() {
             if path.is_dir() {
                 Ok(())
@@ -296,11 +307,6 @@ impl Env {
         } else {
             Ok(())
         }
-    }
-
-    /// Removes logs older than one day.
-    fn remove_old_logs() {
-        // FIXME: Implement removing old log files.
     }
 
     /// Helper function for generating temporary director and file names. Returns string in format
@@ -318,34 +324,52 @@ impl Env {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Drop for Env {
-    fn drop(&mut self) {
-        self.cleanup();
-        log_info1!("Thank you for running perceptia! Bye!");
+// Handling signals.
+impl Env {
+    /// Registers handler for signals `SIGINT`, `SIGTERM`, `SIGSEGV` and `SIGABRT`. Panics if
+    /// something goes wrong.
+    fn register_signal_handler() {
+        let flags = signal::SaFlags::empty().bitand(signal::SA_SIGINFO);
+        let handler = signal::SigHandler::Handler(Self::signal_handler);
+        let sa = signal::SigAction::new(handler, flags, signal::SigSet::empty());
+
+        unsafe {
+            signal::sigaction(signal::SIGINT, &sa).unwrap();
+            signal::sigaction(signal::SIGTERM, &sa).unwrap();
+            signal::sigaction(signal::SIGSEGV, &sa).unwrap();
+            signal::sigaction(signal::SIGABRT, &sa).unwrap();
+        }
+    }
+
+    /// System signal handler.
+    ///
+    /// Normally `SIGINT` and `SIGTERM` signals should be blocked and be handled by `Dispatcher` and
+    /// this function should be only able to catch these signals after `Dispatcher` exited.
+    ///
+    /// `SIGSEGV` and `SIGABRT` are handler by exiting.
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    extern fn signal_handler(signum: libc::c_int) {
+        if (signum == signal::SIGSEGV as libc::c_int)
+        || (signum == signal::SIGABRT as libc::c_int) {
+            log_info1!("Signal {} received asynchronously", signum);
+            log::backtrace();
+            std::process::exit(1);
+        } else if (signum == signal::SIGINT as libc::c_int)
+        || (signum == signal::SIGTERM as libc::c_int) {
+            log_info1!("Signal {} received asynchronously", signum);
+            log::backtrace();
+        } else {
+            log_info2!("Signal {} received asynchronously: ignore", signum);
+        }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-/// System signal handler.
-///
-/// Normally `SIGINT` and `SIGTERM` signals should be blocked and be handled by `Dispatcher` and
-/// this function should be only able to catch these signals after `Dispatcher` exited.
-///
-/// `SIGSEGV` and `SIGABRT` are handler by exiting.
-#[cfg_attr(rustfmt, rustfmt_skip)]
-extern fn signal_handler(signum: libc::c_int) {
-    if (signum == signal::SIGSEGV as libc::c_int)
-    || (signum == signal::SIGABRT as libc::c_int) {
-        log_info1!("Signal {} received asynchronously", signum);
-        log::backtrace();
-        std::process::exit(1);
-    } else if (signum == signal::SIGINT as libc::c_int)
-    || (signum == signal::SIGTERM as libc::c_int) {
-        log_info1!("Signal {} received asynchronously", signum);
-        log::backtrace();
-    } else {
-        log_info2!("Signal {} received asynchronously: ignore", signum);
+impl Drop for Env {
+    fn drop(&mut self) {
+        self.cleanup();
+        log_info1!("Thank you for running perceptia! Bye!");
     }
 }
 

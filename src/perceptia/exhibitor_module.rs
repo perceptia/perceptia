@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{InitResult, Module, ModuleConstructor};
+use dharma::{Module, ModuleConstructor, SignalId};
 use qualia::{DrmBundle, perceptron, Perceptron};
 use output::DrmOutput;
 use coordination::{Context, Coordinator};
@@ -41,8 +41,7 @@ impl Module for ExhibitorModule {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self) -> InitResult {
-        log_info1!("Starting Exhibitor module");
+    fn get_signals(&self) -> Vec<SignalId> {
         vec![perceptron::NOTIFY,
              perceptron::SUSPEND,
              perceptron::WAKEUP,
@@ -59,6 +58,10 @@ impl Module for ExhibitorModule {
              perceptron::SURFACE_DESTROYED,
              perceptron::KEYBOARD_FOCUS_CHANGED,
              perceptron::TAKE_SCREENSHOT]
+    }
+
+    fn initialize(&mut self) {
+        log_info1!("Exhibitor module initialized");
     }
 
     fn execute(&mut self, package: &Self::T) {
@@ -93,7 +96,7 @@ impl Module for ExhibitorModule {
     }
 
     fn finalize(&mut self) {
-        log_info1!("Finalized Exhibitor module");
+        log_info1!("Exhibitor module finalized");
     }
 }
 

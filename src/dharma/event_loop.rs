@@ -22,12 +22,6 @@ use system;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Result of initialization of module. Module should return vector of signal identifiers it wants
-/// to be subscribed for.
-pub type InitResult = Vec<bridge::SignalId>;
-
-// -------------------------------------------------------------------------------------------------
-
 /// `Module` defines independent part of application. One module is bounded only to single thread.
 /// More modules may be run in the same thread. Modules do not share memory, communicate with
 /// signals.
@@ -39,7 +33,10 @@ pub trait Module {
     type C: Clone + Send + Sync;
 
     /// Callback run just after start of `Module`.
-    fn initialize(&mut self) -> InitResult;
+    fn get_signals(&self) -> Vec<bridge::SignalId>;
+
+    /// Callback run just after start of `Module`.
+    fn initialize(&mut self);
 
     /// Callback run on every message `Module` subscribed for.
     fn execute(&mut self, package: &Self::T);
@@ -127,7 +124,7 @@ pub struct EventLoopInfo<P, C>
 // -------------------------------------------------------------------------------------------------
 
 impl<P, C> EventLoopInfo<P, C>
-    where P: Clone + Send + std::fmt::Display,
+    where P: Clone + Send + std::fmt::Debug,
           C: Clone + Send + Sync
 {
     /// Constructs new `EventLoopInfo`.
@@ -169,7 +166,7 @@ pub struct EventLoop<P, C>
 // -------------------------------------------------------------------------------------------------
 
 impl<P, C> EventLoop<P, C>
-    where P: Clone + Send + std::fmt::Display,
+    where P: Clone + Send + std::fmt::Debug,
           C: Clone + Send + Sync
 {
     /// `EventLoop` constructor. Constructs `EventLoop` and all assigned modules.
@@ -208,9 +205,11 @@ impl<P, C> EventLoop<P, C>
     /// Helper method for initializing modules.
     fn initialize(&mut self) {
         self.signaler.register(&self.receiver);
+
+        // Subscribe signals
         let mut i = 0;
-        for mut m in self.modules.iter_mut() {
-            let signals = m.initialize();
+        for m in self.modules.iter() {
+            let signals = m.get_signals();
             for s in signals {
                 if self.subscriptions.contains_key(&s) {
                     match self.subscriptions.get_mut(&s) {
@@ -225,6 +224,11 @@ impl<P, C> EventLoop<P, C>
                 }
             }
             i += 1;
+        }
+
+        // Initialize modules
+        for mut m in self.modules.iter_mut() {
+            m.initialize();
         }
     }
 

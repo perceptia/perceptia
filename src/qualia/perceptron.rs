@@ -87,7 +87,7 @@ pub enum Perceptron {
 
 // -------------------------------------------------------------------------------------------------
 
-impl std::fmt::Display for Perceptron {
+impl std::fmt::Debug for Perceptron {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match *self {
             Perceptron::Notify => write!(f, "Notify"),

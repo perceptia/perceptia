@@ -73,7 +73,7 @@ impl Engine {
     }
 
     /// Starts `Engine`: adds display socket to `LocalDispatcher`.
-    pub fn start(&mut self, sender: dharma::Sender<Perceptron>) {
+    pub fn start(&mut self, sender: dharma::DirectSender<Perceptron>) {
         let handler = Box::new(DisplayEventHandler::new(self.display.clone(), sender));
         self.dispatcher.add_source(handler, dharma::event_kind::READ);
     }

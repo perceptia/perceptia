@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{InitResult, Module, ModuleConstructor};
+use dharma::{Module, ModuleConstructor, SignalId};
 use qualia::{Perceptron, perceptron};
 use coordination::Context;
 use device_manager::DeviceManager;
@@ -31,8 +31,12 @@ impl<'a> Module for DeviceManagerModule<'a> {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self) -> InitResult {
+    fn get_signals(&self) -> Vec<SignalId> {
         vec![perceptron::SUSPEND, perceptron::WAKEUP]
+    }
+
+    fn initialize(&mut self) {
+        log_info1!("Device Manager module initialized");
     }
 
     // FIXME: Finnish handling signals in `DeviceManagerModule`.
@@ -45,7 +49,7 @@ impl<'a> Module for DeviceManagerModule<'a> {
     }
 
     fn finalize(&mut self) {
-        log_info1!("Finalized Device Manager module");
+        log_info1!("Device Manager module finalized");
     }
 }
 

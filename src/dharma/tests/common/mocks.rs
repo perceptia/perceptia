@@ -10,7 +10,7 @@ extern crate dharma;
 use std::sync::{Arc, Mutex};
 use std::thread;
 
-use dharma::{InitResult, Module, ModuleConstructor};
+use dharma::{Module, ModuleConstructor, SignalId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -165,22 +165,27 @@ impl Module for ModuleMock {
     type T = String;
     type C = ContextStub;
 
-    /// Handle `initialize` invocation.
-    #[allow(unused_variables)]
-    fn initialize(&mut self) -> InitResult {
-        let mut mine = self.inner.lock().unwrap();
-        mine.times_initialized += 1;
+    /// Handles `get_signals` invocation.
+    fn get_signals(&self) -> Vec<SignalId> {
+        let mine = self.inner.lock().unwrap();
         mine.signals.clone()
     }
 
-    /// Handle `execute` invocation.
+    /// Handles `initialize` invocation.
+    #[allow(unused_variables)]
+    fn initialize(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.times_initialized += 1;
+    }
+
+    /// Handles `execute` invocation.
     fn execute(&mut self, package: &Self::T) {
         let mut mine = self.inner.lock().unwrap();
         mine.times_executed += 1;
         mine.packages.push(package.clone());
     }
 
-    /// Handle `finalize` invocation.
+    /// Handles `finalize` invocation.
     fn finalize(&mut self) {
         let mut mine = self.inner.lock().unwrap();
         mine.times_finalized += 1;

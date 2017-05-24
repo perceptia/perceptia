@@ -19,13 +19,13 @@ use constants;
 /// Implementation of `dharma::EventHandler` for global (display) socket.
 pub struct DisplayEventHandler {
     socket: wl::DisplaySocket,
-    sender: dharma::Sender<Perceptron>,
+    sender: dharma::DirectSender<Perceptron>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl DisplayEventHandler {
-    pub fn new(socket: wl::DisplaySocket, sender: dharma::Sender<Perceptron>) -> Self {
+    pub fn new(socket: wl::DisplaySocket, sender: dharma::DirectSender<Perceptron>) -> Self {
         DisplayEventHandler {
             socket: socket,
             sender: sender,

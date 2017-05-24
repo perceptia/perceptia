@@ -52,7 +52,7 @@ pub use signaler::Signaler;
 /// Implementation of main thread loop with notification listening.
 ///
 pub mod event_loop;
-pub use event_loop::{EventLoop, EventLoopInfo, InitResult, ServiceInfo};
+pub use event_loop::{EventLoop, EventLoopInfo, ServiceInfo};
 pub use event_loop::{Module, ModuleConstructor, Service, ServiceConstructor};
 
 /// Handling system events (`epoll` wrapper).

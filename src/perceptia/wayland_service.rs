@@ -5,23 +5,22 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::time;
 use std::any::Any;
+use std::time;
 
 use dharma;
 
 use qualia::{perceptron, Perceptron, SurfaceViewer};
+use coordination::Context;
 
 use wayland_frontend::{Engine, Gateway, constants};
-
-use coordination::Context;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Helper macro for printing warning when receiver message with data of wrong type.
 macro_rules! warn_wrong {
     ($id:expr, $pkg:expr) => {
-        log_warn1!("WaylandService: wrong data for message '{}' - {}", $id, $pkg);
+        log_warn1!("WaylandService: wrong data for message '{:?}' - {:?}", $id, $pkg);
     }
 }
 
@@ -69,6 +68,7 @@ impl dharma::Service for WaylandService {
 impl WaylandService {
     /// Initializes `WaylandService`.
     fn initialize(&mut self) {
+        // Subscribe for signals
         self.context.get_signaler().register(&self.receiver);
         for s in vec![perceptron::DISPLAY_CREATED,
                       perceptron::OUTPUT_FOUND,
@@ -85,7 +85,16 @@ impl WaylandService {
                       perceptron::SCREENSHOT_DONE] {
             self.context.get_signaler().subscribe(s, &self.receiver);
         }
-        log_info1!("Started Wayland service");
+
+        // Prepare direct sender - messages from clients will be sent directly to this thread
+        // without any signaling overhead.
+        let mut sender = dharma::DirectSender::new();
+        dharma::direct_connect(&mut sender, &self.receiver);
+
+        // Start the engine
+        self.engine.start(sender);
+
+        log_info1!("Wayland service initialized");
     }
 
     /// Runs main loop.
@@ -94,9 +103,6 @@ impl WaylandService {
         // NOTE: This is not best solution - alternatively listen to messages from the rest of
         // application and from Wayland clients. Maybe move receiving from `Engine` to global
         // `Dispatcher`?
-        let mut sender = dharma::Sender::new();
-        dharma::connect(&mut sender, &self.receiver);
-        self.engine.start(sender);
         let d = time::Duration::from_millis(10);
         while self.listen(d) {
             self.engine.receive();
@@ -219,7 +225,7 @@ impl WaylandService {
 
     /// Finalizes service.
     fn finalize(&mut self) {
-        log_info1!("Stopped Wayland service");
+        log_info1!("Wayland service finalized");
     }
 }
 

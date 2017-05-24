@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use dharma::{InitResult, Module, ModuleConstructor};
+use dharma::{Module, ModuleConstructor, SignalId};
 use qualia::{perceptron, Perceptron};
 use coordination::{Context, Coordinator};
 use aesthetics::Aesthetics;
@@ -35,13 +35,16 @@ impl Module for AestheticsModule {
     type T = Perceptron;
     type C = Context;
 
-    fn initialize(&mut self) -> InitResult {
-        log_info1!("Starting Aesthetics module");
+    fn get_signals(&self) -> Vec<SignalId> {
         vec![perceptron::DISPLAY_CREATED,
              perceptron::CURSOR_SURFACE_CHANGE,
              perceptron::BACKGROUND_SURFACE_CHANGE,
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::SURFACE_DESTROYED]
+    }
+
+    fn initialize(&mut self) {
+        log_info1!("Aesthetics module initialized");
     }
 
     fn execute(&mut self, package: &Self::T) {
@@ -60,7 +63,7 @@ impl Module for AestheticsModule {
     }
 
     fn finalize(&mut self) {
-        log_info1!("Finalized Aesthetics module");
+        log_info1!("Aesthetics module finalized");
     }
 }
 

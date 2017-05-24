@@ -7,6 +7,7 @@
 
 use std;
 use std::fs;
+use std::time::{Duration, SystemTime};
 use std::io::Read;
 use std::ops::BitAnd;
 use std::error::Error;
@@ -180,7 +181,7 @@ impl Env {
 
     /// Chose log file path and sets logger up to use it.
     fn initialize_logger_for_log_file(dir: &Path) -> Result<(), Illusion> {
-        let path = dir.join(format!("log-{}", Self::get_time_representation()));
+        let path = dir.join(format!("log-{}.log", Self::get_time_representation()));
         match timber::init(&path) {
             Ok(ok) => {
                 println!("Welcome to perceptia");
@@ -218,9 +219,40 @@ impl Env {
         }
     }
 
-    /// Removes logs older than one day.
+    /// Removes logs older than two days.
     fn remove_old_logs(&self) {
-        // FIXME: Implement removing old log files.
+        let transition_time = SystemTime::now() - Duration::new(2 * 24 * 60 * 60, 0);
+        if let Ok(entries) = fs::read_dir(&self.cache_dir) {
+            for entry in entries {
+                if let Ok(entry) = entry {
+                    let path = entry.path();
+                    if let Some(extension) = path.extension() {
+                        if extension == "log" {
+                            // Check if file is old enough to be removed. In case of any error
+                            // remove the file.
+                            let meta = path.metadata();
+                            let good_to_remove = {
+                                if let Ok(meta) = meta {
+                                    if let Ok(access_time) = meta.accessed() {
+                                        access_time < transition_time
+                                    } else {
+                                        true
+                                    }
+                                } else {
+                                    true
+                                }
+                            };
+
+                            if good_to_remove {
+                                if let Err(err) = fs::remove_file(&path) {
+                                    log_warn1!("Failed to remove old log file {:?}: {}", path, err);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

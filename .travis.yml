@@ -5,10 +5,10 @@ rust:
   - stable
   - beta
   - nightly
+  - 1.16.0
 
 matrix:
   allow_failures:
-    - rust: beta
     - rust: nightly
 
 before_install:

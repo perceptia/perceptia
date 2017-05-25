@@ -60,7 +60,7 @@ impl wl_callback::Interface for Callback {
                 self.proxy.borrow_mut().globals_done();
                 let id = bundle.get_next_available_client_object_id();
                 let object = Display::synchronize(self.proxy.clone(), id, Action::InitDone);
-                Task::Create { id, object }
+                Task::Create { id: id, object: object }
             }
             Action::InitDone => {
                 self.proxy.borrow_mut().init_done();

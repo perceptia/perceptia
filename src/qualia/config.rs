@@ -20,9 +20,9 @@ use binding_functions;
 // -------------------------------------------------------------------------------------------------
 
 macro_rules! load_config {
-    ( $config:expr; $section:expr; $( $key:ident: $type:ident ),* ) => {
+    ( $config:expr; $section:expr; $( $key:ident: $typ:ident ),* ) => {
         $(
-            load_config!(_entry_ $config; $section; $key: $type);
+            load_config!(_entry_ $config; $section; $key: $typ);
         )*
     };
     ( _entry_ $config:expr; $section:expr; $key:ident: i32 ) => {

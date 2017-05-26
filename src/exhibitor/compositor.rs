@@ -258,10 +258,8 @@ impl<C> Compositor<C>
     /// For convenience if target is `Leaf` its parent is reconfigured.
     fn configure(&mut self, frame: &mut Frame, direction: Direction) -> CommandResult {
         // Check validity of frame
-        if !frame.get_mode().is_reorientable() {
-            log_warn1!("Can not change geometry of frame which is not \
-                       container, leaf or workspace. {:?}",
-                       frame);
+        if !frame.is_reorientable() {
+            log_warn1!("Can not change geometry of this frame: {:?}", frame);
             return CommandResult::WrongFrame;
         }
 
@@ -416,7 +414,7 @@ impl<C> Compositor<C>
                   direction: Direction,
                   distance: i32)
                   -> CommandResult {
-        if !frame.is_anchored() {
+        if frame.get_mobility().is_floating() {
             let distance = distance as isize;
             let vector = {
                     if direction == Direction::North {
@@ -444,7 +442,7 @@ impl<C> Compositor<C>
     ///
     /// TODO: Extract preferred size from frame.
     fn anchorize(&mut self, mut frame: Frame) -> CommandResult {
-        if frame.is_anchored() {
+        if frame.get_mobility().is_anchored() {
             let workspace = self.find_current_workspace();
             let decision = self.strategist.choose_floating(workspace.get_size(), None);
             frame.deanchorize(decision.area, &mut self.coordinator);
@@ -465,7 +463,7 @@ impl<C> Compositor<C>
     fn exalt(&mut self, frame: &mut Frame) {
         // Choose target
         let mut above = frame.get_parent().expect("exalted frame must have parent");
-        if !above.get_mode().is_top() {
+        if above.is_reanchorizable() {
             let mut target = if above.get_geometry() == Geometry::Stacked {
                 above = above.get_parent().expect("exalted frame must have grand parent");
                 if above.get_geometry() == Geometry::Stacked {

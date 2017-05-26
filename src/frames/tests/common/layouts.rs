@@ -10,7 +10,8 @@
 
 use frames::Frame;
 use frames::Geometry::{Horizontal, Stacked, Vertical};
-use qualia::{SurfaceId, Position, Size};
+use frames::Mobility::Floating;
+use qualia::{Area, Position, Size, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -214,7 +215,6 @@ pub fn make_simple_for_deramifying()
     (r, a1, a2, a3, f, b, c, d1, d2, d3)
 }
 
-
 // -------------------------------------------------------------------------------------------------
 
 /// Prepares layout for testing homogenizing. Frame have appropriate size to check if they are not
@@ -234,8 +234,9 @@ pub fn make_simple_for_deramifying()
 ///     └───────────────┴─────┴─────────────┘
 ///
 pub fn make_sized_for_homogenizing()
-    -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,
+        Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r = Frame::new_workspace(String::new(), Stacked);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -245,6 +246,7 @@ pub fn make_sized_for_homogenizing()
     let mut g = Frame::new_leaf(SurfaceId::new(7), Stacked);
     let mut h = Frame::new_leaf(SurfaceId::new(8), Stacked);
     let mut i = Frame::new_leaf(SurfaceId::new(8), Stacked);
+    let mut z = Frame::new_leaf(SurfaceId::new(9), Stacked);
     let mut bcd = Frame::new_container(Stacked);
     let mut ef = Frame::new_container(Horizontal);
     let mut abcdef = Frame::new_container(Vertical);
@@ -264,8 +266,10 @@ pub fn make_sized_for_homogenizing()
     abcdefghi.append(&mut g);
     abcdefghi.append(&mut hi);
     r.append(&mut abcdefghi);
+    r.append(&mut z);
     r.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(360, 360));
-    abcdefghi.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(360, 360));
+    // Make main child slightly bigger to enforce homogenization
+    abcdefghi.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(361, 361));
     hi.       set_plumbing_position_and_size(Position::new(240,   0), Size::new(120, 360));
     abcdef.   set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 360));
     ef.       set_plumbing_position_and_size(Position::new(  0, 300), Size::new(180,  60));
@@ -279,7 +283,9 @@ pub fn make_sized_for_homogenizing()
     c.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 180));
     b.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 180));
     a.        set_plumbing_position_and_size(Position::new(  0,   0), Size::new(180, 120));
-    (r, abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i)
+    z.        set_plumbing_position_and_size(Position::new( 13,  23), Size::new( 33,  43));
+    z.        set_plumbing_mobility(Floating);
+    (r, abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i, z)
 }
 
 // -------------------------------------------------------------------------------------------------

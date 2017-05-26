@@ -49,7 +49,7 @@ impl Searching for Frame {
         let mut current = Some(self.clone());
         loop {
             current = if let Some(ref frame) = current {
-                if frame.get_mode().is_top() {
+                if frame.is_top() {
                     return current.clone();
                 }
                 frame.get_parent()
@@ -138,7 +138,7 @@ impl Searching for Frame {
 
             if let Some(frame) = frame {
                 // Next recurrence step if possible.
-                if frame.get_mode().is_top() {
+                if frame.is_top() {
                     None
                 } else {
                     frame.find_contiguous(direction, new_distance)

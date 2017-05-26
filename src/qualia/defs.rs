@@ -122,7 +122,7 @@ pub mod mode_name {
 
 /// Type defining position, point coordinates or 2D vector.
 #[repr(C)]
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Position {
     pub x: isize,
     pub y: isize,

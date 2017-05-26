@@ -26,10 +26,10 @@ use qualia::{Position, Size};
 #[test]
 fn test_homogenizing() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();
-    let (r, mut abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i) =
+    let (mut r, abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i, z) =
         layouts::make_sized_for_homogenizing();
 
-    abcdefghi.homogenize(&mut sa);
+    r.homogenize(&mut sa);
 
     assertions::assert_area(&r,         Position::new(  0,   0), Size::new(360, 360));
     assertions::assert_area(&abcdefghi, Position::new(  0,   0), Size::new(360, 360));
@@ -46,6 +46,7 @@ fn test_homogenizing() {
     assertions::assert_area(&g,         Position::new(120,   0), Size::new(120, 360));
     assertions::assert_area(&h,         Position::new(  0,   0), Size::new( 80, 360));
     assertions::assert_area(&i,         Position::new( 80,   0), Size::new( 40, 360));
+    assertions::assert_area(&z,         Position::new( 13,  23), Size::new( 33,  43));
 
     r.destroy();
 }

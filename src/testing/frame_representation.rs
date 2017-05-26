@@ -25,7 +25,7 @@ impl FrameRepresentation {
     /// Creates representation of leaf `Frame`.
     pub fn new(params: Parameters, branches: Vec<FrameRepresentation>) -> Self {
         FrameRepresentation {
-            has_area: (params.mode == Mode::Special),
+            has_area: (params.mode == Mode::Display),
             params: params,
             branches: branches,
         }
@@ -79,7 +79,7 @@ impl FrameRepresentation {
                         FrameRepresentation::new(
                             Parameters::new_workspace("1".to_owned(), geometry),
                             branches
-                        )
+                        ).with_area(area.pos.x, area.pos.y, area.size.width, area.size.height)
                     ]
                 )
             ]

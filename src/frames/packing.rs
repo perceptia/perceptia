@@ -64,7 +64,7 @@ impl Packing for Frame {
         // Resize and reposition all subframes recursively
         let mut pos = Position::default();
         for mut frame in self.space_iter() {
-            if frame.is_anchored() {
+            if frame.get_mobility().is_anchored() {
                 frame.set_size(size.clone(), sa);
                 frame.set_position(pos.clone());
             }
@@ -114,7 +114,7 @@ impl Packing for Frame {
         if let Some(ref mut parent) = self.get_parent() {
             self.remove();
             let len = parent.count_children();
-            if len == 0 && !parent.get_mode().is_top() {
+            if len == 0 && !parent.is_top() {
                 parent.remove_self(sa);
             } else {
                 parent.relax(sa);

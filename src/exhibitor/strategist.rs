@@ -13,6 +13,7 @@ use strategies;
 // -------------------------------------------------------------------------------------------------
 
 /// Structure describing strategic decision about how to handle new surface.
+#[derive(Debug)]
 pub struct TargetDecision {
     /// Target frame where new surface should be settled.
     pub target: Frame,
@@ -30,6 +31,7 @@ pub struct TargetDecision {
 // -------------------------------------------------------------------------------------------------
 
 /// Structure describing strategic decision about how to place floating frame.
+#[derive(Debug)]
 pub struct FloatingDecision {
     /// Area of the frame.
     pub area: Area,

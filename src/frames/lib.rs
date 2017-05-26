@@ -49,7 +49,8 @@
 extern crate qualia;
 
 mod frame;
-pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Mode, Geometry, Side, Parameters};
+pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Side, Parameters};
+pub use frame::{Geometry, Mobility, Mode};
 
 mod displaying;
 pub use displaying::Displaying;

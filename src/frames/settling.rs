@@ -7,7 +7,7 @@
 
 use qualia::{Area, Position, Vector, SurfaceAccess, SurfaceId};
 
-use frame::{Frame, Geometry, Mode, Side};
+use frame::{Frame, Geometry, Mobility, Mode, Side};
 use searching::Searching;
 use packing::Packing;
 
@@ -76,15 +76,15 @@ impl Settling for Frame {
             if buildable.get_geometry() == Geometry::Stacked {
                 buildable.prepend(self);
                 if let Some(area) = area {
+                    self.set_plumbing_mobility(Mobility::Floating);
                     self.set_size(area.size, sa);
                     self.set_position(area.pos);
-                    self.set_plumbing_is_anchored(false);
                 } else {
-                    self.set_plumbing_is_anchored(true);
+                    self.set_plumbing_mobility(Mobility::Anchored);
                 }
             } else {
                 buildable.append(self);
-                self.set_plumbing_is_anchored(true);
+                self.set_plumbing_mobility(Mobility::Anchored);
             }
             buildable.relax(sa);
         }
@@ -131,7 +131,7 @@ impl Settling for Frame {
             return parent;
         }
 
-        let distancer_mode = if self.get_mode().is_top() {
+        let distancer_mode = if self.is_top() {
             self.get_mode()
         } else {
             Mode::Container
@@ -144,12 +144,12 @@ impl Settling for Frame {
         };
 
         let mut distancer = Frame::new(SurfaceId::invalid(),
-                                       distancer_mode,
                                        geometry,
+                                       Mobility::Anchored,
+                                       distancer_mode,
                                        self.get_position(),
                                        self.get_size(),
-                                       self.get_title(),
-                                       true);
+                                       self.get_title());
         self.prejoin(&mut distancer);
         self.remove();
         self.set_plumbing_mode(frame_mode);
@@ -192,7 +192,7 @@ impl Settling for Frame {
                 }
                 Side::On => {
                     let mut new_target = {
-                        if !target_parent.get_mode().is_top() &&
+                        if !target_parent.is_top() &&
                            target_parent.count_children() == 1 {
                             target_parent.clone()
                         } else if target.get_mode().is_leaf() {
@@ -214,28 +214,26 @@ impl Settling for Frame {
     }
 
     fn anchorize(&mut self, sa: &mut SurfaceAccess) {
-        if self.get_mode().is_reanchorizable() && !self.is_anchored() {
+        if self.is_reanchorizable() && self.get_mobility().is_floating() {
             // NOTE: Floating surface must be direct child of workspace.
             let parent = self.get_parent().expect("should have parent");
             self.set_size(parent.get_size(), sa);
             self.set_position(Position::default());
-            self.set_plumbing_is_anchored(true);
+            self.set_plumbing_mobility(Mobility::Anchored);
         }
     }
 
     fn deanchorize(&mut self, area: Area, sa: &mut SurfaceAccess) {
-        if self.get_mode().is_reanchorizable() && self.is_anchored() {
+        if self.is_reanchorizable() && self.get_mobility().is_anchored() {
             let mut workspace = self.find_top().expect("should have toplevel");
-            if workspace.get_mode().is_workspace() {
-                let parent = self.get_parent().expect("should have parent");
-                if !parent.equals_exact(&workspace) {
-                    self.remove_self(sa);
-                    workspace.prepend(self);
-                }
-                self.set_size(area.size, sa);
-                self.set_position(area.pos);
-                self.set_plumbing_is_anchored(false);
+            let parent = self.get_parent().expect("should have parent");
+            if !parent.equals_exact(&workspace) {
+                self.remove_self(sa);
+                workspace.prepend(self);
             }
+            self.set_size(area.size, sa);
+            self.set_position(area.pos);
+            self.set_plumbing_mobility(Mobility::Floating);
         }
     }
 

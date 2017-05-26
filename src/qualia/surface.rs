@@ -17,7 +17,7 @@ pub use defs::{SurfaceId, SurfaceIdType};
 // -------------------------------------------------------------------------------------------------
 
 /// This structure defines how the surface should be drawn.
-#[derive(Debug)]
+#[derive(Debug, Eq, PartialEq)]
 pub struct SurfaceContext {
     pub id: SurfaceId,
     pub pos: Position,

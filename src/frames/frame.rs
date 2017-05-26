@@ -73,50 +73,6 @@ impl Default for Node {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Defines mode of the frame.
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum Mode {
-    Root,
-    Special,
-    Workspace,
-    Container,
-    Leaf,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Mode {
-    /// Returns `false` if mode is `Leaf` or `Container`, `true` otherwise.
-    pub fn is_top(&self) -> bool {
-        (*self != Mode::Container) && (*self != Mode::Leaf)
-    }
-
-    /// Returns `true` if mode is `Leaf`, `Container` or `Workspace`, `false` otherwise.
-    pub fn is_reorientable(&self) -> bool {
-        (*self == Mode::Container) || (*self == Mode::Leaf) || (*self == Mode::Workspace)
-    }
-
-    /// Returns `true` if frame with this mode can be reanchorized, `false` otherwise.
-    ///
-    /// NOTE: Display must be floating. Otherwise it could be relaxed. For the same reason
-    /// workspace must be anchored.
-    pub fn is_reanchorizable(&self) -> bool {
-        (*self != Mode::Workspace) && (*self != Mode::Special) && (*self != Mode::Root)
-    }
-
-    /// Returns `true` if mode is `Workspace`, `false` otherwise.
-    pub fn is_workspace(&self) -> bool {
-        *self == Mode::Workspace
-    }
-
-    /// Returns `true` if mode is `Leaf`, `false` otherwise.
-    pub fn is_leaf(&self) -> bool {
-        *self == Mode::Leaf
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Defines geometry of the frame.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Geometry {
@@ -128,6 +84,61 @@ pub enum Geometry {
 
     /// Children of frame with this geometry are placed on stack - only one is visible at a time.
     Stacked,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Defines what spatial operations are allowed in the frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Mobility {
+    /// Frame can be moved and resized.
+    Floating,
+
+    /// Frame can only be resized.
+    Anchored,
+
+    /// Frame cannot be moved nor resized.
+    Docked,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Mobility {
+    /// Returns `true` if frame can be moved or resized.
+    pub fn is_floating(&self) -> bool {
+        *self == Mobility::Floating
+    }
+
+    /// Returns `true` if frame can be resize but not moved.
+    pub fn is_anchored(&self) -> bool {
+        *self == Mobility::Anchored
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Defines mode of the frame.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Mode {
+    Root,
+    Display,
+    Workspace,
+    Container,
+    Leaf,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Mode {
+    /// Returns `true` if mode is `Workspace`, `false` otherwise.
+    pub fn is_workspace(&self) -> bool {
+        *self == Mode::Workspace
+    }
+
+    /// Returns `true` if mode is `Leaf`, `false` otherwise.
+    pub fn is_leaf(&self) -> bool {
+        *self == Mode::Leaf
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -152,11 +163,14 @@ pub struct Parameters {
     /// ID of assigned surface.
     pub sid: SurfaceId,
 
-    /// Mode.
-    pub mode: Mode,
-
     /// Geometry.
     pub geometry: Geometry,
+
+    /// Mobility.
+    pub mobility: Mobility,
+
+    /// Mode.
+    pub mode: Mode,
 
     /// Position.
     pub pos: Position,
@@ -166,9 +180,6 @@ pub struct Parameters {
 
     /// Title.
     pub title: String,
-
-    /// Anchorization state.
-    pub is_anchored: bool,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -178,12 +189,12 @@ impl Parameters {
     pub fn new_root() -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
-            mode: Mode::Root,
             geometry: Geometry::Stacked,
+            mobility: Mobility::Floating,
+            mode: Mode::Root,
             pos: Position::default(),
             size: Size::default(),
             title: "PERCEPTIA".to_owned(),
-            is_anchored: false,
         }
     }
 
@@ -191,12 +202,12 @@ impl Parameters {
     pub fn new_display(area: Area, title: String) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
-            mode: Mode::Special,
             geometry: Geometry::Stacked,
+            mobility: Mobility::Floating,
+            mode: Mode::Display,
             pos: area.pos,
             size: area.size,
             title: title,
-            is_anchored: false,
         }
     }
 
@@ -204,12 +215,12 @@ impl Parameters {
     pub fn new_workspace(title: String, geometry: Geometry) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
-            mode: Mode::Workspace,
             geometry: geometry,
+            mobility: Mobility::Anchored,
+            mode: Mode::Workspace,
             pos: Position::default(),
             size: Size::default(),
             title: title,
-            is_anchored: true,
         }
     }
 
@@ -217,12 +228,12 @@ impl Parameters {
     pub fn new_container(geometry: Geometry) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
-            mode: Mode::Container,
             geometry: geometry,
+            mobility: Mobility::Anchored,
+            mode: Mode::Container,
             pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
-            is_anchored: true,
         }
     }
 
@@ -233,12 +244,12 @@ impl Parameters {
     pub fn new_leaf(sid: SurfaceId, geometry: Geometry) -> Self {
         Parameters {
             sid: sid,
-            mode: Mode::Leaf,
             geometry: geometry,
+            mobility: Mobility::Anchored,
+            mode: Mode::Leaf,
             pos: Position::default(),
             size: Size::default(),
             title: "".to_owned(),
-            is_anchored: true,
         }
     }
 }
@@ -269,22 +280,22 @@ pub struct Frame {
 impl Frame {
     /// Creates new generic frame.
     pub fn new(sid: SurfaceId,
-               mode: Mode,
                geometry: Geometry,
+               mobility: Mobility,
+               mode: Mode,
                pos: Position,
                size: Size,
-               title: String,
-               is_anchored: bool)
+               title: String)
                -> Self {
         Self::allocate(InnerFrame {
                            params: Parameters {
                                sid: sid,
-                               mode: mode,
                                geometry: geometry,
+                               mobility: mobility,
+                               mode: mode,
                                pos: pos,
                                size: size,
                                title: title,
-                               is_anchored: is_anchored,
                            },
                            node: Node::default(),
                        })
@@ -386,6 +397,12 @@ impl Frame {
         unsafe { (*self.inner).params.geometry }
     }
 
+    /// Gets mobility.
+    #[inline]
+    pub fn get_mobility(&self) -> Mobility {
+        unsafe { (*self.inner).params.mobility }
+    }
+
     /// Gets position.
     #[inline]
     pub fn get_position(&self) -> Position {
@@ -409,9 +426,24 @@ impl Frame {
         unsafe { (*self.inner).params.title.clone() }
     }
 
-    /// Returns anchorization state.
-    pub fn is_anchored(&self) -> bool {
-        unsafe { (*self.inner).params.is_anchored }
+    /// Check if frame is spacial and should be ignored while normal surface management.
+    pub fn is_top(&self) -> bool {
+        let mode = self.get_mode();
+        let mobility = self.get_mobility();
+        (mobility == Mobility::Docked) || ((mode != Mode::Container) && (mode != Mode::Leaf))
+    }
+
+    /// Returns `true` if frame with this mode can be reanchorized, `false` otherwise.
+    ///
+    /// NOTE: Display must be floating. Otherwise it could be relaxed. For the same reason
+    /// workspace must be anchored.
+    pub fn is_reanchorizable(&self) -> bool {
+        !self.is_top()
+    }
+
+    /// Check if it should be possible to reorient or resize contents of frame.
+    pub fn is_reorientable(&self) -> bool {
+        (!self.is_top()) || (self.get_mode() == Mode::Workspace)
     }
 }
 
@@ -451,6 +483,14 @@ impl Frame {
         }
     }
 
+    /// Sets mobility without any checks.
+    #[inline]
+    pub fn set_plumbing_mobility(&mut self, mobility: Mobility) {
+        unsafe {
+            (*self.inner).params.mobility = mobility;
+        }
+    }
+
     /// Sets mode without any checks.
     #[inline]
     pub fn set_plumbing_mode(&mut self, mode: Mode) {
@@ -467,14 +507,6 @@ impl Frame {
         }
         unsafe {
             (*self.inner).params.size = size;
-        }
-    }
-
-    /// Sets anchorization state without correcting position changing position or size.
-    #[inline]
-    pub fn set_plumbing_is_anchored(&mut self, is_anchored: bool) {
-        unsafe {
-            (*self.inner).params.is_anchored = is_anchored;
         }
     }
 }
@@ -804,18 +836,17 @@ impl fmt::Debug for Frame {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let pos = self.get_position();
         let size = self.get_size();
-        let is_anchored = if self.is_anchored() { "A" } else { "F" };
         write!(f,
-               "Frame {{ sid: {:?}, '{}', {:?}, {:?}, {}x{}+{}+{}, {} }}",
+               "Frame {{ sid: {:?}, '{}', {:?}, {:?}, {:?}, {}x{}+{}+{} }}",
                self.get_sid(),
                self.get_title(),
                self.get_mode(),
                self.get_geometry(),
+               self.get_mobility(),
                size.width,
                size.height,
                pos.x,
-               pos.y,
-               is_anchored)
+               pos.y)
     }
 }
 

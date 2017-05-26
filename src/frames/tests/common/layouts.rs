@@ -411,3 +411,68 @@ pub fn make_positioned_for_jumping()
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Prepares layout with two workspaces to testing casting frame to array of surface contexts.
+pub fn make_positioned_for_displaying()
+-> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,
+    Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r  = Frame::new_display(Area::create(0, 0, 400, 400), "test_name".to_string());
+    let mut k1 = Frame::new_container(Vertical);
+    let mut k2 = Frame::new_container(Horizontal);
+    let mut k3 = Frame::new_container(Stacked);
+    let mut l1 = Frame::new_leaf(SurfaceId::new(101), Stacked);
+    let mut l2 = Frame::new_leaf(SurfaceId::new(102), Stacked);
+    let mut w1 = Frame::new_workspace(String::new(), Stacked);
+    let mut w2 = Frame::new_workspace(String::new(), Horizontal);
+    let mut a  = Frame::new_container(Stacked);
+    let mut a1 = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut a2 = Frame::new_leaf(SurfaceId::new(2), Stacked);
+    let mut a3 = Frame::new_leaf(SurfaceId::new(3), Stacked);
+    let mut b  = Frame::new_container(Vertical);
+    let mut b1 = Frame::new_leaf(SurfaceId::new(4), Stacked);
+    let mut b2 = Frame::new_leaf(SurfaceId::new(5), Stacked);
+    let mut b3 = Frame::new_leaf(SurfaceId::new(6), Stacked);
+    let mut c1 = Frame::new_leaf(SurfaceId::new(7), Stacked);
+    let mut c2 = Frame::new_leaf(SurfaceId::new(8), Stacked);
+    let mut c3 = Frame::new_leaf(SurfaceId::new(9), Stacked);
+    r. append(&mut k1);
+    k1.append(&mut l1);
+    k1.append(&mut k2);
+    k2.append(&mut l2);
+    k2.append(&mut k3);
+    k3.append(&mut w1);
+    k3.append(&mut w2);
+    w1.append(&mut a);
+    w1.append(&mut b);
+    a. append(&mut a1);
+    a. append(&mut a2);
+    a. append(&mut a3);
+    b. append(&mut b1);
+    b. append(&mut b2);
+    b. append(&mut b3);
+    w2.append(&mut c1);
+    w2.append(&mut c2);
+    w2.append(&mut c3);
+    r. set_plumbing_position_and_size(Position::new(  0,   0), Size::new(400, 400));
+    k1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(400, 400));
+    k2.set_plumbing_position_and_size(Position::new(  0, 100), Size::new(400, 300));
+    k3.set_plumbing_position_and_size(Position::new(100,   0), Size::new(300, 300));
+    l1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(400, 100));
+    l2.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(100, 300));
+    w1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    w2.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    a. set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    b. set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    a1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    a2.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    a3.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 300));
+    b1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(300, 100));
+    b2.set_plumbing_position_and_size(Position::new(  0, 100), Size::new(300, 100));
+    b3.set_plumbing_position_and_size(Position::new(  0, 200), Size::new(300, 100));
+    c1.set_plumbing_position_and_size(Position::new(  0,   0), Size::new(100, 300));
+    c2.set_plumbing_position_and_size(Position::new(100,   0), Size::new(100, 300));
+    c3.set_plumbing_position_and_size(Position::new(200,   0), Size::new(100, 300));
+    (r, w1, w2, k1, k2, k3, l1, l2, a, b, a1, a2, a3, b1, b2, b3, c1, c2, c3)
+}
+
+// -------------------------------------------------------------------------------------------------

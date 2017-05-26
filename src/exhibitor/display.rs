@@ -126,11 +126,8 @@ impl<C> Display<C>
     fn redraw_all(&mut self) {
         let info = self.output.get_info();
 
-        let surfaces = self.frame
-            .get_first_time()
-            .expect("display must have at least one workspace")
-            .to_array(Position::default(), &self.coordinator);
-
+        let mut surfaces = self.frame.to_array(Position::default(), &self.coordinator);
+        surfaces.reverse();
         let layover = self.prepare_layover_context(info.area.pos);
         let layunder = self.prepare_layunder_context();
         self.pointer.borrow_mut().update_hover_state(info.area, &surfaces);

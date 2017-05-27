@@ -12,7 +12,7 @@ use dharma::SignalId;
 
 use timing::Milliseconds;
 use defs::{Command, OutputInfo, SurfaceId};
-use defs::{Axis, Position, OptionalPosition, Vector, Button, Key};
+use defs::{Axis, Position, OptionalPosition, Vector, Button, Key, Size};
 use graphics::DrmBundle;
 
 // -------------------------------------------------------------------------------------------------
@@ -34,6 +34,7 @@ pub const INPUT_KEYBOARD: SignalId = 15;
 pub const SURFACE_READY: SignalId = 20;
 pub const SURFACE_DESTROYED: SignalId = 21;
 pub const SURFACE_RECONFIGURED: SignalId = 22;
+pub const DOCK_SURFACE: SignalId = 23;
 pub const CURSOR_SURFACE_CHANGE: SignalId = 25;
 pub const BACKGROUND_SURFACE_CHANGE: SignalId = 26;
 pub const SURFACE_FRAME: SignalId = 30;
@@ -73,6 +74,7 @@ pub enum Perceptron {
     SurfaceReady(SurfaceId),
     SurfaceDestroyed(SurfaceId),
     SurfaceReconfigured(SurfaceId),
+    DockSurface(SurfaceId, Size, i32),
     CursorSurfaceChange(SurfaceId),
     BackgroundSurfaceChange(SurfaceId),
     SurfaceFrame(SurfaceId, Milliseconds),
@@ -114,6 +116,9 @@ impl std::fmt::Debug for Perceptron {
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
             Perceptron::SurfaceDestroyed(ref sid) => write!(f, "SurfaceDestroyed({})", sid),
             Perceptron::SurfaceReconfigured(ref sid) => write!(f, "SurfaceReconfigured({})", sid),
+            Perceptron::DockSurface(ref sid, ref size, display_id) => {
+                write!(f, "DockSurface({}, {:?}, {:?})", sid, size, display_id)
+            }
             Perceptron::CursorSurfaceChange(ref sid) => write!(f, "CursorSurfaceChange({})", sid),
             Perceptron::BackgroundSurfaceChange(ref sid) => {
                 write!(f, "BackgroundSurfaceChange({})", sid)

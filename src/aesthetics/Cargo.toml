@@ -5,6 +5,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 image = "0.12.3"
+rusttype = "0.2.1"
 timber = { path = "../timber" }
 qualia = { path = "../qualia" }
 

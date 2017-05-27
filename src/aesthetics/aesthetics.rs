@@ -7,6 +7,7 @@
 // -------------------------------------------------------------------------------------------------
 
 extern crate image;
+extern crate rusttype;
 
 #[macro_use]
 extern crate timber;
@@ -15,34 +16,38 @@ extern crate qualia;
 
 mod cursor;
 mod background;
+mod panels;
 
-use qualia::{SurfaceId, AestheticsConfig, AestheticsCoordinationTrait};
+use qualia::{SurfaceId, AestheticsConfig, AestheticsCoordinationTrait, OutputInfo};
 
 use cursor::Cursor;
 use background::Background;
+use panels::PanelManager;
 
 // -------------------------------------------------------------------------------------------------
 
 /// `Aesthetics` manages tasks related to visual appearance. It uses the same API as exposed to
 /// client frontends.
-pub struct Aesthetics<C>
+pub struct Aesthetics<'a, C>
     where C: AestheticsCoordinationTrait
 {
     cursor: Cursor<C>,
     background: Background<C>,
+    panel: PanelManager<'a, C>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// General methods.
-impl<C> Aesthetics<C>
+impl<'a, C> Aesthetics<'a, C>
     where C: AestheticsCoordinationTrait + Clone
 {
     /// Constructs new `Aesthetics`.
     pub fn new(coordinator: C, config: AestheticsConfig) -> Self {
         Aesthetics {
             cursor: Cursor::new(coordinator.clone()),
-            background: Background::new(coordinator.clone(), config),
+            background: Background::new(coordinator.clone(), config.clone()),
+            panel: PanelManager::new(coordinator.clone()),
         }
     }
 }
@@ -50,7 +55,7 @@ impl<C> Aesthetics<C>
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
-impl<C> Aesthetics<C>
+impl<'a, C> Aesthetics<'a, C>
     where C: AestheticsCoordinationTrait + Clone
 {
     /// This method is called when changing cursor surface was requested.
@@ -74,9 +79,10 @@ impl<C> Aesthetics<C>
     }
 
     /// This method is called when new display was created.
-    pub fn on_display_created(&mut self) {
+    pub fn on_display_created(&mut self, output: &OutputInfo) {
         self.cursor.on_display_created();
         self.background.on_display_created();
+        self.panel.on_display_created(output);
     }
 }
 

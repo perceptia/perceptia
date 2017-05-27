@@ -124,8 +124,18 @@ impl Pixmap for Buffer {
     }
 
     #[inline]
+    fn get_stride(&self) -> usize {
+        self.stride
+    }
+
+    #[inline]
     fn as_slice(&self) -> &[u8] {
         self.data.as_slice()
+    }
+
+    #[inline]
+    fn as_mut_slice(&mut self) -> &mut [u8] {
+        self.data.as_mut_slice()
     }
 
     #[inline]
@@ -200,7 +210,7 @@ impl Drop for MappedMemory {
 /// Represents view into memory shared with client.
 pub struct MemoryView {
     memory: Arc<MemoryKind>,
-    data: *const u8,
+    data: *mut u8,
     width: usize,
     height: usize,
     stride: usize,
@@ -245,8 +255,18 @@ impl Pixmap for MemoryView {
     }
 
     #[inline]
+    fn get_stride(&self) -> usize {
+        self.stride
+    }
+
+    #[inline]
     fn as_slice(&self) -> &[u8] {
         unsafe { std::slice::from_raw_parts(self.data.offset(0), self.height * self.stride) }
+    }
+
+    #[inline]
+    fn as_mut_slice(&mut self) -> &mut [u8] {
+        unsafe { std::slice::from_raw_parts_mut(self.data.offset(0), self.height * self.stride) }
     }
 
     #[inline]
@@ -322,7 +342,7 @@ impl MemoryPool {
             MemoryKind::Buffered(ref buffer) => {
                 MemoryView {
                     memory: self.memory.clone(),
-                    data: unsafe { buffer.as_ptr() as *const u8 },
+                    data: unsafe { buffer.as_ptr() as *mut u8 },
                     width: width,
                     height: height,
                     stride: stride,

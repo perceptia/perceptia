@@ -60,6 +60,16 @@ impl<C> Display<C>
         self.output.get_info()
     }
 
+    /// Returns display frame.
+    pub fn get_frame(&self) -> Frame {
+        self.frame.clone()
+    }
+
+    /// Sets display frame.
+    pub fn set_frame(&mut self, frame: Frame) {
+        self.frame = frame
+    }
+
     /// Schedule page flip on assigned output.
     pub fn schedule_pageflip(&mut self) -> Result<(), Illusion> {
         if !self.page_flip_scheduled {

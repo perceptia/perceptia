@@ -273,6 +273,12 @@ impl ResourceStorage {
         }
     }
 
+    /// Requests showing given surface as dock with given size on given display.
+    pub fn dock_surface(&mut self, sid: SurfaceId, size: Size, display_id: i32) {
+        self.signaler.emit(perceptron::DOCK_SURFACE,
+                           Perceptron::DockSurface(sid, size, display_id));
+    }
+
     /// Subtracts given show reason flag from set of surfaces show reason. If not all reasons
     /// needed for surface to be drawn are meet, emit signal `surface destroyed`.
     pub fn hide_surface(&mut self, sid: SurfaceId, reason: show_reason::ShowReason) {

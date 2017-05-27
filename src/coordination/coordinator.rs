@@ -235,6 +235,12 @@ impl SurfaceControl for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    fn dock_surface(&self, sid: SurfaceId, size: Size, display_id: i32) {
+        let mut mine = self.resources.lock().unwrap();
+        mine.dock_surface(sid, size, display_id)
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     fn hide_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason) {
         let mut mine = self.resources.lock().unwrap();
         mine.hide_surface(sid, reason)

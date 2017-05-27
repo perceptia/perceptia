@@ -187,6 +187,9 @@ pub trait SurfaceControl {
     /// Adds given show reason flag to set of surfaces show reason.
     fn show_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason);
 
+    /// Docks given surface.
+    fn dock_surface(&self, sid: SurfaceId, size: Size, display_id: i32);
+
     /// Subtracts given show reason flag from set of surfaces show reason.
     fn hide_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason);
 

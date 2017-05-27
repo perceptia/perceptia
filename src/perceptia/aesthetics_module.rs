@@ -13,13 +13,13 @@ use aesthetics::Aesthetics;
 // -------------------------------------------------------------------------------------------------
 
 /// Implementation of `dharma::Module` for Aesthetics.
-pub struct AestheticsModule {
-    aesthetics: Aesthetics<Coordinator>,
+pub struct AestheticsModule<'a> {
+    aesthetics: Aesthetics<'a, Coordinator>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl AestheticsModule {
+impl<'a> AestheticsModule<'a> {
     /// Constructs new `AestheticsModule`.
     pub fn new(context: &mut Context) -> Self {
         AestheticsModule {
@@ -31,7 +31,7 @@ impl AestheticsModule {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Module for AestheticsModule {
+impl<'a> Module for AestheticsModule<'a> {
     type T = Perceptron;
     type C = Context;
 
@@ -54,7 +54,7 @@ impl Module for AestheticsModule {
                 self.aesthetics.on_pointer_focus_changed(old_pfsid, new_pfsid);
             }
             Perceptron::SurfaceDestroyed(sid) => self.aesthetics.on_surface_destroyed(sid),
-            Perceptron::DisplayCreated(_) => self.aesthetics.on_display_created(),
+            Perceptron::DisplayCreated(ref output) => self.aesthetics.on_display_created(output),
             Perceptron::BackgroundSurfaceChange(sid) => {
                 self.aesthetics.on_background_surface_change(sid);
             }

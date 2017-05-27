@@ -55,6 +55,7 @@ impl Module for ExhibitorModule {
              perceptron::CURSOR_SURFACE_CHANGE,
              perceptron::BACKGROUND_SURFACE_CHANGE,
              perceptron::SURFACE_READY,
+             perceptron::DOCK_SURFACE,
              perceptron::SURFACE_DESTROYED,
              perceptron::KEYBOARD_FOCUS_CHANGED,
              perceptron::TAKE_SCREENSHOT]
@@ -79,10 +80,13 @@ impl Module for ExhibitorModule {
             Perceptron::CursorSurfaceChange(sid) => self.exhibitor.on_cursor_surface_change(sid),
 
             Perceptron::SurfaceReady(sid) => self.exhibitor.on_surface_ready(sid),
+            Perceptron::DockSurface(sid, size, display_id) => {
+                self.exhibitor.on_dock_surface(sid, size, display_id);
+            }
             Perceptron::SurfaceDestroyed(sid) => self.exhibitor.on_surface_destroyed(sid),
 
             Perceptron::KeyboardFocusChanged(_, sid) => {
-                self.exhibitor.on_keyboard_focus_changed(sid)
+                self.exhibitor.on_keyboard_focus_changed(sid);
             }
 
             Perceptron::Suspend => self.exhibitor.on_suspend(),

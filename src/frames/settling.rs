@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Area, Position, Vector, SurfaceAccess, SurfaceId};
+use qualia::{Area, Position, Vector, Size, SurfaceAccess, SurfaceId};
 
 use frame::{Frame, Geometry, Mobility, Mode, Side};
 use searching::Searching;
@@ -40,6 +40,8 @@ pub trait Settling {
     ///  - `self` if it is container with one child,
     ///  - parent if parent has one child
     ///  - newly created container frame otherwise
+    ///
+    /// Returned frame is guarantied to have exactly one child.
     fn ramify(&mut self, geometry: Geometry) -> Frame;
 
     /// Removes unnecessary layers of container frames containing only one container or leaf frame.
@@ -50,6 +52,9 @@ pub trait Settling {
 
     /// Removes frame `self` from frame layout and then places it using `jumpin` method.
     fn jump(&mut self, side: Side, target: &mut Frame, sa: &mut SurfaceAccess);
+
+    /// Places frame `self` in `target` frame as dock.
+    fn dock(&mut self, target: &mut Frame, size: Size, sa: &mut SurfaceAccess);
 
     /// Anchorizes floating frame.
     fn anchorize(&mut self, sa: &mut SurfaceAccess);
@@ -211,6 +216,15 @@ impl Settling for Frame {
     fn jump(&mut self, side: Side, target: &mut Frame, sa: &mut SurfaceAccess) {
         self.remove_self(sa);
         self.jumpin(side, target, sa);
+    }
+
+    fn dock(&mut self, target: &mut Frame, size: Size, sa: &mut SurfaceAccess) {
+        target.set_plumbing_geometry(Geometry::Vertical);
+        self.set_plumbing_mobility(Mobility::Docked);
+        self.set_plumbing_size(size);
+        self.set_plumbing_position(Position::default());
+        target.prepend(self);
+        target.relax(sa);
     }
 
     fn anchorize(&mut self, sa: &mut SurfaceAccess) {

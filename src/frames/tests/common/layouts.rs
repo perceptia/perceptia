@@ -10,7 +10,7 @@
 
 use frames::Frame;
 use frames::Geometry::{Horizontal, Stacked, Vertical};
-use frames::Mobility::Floating;
+use frames::Mobility::{Docked, Floating};
 use qualia::{Area, Position, Size, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
@@ -286,6 +286,62 @@ pub fn make_sized_for_homogenizing()
     z.        set_plumbing_position_and_size(Position::new( 13,  23), Size::new( 33,  43));
     z.        set_plumbing_mobility(Floating);
     (r, abcdefghi, hi, abcdef, ef, bcd, a, b, c, d, e, f, g, h, i, z)
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Prepares layout for testing homogenizing vertical contained with docks.
+pub fn make_sized_for_homogenizing_vertical_with_docked()
+    -> (Frame, Frame, Frame, Frame, Frame, Frame) {
+    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
+    let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
+    let mut d = Frame::new_leaf(SurfaceId::new(4), Stacked);
+    let mut e = Frame::new_leaf(SurfaceId::new(5), Stacked);
+    r.append(&mut a);
+    r.append(&mut b);
+    r.append(&mut c);
+    r.append(&mut d);
+    r.append(&mut e);
+    r.set_plumbing_position_and_size(Position::new(0,   0), Size::new(100, 130));
+    a.set_plumbing_position_and_size(Position::new(0,   0), Size::new(100,  10));
+    b.set_plumbing_position_and_size(Position::new(0,   0), Size::new(100,  20));
+    c.set_plumbing_position_and_size(Position::new(0,   0), Size::new(100,  30));
+    d.set_plumbing_position_and_size(Position::new(0, 110), Size::new(100,  20));
+    e.set_plumbing_position_and_size(Position::new(8,   9), Size::new( 12,  13));
+    a.set_plumbing_mobility(Docked);
+    d.set_plumbing_mobility(Docked);
+    e.set_plumbing_mobility(Floating);
+    (r, a, b, c, d, e)
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Prepares layout for testing homogenizing horizontal contained with docks.
+pub fn make_sized_for_homogenizing_horizontal_with_docked()
+    -> (Frame, Frame, Frame, Frame, Frame, Frame) {
+    let mut r = Frame::new_workspace(String::new(), Horizontal);
+    let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
+    let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
+    let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
+    let mut d = Frame::new_leaf(SurfaceId::new(4), Stacked);
+    let mut e = Frame::new_leaf(SurfaceId::new(5), Stacked);
+    r.append(&mut a);
+    r.append(&mut b);
+    r.append(&mut c);
+    r.append(&mut d);
+    r.append(&mut e);
+    r.set_plumbing_position_and_size(Position::new(  0, 0), Size::new(130, 100));
+    a.set_plumbing_position_and_size(Position::new(  0, 0), Size::new( 10, 100));
+    b.set_plumbing_position_and_size(Position::new(  0, 0), Size::new( 20, 100));
+    c.set_plumbing_position_and_size(Position::new(  0, 0), Size::new( 30, 100));
+    d.set_plumbing_position_and_size(Position::new(110, 0), Size::new( 20, 100));
+    e.set_plumbing_position_and_size(Position::new(  8, 9), Size::new( 12,  13));
+    a.set_plumbing_mobility(Docked);
+    d.set_plumbing_mobility(Docked);
+    e.set_plumbing_mobility(Floating);
+    (r, a, b, c, d, e)
 }
 
 // -------------------------------------------------------------------------------------------------

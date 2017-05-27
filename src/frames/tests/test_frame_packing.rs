@@ -53,6 +53,46 @@ fn test_homogenizing() {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Test homogenizing vertical with docked frames.
+#[test]
+fn test_homogenizing_vertical_with_docked() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (mut r, a, b, c, d, e) = layouts::make_sized_for_homogenizing_vertical_with_docked();
+
+    r.homogenize(&mut sa);
+
+    assertions::assert_area(&r, Position::new(0,   0), Size::new(100, 130));
+    assertions::assert_area(&a, Position::new(0,   0), Size::new(100,  10));
+    assertions::assert_area(&b, Position::new(0,  10), Size::new(100,  50));
+    assertions::assert_area(&c, Position::new(0,  60), Size::new(100,  50));
+    assertions::assert_area(&d, Position::new(0, 110), Size::new(100,  20));
+    assertions::assert_area(&e, Position::new(8,   9), Size::new( 12,  13));
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Test homogenizing horozontal with docked frames.
+#[test]
+fn test_homogenizing_horizontal_with_docked() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (mut r, a, b, c, d, e) = layouts::make_sized_for_homogenizing_horizontal_with_docked();
+
+    r.homogenize(&mut sa);
+
+    assertions::assert_area(&r, Position::new(  0, 0), Size::new(130, 100));
+    assertions::assert_area(&a, Position::new(  0, 0), Size::new( 10, 100));
+    assertions::assert_area(&b, Position::new( 10, 0), Size::new( 50, 100));
+    assertions::assert_area(&c, Position::new( 60, 0), Size::new( 50, 100));
+    assertions::assert_area(&d, Position::new(110, 0), Size::new( 20, 100));
+    assertions::assert_area(&e, Position::new(  8, 9), Size::new( 12,  13));
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Test if removing frame with siblings works correctly.
 #[test]
 fn test_removing_self_with_siblings() {

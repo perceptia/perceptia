@@ -30,7 +30,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use qualia::{SurfaceId, Button, Command, OptionalPosition, Position, Vector};
+use qualia::{SurfaceId, Button, Command, OptionalPosition, Position, Size, Vector};
 use qualia::{perceptron, Perceptron};
 use qualia::{CompositorConfig, ExhibitorCoordinationTrait};
 use output::Output;
@@ -148,6 +148,16 @@ impl<C> Exhibitor<C>
     /// This method is called when new surface is ready to be managed.
     pub fn on_surface_ready(&mut self, sid: SurfaceId) {
         self.compositor.manage_surface(sid);
+    }
+
+    /// Dock given surface with given size on given display.
+    ///
+    /// TODO: Currently dock will shown on top. Make it possible to dock it on arbitrary edge.
+    pub fn on_dock_surface(&mut self, sid: SurfaceId, size: Size, display_id: i32) {
+        if let Some(ref mut display) = self.displays.get_mut(&display_id) {
+            let new_display = self.compositor.dock_surface(sid, size, display.get_frame().clone());
+            display.set_frame(new_display);
+        }
     }
 
     /// This method is called when surface was destroyed.

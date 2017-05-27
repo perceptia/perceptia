@@ -62,6 +62,7 @@ impl SurfaceManagement for CoordinatorMock {
 #[allow(unused_variables)]
 impl SurfaceControl for CoordinatorMock {
     fn show_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason) {}
+    fn dock_surface(&self, sid: SurfaceId, size: Size, display_id: i32) {}
     fn hide_surface(&self, sid: SurfaceId, reason: show_reason::ShowReason) {}
     fn set_surface_offset(&self, sid: SurfaceId, offset: Vector) {}
     fn set_surface_requested_size(&self, sid: SurfaceId, size: Size) {}

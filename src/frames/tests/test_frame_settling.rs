@@ -213,10 +213,12 @@ fn test_ramifing_single_child() {
     let d = f.ramify(Horizontal);
     assertions::assert_frame_equal_exact(&d, &a1);
     assertions::assert_frame_equal_exact(&f.get_parent().unwrap(), &a1);
+    assert_eq!(d.count_children(), 1);
 
     let d = a1.ramify(Horizontal);
     assertions::assert_frame_equal_exact(&d, &a1);
     assertions::assert_frame_equal_exact(&f.get_parent().unwrap(), &a1);
+    assert_eq!(d.count_children(), 1);
 
     r.destroy();
 }

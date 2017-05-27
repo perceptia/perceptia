@@ -109,9 +109,14 @@ impl Mobility {
         *self == Mobility::Floating
     }
 
-    /// Returns `true` if frame can be resize but not moved.
+    /// Returns `true` if frame can be resized but not moved.
     pub fn is_anchored(&self) -> bool {
         *self == Mobility::Anchored
+    }
+
+    /// Returns `true` if frame cannot be resized nor moved.
+    pub fn is_docked(&self) -> bool {
+        *self == Mobility::Docked
     }
 }
 
@@ -825,6 +830,17 @@ impl Frame {
         let mut result = 0;
         for _ in self.time_iter() {
             result += 1
+        }
+        result
+    }
+
+    /// Counts anchored children and returns their number.
+    pub fn count_anchored_children(&self) -> usize {
+        let mut result = 0;
+        for child in self.time_iter() {
+            if child.get_mobility().is_anchored() {
+                result += 1
+            }
         }
         result
     }

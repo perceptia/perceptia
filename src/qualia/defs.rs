@@ -502,7 +502,7 @@ impl Axis {
 /// Set of informations about output.
 #[derive(Clone, Debug)]
 pub struct OutputInfo {
-    pub id: i32,
+    pub id: i32, // TODO: Define new type for output ID.
     pub area: Area,
     pub physical_size: Size,
     pub refresh_rate: usize,

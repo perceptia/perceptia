@@ -51,8 +51,14 @@ pub trait Pixmap: Image {
     /// Returns pixel format of the pixmap.
     fn get_format(&self) -> PixelFormat;
 
+    /// Return stride (width in bytes or one row) of the pixmap.
+    fn get_stride(&self) -> usize;
+
     /// Returns data as slice.
     fn as_slice(&self) -> &[u8];
+
+    /// Returns data as mutable slice.
+    fn as_mut_slice(&mut self) -> &mut [u8];
 
     /// Returns data as pointer to `u8`.
     unsafe fn as_ptr(&self) -> *const u8;

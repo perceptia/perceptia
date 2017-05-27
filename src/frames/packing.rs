@@ -8,7 +8,7 @@
 use qualia::{Position, Size, Vector};
 use qualia::{SurfaceAccess, surface_state};
 
-use frame::{Frame, Geometry};
+use frame::{Frame, Geometry, Mobility};
 use settling::Settling;
 
 // -------------------------------------------------------------------------------------------------
@@ -37,7 +37,7 @@ impl Packing for Frame {
     }
 
     fn homogenize(&mut self, sa: &mut SurfaceAccess) {
-        let len = self.count_children();
+        let len = self.count_anchored_children();
         if len < 1 {
             return;
         }
@@ -50,13 +50,25 @@ impl Packing for Frame {
                 size = self.get_size();
             }
             Geometry::Vertical => {
+                let mut docked_height = 0;
+                for frame in self.space_iter() {
+                    if frame.get_mobility().is_docked() {
+                        docked_height += frame.get_size().height;
+                    }
+                }
                 size.width = self.get_size().width;
-                size.height = self.get_size().height / len;
+                size.height = (self.get_size().height - docked_height) / len;
                 increment.y = size.height as isize;
             }
             Geometry::Horizontal => {
+                let mut docked_width = 0;
+                for frame in self.space_iter() {
+                    if frame.get_mobility().is_docked() {
+                        docked_width += frame.get_size().width;
+                    }
+                }
                 size.height = self.get_size().height;
-                size.width = self.get_size().width / len;
+                size.width = (self.get_size().width - docked_width) / len;
                 increment.x = size.width as isize;
             }
         }
@@ -64,11 +76,21 @@ impl Packing for Frame {
         // Resize and reposition all subframes recursively
         let mut pos = Position::default();
         for mut frame in self.space_iter() {
-            if frame.get_mobility().is_anchored() {
-                frame.set_size(size.clone(), sa);
-                frame.set_position(pos.clone());
+            match frame.get_mobility() {
+                Mobility::Anchored => {
+                    frame.set_size(size.clone(), sa);
+                    frame.set_position(pos.clone());
+                    pos = pos + increment.clone();
+                }
+                Mobility::Docked => {
+                    match self.get_geometry() {
+                        Geometry::Stacked => {}
+                        Geometry::Vertical => pos.y += frame.get_size().height as isize,
+                        Geometry::Horizontal => pos.x += frame.get_size().width as isize,
+                    }
+                }
+                Mobility::Floating => {}
             }
-            pos = pos + increment.clone();
         }
     }
 

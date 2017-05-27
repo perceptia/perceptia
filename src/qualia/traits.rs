@@ -126,7 +126,7 @@ pub trait Screenshooting {
 
 /// Helper trait gathering traits used by `Aesthetics`.
 pub trait AestheticsCoordinationTrait
-    : SurfaceManagement + AppearanceManagement + MemoryManagement {
+    : SurfaceControl + SurfaceManagement + AppearanceManagement + MemoryManagement {
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -9,7 +9,7 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Direction, Vector};
+use qualia::{Action, Area, Command, Direction, Size, Vector};
 use qualia::{SurfaceId, CompositorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
@@ -193,6 +193,25 @@ impl<C> Compositor<C>
             self.history.add(sid);
             self.coordinator.notify();
             self.log_frames();
+        }
+    }
+
+    /// Dock given surface.
+    pub fn dock_surface(&mut self, sid: SurfaceId, size: Size, mut display_frame: Frame) -> Frame {
+        if self.root.find_with_sid(sid).is_none() {
+            // Dock the surface
+            let mut dock = Frame::new_leaf(sid, Geometry::Stacked);
+            let mut new_display_frame = display_frame.ramify(Geometry::Vertical);
+            dock.dock(&mut new_display_frame, size, &mut self.coordinator);
+
+            // Finalize
+            self.coordinator.notify();
+            self.log_frames();
+
+            // Display frame might changed - return the new one
+            new_display_frame
+        } else {
+            display_frame
         }
     }
 

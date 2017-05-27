@@ -15,6 +15,7 @@ use qualia::{Area, Position, Size};
 use qualia::{Action, Command, Direction};
 use qualia::CompositorConfig;
 use frames::Geometry::{Stacked, Vertical};
+use frames::Mobility::{Anchored, Floating};
 use frames::Parameters;
 use exhibitor::{Exhibitor, Strategist};
 use testing::frame_representation::FrameRepresentation;
@@ -66,9 +67,9 @@ fn test_creation_of_three_surfaces() {
 
     let repr = FrameRepresentation::single_workspace(e.output_info.area, Stacked,
         vec![
-            FrameRepresentation::new_leaf(3, Vertical),
-            FrameRepresentation::new_leaf(2, Vertical),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(3, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(2, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());
@@ -94,9 +95,9 @@ fn test_configuring_geometry() {
 
     let repr = FrameRepresentation::single_workspace(e.output_info.area, Vertical,
         vec![
-            FrameRepresentation::new_leaf(3, Vertical),
-            FrameRepresentation::new_leaf(2, Vertical),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(3, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(2, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());
@@ -132,11 +133,11 @@ fn test_diving() {
             FrameRepresentation::new(
                 Parameters::new_container(Stacked),
                 vec![
-                    FrameRepresentation::new_leaf(3, Vertical),
-                    FrameRepresentation::new_leaf(2, Vertical),
+                    FrameRepresentation::new_leaf(3, Vertical).with_mobility(Anchored),
+                    FrameRepresentation::new_leaf(2, Vertical).with_mobility(Anchored),
                 ]
             ),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());

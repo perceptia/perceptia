@@ -14,6 +14,7 @@ use qualia::{OutputInfo, SurfaceId};
 use qualia::{Area, Position, Size};
 use qualia::CompositorConfig;
 use frames::Geometry::{Stacked, Vertical};
+use frames::Mobility::Floating;
 use frames::Parameters;
 use exhibitor::{Exhibitor, Strategist};
 use testing::frame_representation::FrameRepresentation;
@@ -86,7 +87,7 @@ fn test_moving_surface_between_displays() {
                 vec![
                     FrameRepresentation::new(
                         Parameters::new_workspace("2".to_owned(), Stacked),
-                        vec![FrameRepresentation::new_leaf(1, Vertical)]
+                        vec![FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating)]
                     )
                 ]
             ),
@@ -125,7 +126,7 @@ fn test_moving_surface_between_displays() {
                 vec![
                     FrameRepresentation::new(
                         Parameters::new_workspace("1".to_owned(), Stacked),
-                        vec![FrameRepresentation::new_leaf(1, Vertical)]
+                        vec![FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating)]
                     )
                 ]
             )

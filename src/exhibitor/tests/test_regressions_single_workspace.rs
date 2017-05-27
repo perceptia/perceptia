@@ -14,6 +14,7 @@ use qualia::{OutputInfo, SurfaceId};
 use qualia::{Area, Position, Size};
 use qualia::{CompositorConfig, StrategistConfig};
 use frames::Geometry::{Horizontal, Stacked, Vertical};
+use frames::Mobility::{Anchored, Floating};
 use frames::Parameters;
 use exhibitor::{Exhibitor, Strategist};
 use testing::frame_representation::FrameRepresentation;
@@ -71,8 +72,8 @@ fn test_exaltation_of_the_most_exalted() {
     // Check structure was not changed
     let repr = FrameRepresentation::single_workspace(e.output_info.area, Stacked,
         vec![
-            FrameRepresentation::new_leaf(2, Vertical),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(2, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());
@@ -104,10 +105,10 @@ fn test_selection_after_unmanaging_ramified() {
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Stacked),
-                vec![FrameRepresentation::new_leaf(3, Vertical)],
+                vec![FrameRepresentation::new_leaf(3, Vertical).with_mobility(Anchored)],
             ),
-            FrameRepresentation::new_leaf(2, Vertical),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(2, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());
@@ -120,8 +121,8 @@ fn test_selection_after_unmanaging_ramified() {
 
     let repr = FrameRepresentation::single_workspace(e.output_info.area, Stacked,
         vec![
-            FrameRepresentation::new_leaf(2, Vertical),
-            FrameRepresentation::new_leaf(1, Vertical),
+            FrameRepresentation::new_leaf(2, Vertical).with_mobility(Floating),
+            FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating),
         ]);
 
     repr.assert_frames_spaced(&e.exhibitor.get_root());

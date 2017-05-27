@@ -46,6 +46,9 @@ pub trait ExhibitorCommandShorthands {
     /// Executes dive down command.
     fn dive_down(&mut self);
 
+    /// Executes focus of workspace command.
+    fn focus_workspace(&mut self, workspace_name: &str);
+
     /// Executes jump to workspace command.
     fn jump_to_workspace(&mut self, workspace_name: &str);
 }
@@ -194,6 +197,18 @@ impl<C> ExhibitorCommandShorthands for Exhibitor<C>
             direction: Direction::South,
             magnitude: 1,
             string: String::default(),
+        };
+
+        self.on_command(command);
+    }
+
+    /// Executes focus of workspace command.
+    fn focus_workspace(&mut self, workspace_name: &str) {
+        let command = Command {
+            action: Action::Focus,
+            direction: Direction::Workspace,
+            magnitude: 1,
+            string: workspace_name.to_owned(),
         };
 
         self.on_command(command);

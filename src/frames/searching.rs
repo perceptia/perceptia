@@ -6,12 +6,18 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::{Direction, Position, SurfaceId};
-use frame::{Frame, Geometry};
+use frame::{Frame, Geometry, Mode};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Extension trait for `Frame` adding more search functionality.
 pub trait Searching {
+    /// Returns first found frame with given non-`None` parameters. If all parameters are `None`,
+    /// `self` will be returned.
+    ///
+    /// List of parameters may be extended.
+    fn find(&self, mode: Option<Mode>, title: Option<&str>) -> Option<Frame>;
+
     /// Finds first frame suitable for building.
     /// Returns `self` if `self` has no surface ID set, its parent otherwise.
     fn find_buildable(&self) -> Option<Frame>;
@@ -37,6 +43,32 @@ pub trait Searching {
 // -------------------------------------------------------------------------------------------------
 
 impl Searching for Frame {
+    fn find(&self, mode: Option<Mode>, title: Option<&str>) -> Option<Frame> {
+        let mut found = true;
+        if let Some(mode) = mode {
+            if mode != self.get_mode() {
+                found = false;
+            }
+        }
+        if let Some(title) = title {
+            if *title != self.get_title() {
+                found = false;
+            }
+        }
+
+        if found {
+            Some(self.clone())
+        } else {
+            for subsurface in self.space_iter() {
+                let result = subsurface.find(mode, title);
+                if result.is_some() {
+                    return result;
+                }
+            }
+            None
+        }
+    }
+
     fn find_buildable(&self) -> Option<Frame> {
         if self.get_sid().is_valid() {
             self.get_parent()

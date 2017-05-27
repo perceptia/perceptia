@@ -96,8 +96,16 @@ impl Settling for Frame {
     }
 
     fn resettle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
+        let area = {
+            // Preserve area if resettling to another workspace
+            if self.get_mobility().is_floating() && target.get_mode().is_workspace() {
+                Some(self.get_area())
+            } else {
+                None
+            }
+        };
         self.remove_self(sa);
-        self.settle(target, None, sa);
+        self.settle(target, area, sa);
     }
 
     fn pop_recursively(&mut self, pop: &mut Frame) {
@@ -128,18 +136,20 @@ impl Settling for Frame {
     }
 
     fn ramify(&mut self, geometry: Geometry) -> Frame {
-        let parent = self.get_parent().expect("should have parent");
-        if self.count_children() == 1 {
-            return self.clone();
-        }
-        if parent.count_children() == 1 {
-            return parent;
+        if !self.is_top() {
+            let parent = self.get_parent().expect("should have parent");
+            if self.count_children() == 1 {
+                return self.clone();
+            }
+            if parent.count_children() == 1 {
+                return parent;
+            }
         }
 
-        let distancer_mode = if self.is_top() {
-            self.get_mode()
+        let (distancer_mobility, distancer_mode) = if self.is_top() {
+            (self.get_mobility(), self.get_mode())
         } else {
-            Mode::Container
+            (Mobility::Anchored, Mode::Container)
         };
 
         let frame_mode = if self.get_mode().is_leaf() {
@@ -150,13 +160,14 @@ impl Settling for Frame {
 
         let mut distancer = Frame::new(SurfaceId::invalid(),
                                        geometry,
-                                       Mobility::Anchored,
+                                       distancer_mobility,
                                        distancer_mode,
                                        self.get_position(),
                                        self.get_size(),
                                        self.get_title());
         self.prejoin(&mut distancer);
         self.remove();
+        self.set_plumbing_mobility(Mobility::Anchored);
         self.set_plumbing_mode(frame_mode);
         let opposite = self.get_position().opposite();
         self.move_with_contents(opposite);
@@ -260,11 +271,6 @@ impl Settling for Frame {
         // Update frames position
         let new_position = self.get_position() + vector.clone();
         self.set_plumbing_position(new_position);
-
-        // Move all subframes
-        for mut frame in self.space_iter() {
-            frame.move_with_contents(vector.clone());
-        }
     }
 
     fn destroy_self(&mut self, sa: &mut SurfaceAccess) {

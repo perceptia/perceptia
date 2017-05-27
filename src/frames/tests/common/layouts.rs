@@ -290,7 +290,7 @@ pub fn make_sized_for_homogenizing()
 
 // -------------------------------------------------------------------------------------------------
 
-/// Prepares layout for testing homogenizing vertical contained with docks.
+/// Prepares layout for testing homogenizing vertical container with docks.
 pub fn make_sized_for_homogenizing_vertical_with_docked()
     -> (Frame, Frame, Frame, Frame, Frame, Frame) {
     let mut r = Frame::new_workspace(String::new(), Vertical);
@@ -318,7 +318,7 @@ pub fn make_sized_for_homogenizing_vertical_with_docked()
 
 // -------------------------------------------------------------------------------------------------
 
-/// Prepares layout for testing homogenizing horizontal contained with docks.
+/// Prepares layout for testing homogenizing horizontal container with docks.
 pub fn make_sized_for_homogenizing_horizontal_with_docked()
     -> (Frame, Frame, Frame, Frame, Frame, Frame) {
     let mut r = Frame::new_workspace(String::new(), Horizontal);

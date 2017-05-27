@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use frames::{Frame, Parameters, Geometry, Mode};
+use frames::{Frame, Parameters, Geometry, Mobility, Mode};
 use qualia::{Area, Position, Size, SurfaceId};
 
 // -------------------------------------------------------------------------------------------------
@@ -45,6 +45,18 @@ impl FrameRepresentation {
         self.params.pos = Position::new(x, y);
         self.params.size = Size::new(width, height);
         self.has_area = true;
+        self
+    }
+
+    /// Modifies conditions for geometry.
+    pub fn with_geometry(mut self, geometry: Geometry) -> Self {
+        self.params.geometry = geometry;
+        self
+    }
+
+    /// Modifies conditions for mobility.
+    pub fn with_mobility(mut self, mobility: Mobility) -> Self {
+        self.params.mobility = mobility;
         self
     }
 
@@ -94,16 +106,35 @@ impl FrameRepresentation {
     /// Validates `Frame`s parameters by comparing with its representation.
     pub fn assert_frame(&self, frame: &Frame) {
         assert_eq!(frame.get_sid(), self.params.sid, "wrong sid");
-        assert_eq!(frame.get_mode(), self.params.mode, "wrong mode");
-        assert_eq!(frame.get_geometry(), self.params.geometry, "wrong geometry");
+        assert_eq!(frame.get_geometry(),
+                   self.params.geometry,
+                   "wrong geometry in {:?}",
+                   frame.get_sid());
+        assert_eq!(frame.get_mobility(),
+                   self.params.mobility,
+                   "wrong mobility in {:?}",
+                   frame.get_sid());
+        assert_eq!(frame.get_mode(),
+                   self.params.mode,
+                   "wrong mode in {:?}",
+                   frame.get_sid());
 
         if self.params.mode == Mode::Workspace {
-            assert_eq!(frame.get_title(), self.params.title, "wrong title");
+            assert_eq!(frame.get_title(),
+                       self.params.title,
+                       "wrong title in {:?}",
+                       frame.get_sid());
         }
 
         if self.has_area {
-            assert_eq!(frame.get_position(), self.params.pos, "wrong position");
-            assert_eq!(frame.get_size(), self.params.size, "wrong size");
+            assert_eq!(frame.get_position(),
+                       self.params.pos,
+                       "wrong position in {:?}",
+                       frame.get_sid());
+            assert_eq!(frame.get_size(),
+                       self.params.size,
+                       "wrong size {:?}",
+                       frame.get_sid());
         }
     }
 

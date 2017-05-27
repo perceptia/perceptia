@@ -78,9 +78,9 @@ impl Packing for Frame {
         for mut frame in self.space_iter() {
             match frame.get_mobility() {
                 Mobility::Anchored => {
-                    frame.set_size(size.clone(), sa);
-                    frame.set_position(pos.clone());
-                    pos = pos + increment.clone();
+                    frame.set_size(size, sa);
+                    frame.set_position(pos);
+                    pos = pos + increment;
                 }
                 Mobility::Docked => {
                     match self.get_geometry() {

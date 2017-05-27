@@ -13,7 +13,7 @@ use qualia::{Action, Area, Command, Direction, Size, Vector};
 use qualia::{SurfaceId, CompositorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
-use frames::{Frame, Geometry, Side};
+use frames::{Frame, Geometry, Mode, Side};
 use frames::searching::Searching;
 use frames::settling::Settling;
 
@@ -382,7 +382,7 @@ impl<C> Compositor<C>
         let old_workspace = self.find_current_workspace();
         let mut new_workspace = self.bring_workspace(title, false);
         if !old_workspace.equals_exact(&new_workspace) {
-            frame.jump(Side::On, &mut new_workspace, &mut self.coordinator);
+            frame.resettle(&mut new_workspace, &mut self.coordinator);
             let most_recent = self.find_most_recent(old_workspace);
             self.select(most_recent);
         }
@@ -533,14 +533,7 @@ impl<C> Compositor<C>
 {
     /// Search for existing workspace with given title.
     fn find_workspace(&self, title: &String) -> Option<Frame> {
-        for display_frame in self.root.time_iter() {
-            for workspace_frame in display_frame.time_iter() {
-                if workspace_frame.get_title() == *title {
-                    return Some(workspace_frame.clone());
-                }
-            }
-        }
-        None
+        self.root.find(Some(Mode::Workspace), Some(title))
     }
 
     /// Search for existing workspace with given title.

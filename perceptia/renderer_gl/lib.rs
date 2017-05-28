@@ -10,12 +10,13 @@ extern crate libc;
 extern crate gl;
 extern crate egl;
 
+extern crate cognitive_graphics;
+
 // TODO: Enable logging only for debugging.
 #[macro_use(timber)]
 extern crate timber;
 #[macro_use]
 extern crate qualia;
-extern crate graphics;
 
 mod cache_gl;
 

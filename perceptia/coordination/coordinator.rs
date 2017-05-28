@@ -12,9 +12,9 @@ use std::sync::{Arc, Mutex};
 
 use dharma;
 
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
-use qualia::{Buffer, MappedMemory, PixelFormat};
-use qualia::{EglAttributes, DmabufAttributes, GraphicsManagement};
+use qualia::{Buffer, MappedMemory, PixelFormat, GraphicsManagement};
 use qualia::{perceptron, Perceptron, Transfer};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};

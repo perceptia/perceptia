@@ -15,9 +15,9 @@ use libdrm::drm_mode;
 
 use dharma::{DispatcherController, Signaler, event_kind};
 use qualia::{DrmBundle, Illusion, perceptron, Perceptron, HwGraphics};
-use graphics::GraphicsManager;
 use coordination::Coordinator;
 
+use graphics_manager::GraphicsManager;
 use pageflip::PageFlipEventHandler;
 
 // -------------------------------------------------------------------------------------------------

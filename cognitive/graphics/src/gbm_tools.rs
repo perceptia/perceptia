@@ -8,7 +8,7 @@
 use std::os::unix::io::RawFd;
 use libgbm;
 
-use qualia::{Illusion, Size};
+use errors::GraphicsError;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -24,31 +24,31 @@ pub struct GbmBucket {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper function for getting device.
-pub fn get_device(fd: RawFd) -> Result<libgbm::Device, Illusion> {
+pub fn get_device(fd: RawFd) -> Result<libgbm::Device, GraphicsError> {
     if let Some(device) = libgbm::Device::from_fd(fd) {
         Ok(device)
     } else {
-        Err(Illusion::General(format!("Failed to create GBM device")))
+        Err(GraphicsError::new(format!("Failed to create GBM device")))
     }
 }
 // -------------------------------------------------------------------------------------------------
 
 impl GbmBucket {
     /// `GbmBucket` constructor.
-    pub fn new(fd: RawFd, size: Size) -> Result<Self, Illusion> {
+    pub fn new(fd: RawFd, width: u32, height: u32) -> Result<Self, GraphicsError> {
         // Create device
         let device = self::get_device(fd)?;
 
         // Create surface
         let surface = if let Some(surface) = libgbm::Surface::new(&device,
-                                                                  size.width as u32,
-                                                                  size.height as u32,
+                                                                  width,
+                                                                  height,
                                                                   libgbm::format::XRGB8888,
                                                                   libgbm::USE_SCANOUT |
                                                                   libgbm::USE_RENDERING) {
             surface
         } else {
-            return Err(Illusion::General(format!("Failed to create GBM surface")));
+            return Err(GraphicsError::new(format!("Failed to create GBM surface")));
         };
 
 

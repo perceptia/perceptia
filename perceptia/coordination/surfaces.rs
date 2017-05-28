@@ -5,9 +5,9 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{DmabufAttributes, EglAttributes, MemoryView};
-use qualia::{Position, Size, Vector};
-use qualia::{DataSource, SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
+use cognitive_graphics::attributes::{DmabufAttributes, EglAttributes};
+use qualia::{DataSource, MemoryView, Position, Size, Vector};
+use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, show_reason, surface_state};
 
 // -------------------------------------------------------------------------------------------------
 

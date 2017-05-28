@@ -28,6 +28,7 @@ extern crate serde_yaml;
 #[macro_use(timber)]
 extern crate timber;
 extern crate dharma;
+extern crate cognitive_graphics;
 
 pub mod enums;
 pub use enums::{DeviceKind, KeyState, Action, Direction};
@@ -43,15 +44,11 @@ pub use timing::Milliseconds;
 
 pub mod defs;
 pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Command, modifier, Key, KeyCode, KeyValue, OutputInfo};
+pub use defs::{Command, modifier, Key, KeyCode, KeyValue, OutputInfo, DrmBundle};
 pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod image;
 pub use image::{Image, Pixmap, PixelFormat};
-
-pub mod graphics;
-pub use graphics::{DrmBundle, EglAttributes, DmabufAttributes, ValidationResult};
-pub use graphics::{GraphicsManagement, HwImage, RawHwImage};
 
 pub mod memory;
 pub use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
@@ -77,6 +74,7 @@ pub use perceptron::Perceptron;
 pub mod traits;
 pub use traits::{AppearanceManagement, DataTransferring, Emiter};
 pub use traits::{Screenshooting, MemoryManagement, HwGraphics};
+pub use traits::GraphicsManagement;
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 
 #[macro_use]

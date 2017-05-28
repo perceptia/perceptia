@@ -3,6 +3,9 @@
 
 //! This create gathers some functionality related to images and access to them.
 
+use cognitive_graphics::egl_tools::HwImage;
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+
 use defs::Size;
 
 // -------------------------------------------------------------------------------------------------
@@ -62,6 +65,63 @@ pub trait Pixmap: Image {
 
     /// Returns data as pointer to `u8`.
     unsafe fn as_ptr(&self) -> *const u8;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Image for HwImage {
+    /// Returns width and height of the image.
+    fn get_size(&self) -> Size {
+        Size::new(self.get_width(), self.get_height())
+    }
+
+    /// Returns width of the image.
+    fn get_width(&self) -> usize {
+        self.get_width()
+    }
+
+    /// Returns height of the image.
+    fn get_height(&self) -> usize {
+        self.get_height()
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Image for EglAttributes {
+    /// Get width and height of the underlying hardware image.
+    fn get_size(&self) -> Size {
+        Size::new(self.width as usize, self.height as usize)
+    }
+
+    /// Return width of the underlying hardware image.
+    fn get_width(&self) -> usize {
+        self.width as usize
+    }
+
+    /// Returns height of the underlying hardware image.
+    fn get_height(&self) -> usize {
+        self.height as usize
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Image for DmabufAttributes {
+    /// Get width and height of the underlying hardware image.
+    fn get_size(&self) -> Size {
+        Size::new(self.width as usize, self.height as usize)
+    }
+
+    /// Return width of the underlying hardware image.
+    fn get_width(&self) -> usize {
+        self.width as usize
+    }
+
+    /// Returns height of the underlying hardware image.
+    fn get_height(&self) -> usize {
+        self.height as usize
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

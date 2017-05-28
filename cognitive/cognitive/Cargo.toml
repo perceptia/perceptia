@@ -12,6 +12,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 timber = "0.0.1"
 dharma = "0.0.1"
+cognitive-graphics = "0.0.1"
 
 [lib]
 name = "cognitive"

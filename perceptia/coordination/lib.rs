@@ -8,11 +8,13 @@
 //! TODO: Other crates should not use `coordination` directly but by traits provided by `qualia`.
 //! Ideally `coordination` should be merged with `perceptia` to prevent such use.
 
+extern crate dharma;
+extern crate cognitive_graphics;
+
 #[macro_use(timber)]
 extern crate timber;
 #[macro_use]
 extern crate qualia;
-extern crate dharma;
 
 mod surfaces;
 

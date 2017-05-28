@@ -7,9 +7,10 @@
 
 use std::time::Instant;
 
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+
 use image::Image;
 use memory::MemoryView;
-use graphics::{EglAttributes, DmabufAttributes};
 use defs::{DmabufId, EglImageId, MemoryViewId};
 use defs::{Position, Size, Vector};
 pub use defs::{SurfaceId, SurfaceIdType};

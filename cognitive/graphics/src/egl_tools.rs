@@ -9,14 +9,61 @@ use libc;
 use std;
 use egl;
 
-use qualia::{Illusion, HwImage, RawHwImage, DmabufAttributes, EglAttributes};
+use errors::GraphicsError;
+use attributes::{DmabufAttributes, EglAttributes};
+
+// -------------------------------------------------------------------------------------------------
+
+/// Raw hardware image.
+pub type RawHwImage = *const std::os::raw::c_void;
+
+// -------------------------------------------------------------------------------------------------
+
+/// Wrapper for hardware image. Conveying its size and adding ability to send between threads.
+#[derive(Clone, Debug)]
+pub struct HwImage {
+    image: RawHwImage,
+    width: usize,
+    height: usize,
+}
+
+/// `HwImage` contains only simple data and handle to raw image. It is as safe to send it as to use.
+unsafe impl Send for HwImage {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl HwImage {
+    /// Constructs new `HwImage`.
+    pub fn new(image: RawHwImage, width: usize, height: usize) -> Self {
+        HwImage {
+            image: image,
+            width: width,
+            height: height,
+        }
+    }
+
+    /// Returns raw image.
+    pub fn as_raw(&self) -> RawHwImage {
+        self.image
+    }
+
+    /// Returns width of the image.
+    pub fn get_width(&self) -> usize {
+        self.width
+    }
+
+    /// Returns height of the image.
+    pub fn get_height(&self) -> usize {
+        self.height
+    }
+}
 
 // -------------------------------------------------------------------------------------------------
 
 /// Module with some constants for extensions.
 pub mod ext {
     use egl;
-    use qualia::RawHwImage;
+    use super::RawHwImage;
 
     // Extension names
     pub const IMAGE_BASE_EXT: &'static str = "EGL_KHR_image_base";
@@ -210,7 +257,7 @@ pub fn get_proc_addr_of_image_target_render_storage_oes() -> Option<ImageTargetR
 ///
 /// First tries `eglGetDisplay`. If that fails, tries `eglGetPlatformDisplayEXT`.
 pub fn get_gbm_display(native_display: egl::EGLNativeDisplayType)
-                       -> Result<egl::EGLDisplay, Illusion> {
+                       -> Result<egl::EGLDisplay, GraphicsError> {
     if let Some(display) = egl::get_display(native_display) {
         Ok(display)
     } else {
@@ -220,10 +267,10 @@ pub fn get_gbm_display(native_display: egl::EGLNativeDisplayType)
             if !display.is_null() {
                 Ok(display)
             } else {
-                Err(Illusion::General(format!("Failed to get EGL display")))
+                Err(GraphicsError::new(format!("Failed to get EGL display")))
             }
         } else {
-            Err(Illusion::General(format!("GBM platform is not supported")))
+            Err(GraphicsError::new(format!("GBM platform is not supported")))
         }
     }
 }
@@ -373,7 +420,7 @@ impl EglBucket {
     /// `EglBucket` constructor.
     pub fn new(native_display: egl::EGLNativeDisplayType,
                window_type: egl::EGLNativeWindowType)
-               -> Result<Self, Illusion> {
+               -> Result<Self, GraphicsError> {
         // Get display
         let display = self::get_gbm_display(native_display)?;
 
@@ -381,18 +428,18 @@ impl EglBucket {
         let mut major = 0;
         let mut minor = 0;
         if !egl::initialize(display, &mut major, &mut minor) {
-            return Err(Illusion::General(format!("Failed to initialize EGL")));
+            return Err(GraphicsError::new(format!("Failed to initialize EGL")));
         };
 
         if !egl::bind_api(egl::EGL_OPENGL_ES_API) {
-            return Err(Illusion::General(format!("Failed to bind EGL API")));
+            return Err(GraphicsError::new(format!("Failed to bind EGL API")));
         };
 
         // Choose config
         let config = if let Some(config) = egl::choose_config(display, &CONFIG_ATTRIB_LIST, 1) {
             config
         } else {
-            return Err(Illusion::General(format!("Failed to choose EGL config")));
+            return Err(GraphicsError::new(format!("Failed to choose EGL config")));
         };
 
         // Create context
@@ -400,7 +447,7 @@ impl EglBucket {
         let context = if let Some(context) = c {
             context
         } else {
-            return Err(Illusion::General(format!("Failed to create EGL context")));
+            return Err(GraphicsError::new(format!("Failed to create EGL context")));
         };
 
         // Create window surface
@@ -408,7 +455,7 @@ impl EglBucket {
         let surface = if let Some(surface) = s {
             surface
         } else {
-            return Err(Illusion::General(format!("Failed to create EGL window surface")));
+            return Err(GraphicsError::new(format!("Failed to create EGL window surface")));
         };
 
         // Return bundle
@@ -423,9 +470,9 @@ impl EglBucket {
     /// Make EGL context current.
     /// This method returns `EglContext` structure which will release context when goes out of the
     /// scope.
-    pub fn make_current(&self) -> Result<EglContext, Illusion> {
+    pub fn make_current(&self) -> Result<EglContext, GraphicsError> {
         if !egl::make_current(self.display, self.surface, self.surface, self.context) {
-            Err(Illusion::General(format!("Failed to make EGL context current")))
+            Err(GraphicsError::new(format!("Failed to make EGL context current")))
         } else {
             Ok(EglContext::new(*self))
         }
@@ -445,23 +492,23 @@ impl EglContext {
 
 impl EglContext {
     /// Release EGL context.
-    fn release(&self) -> Result<(), Illusion> {
+    fn release(&self) -> Result<(), GraphicsError> {
         if !egl::make_current(self.egl.display,
                               egl::EGL_NO_SURFACE,
                               egl::EGL_NO_SURFACE,
                               egl::EGL_NO_CONTEXT) {
-            Err(Illusion::General(format!("Failed to release EGL context")))
+            Err(GraphicsError::new(format!("Failed to release EGL context")))
         } else {
             Ok(())
         }
     }
 
     /// Swap buffers.
-    pub fn swap_buffers(&self) -> Result<(), Illusion> {
+    pub fn swap_buffers(&self) -> Result<(), GraphicsError> {
         if egl::swap_buffers(self.egl.display, self.egl.surface) {
             Ok(())
         } else {
-            Err(Illusion::General(format!("Failed to swap EGL buffers (0x{:x})", egl::get_error())))
+            Err(GraphicsError::new(format!("Failed to swap EGL buffers (0x{:x})", egl::get_error())))
         }
     }
 }

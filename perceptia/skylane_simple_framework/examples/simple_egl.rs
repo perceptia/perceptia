@@ -25,15 +25,14 @@ extern crate egl;
 extern crate gbm_rs as libgbm;
 extern crate drm as libdrm;
 
-extern crate graphics;
+extern crate cognitive_graphics;
 extern crate skylane_simple_framework;
 
 use std::os::unix::io::RawFd;
 use std::path::PathBuf;
 use std::collections::HashSet;
 
-use graphics::egl_tools;
-use graphics::gl_tools;
+use cognitive_graphics::{egl_tools, gl_tools};
 use skylane_simple_framework::{Application, Controller};
 use skylane_simple_framework::{Listener, ListenerConstructor};
 

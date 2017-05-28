@@ -22,7 +22,6 @@
 extern crate nix;
 extern crate drm as libdrm;
 
-extern crate graphics;
 extern crate skylane_simple_framework;
 
 use std::os::unix::io::RawFd;
@@ -153,7 +152,7 @@ impl SimpleDmabuf {
 
         let bufmgr = unsafe { ffi::drm_intel_bufmgr_gem_init(fd, 32) };
         if bufmgr == std::ptr::null_mut() {
-            return Err(format!("Failed to initalize buffer manager"));
+            return Err(format!("Failed to initialize buffer manager"));
         }
 
         let mut tiling = 0;

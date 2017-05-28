@@ -40,6 +40,8 @@ extern crate skylane;
 extern crate skylane_protocols;
 
 extern crate dharma;
+extern crate cognitive_graphics;
+
 #[macro_use]
 extern crate timber;
 #[macro_use]

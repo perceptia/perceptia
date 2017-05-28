@@ -11,8 +11,8 @@ extern crate egl;
 extern crate drm as libdrm;
 extern crate gbm_rs as libgbm;
 
+extern crate cognitive_graphics;
 extern crate qualia;
-extern crate graphics;
 extern crate renderer_gl;
 
 mod output;

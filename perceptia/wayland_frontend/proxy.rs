@@ -19,10 +19,10 @@ use skylane_protocols::server::wayland::wl_shell_surface;
 use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_surface_v6};
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
-use qualia::{Settings, Transfer};
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+use qualia::{Settings, Transfer, DrmBundle, MappedMemory};
 use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
-use qualia::{DrmBundle, EglAttributes, DmabufAttributes, MappedMemory};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};

@@ -16,7 +16,7 @@ use libdrm::drm_mode;
 
 use qualia;
 use device_manager;
-use graphics::{gbm_tools, egl_tools};
+use cognitive_graphics::{gbm_tools, egl_tools};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -112,7 +112,7 @@ fn print_egl_info(fd: io::RawFd) {
 
     // Prepare GBM device and create surface
     let size = qualia::Size::new(16, 16);
-    let gbm = match gbm_tools::GbmBucket::new(fd, size) {
+    let gbm = match gbm_tools::GbmBucket::new(fd, size.width as u32, size.height as u32) {
         Ok(gbm) => gbm,
         Err(err) => {
             println!("\t\tError: {}", err);

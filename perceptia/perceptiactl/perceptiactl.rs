@@ -13,7 +13,7 @@ extern crate image;
 
 extern crate timber;
 extern crate qualia;
-extern crate graphics;
+extern crate cognitive_graphics;
 extern crate device_manager;
 extern crate skylane_simple_framework;
 

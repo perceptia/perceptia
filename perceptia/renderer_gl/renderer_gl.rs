@@ -11,11 +11,10 @@ use std::time::Instant;
 use gl;
 use egl;
 
-use graphics::egl_tools;
-use graphics::gl_tools;
-
+use cognitive_graphics::{egl_tools, gl_tools};
+use cognitive_graphics::attributes::{DmabufAttributes, EglAttributes};
 use qualia::{SurfaceViewer, SurfaceContext, Illusion, Size, PixelFormat, SurfaceId};
-use qualia::{Buffer, DataSource, DmabufAttributes, EglAttributes, Image, MemoryView, Pixmap};
+use qualia::{Buffer, DataSource, Image, MemoryView, Pixmap};
 
 use cache_gl::CacheGl;
 
@@ -136,7 +135,8 @@ impl RendererGl {
     /// Swap buffers.
     pub fn swap_buffers(&mut self) -> Result<(), Illusion> {
         let context = self.egl.make_current()?;
-        context.swap_buffers()
+        context.swap_buffers()?;
+        Ok(())
     }
 
     /// Reads pixels for whole screen and returns image data as `Buffer`.

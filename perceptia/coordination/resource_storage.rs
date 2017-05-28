@@ -10,9 +10,9 @@ use std;
 
 use dharma;
 
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
-use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView, PixelFormat};
-use qualia::{EglAttributes, DmabufAttributes, GraphicsManagement};
+use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView, PixelFormat, GraphicsManagement};
 use qualia::{perceptron, Perceptron};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{show_reason, surface_state};

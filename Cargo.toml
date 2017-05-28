@@ -3,10 +3,11 @@
 members = [
         "cognitive/dharma",
         "cognitive/timber",
+        "cognitive/graphics",
         "cognitive/cognitive",
+
         "perceptia/qualia",
         "perceptia/testing",
-        "perceptia/graphics",
         "perceptia/renderer_gl",
         "perceptia/frames",
         "perceptia/exhibitor",
@@ -18,8 +19,3 @@ members = [
         "perceptia/perceptia",
         "perceptia/perceptiactl",
     ]
-
-[replace]
-"dharma:0.0.1" = { path = "cognitive/dharma" }
-"timber:0.0.1" = { path = "cognitive/timber" }
-

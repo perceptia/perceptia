@@ -1,0 +1,20 @@
+[package]
+name = "cognitive-graphics"
+version = "0.0.1"
+description = "Simple tools related to hardware graphics"
+documentation = "https://docs.rs/cognitive-graphics"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["gl", "egl", "gbm"]
+license = "MPL-2.0"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+libc = "0.2.18"
+gbm-rs = "0.2.0"
+egl = "0.2.6"
+gl = "0.6.0"
+
+[lib]
+name = "cognitive_graphics"
+path = "src/lib.rs"

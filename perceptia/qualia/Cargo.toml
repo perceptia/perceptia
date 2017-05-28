@@ -19,6 +19,7 @@ serde_derive = "0.9"
 serde_yaml = "0.6"
 dharma = "0.0.1"
 timber = "0.0.1"
+cognitive-graphics = "0.0.1"
 
 [lib]
 name = "qualia"

@@ -8,14 +8,17 @@ extern crate nix;
 extern crate libudev;
 extern crate uinput_sys;
 extern crate libc;
+extern crate egl;
+extern crate gbm_rs as libgbm;
 extern crate drm as libdrm;
+
+extern crate dharma;
+extern crate cognitive_graphics;
 
 #[macro_use]
 extern crate timber;
 #[macro_use]
 extern crate qualia;
-extern crate dharma;
-extern crate graphics;
 
 // TODO: Get rid of dependency from `coordination` and `dharma` in `device_manager`. See
 // description of `coordination` crate. Provide unit tests.
@@ -31,6 +34,9 @@ mod device_monitor;
 mod virtual_terminal;
 
 pub mod udev;
+
+mod graphics_manager;
+pub use graphics_manager::GraphicsManager;
 
 pub mod device_manager;
 pub use device_manager::DeviceManager;

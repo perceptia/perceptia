@@ -14,7 +14,8 @@ use skylane_protocols::server::Handler;
 use skylane_protocols::server::drm::wl_drm;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{EglAttributes, PixelFormat, EglImageId};
+use cognitive_graphics::attributes::EglAttributes;
+use qualia::EglImageId;
 
 use global::Global;
 use facade::Facade;
@@ -74,22 +75,9 @@ impl wl_drm::Interface for Drm {
                      stride: u32,
                      format: u32)
                      -> Task {
-        let pixel_format = {
-            match format {
-                wl_drm::format::XRGB8888 => PixelFormat::XRGB8888,
-                wl_drm::format::ARGB8888 => PixelFormat::XRGB8888,
-                wl_drm::format::XBGR8888 => PixelFormat::XBGR8888,
-                wl_drm::format::ABGR8888 => PixelFormat::XBGR8888,
-                _ => {
-                    log_warn3!("Unsupported format: {}", format);
-                    return Task::None;
-                }
-            }
-        };
-
         let eiid = {
             let mut proxy = self.proxy.borrow_mut();
-            let attrs = EglAttributes::new(name, width, height, stride, pixel_format);
+            let attrs = EglAttributes::new(name, width, height, stride, format);
             proxy.create_egl_image(buffer_oid, attrs)
         };
 

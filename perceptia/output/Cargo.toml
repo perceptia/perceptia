@@ -10,8 +10,8 @@ gbm-rs = "0.2.0"
 egl = "0.2.6"
 dharma = "0.0.1"
 timber = "0.0.1"
+cognitive-graphics = "0.0.1"
 qualia = { path = "../qualia" }
-graphics = { path = "../graphics" }
 renderer_gl = { path = "../renderer_gl" }
 
 [lib]

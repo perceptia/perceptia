@@ -18,7 +18,8 @@ use skylane_protocols::server::linux_dmabuf_unstable_v1::zwp_linux_dmabuf_v1;
 use skylane_protocols::server::linux_dmabuf_unstable_v1::zwp_linux_buffer_params_v1;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{DmabufAttributes, DmabufId, ValidationResult};
+use cognitive_graphics::attributes::{DmabufAttributes, ValidationResult};
+use qualia::DmabufId;
 
 use global::Global;
 use facade::Facade;

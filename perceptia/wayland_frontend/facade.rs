@@ -10,8 +10,8 @@ use std::os::unix::io::RawFd;
 
 use skylane::server as wl;
 
-use qualia::{Area, PixelFormat, Size, SurfaceId, Transfer, Vector, show_reason};
-use qualia::{EglAttributes, DmabufAttributes, MappedMemory};
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+use qualia::{Area, MappedMemory, PixelFormat, Size, SurfaceId, Transfer, Vector, show_reason};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 
 // -------------------------------------------------------------------------------------------------

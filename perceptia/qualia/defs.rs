@@ -6,6 +6,8 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
+use std::path::PathBuf;
+use std::os::unix::io::RawFd;
 
 use enums;
 use timing;
@@ -554,6 +556,17 @@ impl std::default::Default for Command {
             string: "".to_owned(),
         }
     }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure containing all data needed to initialize DRM output.
+#[derive(Clone, Debug)]
+pub struct DrmBundle {
+    pub path: PathBuf,
+    pub fd: RawFd,
+    pub crtc_id: u32,
+    pub connector_id: u32,
 }
 
 // -------------------------------------------------------------------------------------------------

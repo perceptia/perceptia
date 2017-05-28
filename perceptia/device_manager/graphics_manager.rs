@@ -1,7 +1,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! This module contains common GBM-related tools.
+//! This module contains implementation of `GraphicsManager`.
+//!
+//! TODO: Rewrite `GraphicsManager` after `gbm_tools` have support for off-screen GBM and remove
+//! direct dependency from `egl` and `libgbm`.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -10,14 +13,14 @@ use std::os::unix::io::RawFd;
 use egl;
 use libgbm;
 
-use qualia::{DmabufAttributes, EglAttributes, GraphicsManagement, Illusion, HwImage};
+use cognitive_graphics::attributes::{DmabufAttributes, EglAttributes};
+use cognitive_graphics::{gbm_tools, egl_tools};
+use qualia::{GraphicsManagement, Illusion};
 
-use gbm_tools;
-use egl_tools;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Graphics manager provides basic acces to GPU for non-rendering components.
+/// Graphics manager provides basic access to GPU for non-rendering components.
 pub struct GraphicsManager {
     /// GBM device.
     _device: libgbm::Device,
@@ -70,17 +73,17 @@ impl GraphicsManager {
 
 impl GraphicsManagement for GraphicsManager {
     /// Creates EGL image from given parameters.
-    fn create_egl_image(&mut self, attrs: &EglAttributes) -> Option<HwImage> {
+    fn create_egl_image(&mut self, attrs: &EglAttributes) -> Option<egl_tools::HwImage> {
         egl_tools::create_image(self.display, attrs)
     }
 
     /// Imports dmabuf as EGL image.
-    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImage> {
+    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<egl_tools::HwImage> {
         egl_tools::import_dmabuf(self.display, attrs)
     }
 
     /// Destroys given hardware image.
-    fn destroy_hw_image(&mut self, image: HwImage) -> Result<(), ()> {
+    fn destroy_hw_image(&mut self, image: egl_tools::HwImage) -> Result<(), ()> {
         egl_tools::destroy_image(self.display, image)
     }
 }

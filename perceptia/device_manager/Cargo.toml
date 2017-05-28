@@ -8,11 +8,13 @@ libudev = "0.2.0"
 nix = "0.8.0"
 libc = "0.2.18"
 drm-rs = "0.1.2"
+egl = "0.2.6"
+gbm-rs = "0.2.0"
 uinput-sys = "0.1.5"
 dharma = "0.0.1"
 timber = "0.0.1"
+cognitive-graphics = "0.0.1"
 qualia = { path = "../qualia" }
-graphics = { path = "../graphics" }
 coordination = { path = "../coordination" }
 
 [lib]

@@ -8,7 +8,8 @@ use std::time::Instant;
 
 use gl;
 
-use qualia::{HwImage, SurfaceId};
+use cognitive_graphics::egl_tools::HwImage;
+use qualia::SurfaceId;
 
 // -------------------------------------------------------------------------------------------------
 

@@ -11,9 +11,9 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
+use cognitive_graphics::{egl_tools, gbm_tools};
 use qualia::{Buffer, DrmBundle, Illusion, SurfaceContext, SurfaceViewer};
 use qualia::{Area, OutputInfo, Position, Size};
-use graphics::{egl_tools, gbm_tools};
 use renderer_gl::RendererGl;
 
 use output::Output;
@@ -87,7 +87,7 @@ impl DrmOutput {
         }
 
         // GBM
-        let gbm = gbm_tools::GbmBucket::new(drm.fd, size.clone())?;
+        let gbm = gbm_tools::GbmBucket::new(drm.fd, size.width as u32, size.height as u32)?;
 
         // EGL
         let egl = egl_tools::EglBucket::new(gbm.device.c_struct() as *mut _,

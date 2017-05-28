@@ -6,9 +6,10 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
-use libudev;
-
 use std::error::Error;
+
+use libudev;
+use cognitive_graphics;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -21,6 +22,7 @@ pub enum Illusion {
     Permissions(String),
     InvalidArgument(String),
     General(String),
+    Graphics(String),
     Config(std::path::PathBuf, String),
     IO(String),
     Unknown(String),
@@ -34,6 +36,7 @@ impl std::fmt::Display for Illusion {
             Illusion::Permissions(ref s) => write!(f, "Wrong permissions: {}", s),
             Illusion::InvalidArgument(ref s) => write!(f, "Invalid argument: {}", s),
             Illusion::General(ref s) => write!(f, "{}", s),
+            Illusion::Graphics(ref s) => write!(f, "{}", s),
             Illusion::Config(ref path, ref s) => write!(f, "Config error ({:?}): {}", path, s),
             Illusion::IO(ref s) => write!(f, "IO error: {}", s),
             Illusion::Unknown(ref s) => write!(f, "Unknown error: {}", s),
@@ -54,6 +57,14 @@ impl std::convert::From<std::io::Error> for Illusion {
 impl std::convert::From<libudev::Error> for Illusion {
     fn from(error: libudev::Error) -> Self {
         Illusion::General(error.description().to_owned())
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl std::convert::From<cognitive_graphics::GraphicsError> for Illusion {
+    fn from(error: cognitive_graphics::GraphicsError) -> Self {
+        Illusion::Graphics(error.description().to_owned())
     }
 }
 

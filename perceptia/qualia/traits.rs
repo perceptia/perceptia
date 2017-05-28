@@ -6,10 +6,12 @@
 
 use std::os::unix::io::RawFd;
 
+use cognitive_graphics::egl_tools::HwImage;
+use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
 use memory::{Buffer, MappedMemory};
-use graphics::{EglAttributes, DmabufAttributes, GraphicsManagement};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -120,6 +122,22 @@ pub trait Screenshooting {
 
     /// Returns and forgets screenshot buffer.
     fn take_screenshot_buffer(&mut self) -> Option<Buffer>;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Trait every graphics manager should implement.
+///
+/// Graphics manager is peace of code abstracting hardware image creation.
+pub trait GraphicsManagement {
+    /// Creates EGL image from given parameters.
+    fn create_egl_image(&mut self, attrs: &EglAttributes) -> Option<HwImage>;
+
+    /// Imports dmabuf as EGL image.
+    fn import_dmabuf(&mut self, attrs: &DmabufAttributes) -> Option<HwImage>;
+
+    /// Destroys given hardware image.
+    fn destroy_hw_image(&mut self, image: HwImage) -> Result<(), ()>;
 }
 
 // -------------------------------------------------------------------------------------------------

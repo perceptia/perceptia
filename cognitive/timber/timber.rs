@@ -1,4 +1,4 @@
-// Copyright 2016 The Perceptia Project Developers
+// Copyright 2016-2017 The Perceptia Project Developers
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this software
 // and associated documentation files (the "Software"), to deal in the Software without

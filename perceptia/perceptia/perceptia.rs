@@ -3,11 +3,13 @@
 
 #![cfg_attr(not(test), allow(unused_variables))]
 
+extern crate dharma;
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
-extern crate dharma;
+extern crate cognitive_qualia as qualia;
+extern crate cognitive_inputs as inputs;
+extern crate gears;
 extern crate output;
 extern crate coordination;
 
@@ -22,7 +24,7 @@ mod exhibitor_module;
 mod wayland_service;
 
 use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, SignalEventHandler, Signaler};
-use qualia::InputManager;
+use gears::InputManager;
 use coordination::{Context, Coordinator};
 
 use aesthetics_module::AestheticsModuleConstructor;
@@ -33,12 +35,12 @@ use wayland_service::WaylandServiceConstructor;
 fn main() {
     // Set panic hook: log the panic and quit application - we want to exit when one of threads
     // panics.
-    std::panic::set_hook(Box::new(|info| qualia::functions::panic_hook(info)));
+    std::panic::set_hook(Box::new(|info| gears::functions::panic_hook(info)));
 
     // Prepare tools
     let env = qualia::Env::create(qualia::LogDestination::LogFile);
-    let config = env.read_config();
-    let keymap = qualia::Keymap::new(&env, config.get_keyboard_config()).unwrap();
+    let config = gears::Config::read_or_default(env.get_directories());
+    let keymap = inputs::Keymap::new(&env, config.get_keyboard_config()).unwrap();
     let settings = qualia::Settings::new(keymap.get_settings());
 
     // Prepare state

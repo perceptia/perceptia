@@ -7,14 +7,19 @@
 
 use std;
 use std::ascii::AsciiExt;
+use std::error::Error;
+use std::io::Read;
 use std::path::PathBuf;
+use std::fs::File;
 use uinput_sys;
 use yaml_rust;
 use serde_yaml;
 use serde::ser::{Serialize, Serializer, SerializeMap};
 
-use defs::modifier;
-use input_manager::Binding;
+use qualia::{Binding, Directories, Illusion, modifier};
+use qualia::{AestheticsConfig, KeyboardConfig, ExhibitorConfig, InputConfig};
+
+use config_defaults::DefaultConfig;
 use binding_functions;
 
 // -------------------------------------------------------------------------------------------------
@@ -91,53 +96,6 @@ impl BindingEntry {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Configuration of aesthetics.
-#[derive(Clone, Debug, Serialize)]
-pub struct AestheticsConfig {
-    /// Path to background image.
-    pub background_path: Option<PathBuf>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration of compositor.
-#[derive(Clone, Debug, Serialize)]
-pub struct CompositorConfig {
-    /// Distance in pixels by which frames are moved by `move` command.
-    pub move_step: u32,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration of exhibitor.
-#[derive(Clone, Debug, Serialize)]
-pub struct ExhibitorConfig {
-    /// Configuration of compositor.
-    pub compositor: CompositorConfig,
-
-    /// Configuration of strategist.
-    pub strategist: StrategistConfig,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration of input devices.
-#[derive(Clone, Debug, Serialize)]
-pub struct InputConfig {
-    /// Scale for touchpad event position values.
-    /// In future will be replaced by non-linear scale per dimension.
-    pub touchpad_scale: f32,
-
-    /// Threshold value for touchpad pressure below which move events will be ignored.
-    pub touchpad_pressure_threshold: i32,
-
-    /// Scale for mouse event motion values.
-    /// In future will be replaced by non-linear scale per dimension.
-    pub mouse_scale: f32,
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Configuration of keyboard.
 #[derive(Clone, Debug)]
 pub struct KeybindingsConfig {
@@ -149,27 +107,6 @@ pub struct KeybindingsConfig {
 
     /// Bindings for `normal` mode.
     pub normal: Vec<BindingEntry>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration of keyboard.
-#[derive(Clone, Debug, Serialize)]
-pub struct KeyboardConfig {
-    pub layout: String,
-    pub variant: String,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Configuration of strategist.
-#[derive(Clone, Debug, Serialize)]
-pub struct StrategistConfig {
-    /// Strategy used to decide where and how new surface should be placed.
-    pub choose_target: String,
-
-    /// Strategy used to decide position and size of floating surface (new or deanchorized).
-    pub choose_floating: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -209,6 +146,45 @@ impl Config {
             input: input,
             keyboard: keyboard,
             keybindings: keybindings,
+        }
+    }
+
+    /// Loads configuration.
+    ///
+    /// TODO: Configuration is currently read only from `perceptia.conf` in config directories.
+    /// Make all files with extension `.conf` or `.yaml` be threated as config files.
+    ///
+    /// TODO: Keep reading files even if parsing one fails.
+    pub fn read(dirs: &Directories) -> Result<Self, Illusion> {
+        let mut config = Config::default();
+
+        for dir in vec![dirs.system_config.clone(), dirs.user_config.clone()] {
+            if let Some(mut path) = dir {
+                path.push("perceptia.conf");
+                if let Ok(mut file) = File::open(&path) {
+                    let mut contents = String::new();
+                    file.read_to_string(&mut contents)?;
+                    match yaml_rust::YamlLoader::load_from_str(&contents) {
+                        Ok(yaml) => config.load(&yaml),
+                        Err(err) => {
+                            return Err(Illusion::Config(path, err.description().to_owned()));
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(config)
+    }
+
+    /// Reads in configuration. If loading fails returns default configuration.
+    pub fn read_or_default(dirs: &Directories) -> Self {
+        match Self::read(dirs) {
+            Ok(config) => config,
+            Err(err) => {
+                log_error!("Config error: {}", err);
+                Self::default()
+            }
         }
     }
 
@@ -395,7 +371,7 @@ impl Config {
             "jump_right" => binding_functions::JumpRight::new(),
             "jump_down" => binding_functions::JumpDown::new(),
             "jump_left" => binding_functions::JumpLeft::new(),
-            "jump_ip" => binding_functions::JumpUp::new(),
+            "jump_up" => binding_functions::JumpUp::new(),
             "exalt" => binding_functions::Exalt::new(),
             "ramify" => binding_functions::Ramify::new(),
             "dive_right" => binding_functions::DiveRight::new(),

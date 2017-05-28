@@ -8,21 +8,18 @@
 use std;
 use std::fs;
 use std::time::{Duration, SystemTime};
-use std::io::Read;
 use std::ops::BitAnd;
 use std::error::Error;
-use std::default::Default;
 use std::path::{Path, PathBuf};
 
 use libc;
 use time;
 use nix::sys::signal;
-use yaml_rust;
 
 use timber;
 
+use settings::Directories;
 use errors::Illusion;
-use config;
 use log;
 
 // -------------------------------------------------------------------------------------------------
@@ -33,7 +30,7 @@ const CACHE_DIR_VAR: &'static str = "XDG_CACHE_HOME";
 const CONFIG_DIR_VAR: &'static str = "XDG_CONFIG_HOME";
 
 const DEFAULT_RUNTIME_DIR: &'static str = "/tmp";
-const DEFAULT_GLOBAL_CONFIG_DIR: &'static str = "/etc/perceptia";
+const DEFAULT_SYSTEM_CONFIG_DIR: &'static str = "/etc/perceptia";
 
 const DEFAULT_DATA_DIR_FRAGMENT: &'static str = ".local/share";
 const DEFAULT_CACHE_DIR_FRAGMENT: &'static str = ".cache";
@@ -57,13 +54,8 @@ pub enum Directory {
 
 // -------------------------------------------------------------------------------------------------
 
-// FIXME: Do not keep log in runtime directory, as it is removed at exit.
 pub struct Env {
-    runtime_dir: PathBuf,
-    data_dir: PathBuf,
-    cache_dir: PathBuf,
-    local_config_dir: Option<PathBuf>,
-    global_config_dir: Option<PathBuf>,
+    dirs: Directories,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -93,15 +85,17 @@ impl Env {
         let runtime_dir = Self::create_runtime_dir().unwrap();
 
         // Check if configuration directories exist and remember them if so.
-        let (global_config_dir, local_config_dir) = Self::check_config_dirs();
+        let (system_config_dir, user_config_dir) = Self::check_config_dirs();
 
         // Construct `Env`
         let mine = Env {
-            runtime_dir: runtime_dir,
-            data_dir: data_dir,
-            cache_dir: cache_dir,
-            local_config_dir: local_config_dir,
-            global_config_dir: global_config_dir,
+            dirs: Directories {
+                runtime: runtime_dir,
+                data: data_dir,
+                cache: cache_dir,
+                user_config: user_config_dir,
+                system_config: system_config_dir,
+            },
         };
 
         // Remove unneeded files
@@ -109,52 +103,13 @@ impl Env {
         mine
     }
 
-    /// Loads configuration.
-    ///
-    /// TODO: Configuration is currently read only from `perceptia.conf` in config directories.
-    /// Make all files with extension `.conf` or `.yaml` be threated as config files.
-    ///
-    /// TODO: Keep reading files even if parsing one fails.
-    pub fn load_config(&self) -> Result<config::Config, Illusion> {
-        let mut config = config::Config::default();
-
-        for dir in vec![self.global_config_dir.clone(), self.local_config_dir.clone()] {
-            if let Some(mut path) = dir {
-                path.push("perceptia.conf");
-                if let Ok(mut file) = fs::File::open(&path) {
-                    let mut contents = String::new();
-                    file.read_to_string(&mut contents)?;
-                    match yaml_rust::YamlLoader::load_from_str(&contents) {
-                        Ok(yaml) => config.load(&yaml),
-                        Err(err) => {
-                            return Err(Illusion::Config(path, err.description().to_owned()));
-                        }
-                    }
-                }
-            }
-        }
-
-        Ok(config)
-    }
-
-    /// Reads in configuration. If loading fails returns default configuration.
-    pub fn read_config(&self) -> config::Config {
-        match self.load_config() {
-            Ok(config) => config,
-            Err(err) => {
-                log_error!("Config error: {}", err);
-                config::Config::default()
-            }
-        }
-    }
-
     /// Opens file in predefined directory.
     pub fn open_file(&self, name: String, dir: Directory) -> Result<fs::File, Illusion> {
         let mut dir = {
             match dir {
-                Directory::Data => self.data_dir.clone(),
-                Directory::Cache => self.cache_dir.clone(),
-                Directory::Runtime => self.runtime_dir.clone(),
+                Directory::Data => self.dirs.data.clone(),
+                Directory::Cache => self.dirs.cache.clone(),
+                Directory::Runtime => self.dirs.runtime.clone(),
             }
         };
 
@@ -163,6 +118,11 @@ impl Env {
             Ok(file) => Ok(file),
             Err(err) => Err(Illusion::IO(err.description().to_string())),
         }
+    }
+
+    /// Returns directory paths.
+    pub fn get_directories(&self) -> &Directories {
+        &self.dirs
     }
 }
 
@@ -214,7 +174,7 @@ impl Env {
 impl Env {
     /// Cleans up environment: remove runtime directory.
     fn cleanup(&mut self) {
-        if let Err(err) = fs::remove_dir_all(&self.runtime_dir) {
+        if let Err(err) = fs::remove_dir_all(&self.dirs.runtime) {
             log_warn1!("Failed to remove runtime directory: {:?}", err);
         }
     }
@@ -222,7 +182,7 @@ impl Env {
     /// Removes logs older than two days.
     fn remove_old_logs(&self) {
         let transition_time = SystemTime::now() - Duration::new(2 * 24 * 60 * 60, 0);
-        if let Ok(entries) = fs::read_dir(&self.cache_dir) {
+        if let Ok(entries) = fs::read_dir(&self.dirs.cache) {
             for entry in entries {
                 if let Ok(entry) = entry {
                     let path = entry.path();
@@ -293,30 +253,30 @@ impl Env {
     /// `~/.config/perceptia`.
     fn check_config_dirs() -> (Option<PathBuf>, Option<PathBuf>) {
         // Check if local config directory exists
-        let local_config_dir = {
+        let user_config_dir = {
             let mut default_path = std::env::home_dir().unwrap();
             default_path.push(DEFAULT_CONFIG_DIR_FRAGMENT);
-            let mut local = Self::read_path(CONFIG_DIR_VAR, default_path.to_str().unwrap());
-            local.push("perceptia");
-            if local.exists() && local.is_dir() {
-                Some(local)
+            let mut user = Self::read_path(CONFIG_DIR_VAR, default_path.to_str().unwrap());
+            user.push("perceptia");
+            if user.exists() && user.is_dir() {
+                Some(user)
             } else {
                 None
             }
         };
 
         // Check if global config directory exists
-        let global_config_dir = {
-            let global = PathBuf::from(DEFAULT_GLOBAL_CONFIG_DIR);
-            if global.exists() && global.is_dir() {
-                Some(global)
+        let system_config_dir = {
+            let system = PathBuf::from(DEFAULT_SYSTEM_CONFIG_DIR);
+            if system.exists() && system.is_dir() {
+                Some(system)
             } else {
                 None
             }
         };
 
         // Return results
-        (global_config_dir, local_config_dir)
+        (system_config_dir, user_config_dir)
     }
 
     /// Reads given environment variable and if exists returns its value or default value otherwise.

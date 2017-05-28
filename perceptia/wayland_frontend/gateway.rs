@@ -7,8 +7,9 @@
 
 use std::os::unix::io::RawFd;
 
-use qualia::{Axis, Button, DrmBundle, Key, KeyMods, Milliseconds, OutputInfo, Position, Size};
+use qualia::{Axis, Button, DrmBundle, Key, Milliseconds, OutputInfo, Position, Size};
 use qualia::{SurfaceId, surface_state};
+use inputs::KeyMods;
 
 // -------------------------------------------------------------------------------------------------
 

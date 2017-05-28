@@ -14,12 +14,19 @@ use std::sync::{Arc, Mutex};
 use uinput_sys;
 
 use dharma::Signaler;
+use qualia::{modifier, Binding, Command, KeyCode, KeyValue, Action, Direction, KeyState};
+use qualia::{perceptron, Perceptron};
 
-use defs::{modifier, mode_name, Command, KeyCode, KeyValue};
-use enums::{Action, Direction, KeyState};
 use config::KeybindingsConfig;
 use binding_functions::{self, Executor};
-use perceptron::{self, Perceptron};
+
+// -------------------------------------------------------------------------------------------------
+
+pub mod mode_name {
+    pub const COMMON: &'static str = "common";
+    pub const INSERT: &'static str = "insert";
+    pub const NORMAL: &'static str = "normal";
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -28,40 +35,6 @@ use perceptron::{self, Perceptron};
 pub enum KeyCatchResult {
     Caught,
     Passed,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure for identifying key binding.
-///
-/// Used as key in hash maps.
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub struct Binding {
-    code: KeyCode,
-    modifiers: modifier::ModifierType,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Binding {
-    /// `Binding` constructor.
-    ///
-    /// `uinput_sys` defines codes as `i32` so second constructor added to avoid casting in other
-    /// places.
-    pub fn new(code: i32, modifiers: modifier::ModifierType) -> Self {
-        Binding {
-            code: code as KeyCode,
-            modifiers: modifiers,
-        }
-    }
-
-    /// `Binding` constructor.
-    pub fn create(code: KeyCode, modifiers: modifier::ModifierType) -> Self {
-        Binding {
-            code: code,
-            modifiers: modifiers,
-        }
-    }
 }
 
 // -------------------------------------------------------------------------------------------------

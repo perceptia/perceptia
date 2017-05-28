@@ -12,8 +12,9 @@ use dharma;
 use skylane::server as wl;
 
 use qualia::{Axis, Button, DrmBundle, Milliseconds, OutputInfo, Position, Size};
-use qualia::{Key, KeyMods, KeyboardConfig, KeyboardState, Perceptron, Settings};
+use qualia::{Key, KeyboardConfig, Perceptron, Settings};
 use qualia::{surface_state, SurfaceId, SurfaceFocusing};
+use inputs::{KeyboardState, KeyMods};
 use coordination::Coordinator;
 
 use protocol;

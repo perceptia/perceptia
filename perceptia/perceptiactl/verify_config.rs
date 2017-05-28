@@ -4,6 +4,7 @@
 //! Verification to validity of configuration files.
 
 use qualia;
+use gears::Config;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -17,7 +18,7 @@ pub fn process() {
 /// In case of failure prints error returned by parser.
 fn verify_config() {
     let env = qualia::env::Env::create(qualia::LogDestination::Disabled);
-    match env.load_config() {
+    match Config::read(env.get_directories()) {
         Ok(config) => {
             println!("Config valid!");
             println!("{}", config.serialize());

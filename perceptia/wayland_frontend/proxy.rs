@@ -21,12 +21,13 @@ use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Settings, Transfer, DrmBundle, MappedMemory};
-use qualia::{Area, Axis, Button, Key, KeyMods, Milliseconds};
+use qualia::{Area, Axis, Button, Key, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{show_reason, surface_state, SurfaceId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer, SurfaceFocusing};
 use qualia::{AppearanceManagement, DataTransferring, HwGraphics, Screenshooting, MemoryManagement};
+use inputs::KeyMods;
 
 use coordination::Coordinator;
 

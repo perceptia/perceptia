@@ -46,7 +46,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 
 mod frame;
 pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Side, Parameters};

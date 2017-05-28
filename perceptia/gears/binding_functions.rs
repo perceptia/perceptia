@@ -5,9 +5,10 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use qualia::{Action, Direction, KeyCode};
+
+use input_manager::mode_name;
 use functions;
-use enums::{Action, Direction};
-use defs::{KeyCode, mode_name};
 
 // -------------------------------------------------------------------------------------------------
 

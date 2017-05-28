@@ -4,15 +4,13 @@
 //! This crate contains code dedicated to managing output device like buffer swapping or controlling
 //! v-blanks.
 
-// -------------------------------------------------------------------------------------------------
-
 extern crate libc;
 extern crate egl;
 extern crate drm as libdrm;
 extern crate gbm_rs as libgbm;
 
 extern crate cognitive_graphics;
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate renderer_gl;
 
 mod output;
@@ -20,5 +18,3 @@ pub use output::Output;
 
 mod drm_output;
 pub use drm_output::DrmOutput;
-
-// -------------------------------------------------------------------------------------------------

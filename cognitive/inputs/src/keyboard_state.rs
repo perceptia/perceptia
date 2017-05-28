@@ -7,9 +7,8 @@
 
 use xkbcommon::xkb;
 
-use config::KeyboardConfig;
-use defs::{KeyCode, KeyValue};
-use errors::Illusion;
+use qualia::{Illusion, KeyboardConfig, KeyCode, KeyValue};
+
 use keymap::XkbKeymap;
 
 // -------------------------------------------------------------------------------------------------

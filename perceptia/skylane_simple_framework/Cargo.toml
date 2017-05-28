@@ -14,7 +14,7 @@ skylane_protocols = "0.1.2"
 dharma = "0.0.1"
 timber = "0.0.1"
 cognitive-graphics = "0.0.1"
-qualia = { path = "../qualia" }
+cognitive-qualia = "0.0.1"
 
 [lib]
 name = "skylane_simple_framework"

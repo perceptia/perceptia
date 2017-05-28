@@ -12,7 +12,7 @@ extern crate rusttype;
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 
 mod cursor;
 mod background;

@@ -14,7 +14,8 @@ uinput-sys = "0.1.5"
 dharma = "0.0.1"
 timber = "0.0.1"
 cognitive-graphics = "0.0.1"
-qualia = { path = "../qualia" }
+cognitive-qualia = "0.0.1"
+gears = { path = "../gears" }
 coordination = { path = "../coordination" }
 
 [lib]

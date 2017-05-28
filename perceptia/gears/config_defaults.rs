@@ -5,18 +5,37 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use std::default::Default;
 use uinput_sys;
 
-use defs::modifier;
+use qualia::modifier;
+pub use qualia::{AestheticsConfig, CompositorConfig, KeyboardConfig};
+pub use qualia::{ExhibitorConfig, InputConfig, StrategistConfig};
+
+use config::{BindingEntry, Config, KeybindingsConfig};
 use binding_functions;
-use config::{BindingEntry, Config};
-use config::{AestheticsConfig, KeybindingsConfig, KeyboardConfig, InputConfig};
-use config::{CompositorConfig, ExhibitorConfig, StrategistConfig};
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for AestheticsConfig {
+/// Trait for creating default configuration.
+pub trait DefaultConfig {
+    fn default() -> Self;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl DefaultConfig for Config {
+    fn default() -> Self {
+        Config::new(AestheticsConfig::default(),
+                    ExhibitorConfig::default(),
+                    InputConfig::default(),
+                    KeyboardConfig::default(),
+                    KeybindingsConfig::default())
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl DefaultConfig for AestheticsConfig {
     fn default() -> Self {
         AestheticsConfig { background_path: None }
     }
@@ -24,7 +43,7 @@ impl Default for AestheticsConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for CompositorConfig {
+impl DefaultConfig for CompositorConfig {
     fn default() -> Self {
         CompositorConfig { move_step: 10 }
     }
@@ -32,7 +51,7 @@ impl Default for CompositorConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for ExhibitorConfig {
+impl DefaultConfig for ExhibitorConfig {
     fn default() -> Self {
         ExhibitorConfig {
             compositor: CompositorConfig::default(),
@@ -43,7 +62,7 @@ impl Default for ExhibitorConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for InputConfig {
+impl DefaultConfig for InputConfig {
     fn default() -> Self {
         InputConfig {
             touchpad_scale: 1.0,
@@ -55,7 +74,7 @@ impl Default for InputConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for KeybindingsConfig {
+impl DefaultConfig for KeybindingsConfig {
     fn default() -> Self {
         KeybindingsConfig {
             common: {
@@ -313,7 +332,7 @@ impl Default for KeybindingsConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for KeyboardConfig {
+impl DefaultConfig for KeyboardConfig {
     fn default() -> Self {
         KeyboardConfig {
             layout: "us".to_owned(),
@@ -324,24 +343,12 @@ impl Default for KeyboardConfig {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Default for StrategistConfig {
+impl DefaultConfig for StrategistConfig {
     fn default() -> Self {
         StrategistConfig {
             choose_target: "always_floating".to_owned(),
             choose_floating: "random".to_owned(),
         }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Default for Config {
-    fn default() -> Self {
-        Config::new(AestheticsConfig::default(),
-                    ExhibitorConfig::default(),
-                    InputConfig::default(),
-                    KeyboardConfig::default(),
-                    KeybindingsConfig::default())
     }
 }
 

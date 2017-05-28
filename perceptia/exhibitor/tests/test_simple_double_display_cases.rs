@@ -5,14 +5,13 @@
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate frames;
 extern crate exhibitor;
 extern crate testing;
 
 use qualia::{OutputInfo, SurfaceId};
 use qualia::{Area, Position, Size};
-use qualia::CompositorConfig;
 use frames::Geometry::{Stacked, Vertical};
 use frames::Mobility::Floating;
 use frames::Parameters;
@@ -54,7 +53,7 @@ impl Environment {
         let coordinator = CoordinatorMock::new();
         let mut exhibitor = Exhibitor::new(coordinator.clone(),
                                            strategist,
-                                           CompositorConfig::default());
+                                           testing::configurations::compositor());
 
         exhibitor.on_output_found(output1);
         exhibitor.on_output_found(output2);

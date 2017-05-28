@@ -9,7 +9,7 @@
 
 extern crate frames;
 
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate testing;
 
 mod common;

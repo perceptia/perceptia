@@ -5,14 +5,13 @@
 
 #![cfg_attr(rustfmt, rustfmt_skip)]
 
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate frames;
 extern crate exhibitor;
 extern crate testing;
 
 use qualia::{OutputInfo, SurfaceId};
 use qualia::{Area, Position, Size};
-use qualia::{CompositorConfig, StrategistConfig};
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 use frames::Mobility::{Anchored, Floating};
 use frames::Parameters;
@@ -43,7 +42,7 @@ impl Environment {
         let output = Box::new(OutputMock::new(output_info.clone()));
         let coordinator = CoordinatorMock::new();
         let mut exhibitor =
-            Exhibitor::new(coordinator.clone(), strategist, CompositorConfig::default());
+            Exhibitor::new(coordinator.clone(), strategist, testing::configurations::compositor());
 
         exhibitor.on_output_found(output);
 
@@ -136,7 +135,7 @@ fn test_selection_after_unmanaging_ramified() {
 /// Buggy implementation placed ramified and dived surfaces on wrong positions.
 #[test]
 fn test_create_layout_of_four() {
-    let mut config = StrategistConfig::default();
+    let mut config = testing::configurations::strategist();
     config.choose_target = "anchored_but_popups".to_owned();
     let strategist = Strategist::new_from_config(config);
     let mut e = Environment::create(strategist);

@@ -12,9 +12,13 @@
 //!  - [dharma](https://docs.rs/dharma)
 //!  - [timber](https://docs.rs/timber)
 //!  - [graphics](https://docs.rs/cognitive-graphics)
+//!  - [qualia](https://docs.rs/cognitive-qualia)
+//!  - [inputs](https://docs.rs/cognitive-inputs)
 
 #![warn(missing_docs)]
 
 pub extern crate dharma;
 pub extern crate timber;
 pub extern crate cognitive_graphics as graphics;
+pub extern crate cognitive_qualia as qualia;
+pub extern crate cognitive_inputs as inputs;

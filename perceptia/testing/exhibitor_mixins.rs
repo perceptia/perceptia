@@ -1,14 +1,14 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! This module contains extentions to Exhibitor useful in tests.
+//! This module contains extensions to Exhibitor useful in tests.
 
 use qualia::{Action, Command, Direction, ExhibitorCoordinationTrait};
 use exhibitor::Exhibitor;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Mixin for Exhibitor with shorhand methods for handling commands.
+/// Mixin for Exhibitor with shorthand methods for handling commands.
 pub trait ExhibitorCommandShorthands {
     /// Executes exalt command.
     fn exalt(&mut self);

@@ -13,7 +13,8 @@ drm-rs = "0.1.2"
 image = "0.12.3"
 timber = "0.0.1"
 cognitive-graphics = "0.0.1"
-qualia                   = { path = "../qualia" }
+cognitive-qualia = "0.0.1"
+gears                    = { path = "../gears" }
 device_manager           = { path = "../device_manager" }
 skylane_simple_framework = { path = "../skylane_simple_framework" }
 

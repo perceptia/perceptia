@@ -14,7 +14,9 @@ extern crate cognitive_graphics;
 #[macro_use(timber)]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
+
+extern crate gears;
 
 mod surfaces;
 

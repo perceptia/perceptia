@@ -5,9 +5,9 @@
 
 // -------------------------------------------------------------------------------------------------
 
-extern crate qualia;
+extern crate cognitive_qualia;
 
-use self::qualia::defs::{Area, Position, Size};
+use cognitive_qualia::defs::{Area, Position, Size};
 
 // -------------------------------------------------------------------------------------------------
 

@@ -7,7 +7,8 @@
 
 use dharma::{DispatcherController, EventHandler, EventKind, Signaler, SignalId};
 
-use qualia::{Config, Settings, Perceptron, InputManager};
+use qualia::{Settings, Perceptron};
+use gears::{Config, InputManager};
 
 use coordinator::Coordinator;
 

@@ -114,10 +114,36 @@ pub mod modifier {
 
 // -------------------------------------------------------------------------------------------------
 
-pub mod mode_name {
-    pub const COMMON: &'static str = "common";
-    pub const INSERT: &'static str = "insert";
-    pub const NORMAL: &'static str = "normal";
+/// Structure for identifying key binding.
+///
+/// Used as key in hash maps.
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub struct Binding {
+    code: KeyCode,
+    modifiers: modifier::ModifierType,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Binding {
+    /// Constructs new `Binding`.
+    ///
+    /// `uinput_sys` defines codes as `i32` so second constructor added to avoid casting in other
+    /// places.
+    pub fn new(code: i32, modifiers: modifier::ModifierType) -> Self {
+        Binding {
+            code: code as KeyCode,
+            modifiers: modifiers,
+        }
+    }
+
+    /// `Binding` constructor.
+    pub fn create(code: KeyCode, modifiers: modifier::ModifierType) -> Self {
+        Binding {
+            code: code,
+            modifiers: modifiers,
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

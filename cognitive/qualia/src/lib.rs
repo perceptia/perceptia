@@ -14,16 +14,11 @@ extern crate libc;
 extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
 extern crate time;
-extern crate xkbcommon;
-extern crate uinput_sys;
 #[macro_use]
 extern crate bitflags;
 
-extern crate yaml_rust;
-extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate serde_yaml;
 
 #[macro_use(timber)]
 extern crate timber;
@@ -44,7 +39,7 @@ pub use timing::Milliseconds;
 
 pub mod defs;
 pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Command, modifier, Key, KeyCode, KeyValue, OutputInfo, DrmBundle};
+pub use defs::{Binding, Command, modifier, Key, KeyCode, KeyValue, OutputInfo, DrmBundle};
 pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod image;
@@ -53,11 +48,9 @@ pub use image::{Image, Pixmap, PixelFormat};
 pub mod memory;
 pub use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
 
-pub mod config;
-pub use config::{Config, AestheticsConfig, InputConfig, KeyboardConfig};
-pub use config::{CompositorConfig, ExhibitorConfig, StrategistConfig};
-
-pub mod config_defaults;
+pub mod configuration;
+pub use configuration::{AestheticsConfig, CompositorConfig, ExhibitorConfig};
+pub use configuration::{KeyboardConfig, InputConfig, StrategistConfig};
 
 pub mod surface;
 pub use surface::{SurfaceContext, SurfaceId, SurfaceIdType, SurfaceInfo, DataSource};
@@ -81,23 +74,11 @@ pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 pub mod log;
 pub use log::level;
 
-pub mod functions;
-
 pub mod env;
 pub use env::{Env, LogDestination};
 
-pub mod keyboard_state;
-pub use keyboard_state::{KeyboardState, KeyMods};
-
-pub mod keymap;
-pub use keymap::{Keymap, Settings as KeymapSettings};
-
 pub mod settings;
-pub use settings::Settings;
-
-mod binding_functions;
-pub mod input_manager;
-pub use input_manager::{InputManager, KeyCatchResult};
+pub use settings::{Settings, Directories, KeymapSettings};
 
 pub mod ipc;
 pub use ipc::Ipc;

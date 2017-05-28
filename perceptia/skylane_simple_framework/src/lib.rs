@@ -31,10 +31,12 @@ extern crate skylane_protocols;
 
 extern crate dharma;
 extern crate cognitive_graphics;
+
+// TODO: Remove dependency from `qualia` and `timber` from `skylane_simple_framework`.
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 
 #[macro_use]
 mod defs;

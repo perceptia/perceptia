@@ -14,11 +14,12 @@ extern crate drm as libdrm;
 
 extern crate dharma;
 extern crate cognitive_graphics;
+extern crate gears;
 
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 
 // TODO: Get rid of dependency from `coordination` and `dharma` in `device_manager`. See
 // description of `coordination` crate. Provide unit tests.

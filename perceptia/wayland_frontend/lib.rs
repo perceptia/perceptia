@@ -45,7 +45,8 @@ extern crate cognitive_graphics;
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
+extern crate cognitive_inputs as inputs;
 
 // TODO: Get rid of dependency from `coordination` and `dharma` in `wayland_frontend`. See
 // description of `coordination` crate. Provide unit tests.

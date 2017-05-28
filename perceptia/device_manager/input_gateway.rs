@@ -7,12 +7,14 @@
 
 use uinput_sys;
 
+use dharma::Signaler;
 use qualia::{perceptron, Perceptron, InputConfig};
 use qualia::{Axis, Button, Key, OptionalPosition, Slide, Vector};
-use qualia::{modifier, InputManager, KeyCatchResult, KeyCode, KeyValue, KeyState};
-use dharma::Signaler;
+use qualia::{modifier, KeyCode, KeyValue, KeyState};
 
-// For built-in VT swithing
+use gears::{InputManager, KeyCatchResult};
+
+// For built-in VT switching
 use virtual_terminal::VirtualTerminal;
 
 // -------------------------------------------------------------------------------------------------
@@ -177,10 +179,10 @@ impl InputGateway {
         log_info1!("Switching to virtual terminal {}", num);
         if let Some(vt) = self.vt {
             if let Err(err) = vt.switch_to(num as u8) {
-                log_warn1!("Failed to swith terminals: {:?}", err);
+                log_warn1!("Failed to switch terminals: {:?}", err);
             }
         } else {
-            log_warn1!("Viertual terminals were not set up properly");
+            log_warn1!("Virtual terminals were not set up properly");
         }
     }
 }

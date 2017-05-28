@@ -1,20 +1,34 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! Settings for perceptia.
+//! Various settings.
 
 // -------------------------------------------------------------------------------------------------
 
-use std::sync::{Arc, Mutex};
-
-use keymap;
+use std::sync::{Arc, RwLock};
+use std::os::unix::io::RawFd;
+use std::path::PathBuf;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure for global settings.
-#[derive(Clone)]
-struct InnerSettings {
-    pub keymap: keymap::Settings,
+/// Set of paths to XDG directories.
+pub struct Directories {
+    pub runtime: PathBuf,
+    pub data: PathBuf,
+    pub cache: PathBuf,
+    pub user_config: Option<PathBuf>,
+    pub system_config: Option<PathBuf>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Structure containing settings for key map.
+#[derive(Clone, Debug)]
+#[repr(C)]
+pub struct KeymapSettings {
+    pub format: u32,
+    pub size: usize,
+    pub fd: RawFd,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -22,21 +36,20 @@ struct InnerSettings {
 /// Global settings.
 #[derive(Clone)]
 pub struct Settings {
-    inner: Arc<Mutex<InnerSettings>>,
+    keymap: Arc<RwLock<KeymapSettings>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Settings {
     /// `Settings` constructor.
-    pub fn new(keymap: keymap::Settings) -> Self {
-        Settings { inner: Arc::new(Mutex::new(InnerSettings { keymap: keymap })) }
+    pub fn new(keymap: KeymapSettings) -> Self {
+        Settings { keymap: Arc::new(RwLock::new(keymap)) }
     }
 
     /// Get key map related settings.
-    pub fn get_keymap(&self) -> keymap::Settings {
-        let mine = self.inner.lock().unwrap();
-        mine.keymap.clone()
+    pub fn get_keymap(&self) -> KeymapSettings {
+        self.keymap.read().unwrap().clone()
     }
 }
 

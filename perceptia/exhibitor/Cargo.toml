@@ -6,7 +6,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 rand = "0.3"
 timber = "0.0.1"
-qualia = { path = "../qualia" }
+cognitive-qualia = "0.0.1"
 frames = { path = "../frames" }
 output = { path = "../output" }
 

@@ -60,8 +60,6 @@ Nomenclature and key concepts needed for new-coming developers to dive in easier
  * **settings** - not mutable information gathered from system (wayland socket, environment
    variables, program arguments)
 
- * **gears** - mutable user configuration (keymap, key modes, etc.)
-
 Framing
 -------
 

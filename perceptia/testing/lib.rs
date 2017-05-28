@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate frames;
 extern crate output;
 extern crate exhibitor;
@@ -14,5 +14,6 @@ pub mod frame_representation;
 pub mod output_mock;
 pub mod coordinator_mock;
 pub mod exhibitor_mixins;
+pub mod configurations;
 
 // -------------------------------------------------------------------------------------------------

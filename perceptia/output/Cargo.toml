@@ -11,7 +11,7 @@ egl = "0.2.6"
 dharma = "0.0.1"
 timber = "0.0.1"
 cognitive-graphics = "0.0.1"
-qualia = { path = "../qualia" }
+cognitive-qualia = "0.0.1"
 renderer_gl = { path = "../renderer_gl" }
 
 [lib]

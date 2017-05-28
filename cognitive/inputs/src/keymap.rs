@@ -6,28 +6,15 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
-use std::os::unix::io::{AsRawFd, RawFd};
+use std::os::unix::io::AsRawFd;
 use std::io::Write;
 use xkbcommon::xkb;
 
-use config::KeyboardConfig;
-use errors::Illusion;
-use env;
+use qualia::{Illusion, KeyboardConfig, KeymapSettings, env};
 
 // -------------------------------------------------------------------------------------------------
 
 const DEFAULT_FORMAT: u32 = xkb::KEYMAP_FORMAT_TEXT_V1;
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure containing settings for key map.
-#[derive(Clone, Debug)]
-#[repr(C)]
-pub struct Settings {
-    pub format: u32,
-    pub size: usize,
-    pub fd: RawFd,
-}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -65,7 +52,7 @@ impl XkbKeymap {
 /// This structure handles creation of file used for communicating clients current keymap using
 /// xkbcommon.
 pub struct Keymap {
-    settings: Settings,
+    settings: KeymapSettings,
 
     /// Keymap file. It is not referenced here but must be kept open because we will pass file
     /// descriptor to clients.
@@ -91,7 +78,7 @@ impl Keymap {
         file.write_all("\0".as_bytes())?;
 
         Ok(Keymap {
-               settings: Settings {
+               settings: KeymapSettings {
                    format: DEFAULT_FORMAT,
                    size: keymap_str.len() + 1,
                    fd: file.as_raw_fd(),
@@ -101,7 +88,7 @@ impl Keymap {
     }
 
     /// Return key map settings.
-    pub fn get_settings(&self) -> Settings {
+    pub fn get_settings(&self) -> KeymapSettings {
         self.settings.clone()
     }
 }

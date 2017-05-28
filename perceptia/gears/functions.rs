@@ -8,7 +8,7 @@
 use libc;
 use std;
 
-use log;
+use qualia;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -50,7 +50,7 @@ pub fn panic_hook(info: &std::panic::PanicInfo) {
     log_error!("One of threads panicked with message '{}'", message);
     if let Some(location) = info.location() {
         log_error!("Panic occurred in line {}, file '{}'", location.line(), location.file());
-        log::backtrace();
+        qualia::log::backtrace();
     }
 
     // Quit application

@@ -10,7 +10,7 @@ extern crate rand;
 #[macro_use]
 extern crate timber;
 #[macro_use]
-extern crate qualia;
+extern crate cognitive_qualia as qualia;
 extern crate frames;
 extern crate output;
 

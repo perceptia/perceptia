@@ -11,8 +11,8 @@ extern crate rand;
 extern crate timber;
 #[macro_use]
 extern crate cognitive_qualia as qualia;
+extern crate cognitive_outputs as outputs;
 extern crate frames;
-extern crate output;
 
 mod surface_history;
 mod compositor;
@@ -33,7 +33,7 @@ use std::collections::HashMap;
 use qualia::{SurfaceId, Button, Command, OptionalPosition, Position, Size, Vector};
 use qualia::{perceptron, Perceptron};
 use qualia::{CompositorConfig, ExhibitorCoordinationTrait};
-use output::Output;
+use outputs::Output;
 
 use compositor::Compositor;
 use pointer::Pointer;

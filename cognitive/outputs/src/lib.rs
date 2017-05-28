@@ -9,9 +9,9 @@ extern crate egl;
 extern crate drm as libdrm;
 extern crate gbm_rs as libgbm;
 
-extern crate cognitive_graphics;
+extern crate cognitive_graphics as graphics;
 extern crate cognitive_qualia as qualia;
-extern crate renderer_gl;
+extern crate cognitive_renderer_gl as renderer_gl;
 
 mod output;
 pub use output::Output;

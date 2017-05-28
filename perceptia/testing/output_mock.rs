@@ -3,13 +3,13 @@
 
 //! This module contains mock for `Output`.
 
-extern crate output;
+extern crate cognitive_outputs as outputs;
 
 use std::cell::RefCell;
 use std::rc::Rc;
 
 use qualia::{Buffer, Illusion, OutputInfo, Position, SurfaceContext, SurfaceViewer};
-use self::output::Output;
+use self::outputs::Output;
 
 // -------------------------------------------------------------------------------------------------
 

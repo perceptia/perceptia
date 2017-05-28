@@ -7,7 +7,7 @@
 
 use dharma::{Module, ModuleConstructor, SignalId};
 use qualia::{DrmBundle, perceptron, Perceptron};
-use output::DrmOutput;
+use outputs::DrmOutput;
 use coordination::{Context, Coordinator};
 use exhibitor::{Exhibitor, Strategist};
 

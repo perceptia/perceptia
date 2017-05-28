@@ -5,11 +5,12 @@ members = [
         "cognitive/timber",
         "cognitive/graphics",
         "cognitive/qualia",
+        "cognitive/renderer_gl",
         "cognitive/inputs",
+        "cognitive/outputs",
         "cognitive/cognitive",
 
         "perceptia/testing",
-        "perceptia/renderer_gl",
         "perceptia/frames",
         "perceptia/exhibitor",
         "perceptia/aesthetics",

@@ -7,8 +7,8 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 rand = "0.3"
 timber = "0.0.1"
 cognitive-qualia = "0.0.1"
+cognitive-outputs = "0.0.1"
 frames = { path = "../frames" }
-output = { path = "../output" }
 
 [dev-dependencies]
 testing = { path = "../testing" }

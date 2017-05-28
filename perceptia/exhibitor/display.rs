@@ -12,7 +12,7 @@ use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron,
 use qualia::{ExhibitorCoordinationTrait, SurfaceContext, SurfaceId};
 
 use frames::{Frame, Displaying};
-use output::Output;
+use outputs::Output;
 
 use pointer::Pointer;
 

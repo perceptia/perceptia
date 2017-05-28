@@ -11,7 +11,7 @@ use libdrm::drm_mode;
 use std::collections::HashMap;
 use std::collections::VecDeque;
 
-use cognitive_graphics::{egl_tools, gbm_tools};
+use graphics::{egl_tools, gbm_tools};
 use qualia::{Buffer, DrmBundle, Illusion, SurfaceContext, SurfaceViewer};
 use qualia::{Area, OutputInfo, Position, Size};
 use renderer_gl::RendererGl;

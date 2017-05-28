@@ -6,8 +6,8 @@
 // -------------------------------------------------------------------------------------------------
 
 extern crate cognitive_qualia as qualia;
+extern crate cognitive_outputs as outputs;
 extern crate frames;
-extern crate output;
 extern crate exhibitor;
 
 pub mod frame_representation;

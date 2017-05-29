@@ -8,10 +8,11 @@ use std::rc::Rc;
 
 use qualia::{Perceptron, PixelFormat, Position, SignalId, Size, Vector};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
-use qualia::{Buffer, DataSource, DmabufId, EglImageId, MappedMemory, MemoryPoolId, MemoryViewId};
+use qualia::{Buffer, DataSource, DrmBundle};
+use qualia::{DmabufId, EglImageId, MappedMemory, MemoryPoolId, MemoryViewId};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use qualia::{Emiter, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
+use qualia::{StatePublishing, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -125,9 +126,14 @@ impl SurfaceFocusing for CoordinatorMock {
 // -------------------------------------------------------------------------------------------------
 
 #[allow(unused_variables)]
-impl Emiter for CoordinatorMock {
+impl StatePublishing for CoordinatorMock {
     fn emit(&mut self, id: SignalId, package: Perceptron) {}
+    fn suspend(&mut self) {}
+    fn wakeup(&mut self) {}
     fn notify(&mut self) {}
+    fn publish_output(&mut self, drm_bundle: DrmBundle) {}
+    fn emit_vblank(&mut self, display_id: i32) {}
+    fn emit_page_flip(&mut self, display_id: i32) {}
 }
 
 // -------------------------------------------------------------------------------------------------

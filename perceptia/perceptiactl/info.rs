@@ -16,7 +16,7 @@ use libdrm::drm_mode;
 
 use qualia;
 use device_manager;
-use cognitive_graphics::{gbm_tools, egl_tools};
+use graphics::{gbm_tools, egl_tools};
 
 // -------------------------------------------------------------------------------------------------
 

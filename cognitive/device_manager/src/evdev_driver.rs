@@ -8,18 +8,30 @@
 use std::mem;
 use std::os::unix::io;
 use std::path::Path;
-use uinput_sys::{self, input_event};
+use libc;
 
 use nix::fcntl;
 use nix::sys::stat;
 use nix::unistd::read;
 
-use qualia::{DeviceKind, Illusion, InputConfig};
 use dharma::{EventHandler, EventKind, event_kind};
+use qualia::{DeviceKind, Illusion, InputConfig, InputForwarding};
+use inputs::codes;
 
 use drivers;
 use device_access::RestrictedOpener;
 use input_gateway::InputGateway;
+
+// -------------------------------------------------------------------------------------------------
+
+#[derive(Clone, Copy)]
+#[repr(C)]
+struct InputEvent {
+    pub time: libc::timeval,
+    pub kind: u16,
+    pub code: u16,
+    pub value: i32,
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -85,8 +97,8 @@ impl Evdev {
 
     /// Reads events.
     fn read_events(&mut self) {
-        let mut ev: input_event = unsafe { mem::uninitialized() };
-        let data = unsafe { mem::transmute::<&mut input_event, &mut [u8; 3 * 8]>(&mut ev) };
+        let mut ev: InputEvent = unsafe { mem::uninitialized() };
+        let data = unsafe { mem::transmute::<&mut InputEvent, &mut [u8; 3 * 8]>(&mut ev) };
         match read(self.fd, &mut data[..]) {
             Ok(_) => {
                 match self.device_kind {
@@ -101,36 +113,38 @@ impl Evdev {
     }
 
     /// Helper method for processing keyboard events.
-    fn process_keyboard_event(&mut self, ev: &input_event) {
-        if ev.kind == uinput_sys::EV_KEY as _ {
+    fn process_keyboard_event(&mut self, ev: &InputEvent) {
+        if ev.kind == codes::EV_KEY {
             self.gateway.emit_key(ev.code, ev.value);
         }
     }
 
     /// Helper method for processing mouse events.
-    fn process_mouse_event(&mut self, ev: &input_event) {
-        if ev.kind == uinput_sys::EV_SYN as _ {
+    fn process_mouse_event(&mut self, ev: &InputEvent) {
+        if ev.kind == codes::EV_SYN {
             // Ignore sync
-        } else if ev.kind == uinput_sys::EV_KEY as _ {
-            if (ev.code == uinput_sys::BTN_LEFT as _) || (ev.code == uinput_sys::BTN_MIDDLE as _) ||
-               (ev.code == uinput_sys::BTN_RIGHT as _) {
+        } else if ev.kind == codes::EV_KEY {
+            if (ev.code == codes::BTN_LEFT) || (ev.code == codes::BTN_MIDDLE) ||
+               (ev.code == codes::BTN_RIGHT) {
                 self.gateway.emit_button(ev.code, ev.value);
             } else {
                 log_nyimp!("Unhandled mouse key event (code: {}, value: {})", ev.code, ev.value);
             }
-        } else if ev.kind == uinput_sys::EV_REL as _ {
-            if ev.code == uinput_sys::ABS_X as _ {
-                self.gateway.emit_motion(ev.value as isize, 0);
-            } else if ev.code == uinput_sys::ABS_Y as _ {
-                self.gateway.emit_motion(0, ev.value as isize);
-            } else if ev.code == uinput_sys::REL_WHEEL as _ {
+        } else if ev.kind == codes::EV_REL {
+            if ev.code == codes::ABS_X {
+                let value = ev.value as f32 * self.config.mouse_scale;
+                self.gateway.emit_motion(value as isize, 0);
+            } else if ev.code == codes::ABS_Y {
+                let value = ev.value as f32 * self.config.mouse_scale;
+                self.gateway.emit_motion(0, value as isize);
+            } else if ev.code == codes::REL_WHEEL {
                 self.gateway.emit_axis(0, ev.value as isize);
             } else {
                 log_nyimp!("Unhandled mouse relative event (code: {}, value: {})",
                            ev.code,
                            ev.value);
             }
-        } else if ev.kind == uinput_sys::EV_ABS as _ {
+        } else if ev.kind == codes::EV_ABS {
             log_nyimp!("Unhandled mouse absolute event (code: {}, value: {})", ev.code, ev.value);
         } else {
             log_nyimp!("Unhandled mouse event (type: {}, code: {}, value: {})",
@@ -141,36 +155,38 @@ impl Evdev {
     }
 
     /// Helper method for processing touchpad events.
-    fn process_touchpad_event(&mut self, ev: &input_event) {
-        if ev.kind == uinput_sys::EV_SYN as _ {
+    fn process_touchpad_event(&mut self, ev: &InputEvent) {
+        if ev.kind == codes::EV_SYN {
             // Ignore sync
-        } else if ev.kind == uinput_sys::EV_KEY as _ {
-            if (ev.code == uinput_sys::BTN_LEFT as _) || (ev.code == uinput_sys::BTN_MIDDLE as _) ||
-               (ev.code == uinput_sys::BTN_RIGHT as _) {
+        } else if ev.kind == codes::EV_KEY {
+            if (ev.code == codes::BTN_LEFT) || (ev.code == codes::BTN_MIDDLE) ||
+               (ev.code == codes::BTN_RIGHT) {
                 self.gateway.emit_button(ev.code, ev.value);
-            } else if (ev.code == uinput_sys::BTN_TOOL_FINGER as _) ||
-                      (ev.code == uinput_sys::BTN_TOUCH as _) {
+            } else if (ev.code == codes::BTN_TOOL_FINGER) ||
+                      (ev.code == codes::BTN_TOUCH) {
                 self.gateway.emit_position_reset();
             } else {
                 log_nyimp!("Unhandled touchpad key event (code: {}, value: {})", ev.code, ev.value);
             }
-        } else if ev.kind == uinput_sys::EV_REL as _ {
+        } else if ev.kind == codes::EV_REL {
             log_nyimp!("Unhandled touchpad relative event (code: {}, value: {})",
                        ev.code,
                        ev.value);
-        } else if ev.kind == uinput_sys::EV_ABS as _ {
-            if ev.code == uinput_sys::ABS_PRESSURE as _ {
+        } else if ev.kind == codes::EV_ABS {
+            if ev.code == codes::ABS_PRESSURE {
                 log_info4!("Touchpad pressure: {:?}", ev.value);
                 self.pressure = ev.value;
-            } else if ev.code == uinput_sys::ABS_MT_TRACKING_ID as _ {
+            } else if ev.code == codes::ABS_MT_TRACKING_ID {
                 self.gateway.emit_position_reset();
             } else if self.pressure > self.config.touchpad_pressure_threshold {
-                if (ev.code == uinput_sys::ABS_MT_POSITION_X as _) ||
-                   (ev.code == uinput_sys::ABS_X as _) {
-                    self.gateway.emit_position(Some(ev.value as isize), None);
-                } else if (ev.code == uinput_sys::ABS_MT_POSITION_Y as _) ||
-                          (ev.code == uinput_sys::ABS_Y as _) {
-                    self.gateway.emit_position(None, Some(ev.value as isize));
+                if (ev.code == codes::ABS_MT_POSITION_X) ||
+                   (ev.code == codes::ABS_X) {
+                    let value = ev.value as f32 * self.config.touchpad_scale;
+                    self.gateway.emit_position(Some(value as isize), None);
+                } else if (ev.code == codes::ABS_MT_POSITION_Y) ||
+                          (ev.code == codes::ABS_Y) {
+                    let value = ev.value as f32 * self.config.touchpad_scale;
+                    self.gateway.emit_position(None, Some(value as isize));
                 }
             }
         } else {

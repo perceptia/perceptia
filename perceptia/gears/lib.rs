@@ -25,4 +25,4 @@ pub mod config;
 pub use config::{Config, KeybindingsConfig};
 
 pub mod input_manager;
-pub use input_manager::{InputManager, KeyCatchResult};
+pub use input_manager::{InputForwarder, InputManager};

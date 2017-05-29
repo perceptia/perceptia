@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-qualia"
-version = "0.0.1"
+version = "0.0.2"
 description = "Basic definitions and traits for `cognitive`"
 documentation = "https://docs.rs/cognitive-qualia"
 homepage = "https://github.com/perceptia/perceptia"

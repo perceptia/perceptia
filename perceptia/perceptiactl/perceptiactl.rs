@@ -12,10 +12,11 @@ extern crate drm as libdrm;
 extern crate image;
 
 extern crate timber;
-extern crate cognitive_graphics;
+extern crate cognitive_graphics as graphics;
 extern crate cognitive_qualia as qualia;
+extern crate cognitive_device_manager as device_manager;
+
 extern crate gears;
-extern crate device_manager;
 extern crate skylane_simple_framework;
 
 mod info;

@@ -13,9 +13,8 @@ use nix::fcntl;
 use nix::sys::stat;
 use libdrm::drm_mode;
 
-use dharma::{DispatcherController, Signaler, event_kind};
-use qualia::{DrmBundle, Illusion, perceptron, Perceptron, HwGraphics};
-use coordination::Coordinator;
+use dharma::event_kind;
+use qualia::{DrmBundle, Illusion, EventHandling, HwGraphics, StatePublishing};
 
 use graphics_manager::GraphicsManager;
 use pageflip::PageFlipEventHandler;
@@ -24,25 +23,20 @@ use pageflip::PageFlipEventHandler;
 
 /// Output Collector manages output devices. When output if found or lost Collector notifies the
 /// rest of application about this event.
-pub struct OutputCollector {
-    dispatcher: DispatcherController,
-    signaler: Signaler<Perceptron>,
-    coordinator: Coordinator,
+pub struct OutputCollector<C>
+    where C: EventHandling + StatePublishing + HwGraphics + Clone
+{
+    coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl OutputCollector {
-    /// `OutputCollector` constructor.
-    pub fn new(dispatcher: DispatcherController,
-               signaler: Signaler<Perceptron>,
-               coordinator: Coordinator)
-               -> Self {
-        OutputCollector {
-            dispatcher: dispatcher,
-            signaler: signaler,
-            coordinator: coordinator,
-        }
+impl<C> OutputCollector<C>
+    where C: 'static + EventHandling + StatePublishing + HwGraphics + Send + Clone
+{
+    /// Constructs new `OutputCollector`.
+    pub fn new(coordinator: C) -> Self {
+        OutputCollector { coordinator: coordinator }
     }
 
     /// Scan DRM devices to find outputs. When the output is found emits `OutputFound` signal.
@@ -73,8 +67,8 @@ impl OutputCollector {
         }
 
         // Register for pageflip events
-        let pageflip_event_handler = Box::new(PageFlipEventHandler::new(fd, self.signaler.clone()));
-        self.dispatcher.add_source(pageflip_event_handler, event_kind::READ);
+        let pageflip_handler = Box::new(PageFlipEventHandler::new(fd, self.coordinator.clone()));
+        self.coordinator.add_event_handler(pageflip_handler, event_kind::READ);
 
         // Create graphics manager
         // FIXME: How to handle many graphic cards?
@@ -102,7 +96,7 @@ impl OutputCollector {
                     connector_id: connector.get_connector_id(),
                     crtc_id: encoder.get_crtc_id(),
                 };
-                self.signaler.emit(perceptron::OUTPUT_FOUND, Perceptron::OutputFound(bundle));
+                self.coordinator.publish_output(bundle);
             } else {
                 log_warn1!("No encoder for connector '{:?}'", connector.get_connector_id());
             }

@@ -6,9 +6,11 @@
 
 use std::os::unix::io::RawFd;
 
-use cognitive_graphics::egl_tools::HwImage;
-use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+use dharma::{EventHandler, EventKind};
+use graphics::egl_tools::HwImage;
+use graphics::attributes::{EglAttributes, DmabufAttributes};
 
+use defs::DrmBundle;
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
 use memory::{Buffer, MappedMemory};
@@ -44,13 +46,41 @@ pub trait DataTransferring {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Managing event sources (input devices, notifications from output devices, etc.)
+pub trait EventHandling {
+    /// Adds new event handler.
+    fn add_event_handler(&mut self,
+                         event_handler: Box<EventHandler + Send>,
+                         event_kind: EventKind);
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Generic communication with the rest of application.
-pub trait Emiter {
+pub trait StatePublishing {
     /// Emits given signal.
+    /// TODO: Remove `emit` method.
     fn emit(&mut self, id: SignalId, package: Perceptron);
 
+    /// Notifies about suspending drawing on screen. Probably virtual terminal was switched and GPU
+    /// is not available to us.
+    fn suspend(&mut self);
+
+    /// Send request to revoke application from suspension.
+    fn wakeup(&mut self);
+
     /// Notifies application about event that requires screen to be refreshed.
+    /// TODO: Rename `notify` to `refresh`.
     fn notify(&mut self);
+
+    /// Publishes newly found output.
+    fn publish_output(&mut self, drm_budle: DrmBundle);
+
+    /// Notifies about V-blank.
+    fn emit_vblank(&mut self, display_id: i32);
+
+    /// Notifies about page flip.
+    fn emit_page_flip(&mut self, display_id: i32);
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -156,7 +186,7 @@ pub trait ExhibitorCoordinationTrait: SurfaceControl +
                                       SurfaceAccess +
                                       SurfaceListing +
                                       SurfaceFocusing +
-                                      Emiter +
+                                      StatePublishing +
                                       Screenshooting +
                                       Clone {}
 

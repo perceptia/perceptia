@@ -8,55 +8,55 @@
 use std::os::unix::io;
 use libdrm::drm;
 
-use dharma::{EventHandler, EventKind, Signaler, event_kind};
-use qualia::{perceptron, Perceptron};
+use dharma::{EventHandler, EventKind, event_kind};
+use qualia::StatePublishing;
 
 // -------------------------------------------------------------------------------------------------
 
 /// Context passed ti libdrm to handle page flips.
-struct PageFlipContext {
-    signaler: Signaler<Perceptron>,
+struct PageFlipContext<P> where P: StatePublishing {
+    state_publisher: P,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl PageFlipContext {
+impl<P> PageFlipContext<P> where P: StatePublishing {
     /// `PageFlipContext` constructor.
-    pub fn new(signaler: Signaler<Perceptron>) -> Self {
-        PageFlipContext { signaler: signaler }
+    pub fn new(state_publisher: P) -> Self {
+        PageFlipContext { state_publisher: state_publisher }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl drm::EventContext for PageFlipContext {
+impl<P> drm::EventContext for PageFlipContext<P> where P: StatePublishing {
     #[allow(unused_variables)]
     fn vblank_handler(&mut self, fd: io::RawFd, sequence: u32, sec: u32, usec: u32, data: i32) {
-        self.signaler.emit(perceptron::VERTICAL_BLANK, Perceptron::VerticalBlank(data));
+        self.state_publisher.emit_vblank(data);
     }
 
     #[allow(unused_variables)]
     fn page_flip_handler(&mut self, fd: io::RawFd, sequence: u32, sec: u32, usec: u32, data: i32) {
-        self.signaler.emit(perceptron::PAGE_FLIP, Perceptron::PageFlip(data));
+        self.state_publisher.emit_page_flip(data);
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// `dharma` event handler for pageflip events.
-pub struct PageFlipEventHandler {
+pub struct PageFlipEventHandler<P> where P: StatePublishing {
     drm_fd: io::RawFd,
-    signaler: Signaler<Perceptron>,
+    state_publisher: P,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl PageFlipEventHandler {
+impl<P> PageFlipEventHandler<P> where P: StatePublishing {
     /// `PageFlipEventHandler` constructor.
-    pub fn new(fd: io::RawFd, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(fd: io::RawFd, state_publisher: P) -> Self {
         PageFlipEventHandler {
             drm_fd: fd,
-            signaler: signaler,
+            state_publisher: state_publisher,
         }
     }
 }
@@ -64,14 +64,14 @@ impl PageFlipEventHandler {
 // -------------------------------------------------------------------------------------------------
 
 /// This code executes in main dispatchers thread.
-impl EventHandler for PageFlipEventHandler {
+impl<P> EventHandler for PageFlipEventHandler<P> where P: 'static + StatePublishing + Send + Clone {
     fn get_fd(&self) -> io::RawFd {
         self.drm_fd
     }
 
     fn process_event(&mut self, event_kind: EventKind) {
         if event_kind.intersects(event_kind::READ) {
-            let ctx = Box::new(PageFlipContext::new(self.signaler.clone()));
+            let ctx = Box::new(PageFlipContext::new(self.state_publisher.clone()));
             drm::handle_event(self.drm_fd, ctx);
         } else if event_kind.intersects(event_kind::HANGUP) {
             // It seems that DRM devices do not hang-up during virtual terminal switch and after

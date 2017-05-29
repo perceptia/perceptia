@@ -7,7 +7,7 @@
 
 use std::time::Instant;
 
-use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+use graphics::attributes::{EglAttributes, DmabufAttributes};
 
 use image::Image;
 use memory::MemoryView;

@@ -9,7 +9,7 @@ use std;
 use std::error::Error;
 
 use libudev;
-use cognitive_graphics;
+use graphics;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -62,8 +62,8 @@ impl std::convert::From<libudev::Error> for Illusion {
 
 // -------------------------------------------------------------------------------------------------
 
-impl std::convert::From<cognitive_graphics::GraphicsError> for Illusion {
-    fn from(error: cognitive_graphics::GraphicsError) -> Self {
+impl std::convert::From<graphics::GraphicsError> for Illusion {
+    fn from(error: graphics::GraphicsError) -> Self {
         Illusion::Graphics(error.description().to_owned())
     }
 }

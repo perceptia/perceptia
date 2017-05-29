@@ -7,13 +7,14 @@
 
 use dharma::{Module, ModuleConstructor, SignalId};
 use qualia::{Perceptron, perceptron};
-use coordination::Context;
+use coordination::{Context, Coordinator};
+use gears::{InputManager, InputForwarder};
 use device_manager::DeviceManager;
 
 // -------------------------------------------------------------------------------------------------
 
 pub struct DeviceManagerModule<'a> {
-    manager: DeviceManager<'a>,
+    manager: DeviceManager<'a, Coordinator>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -21,7 +22,23 @@ pub struct DeviceManagerModule<'a> {
 impl<'a> DeviceManagerModule<'a> {
     /// `DeviceManagerModule` constructor.
     pub fn new(context: &mut Context) -> Self {
-        DeviceManagerModule { manager: DeviceManager::new(context.clone()) }
+        let coordinator = context.get_coordinator().clone();
+        let signaler = context.get_signaler().clone();
+        let config = context.get_config();
+
+        // Construct `InputManager` implementing `InputHandling`.
+        let input_manager = InputManager::new(config.get_keybindings_config(), signaler.clone());
+
+        // Construct `InputForwarder` implementing `InputForwarding`.
+        let input_forwarder = InputForwarder::new(signaler);
+
+        // Construct the module.
+        DeviceManagerModule {
+            manager: DeviceManager::new(Box::new(input_manager),
+                                        Box::new(input_forwarder),
+                                        config.get_input_config().clone(),
+                                        coordinator),
+        }
     }
 }
 

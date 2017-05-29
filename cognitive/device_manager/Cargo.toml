@@ -1,25 +1,27 @@
 [package]
-name = "cognitive-outputs"
+name = "cognitive-device-manager"
 version = "0.0.1"
-description = "Output related functionality for `cognitive`"
-documentation = "https://docs.rs/cognitive-outputs"
+description = "Device management for `cognitive`"
+documentation = "https://docs.rs/cognitive-device-manager"
 homepage = "https://github.com/perceptia/perceptia"
 repository = "https://github.com/perceptia/perceptia"
-keywords = ["drm", "cognitive"]
+keywords = ["udev", "cognitive"]
 license = "MPL-2.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 libc = "0.2.18"
+nix = "0.8.0"
+libudev = "0.2.0"
 drm-rs = "0.1.2"
-gbm-rs = "0.2.0"
 egl = "0.2.6"
+gbm-rs = "0.2.0"
 dharma = "0.0.1"
 timber = "0.0.1"
 cognitive-graphics = "0.0.1"
 cognitive-qualia = "0.0.2"
-cognitive-renderer-gl = "0.0.1"
+cognitive-inputs = "0.0.2"
 
 [lib]
-name = "cognitive_outputs"
+name = "cognitive_device_manager"
 path = "src/lib.rs"

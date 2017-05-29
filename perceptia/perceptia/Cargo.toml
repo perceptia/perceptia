@@ -6,15 +6,15 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 dharma = "0.0.1"
 timber = "0.0.1"
-cognitive-qualia = "0.0.1"
-cognitive-inputs = "0.0.1"
+cognitive-qualia = "0.0.2"
+cognitive-inputs = "0.0.2"
 cognitive-outputs = "0.0.1"
-gears            = { path = "../gears" }
-coordination     = { path = "../coordination" }
-aesthetics       = { path = "../aesthetics" }
-device_manager   = { path = "../device_manager" }
-exhibitor        = { path = "../exhibitor" }
+cognitive-device-manager = "0.0.1"
+aesthetics = { path = "../aesthetics" }
+exhibitor = { path = "../exhibitor" }
 wayland_frontend = { path = "../wayland_frontend" }
+gears = { path = "../gears" }
+coordination = { path = "../coordination" }
 
 [[bin]]
 name = "perceptia"

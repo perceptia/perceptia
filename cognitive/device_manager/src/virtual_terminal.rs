@@ -12,9 +12,9 @@ use std::mem;
 use std::path::Path;
 use libc;
 
-use dharma::{DispatcherController, EventHandler, EventKind, Signaler, event_kind};
+use dharma::{EventHandler, EventKind, event_kind};
 
-use qualia::{Illusion, Perceptron, perceptron};
+use qualia::{EventHandling, Illusion, StatePublishing};
 
 use device_access::RestrictedOpener;
 
@@ -46,36 +46,36 @@ mod ioctl {
 // -------------------------------------------------------------------------------------------------
 
 /// Handler for events about switching virtual terminal.
-pub struct SwitchHandler {
+pub struct SwitchHandler<P> where P: StatePublishing {
     signal_fd: signalfd::SignalFd,
     tty_fd: RawFd,
-    signaler: Signaler<Perceptron>,
+    state_publisher: P,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl SwitchHandler {
+impl<P> SwitchHandler<P> where P: StatePublishing {
     /// Constructs new `SwitchHandler`.
-    pub fn new(tty_fd: RawFd, signaler: Signaler<Perceptron>) -> Self {
+    pub fn new(tty_fd: RawFd, state_publisher: P) -> Self {
         let mut mask = signal::SigSet::empty();
         mask.add(signal::SIGUSR1);
         mask.add(signal::SIGUSR2);
         SwitchHandler {
             signal_fd: signalfd::SignalFd::new(&mask).expect("Creation of signalfd"),
             tty_fd: tty_fd,
-            signaler: signaler,
+            state_publisher: state_publisher,
         }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl SwitchHandler {
+impl<P> SwitchHandler<P> where P: StatePublishing {
     /// Handles activation of virtual terminal this application is assigned to.
     fn handle_activation(&mut self) {
         log_info1!("Virtual terminal activation");
-        self.signaler.emit(perceptron::WAKEUP, Perceptron::WakeUp);
-        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+        self.state_publisher.wakeup();
+        self.state_publisher.notify();
     }
 
     /// Handles deactivation of virtual terminal this application is assigned to.
@@ -85,7 +85,7 @@ impl SwitchHandler {
     fn handle_deactivation(&mut self) {
         log_info1!("Virtual terminal deactivation");
         match unsafe { ioctl::release_vt(self.tty_fd, ioctl::ACK_ACQ as *mut u8) } {
-            Ok(_) => self.signaler.emit(perceptron::SUSPEND, Perceptron::Suspend),
+            Ok(_) => self.state_publisher.suspend(),
             Err(err) => log_warn1!("Failed to release VT: {:?}", err),
         }
     }
@@ -93,7 +93,7 @@ impl SwitchHandler {
 
 // -------------------------------------------------------------------------------------------------
 
-impl EventHandler for SwitchHandler {
+impl<P> EventHandler for SwitchHandler<P> where P: StatePublishing {
     fn get_fd(&self) -> RawFd {
         self.signal_fd.as_raw_fd()
     }
@@ -225,19 +225,20 @@ impl VirtualTerminal {
 // -------------------------------------------------------------------------------------------------
 
 /// Subscribes for terminal activation and deactivation events.
-fn subscribe(path: &Path,
-             mut dispatcher: DispatcherController,
-             signaler: Signaler<Perceptron>,
-             ro: &RestrictedOpener)
-             -> Result<(), Illusion> {
+fn subscribe<C>(path: &Path,
+                mut coordinator: C,
+                ro: &RestrictedOpener)
+                -> Result<(), Illusion>
+    where C: 'static + StatePublishing + EventHandling + Send + Clone
+{
     match ro.open(path, fcntl::O_WRONLY | fcntl::O_CLOEXEC, stat::Mode::empty()) {
         Ok(tty_fd) => {
             let mut mode = VtMode::new(true, signal::SIGUSR1, signal::SIGUSR2);
             let data = unsafe { mem::transmute::<&mut VtMode, &mut u8>(&mut mode) as *mut u8 };
             match unsafe { ioctl::set_vt_mode(tty_fd, data) } {
                 Ok(_) => {
-                    let signal_source = Box::new(SwitchHandler::new(tty_fd, signaler));
-                    dispatcher.add_source(signal_source, event_kind::READ);
+                    let signal_source = Box::new(SwitchHandler::new(tty_fd, coordinator.clone()));
+                    coordinator.add_event_handler(signal_source, event_kind::READ);
                     Ok(())
                 }
                 Err(err) => {
@@ -257,16 +258,17 @@ fn subscribe(path: &Path,
 // -------------------------------------------------------------------------------------------------
 
 /// Sets up virtual terminal by subscribing messages about its activation and deactivation.
-pub fn setup(tty_num: u32,
-             dispatcher: DispatcherController,
-             signaler: Signaler<Perceptron>,
-             ro: &RestrictedOpener)
-             -> Result<(), Illusion> {
+pub fn setup<C>(tty_num: u32,
+                coordinator: C,
+                ro: &RestrictedOpener)
+                -> Result<(), Illusion>
+    where C: 'static + StatePublishing + EventHandling + Send + Clone
+{
     let path_str = format!("{}{}", BASE_TTY_PATH, tty_num);
     let path = Path::new(&path_str);
 
     log_info2!("Setting up virtual terminal '{}'", path_str);
-    subscribe(path, dispatcher, signaler, ro)
+    subscribe(path, coordinator, ro)
 }
 
 // -------------------------------------------------------------------------------------------------

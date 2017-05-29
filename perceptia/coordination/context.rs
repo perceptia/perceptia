@@ -8,7 +8,7 @@
 use dharma::{DispatcherController, EventHandler, EventKind, Signaler, SignalId};
 
 use qualia::{Settings, Perceptron};
-use gears::{Config, InputManager};
+use gears::Config;
 
 use coordinator::Coordinator;
 
@@ -22,7 +22,6 @@ pub struct Context {
     signaler: Signaler<Perceptron>,
     dispatcher: DispatcherController,
     coordinator: Coordinator,
-    input_manager: InputManager,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -33,8 +32,7 @@ impl Context {
                settings: Settings,
                signaler: Signaler<Perceptron>,
                dispatcher: DispatcherController,
-               coordinator: Coordinator,
-               input_manager: InputManager)
+               coordinator: Coordinator)
                -> Self {
         Context {
             config: config,
@@ -42,7 +40,6 @@ impl Context {
             signaler: signaler,
             dispatcher: dispatcher,
             coordinator: coordinator,
-            input_manager: input_manager,
         }
     }
 
@@ -81,11 +78,6 @@ impl Context {
     /// Get reference to `Coordinator`.
     pub fn get_coordinator(&mut self) -> &mut Coordinator {
         &mut self.coordinator
-    }
-
-    /// Get reference to `InputManager`.
-    pub fn get_input_manager(&mut self) -> &mut InputManager {
-        &mut self.input_manager
     }
 }
 

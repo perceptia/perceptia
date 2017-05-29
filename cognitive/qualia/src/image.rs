@@ -3,8 +3,8 @@
 
 //! This create gathers some functionality related to images and access to them.
 
-use cognitive_graphics::egl_tools::HwImage;
-use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
+use graphics::egl_tools::HwImage;
+use graphics::attributes::{EglAttributes, DmabufAttributes};
 
 use defs::Size;
 

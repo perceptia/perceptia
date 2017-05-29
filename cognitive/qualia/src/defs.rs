@@ -10,19 +10,14 @@ use std::path::PathBuf;
 use std::os::unix::io::RawFd;
 
 use enums;
-use timing;
 
 // -------------------------------------------------------------------------------------------------
 
 pub type Point = Position;
 pub type Vector = Position;
-pub type Key = Button;
 
 /// Type of surface ID.
 pub type SurfaceIdType = u64;
-
-pub type KeyCode = u16;
-pub type KeyValue = i32;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -88,60 +83,6 @@ impl std::fmt::Display for SurfaceId {
             write!(f, "SID({})", self.0)
         } else {
             write!(f, "<invalid>")
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// These flags describe key modifiers.
-pub mod modifier {
-    pub type ModifierType = u16;
-    pub const NONE: ModifierType = 0b00000000;
-    pub const LCTL: ModifierType = 0b00000001;
-    pub const RCTL: ModifierType = 0b00000010;
-    pub const LSHF: ModifierType = 0b00000100;
-    pub const RSHF: ModifierType = 0b00001000;
-    pub const LALT: ModifierType = 0b00010000;
-    pub const RALT: ModifierType = 0b00100000;
-    pub const LMTA: ModifierType = 0b01000000;
-    pub const RMTA: ModifierType = 0b10000000;
-    pub const CTRL: ModifierType = LCTL | RCTL;
-    pub const SHIFT: ModifierType = LSHF | RSHF;
-    pub const ALT: ModifierType = LALT | RALT;
-    pub const META: ModifierType = LMTA | RMTA;
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure for identifying key binding.
-///
-/// Used as key in hash maps.
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub struct Binding {
-    code: KeyCode,
-    modifiers: modifier::ModifierType,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Binding {
-    /// Constructs new `Binding`.
-    ///
-    /// `uinput_sys` defines codes as `i32` so second constructor added to avoid casting in other
-    /// places.
-    pub fn new(code: i32, modifiers: modifier::ModifierType) -> Self {
-        Binding {
-            code: code as KeyCode,
-            modifiers: modifiers,
-        }
-    }
-
-    /// `Binding` constructor.
-    pub fn create(code: KeyCode, modifiers: modifier::ModifierType) -> Self {
-        Binding {
-            code: code,
-            modifiers: modifiers,
         }
     }
 }
@@ -459,68 +400,6 @@ impl std::default::Default for Area {
         Area {
             pos: Position::default(),
             size: Size::default(),
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Data for button event.
-#[derive(Clone, Copy, Debug)]
-pub struct Button {
-    pub code: u16,
-    pub value: i32,
-    pub time: timing::Milliseconds,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Button {
-    /// Constructs `Button`.
-    pub fn new(code: u16, value: i32, milliseconds: timing::Milliseconds) -> Self {
-        Button {
-            code: code,
-            value: value,
-            time: milliseconds,
-        }
-    }
-
-    /// Constructs `Button` with current time.
-    pub fn new_now(code: u16, value: i32) -> Self {
-        Button {
-            code: code,
-            value: value,
-            time: timing::Milliseconds::now(),
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Data for axis event.
-#[derive(Clone, Copy, Debug)]
-pub struct Axis {
-    pub discrete: Vector,
-    pub continuous: Slide,
-    pub time: timing::Milliseconds,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl Axis {
-    pub fn new(discrete: Vector, continuous: Slide, time: timing::Milliseconds) -> Self {
-        Axis {
-            discrete: discrete,
-            continuous: continuous,
-            time: time,
-        }
-    }
-
-    pub fn new_now(discrete: Vector, continuous: Slide) -> Self {
-        Axis {
-            discrete: discrete,
-            continuous: continuous,
-            time: timing::Milliseconds::now(),
         }
     }
 }

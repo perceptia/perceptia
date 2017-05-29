@@ -15,11 +15,11 @@ use dharma;
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{Buffer, MappedMemory, PixelFormat, GraphicsManagement};
-use qualia::{perceptron, Perceptron, Transfer};
+use qualia::{perceptron, Perceptron, Transfer, DrmBundle};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use qualia::{AppearanceManagement, DataTransferring, Emiter};
+use qualia::{AppearanceManagement, DataTransferring, EventHandling, StatePublishing};
 use qualia::{MemoryManagement, HwGraphics, Screenshooting};
 use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 use qualia::{show_reason, surface_state};
@@ -31,8 +31,11 @@ use resource_storage::ResourceStorage;
 /// This structure contains logic related to maintaining shared application state other than
 /// surfaces.
 struct InnerCoordinator {
-    /// Global signaler
+    /// Global signaler.
     signaler: dharma::Signaler<Perceptron>,
+
+    /// `Dispatcher` controller.
+    dispatcher: dharma::DispatcherController,
 
     /// Screenshot buffer to be shared between threads.
     screenshot_buffer: Option<Buffer>,
@@ -51,9 +54,12 @@ struct InnerCoordinator {
 
 impl InnerCoordinator {
     /// Constructs new `InnerCoordinator`.
-    pub fn new(signaler: dharma::Signaler<Perceptron>) -> Self {
+    pub fn new(signaler: dharma::Signaler<Perceptron>,
+               dispatcher: dharma::DispatcherController)
+               -> Self {
         InnerCoordinator {
             signaler: signaler,
+            dispatcher: dispatcher,
             screenshot_buffer: None,
             kfsid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
@@ -107,9 +113,35 @@ impl InnerCoordinator {
         self.signaler.emit(id, package);
     }
 
+    /// Notifies about suspending drawing on screen. Probably virtual terminal was switched and GPU
+    /// is not available to us.
+    pub fn suspend(&mut self) {
+        self.signaler.emit(perceptron::SUSPEND, Perceptron::Suspend);
+    }
+
+    /// Send request to revoke application from suspension.
+    pub fn wakeup(&mut self) {
+        self.signaler.emit(perceptron::WAKEUP, Perceptron::WakeUp);
+    }
+
     /// Notifies application about event that requires screen to be refreshed.
     pub fn notify(&mut self) {
         self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+    }
+
+    /// Publishes newly found output.
+    fn publish_output(&mut self, drm_bundle: DrmBundle) {
+        self.signaler.emit(perceptron::OUTPUT_FOUND, Perceptron::OutputFound(drm_bundle));
+    }
+
+    /// Notifies about V-blank.
+    fn emit_vblank(&mut self, display_id: i32) {
+        self.signaler.emit(perceptron::VERTICAL_BLANK, Perceptron::VerticalBlank(display_id));
+    }
+
+    /// Notifies about page flip.
+    fn emit_page_flip(&mut self, display_id: i32) {
+        self.signaler.emit(perceptron::PAGE_FLIP, Perceptron::PageFlip(display_id));
     }
 
     /// Sets data transfer information.
@@ -128,6 +160,13 @@ impl InnerCoordinator {
     pub fn request_transfer(&mut self, mime_type: String, fd: RawFd) {
         self.signaler.emit(perceptron::TRANSFER_REQUESTED,
                            Perceptron::TransferRequested(mime_type, fd));
+    }
+
+    /// Adds new event handler.
+    pub fn add_event_handler(&mut self,
+                             event_handler: Box<dharma::EventHandler + Send>,
+                             event_kind: dharma::EventKind) {
+        self.dispatcher.add_source(event_handler, event_kind);
     }
 
     /// Makes screenshot request.
@@ -160,10 +199,12 @@ pub struct Coordinator {
 
 impl Coordinator {
     /// `Coordinator` constructor.
-    pub fn new(signaler: dharma::Signaler<Perceptron>) -> Self {
+    pub fn new(signaler: dharma::Signaler<Perceptron>,
+               dispatcher: dharma::DispatcherController)
+               -> Self {
         Coordinator {
             resources: Arc::new(Mutex::new(ResourceStorage::new(signaler.clone()))),
-            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler))),
+            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler, dispatcher))),
         }
     }
 }
@@ -378,7 +419,19 @@ impl DataTransferring for Coordinator {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Emiter for Coordinator {
+impl EventHandling for Coordinator {
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn add_event_handler(&mut self,
+                         event_handler: Box<dharma::EventHandler + Send>,
+                         event_kind: dharma::EventKind) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.add_event_handler(event_handler, event_kind);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl StatePublishing for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
     fn emit(&mut self, id: dharma::SignalId, package: Perceptron) {
         let mut mine = self.inner.lock().unwrap();
@@ -386,9 +439,39 @@ impl Emiter for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
+    fn suspend(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.suspend();
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn wakeup(&mut self) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.wakeup();
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
     fn notify(&mut self) {
         let mut mine = self.inner.lock().unwrap();
-        mine.notify()
+        mine.notify();
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn publish_output(&mut self, drm_budle: DrmBundle) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.publish_output(drm_budle);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn emit_vblank(&mut self, display_id: i32) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.emit_vblank(display_id);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn emit_page_flip(&mut self, display_id: i32) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.emit_page_flip(display_id);
     }
 }
 

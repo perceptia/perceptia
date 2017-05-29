@@ -7,7 +7,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 image = "0.12.3"
 rusttype = "0.2.1"
 timber = "0.0.1"
-cognitive-qualia = "0.0.1"
+cognitive-qualia = "0.0.2"
 
 [lib]
 name = "aesthetics"

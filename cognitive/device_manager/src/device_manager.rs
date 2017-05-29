@@ -9,10 +9,11 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use dharma;
-use coordination::Context;
+use qualia::{InputConfig, InputForwarding, InputHandling};
+use qualia::{EventHandling, HwGraphics, StatePublishing};
 
-use evdev;
 use udev;
+use evdev_driver;
 use device_access::RestrictedOpener;
 use output_collector::OutputCollector;
 use input_gateway::InputGateway;
@@ -22,42 +23,53 @@ use virtual_terminal;
 // -------------------------------------------------------------------------------------------------
 
 /// Device Manager manages searching input and output devices and monitoring them.
-pub struct DeviceManager<'a> {
+pub struct DeviceManager<'a, C>
+    where C: EventHandling + StatePublishing + HwGraphics + Clone
+{
     udev: udev::Udev<'a>,
     restricted_opener: Rc<RefCell<RestrictedOpener>>,
+    output_collector: OutputCollector<C>,
     vt: Option<virtual_terminal::VirtualTerminal>,
-    output_collector: OutputCollector,
-    context: Context,
+    input_handler: Box<InputHandling>,
+    input_forwarder: Box<InputForwarding>,
+    input_config: InputConfig,
+    coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<'a> DeviceManager<'a> {
+impl<'a, C> DeviceManager<'a, C>
+    where C: 'static + EventHandling + StatePublishing + HwGraphics + Send + Clone
+{
     /// `DeviceManager` constructor.
-    pub fn new(mut context: Context) -> Self {
+    pub fn new(input_handler: Box<InputHandling>,
+               input_forwarder: Box<InputForwarding>,
+               input_config: InputConfig,
+               coordinator: C) -> Self {
         let restricted_opener = Self::prepare_restricted_opener();
 
         let mut mine = DeviceManager {
             udev: udev::Udev::new(),
             restricted_opener: restricted_opener,
+            output_collector: OutputCollector::new(coordinator.clone()),
             vt: None,
-            output_collector: OutputCollector::new(context.get_dispatcher().clone(),
-                                                   context.get_signaler().clone(),
-                                                   context.get_coordinator().clone()),
-            context: context.clone(),
+            input_handler: input_handler,
+            input_forwarder: input_forwarder,
+            input_config: input_config.clone(),
+            coordinator: coordinator.clone(),
         };
 
         // Setup virtual terminal
-        mine.setup_virtual_terminal(&mut context);
+        mine.setup_virtual_terminal();
 
         // Initialize input devices
-        mine.initialize_input_devices(&mut context);
+        mine.initialize_input_devices();
 
         // Initialize output devices
         mine.initialize_output_devices();
 
         // Initialize device monitor
-        mine.initialize_device_monitor(&mut context);
+        mine.initialize_device_monitor();
 
         mine
     }
@@ -74,15 +86,14 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Sets up virtual terminal.
-    fn setup_virtual_terminal(&mut self, context: &mut Context) {
+    fn setup_virtual_terminal(&mut self) {
         match virtual_terminal::VirtualTerminal::new(&self.restricted_opener.borrow()) {
             Ok(vt) => {
                 self.vt = Some(vt);
                 match vt.get_current() {
                     Ok(tty_num) => {
                         match virtual_terminal::setup(tty_num,
-                                                      context.get_dispatcher().clone(),
-                                                      context.get_signaler().clone(),
+                                                      self.coordinator.clone(),
                                                       &self.restricted_opener.borrow()) {
                             Ok(_) => {}
                             Err(err) => log_error!("Device Manager: {:?}", err),
@@ -100,21 +111,26 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Iterate over input devices to find usable ones and initialize event handlers for them.
-    fn initialize_input_devices(&mut self, context: &mut Context) {
+    fn initialize_input_devices(&mut self) {
+        let input_handler = self.input_handler.duplicate();
+        let input_forwarder = self.input_forwarder.duplicate();
+        let input_config = self.input_config.clone();
+        let restricted_opener = self.restricted_opener.clone();
+        let mut coordinator = self.coordinator.clone();
+        let vt = self.vt.clone();
+
         self.udev.iterate_event_devices(|devnode, devkind, _| {
-            let config = context.get_config().get_input_config().clone();
-            let gateway = InputGateway::new(config.clone(),
-                                            context.get_input_manager().clone(),
-                                            context.get_signaler().clone(),
-                                            self.vt);
-            let r = evdev::Evdev::initialize_device(devnode,
-                                                    devkind,
-                                                    config,
-                                                    gateway,
-                                                    &self.restricted_opener.borrow());
+            let gateway = InputGateway::new(input_handler.duplicate(),
+                                            input_forwarder.duplicate(),
+                                            vt.clone());
+            let r = evdev_driver::Evdev::initialize_device(devnode,
+                                                           devkind,
+                                                           input_config.clone(),
+                                                           gateway,
+                                                           &restricted_opener.borrow());
             match r {
                 Ok(driver) => {
-                    context.add_event_handler(driver, dharma::event_kind::READ);
+                    coordinator.add_event_handler(driver, dharma::event_kind::READ);
                 }
                 Err(err) => {
                     log_error!("Could not initialize input devices: {}", err);
@@ -134,10 +150,11 @@ impl<'a> DeviceManager<'a> {
     }
 
     /// Initialize device monitoring.
-    fn initialize_device_monitor(&mut self, context: &mut Context) {
+    fn initialize_device_monitor(&mut self) {
         match self.udev.start_device_monitor() {
             Ok(device_monitor) => {
-                context.add_event_handler(Box::new(device_monitor), dharma::event_kind::READ);
+                self.coordinator.add_event_handler(Box::new(device_monitor),
+                                                   dharma::event_kind::READ);
             }
             Err(err) => {
                 log_warn1!("Device Manager: {}", err);
@@ -149,15 +166,16 @@ impl<'a> DeviceManager<'a> {
 // -------------------------------------------------------------------------------------------------
 
 /// Event handlers
-impl<'a> DeviceManager<'a> {
+impl<'a, C> DeviceManager<'a, C>
+    where C: 'static + EventHandling + StatePublishing + HwGraphics + Send + Clone
+{
     pub fn on_suspend(&mut self) {
         // Nothing to do as for now...
     }
 
     pub fn on_wakeup(&mut self) {
         // Old event devices hung-up so devices must be reinitialized.
-        let mut context = self.context.clone();
-        self.initialize_input_devices(&mut context);
+        self.initialize_input_devices();
     }
 }
 

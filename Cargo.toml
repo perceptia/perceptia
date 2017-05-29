@@ -8,6 +8,7 @@ members = [
         "cognitive/renderer_gl",
         "cognitive/inputs",
         "cognitive/outputs",
+        "cognitive/device_manager",
         "cognitive/cognitive",
 
         "perceptia/testing",
@@ -16,9 +17,18 @@ members = [
         "perceptia/aesthetics",
         "perceptia/gears",
         "perceptia/coordination",
-        "perceptia/device_manager",
         "perceptia/wayland_frontend",
         "perceptia/skylane_simple_framework",
         "perceptia/perceptia",
         "perceptia/perceptiactl",
     ]
+
+[replace]
+"dharma:0.0.1" = { path = 'cognitive/dharma' }
+"timber:0.0.1" = { path = 'cognitive/timber' }
+"cognitive-graphics:0.0.1" = { path = 'cognitive/graphics' }
+"cognitive-qualia:0.0.2" = { path = 'cognitive/qualia' }
+"cognitive-renderer-gl:0.0.1" = { path = 'cognitive/renderer_gl' }
+"cognitive-inputs:0.0.2" = { path = 'cognitive/inputs' }
+"cognitive-outputs:0.0.1" = { path = 'cognitive/outputs' }
+"cognitive-device-manager:0.0.1" = { path = 'cognitive/device_manager' }

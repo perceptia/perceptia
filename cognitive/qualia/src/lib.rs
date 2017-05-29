@@ -23,7 +23,7 @@ extern crate serde_derive;
 #[macro_use(timber)]
 extern crate timber;
 extern crate dharma;
-extern crate cognitive_graphics;
+extern crate cognitive_graphics as graphics;
 
 pub mod enums;
 pub use enums::{DeviceKind, KeyState, Action, Direction};
@@ -38,9 +38,13 @@ pub mod timing;
 pub use timing::Milliseconds;
 
 pub mod defs;
-pub use defs::{Area, Axis, Button, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Binding, Command, modifier, Key, KeyCode, KeyValue, OutputInfo, DrmBundle};
+pub use defs::{Area, Point, Position, OptionalPosition, Size, Slide, Vector};
+pub use defs::{Command, OutputInfo, DrmBundle};
 pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
+
+pub mod input;
+pub use input::{Axis, Button, Binding, Key, KeyCatchResult, KeyCode, KeyValue, modifier};
+pub use input::{InputForwarding, InputHandling};
 
 pub mod image;
 pub use image::{Image, Pixmap, PixelFormat};
@@ -65,7 +69,7 @@ pub mod perceptron;
 pub use perceptron::Perceptron;
 
 pub mod traits;
-pub use traits::{AppearanceManagement, DataTransferring, Emiter};
+pub use traits::{AppearanceManagement, DataTransferring, EventHandling, StatePublishing};
 pub use traits::{Screenshooting, MemoryManagement, HwGraphics};
 pub use traits::GraphicsManagement;
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};

@@ -14,7 +14,9 @@ use std::sync::{Arc, Mutex};
 use uinput_sys;
 
 use dharma::Signaler;
-use qualia::{modifier, Binding, Command, KeyCode, KeyValue, Action, Direction, KeyState};
+use qualia::{Action, Command, Direction, OptionalPosition, Slide, Vector};
+use qualia::{modifier, Axis, Binding, Button, KeyCatchResult, Key, KeyCode, KeyValue, KeyState};
+use qualia::{InputForwarding, InputHandling};
 use qualia::{perceptron, Perceptron};
 
 use config::KeybindingsConfig;
@@ -30,15 +32,6 @@ pub mod mode_name {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Enumeration for possible results of catching key.
-#[derive(PartialEq)]
-pub enum KeyCatchResult {
-    Caught,
-    Passed,
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// Structure representing mode.
 pub struct Mode {
     active: bool,
@@ -50,7 +43,7 @@ pub struct Mode {
 // -------------------------------------------------------------------------------------------------
 
 impl Mode {
-    /// `Mode` constructor.
+    /// Constructs new `Mode`.
     pub fn new(active: bool, name: String, default_executor: Option<Box<Executor>>) -> Self {
         Mode {
             active: active,
@@ -215,47 +208,6 @@ impl InnerInputManager {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure for locking `InnerInputManager` shared between threads.
-///
-/// Thread-safe public version of `InnerInputManager`.
-#[derive(Clone)]
-pub struct InputManager {
-    inner: Arc<Mutex<InnerInputManager>>,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl InputManager {
-    /// `InputManager` constructor.
-    pub fn new(config: &KeybindingsConfig, signaler: Signaler<Perceptron>) -> Self {
-        InputManager { inner: Arc::new(Mutex::new(InnerInputManager::new(config, signaler))) }
-    }
-
-    /// Lock and call corresponding method from `InnerInputManager`.
-    pub fn catch_key(&mut self,
-                     code: KeyCode,
-                     value: KeyValue,
-                     modifiers: modifier::ModifierType)
-                     -> KeyCatchResult {
-        let mut mine = self.inner.lock().unwrap();
-        mine.catch_key(code, value, modifiers)
-    }
-
-    /// Lock and call corresponding method from `InnerInputManager`.
-    pub fn make_mode_active(&mut self, mode_name: String, active: bool) {
-        let mut mine = self.inner.lock().unwrap();
-        mine.make_mode_active(mode_name, active)
-    }
-
-    /// Lock and call corresponding method from `InnerInputManager`.
-    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Box<Executor>) {
-        let mut mine = self.inner.lock().unwrap();
-        mine.add_binding(mode_name, binding, executor)
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
 // These methods will be called from executors when `InputManager` is locked so it is save to
 // implement this trait for `InnerInputManager` instead of `InputManager`.
 impl binding_functions::InputContext for InnerInputManager {
@@ -341,6 +293,132 @@ impl binding_functions::InputContext for InnerInputManager {
             uinput_sys::KEY_NUMERIC_9 => Some(9),
             _ => None,
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Helper structure for locking `InnerInputManager` shared between threads.
+///
+/// Thread-safe public version of `InnerInputManager`.
+#[derive(Clone)]
+pub struct InputManager {
+    inner: Arc<Mutex<InnerInputManager>>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl InputManager {
+    /// Constructs new `InputManager`.
+    pub fn new(config: &KeybindingsConfig, signaler: Signaler<Perceptron>) -> Self {
+        InputManager { inner: Arc::new(Mutex::new(InnerInputManager::new(config, signaler))) }
+    }
+
+    /// Lock and call corresponding method from `InnerInputManager`.
+    pub fn make_mode_active(&mut self, mode_name: String, active: bool) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.make_mode_active(mode_name, active)
+    }
+
+    /// Lock and call corresponding method from `InnerInputManager`.
+    pub fn add_binding(&mut self, mode_name: String, binding: Binding, executor: Box<Executor>) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.add_binding(mode_name, binding, executor)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl InputHandling for InputManager {
+    /// Lock and call corresponding method from `InnerInputManager`.
+    fn catch_key(&mut self,
+                 code: KeyCode,
+                 value: KeyValue,
+                 modifiers: modifier::ModifierType)
+                 -> KeyCatchResult {
+        let mut mine = self.inner.lock().unwrap();
+        mine.catch_key(code, value, modifiers)
+    }
+
+    /// Clones the `InputManager` as unsized.
+    fn duplicate(&self) -> Box<InputHandling> {
+        Box::new(self.clone())
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// `InputForwarder` is used by input device drivers to notify the rest of the applications about
+/// events.
+#[derive(Clone)]
+pub struct InputForwarder {
+    signaler: Signaler<Perceptron>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl InputForwarder {
+    /// Constructs new `InputForwarder`.
+    pub fn new(signaler: Signaler<Perceptron>) -> Self {
+        InputForwarder { signaler: signaler }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl InputForwarding for InputForwarder {
+    /// Emits key event.
+    fn emit_key(&mut self, code: u16, value: i32) {
+        let key = Key::new_now(code, value);
+        self.signaler.emit(perceptron::INPUT_KEYBOARD, Perceptron::InputKeyboard(key));
+    }
+
+    /// Emits pointer motion event.
+    fn emit_motion(&mut self, x: isize, y: isize) {
+        // Signal event
+        self.signaler.emit(perceptron::INPUT_POINTER_MOTION,
+                           Perceptron::InputPointerMotion(Vector::new(x, y)));
+    }
+
+    /// Emits pointer position event.
+    fn emit_position(&mut self, x: Option<isize>, y: Option<isize>) {
+        // Signal event
+        self.signaler.emit(perceptron::INPUT_POINTER_POSITION,
+                           Perceptron::InputPointerPosition(OptionalPosition::new(x, y)));
+    }
+
+    /// Emits button event.
+    fn emit_button(&mut self, code: u16, value: i32) {
+        let btn = Button::new_now(code, value);
+
+        // Signal event
+        self.signaler.emit(perceptron::INPUT_POINTER_BUTTON, Perceptron::InputPointerButton(btn));
+    }
+
+    /// Emits exist event.
+    fn emit_axis(&mut self, horizontal: isize, vertical: isize) {
+        let axis = Axis::new_now(Vector::new(horizontal, vertical),
+                                 Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32));
+
+        // Signal event
+        self.signaler.emit(perceptron::INPUT_POINTER_AXIS, Perceptron::InputPointerAxis(axis));
+    }
+
+    /// Emits position reset event.
+    fn emit_position_reset(&mut self) {
+        // Signal event
+        self.signaler.emit(perceptron::INPUT_POINTER_POSITION_RESET,
+                           Perceptron::InputPointerPositionReset);
+    }
+
+    /// Emits system activity event.
+    fn emit_system_activity_event(&mut self) {
+        self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
+    }
+
+    /// Clones the `InputManager` as unsized instance of `InputForwarding`.
+    fn duplicate(&self) -> Box<InputForwarding> {
+        Box::new(self.clone())
     }
 }
 

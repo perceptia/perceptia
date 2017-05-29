@@ -4,9 +4,9 @@
 //! Tools for handling events from input devices.
 
 extern crate xkbcommon;
-extern crate uinput_sys;
-
 extern crate cognitive_qualia as qualia;
+
+pub mod codes;
 
 pub mod keyboard_state;
 pub use keyboard_state::{KeyboardState, KeyMods};

@@ -1,0 +1,23 @@
+[package]
+name = "cognitive-frames"
+version = "0.0.1"
+description = "Managing windows for `cognitive`"
+documentation = "https://docs.rs/cognitive-frames"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["cognitive"]
+license = "MPL-2.0"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[features]
+testing = []
+
+[dependencies]
+cognitive-qualia = "0.0.3"
+
+[dev-dependencies]
+cognitive-qualia = { version = "0.0.3", features = ["testing"] }
+
+[lib]
+name = "cognitive_frames"
+path = "src/lib.rs"

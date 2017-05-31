@@ -1,19 +1,20 @@
 [package]
-name = "cognitive-inputs"
-version = "0.0.3"
-description = "Input related functionality for `cognitive`"
-documentation = "https://docs.rs/cognitive-inputs"
+name = "cognitive-aesthetics"
+version = "0.0.1"
+description = "Aesthetic additions for `cognitive`"
+documentation = "https://docs.rs/cognitive-aesthetics"
 homepage = "https://github.com/perceptia/perceptia"
 repository = "https://github.com/perceptia/perceptia"
-keywords = ["input"]
+keywords = ["cognitive"]
 license = "MPL-2.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-xkbcommon = "0.2"
+image = "0.12.3"
+rusttype = "0.2.1"
 timber = "0.0.1"
 cognitive-qualia = "0.0.3"
 
 [lib]
-name = "cognitive_inputs"
+name = "cognitive_aesthetics"
 path = "src/lib.rs"

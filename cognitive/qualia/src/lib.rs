@@ -73,6 +73,7 @@ pub use traits::{AppearanceManagement, DataTransferring, EventHandling, StatePub
 pub use traits::{Screenshooting, MemoryManagement, HwGraphics};
 pub use traits::GraphicsManagement;
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
+pub use traits::FrontendsCoordinationTrait;
 
 #[macro_use]
 pub mod log;
@@ -86,3 +87,6 @@ pub use settings::{Settings, Directories, KeymapSettings};
 
 pub mod ipc;
 pub use ipc::Ipc;
+
+#[cfg(feature = "testing")]
+pub mod coordinator_mock;

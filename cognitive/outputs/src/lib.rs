@@ -18,3 +18,6 @@ pub use output::Output;
 
 mod drm_output;
 pub use drm_output::DrmOutput;
+
+#[cfg(feature = "testing")]
+pub mod output_mock;

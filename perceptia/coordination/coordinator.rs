@@ -22,6 +22,7 @@ use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 use qualia::{AppearanceManagement, DataTransferring, EventHandling, StatePublishing};
 use qualia::{MemoryManagement, HwGraphics, Screenshooting};
 use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
+use qualia::FrontendsCoordinationTrait;
 use qualia::{show_reason, surface_state};
 
 use resource_storage::ResourceStorage;
@@ -592,5 +593,6 @@ impl Screenshooting for Coordinator {
 
 impl AestheticsCoordinationTrait for Coordinator {}
 impl ExhibitorCoordinationTrait for Coordinator {}
+impl FrontendsCoordinationTrait for Coordinator {}
 
 // -------------------------------------------------------------------------------------------------

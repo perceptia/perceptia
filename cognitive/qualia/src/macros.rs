@@ -10,7 +10,7 @@
 /// and suitable warning is logged in such case.
 #[macro_export]
 macro_rules! define_ref {
-    (struct $name:ident as $ref_name:ident) => {
+    (struct $name:ty as $ref_name:ident) => {
         #[derive(Clone)]
         pub struct $ref_name (std::rc::Rc<std::cell::RefCell<$name>>);
 
@@ -20,7 +20,7 @@ macro_rules! define_ref {
         }
     };
 
-    (trait $name:ident as $ref_name:ident) => {
+    (trait $name:ty as $ref_name:ident) => {
         #[derive(Clone)]
         pub struct $ref_name<T> (std::rc::Rc<std::cell::RefCell<T>>) where T: $name;
 
@@ -30,7 +30,7 @@ macro_rules! define_ref {
         }
     };
 
-    (_impl_ $name:ident as $ref_name:ident) => {
+    (_impl_ $name:ty as $ref_name:ident) => {
         pub fn new(obj: $name) -> Self {
             $ref_name(std::rc::Rc::new(std::cell::RefCell::new(obj)))
         }

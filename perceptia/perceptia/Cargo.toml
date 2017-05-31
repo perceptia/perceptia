@@ -6,13 +6,13 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 [dependencies]
 dharma = "0.0.1"
 timber = "0.0.1"
-cognitive-qualia = "0.0.2"
-cognitive-inputs = "0.0.2"
-cognitive-outputs = "0.0.1"
-cognitive-device-manager = "0.0.1"
-aesthetics = { path = "../aesthetics" }
-exhibitor = { path = "../exhibitor" }
-wayland_frontend = { path = "../wayland_frontend" }
+cognitive-qualia = "0.0.3"
+cognitive-inputs = "0.0.3"
+cognitive-outputs = "0.0.2"
+cognitive-aesthetics = "0.0.1"
+cognitive-device-manager = "0.0.2"
+cognitive-exhibitor = "0.0.1"
+cognitive-wayland-frontend = "0.0.1"
 gears = { path = "../gears" }
 coordination = { path = "../coordination" }
 

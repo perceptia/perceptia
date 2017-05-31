@@ -11,10 +11,10 @@ extern crate cognitive_qualia as qualia;
 extern crate cognitive_inputs as inputs;
 extern crate cognitive_outputs as outputs;
 
-extern crate aesthetics;
+extern crate cognitive_aesthetics as aesthetics;
 extern crate cognitive_device_manager as device_manager;
-extern crate exhibitor;
-extern crate wayland_frontend;
+extern crate cognitive_exhibitor as exhibitor;
+extern crate cognitive_wayland_frontend as wayland_frontend;
 
 extern crate gears;
 extern crate coordination;

@@ -191,3 +191,17 @@ pub trait ExhibitorCoordinationTrait: SurfaceControl +
                                       Clone {}
 
 // -------------------------------------------------------------------------------------------------
+
+/// Helper trait gathering traits used by frontends. Keeping list of all traits in all
+/// implementations is too verbose so this trait was introduced as best for now solution.
+pub trait FrontendsCoordinationTrait: SurfaceManagement +
+                                      SurfaceControl +
+                                      SurfaceViewer +
+                                      SurfaceFocusing +
+                                      AppearanceManagement +
+                                      DataTransferring +
+                                      HwGraphics +
+                                      Screenshooting +
+                                      MemoryManagement {}
+
+// -------------------------------------------------------------------------------------------------

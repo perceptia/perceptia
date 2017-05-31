@@ -1,0 +1,25 @@
+[package]
+name = "cognitive-exhibitor"
+version = "0.0.1"
+description = "Managing displays and compositing surfaces for `cognitive`"
+documentation = "https://docs.rs/cognitive-exhibitor"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["cognitive"]
+license = "MPL-2.0"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+rand = "0.3"
+timber = "0.0.1"
+cognitive-qualia = "0.0.3"
+cognitive-outputs = "0.0.2"
+cognitive-frames = "0.0.1"
+
+[dev-dependencies]
+cognitive-outputs = { version = "0.0.2", features = ["testing"] }
+cognitive-frames = { version = "0.0.1", features = ["testing"] }
+
+[lib]
+name = "cognitive_exhibitor"
+path = "src/lib.rs"

@@ -1,33 +1,14 @@
 [root]
-name = "wayland_frontend"
+name = "timber"
 version = "0.0.1"
 dependencies = [
- "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-inputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "coordination 0.0.1",
- "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "skylane_protocols 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "time 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "adler32"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-
-[[package]]
-name = "aesthetics"
-version = "0.0.1"
-dependencies = [
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "image 0.12.4 (registry+https://github.com/rust-lang/crates.io-index)",
- "rusttype 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
 
 [[package]]
 name = "ansi_term"
@@ -130,23 +111,39 @@ dependencies = [
 name = "cognitive"
 version = "0.0.1"
 dependencies = [
- "cognitive-device-manager 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-device-manager 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-inputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-outputs 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-renderer-gl 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-outputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-renderer-gl 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
-name = "cognitive-device-manager"
+name = "cognitive-aesthetics"
 version = "0.0.1"
 dependencies = [
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.12.4 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rusttype 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cognitive-aesthetics"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+replace = "cognitive-aesthetics 0.0.1"
+
+[[package]]
+name = "cognitive-device-manager"
+version = "0.0.2"
+dependencies = [
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-inputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -159,9 +156,51 @@ dependencies = [
 
 [[package]]
 name = "cognitive-device-manager"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "gbm-rs 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libudev 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cognitive-exhibitor"
+version = "0.0.1"
+dependencies = [
+ "cognitive-frames 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-outputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cognitive-exhibitor"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-replace = "cognitive-device-manager 0.0.1"
+replace = "cognitive-exhibitor 0.0.1"
+
+[[package]]
+name = "cognitive-frames"
+version = "0.0.1"
+dependencies = [
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cognitive-frames"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+replace = "cognitive-frames 0.0.1"
 
 [[package]]
 name = "cognitive-graphics"
@@ -181,26 +220,26 @@ replace = "cognitive-graphics 0.0.1"
 
 [[package]]
 name = "cognitive-inputs"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "xkbcommon 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "cognitive-inputs"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-replace = "cognitive-inputs 0.0.2"
+replace = "cognitive-inputs 0.0.3"
 
 [[package]]
 name = "cognitive-outputs"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-renderer-gl 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-renderer-gl 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -211,13 +250,13 @@ dependencies = [
 
 [[package]]
 name = "cognitive-outputs"
-version = "0.0.1"
+version = "0.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-replace = "cognitive-outputs 0.0.1"
+replace = "cognitive-outputs 0.0.2"
 
 [[package]]
 name = "cognitive-qualia"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "backtrace 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -235,16 +274,16 @@ dependencies = [
 
 [[package]]
 name = "cognitive-qualia"
-version = "0.0.2"
+version = "0.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-replace = "cognitive-qualia 0.0.2"
+replace = "cognitive-qualia 0.0.3"
 
 [[package]]
 name = "cognitive-renderer-gl"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "gl 0.6.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -253,9 +292,30 @@ dependencies = [
 
 [[package]]
 name = "cognitive-renderer-gl"
+version = "0.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+replace = "cognitive-renderer-gl 0.0.2"
+
+[[package]]
+name = "cognitive-wayland-frontend"
+version = "0.0.1"
+dependencies = [
+ "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "nix 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skylane 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "skylane_protocols 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "cognitive-wayland-frontend"
 version = "0.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-replace = "cognitive-renderer-gl 0.0.1"
+replace = "cognitive-wayland-frontend 0.0.1"
 
 [[package]]
 name = "color_quant"
@@ -267,7 +327,7 @@ name = "coordination"
 version = "0.0.1"
 dependencies = [
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "gears 0.0.1",
  "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -351,26 +411,6 @@ version = "0.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "exhibitor"
-version = "0.0.1"
-dependencies = [
- "cognitive-outputs 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "frames 0.0.1",
- "rand 0.3.15 (registry+https://github.com/rust-lang/crates.io-index)",
- "testing 0.0.1",
- "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "frames"
-version = "0.0.1"
-dependencies = [
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "testing 0.0.1",
-]
-
-[[package]]
 name = "gbm-rs"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -387,7 +427,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "gears"
 version = "0.0.1"
 dependencies = [
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 0.9.15 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -615,17 +655,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "perceptia"
 version = "0.0.1"
 dependencies = [
- "aesthetics 0.0.1",
- "cognitive-device-manager 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-inputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-outputs 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-aesthetics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-device-manager 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-exhibitor 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-outputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-wayland-frontend 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "coordination 0.0.1",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "exhibitor 0.0.1",
  "gears 0.0.1",
  "timber 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "wayland_frontend 0.0.1",
 ]
 
 [[package]]
@@ -633,9 +673,9 @@ name = "perceptiactl"
 version = "0.0.1"
 dependencies = [
  "clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-device-manager 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-device-manager 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "gears 0.0.1",
@@ -786,7 +826,7 @@ name = "skylane_simple_framework"
 version = "0.0.1"
 dependencies = [
  "cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "dharma 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "drm-rs 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "egl 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -837,23 +877,6 @@ dependencies = [
  "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.23 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
-name = "testing"
-version = "0.0.1"
-dependencies = [
- "cognitive-outputs 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "exhibitor 0.0.1",
- "frames 0.0.1",
-]
-
-[[package]]
-name = "timber"
-version = "0.0.1"
-dependencies = [
- "time 0.1.37 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -962,12 +985,16 @@ dependencies = [
 "checksum byteorder 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "c40977b0ee6b9885c9013cd41d9feffdd22deb3bb4dc3a71d901cc7a77de18c8"
 "checksum cfg-if 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "de1e760d7b6535af4241fca8bd8adf68e2e7edacc6b29f5d399050c5e48cf88c"
 "checksum clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)" = "6b8f69e518f967224e628896b54e41ff6acfb4dcfefc5076325c36525dac900f"
-"checksum cognitive-device-manager 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "82f8edede5d9817d391e36b8c777132ea5942f42bbc571219a808a9bc5af7bdc"
+"checksum cognitive-aesthetics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "a62e0b08f9d78a0fdf7cd8e209f17b2d1a4aab22893623b1ec64354d134b8514"
+"checksum cognitive-device-manager 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "7e6caf4ac971a3fdf92207689c327d24ff211df2996ea53e534347fd6a415df7"
+"checksum cognitive-exhibitor 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "fe0c05a30b4d3908e1ae45e53bd98088364967f4433d4c8f9f5f10c9922f5fe9"
+"checksum cognitive-frames 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c1e66dd9c9706b4c6c60d8fd45b0d916cc66e1d8950a6c0309f8f3427af51b13"
 "checksum cognitive-graphics 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "1d43a2f1306d0aeb32863a77bfc4126705d6b1c0364666885c0e62a64e040a85"
-"checksum cognitive-inputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "0307af70457db22629798d9d0d8c5de352df3263e25bd11bbf8cd498c0c63720"
-"checksum cognitive-outputs 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "39af4331e428d7e60579a5df8eb64dc429dbda309d571000a7bb46493dccca45"
-"checksum cognitive-qualia 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "272343a77fb611293f6eabf93bd8a0daecc756dd4794fb01411524ab1d80f3ad"
-"checksum cognitive-renderer-gl 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "3b01898a038d44040048e24edd9da64b0608c12e987047d4baa4bedec2b985c5"
+"checksum cognitive-inputs 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "c04cb1d5f913671e775a4b77f439adf10937fac0aeeeb0ffce06befcaf4e41de"
+"checksum cognitive-outputs 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "8d12caf6e498ff13e1bbbf689e90918a2204dc065390db87ea5cd62fa45fc769"
+"checksum cognitive-qualia 0.0.3 (registry+https://github.com/rust-lang/crates.io-index)" = "92a11aabb67385d0ac5c0d108a68522b88c52211b65a16ce0a83d4e67195c1e0"
+"checksum cognitive-renderer-gl 0.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "fa703dcbf8396841f20262763bd65d6fc65315c083da844bea7e5274ddb9d9fb"
+"checksum cognitive-wayland-frontend 0.0.1 (registry+https://github.com/rust-lang/crates.io-index)" = "27b5fc712eb53e926ad27bdd7caa4c30e36891885c84a7d9ce738dc62eb6d94a"
 "checksum color_quant 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a475fc4af42d83d28adf72968d9bcfaf035a1a9381642d8e85d8a04957767b0d"
 "checksum dbghelp-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "97590ba53bcb8ac28279161ca943a924d1fd4a8fb3fa63302591647c4fc5b850"
 "checksum dbus 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)" = "4aee01fb76ada3e5e7ca642ea6664ebf7308a810739ca2aca44909a1191ac254"

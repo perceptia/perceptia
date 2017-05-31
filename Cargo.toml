@@ -8,16 +8,15 @@ members = [
         "cognitive/renderer_gl",
         "cognitive/inputs",
         "cognitive/outputs",
+        "cognitive/frames",
+        "cognitive/aesthetics",
         "cognitive/device_manager",
+        "cognitive/exhibitor",
+        "cognitive/wayland_frontend",
         "cognitive/cognitive",
 
-        "perceptia/testing",
-        "perceptia/frames",
-        "perceptia/exhibitor",
-        "perceptia/aesthetics",
         "perceptia/gears",
         "perceptia/coordination",
-        "perceptia/wayland_frontend",
         "perceptia/skylane_simple_framework",
         "perceptia/perceptia",
         "perceptia/perceptiactl",
@@ -27,8 +26,12 @@ members = [
 "dharma:0.0.1" = { path = 'cognitive/dharma' }
 "timber:0.0.1" = { path = 'cognitive/timber' }
 "cognitive-graphics:0.0.1" = { path = 'cognitive/graphics' }
-"cognitive-qualia:0.0.2" = { path = 'cognitive/qualia' }
-"cognitive-renderer-gl:0.0.1" = { path = 'cognitive/renderer_gl' }
-"cognitive-inputs:0.0.2" = { path = 'cognitive/inputs' }
-"cognitive-outputs:0.0.1" = { path = 'cognitive/outputs' }
+"cognitive-qualia:0.0.3" = { path = 'cognitive/qualia' }
+"cognitive-renderer-gl:0.0.2" = { path = 'cognitive/renderer_gl' }
+"cognitive-inputs:0.0.3" = { path = 'cognitive/inputs' }
+"cognitive-outputs:0.0.2" = { path = 'cognitive/outputs' }
+"cognitive-frames:0.0.1" = { path = 'cognitive/frames' }
+"cognitive-aesthetics:0.0.1" = { path = 'cognitive/aesthetics' }
 "cognitive-device-manager:0.0.1" = { path = 'cognitive/device_manager' }
+"cognitive-exhibitor:0.0.1" = { path = 'cognitive/exhibitor' }
+"cognitive-wayland-frontend:0.0.1" = { path = 'cognitive/wayland_frontend' }

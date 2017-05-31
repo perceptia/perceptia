@@ -13,11 +13,11 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 timber = "0.0.1"
 dharma = "0.0.1"
 cognitive-graphics = "0.0.1"
-cognitive-qualia = "0.0.2"
-cognitive-renderer-gl = "0.0.1"
-cognitive-inputs = "0.0.2"
-cognitive-outputs = "0.0.1"
-cognitive-device-manager = "0.0.1"
+cognitive-qualia = "0.0.3"
+cognitive-renderer-gl = "0.0.2"
+cognitive-inputs = "0.0.3"
+cognitive-outputs = "0.0.2"
+cognitive-device-manager = "0.0.2"
 
 [lib]
 name = "cognitive"

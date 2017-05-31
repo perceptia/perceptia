@@ -40,7 +40,7 @@ impl WaylandService {
     /// Creates new `WaylandService`.
     pub fn new(mut context: Context) -> Self {
         dharma::system::block_signals();
-        let engine = Engine::new(context.get_coordinator().clone(),
+        let engine = Engine::new(Box::new(context.get_coordinator().clone()),
                                  context.get_settings().clone(),
                                  context.get_config().get_keyboard_config().clone());
 
@@ -200,7 +200,7 @@ impl WaylandService {
         } else if id == constants::HANDLE_NEW_CLIENT {
             let mut sender = dharma::DirectSender::new();
             dharma::direct_connect(&mut sender, &self.receiver);
-            self.engine.handle_new_client(sender);
+            self.engine.handle_new_client(sender, Box::new(self.context.get_coordinator().clone()));
         } else if id == constants::TERMINATE_CLIENT {
             match package {
                 Perceptron::CustomId(handler_id) => self.engine.terminate_client(handler_id),

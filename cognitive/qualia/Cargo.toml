@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-qualia"
-version = "0.0.2"
+version = "0.0.3"
 description = "Basic definitions and traits for `cognitive`"
 documentation = "https://docs.rs/cognitive-qualia"
 homepage = "https://github.com/perceptia/perceptia"
@@ -8,6 +8,9 @@ repository = "https://github.com/perceptia/perceptia"
 keywords = ["cognitive"]
 license = "MPL-2.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[features]
+testing = []
 
 [dependencies]
 bitflags = "0.8"

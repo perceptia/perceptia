@@ -18,8 +18,8 @@
 //!              problem.
 //!  - `INFO*` - general info that something happened.
 //!
-//! In `perceptia` some logs may be printed 60 times per second. It is not always desirable to have
-//! them all always switched on. Numbers along level names mean:
+//! In surface compositors or window managers some logs may be printed 60 times per second. It is
+//! not always desirable to have them all always switched on. Numbers along level names mean:
 //!
 //!  - `*1` - very important, very rare log
 //!  - `*2` - mildly important, rare log

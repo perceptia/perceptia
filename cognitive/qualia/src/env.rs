@@ -30,7 +30,7 @@ const CACHE_DIR_VAR: &'static str = "XDG_CACHE_HOME";
 const CONFIG_DIR_VAR: &'static str = "XDG_CONFIG_HOME";
 
 const DEFAULT_RUNTIME_DIR: &'static str = "/tmp";
-const DEFAULT_SYSTEM_CONFIG_DIR: &'static str = "/etc/perceptia";
+const DEFAULT_SYSTEM_CONFIG_DIR_BASE: &'static str = "/etc/";
 
 const DEFAULT_DATA_DIR_FRAGMENT: &'static str = ".local/share";
 const DEFAULT_CACHE_DIR_FRAGMENT: &'static str = ".cache";
@@ -56,6 +56,7 @@ pub enum Directory {
 
 pub struct Env {
     dirs: Directories,
+    progname: String,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -68,24 +69,24 @@ impl Env {
     ///  - create needed directories
     ///  - initialize logger
     ///  - clean old files
-    pub fn create(log_destination: LogDestination) -> Self {
+    pub fn create(log_destination: LogDestination, progname: &str) -> Self {
         // Register signals
         Self::register_signal_handler();
 
         // Create cache directory and initialize logger
-        let cache_dir = Self::create_cache_dir().unwrap();
-        if let Err(err) = Self::initialize_logger(log_destination, &cache_dir) {
+        let cache_dir = Self::create_cache_dir(progname).unwrap();
+        if let Err(err) = Self::initialize_logger(log_destination, &cache_dir, progname) {
             log_warn1!("{}", err);
         }
 
         // Create runtime directory
-        let data_dir = Self::create_data_dir().unwrap();
+        let data_dir = Self::create_data_dir(progname).unwrap();
 
         // Create runtime directory
-        let runtime_dir = Self::create_runtime_dir().unwrap();
+        let runtime_dir = Self::create_runtime_dir(progname).unwrap();
 
         // Check if configuration directories exist and remember them if so.
-        let (system_config_dir, user_config_dir) = Self::check_config_dirs();
+        let (system_config_dir, user_config_dir) = Self::check_config_dirs(progname);
 
         // Construct `Env`
         let mine = Env {
@@ -96,6 +97,7 @@ impl Env {
                 user_config: user_config_dir,
                 system_config: system_config_dir,
             },
+            progname: progname.to_string(),
         };
 
         // Remove unneeded files
@@ -131,20 +133,23 @@ impl Env {
 // Initializing logger
 impl Env {
     /// Initializes logger to write log to given destination.
-    fn initialize_logger(destination: LogDestination, dir: &Path) -> Result<(), Illusion> {
+    fn initialize_logger(destination: LogDestination,
+                         dir: &Path,
+                         progname: &str)
+                         -> Result<(), Illusion> {
         match destination {
-            LogDestination::LogFile => Self::initialize_logger_for_log_file(dir),
+            LogDestination::LogFile => Self::initialize_logger_for_log_file(dir, progname),
             LogDestination::StdOut => Self::initialize_logger_for_stdout(),
             LogDestination::Disabled => Self::disable_logger(),
         }
     }
 
     /// Chose log file path and sets logger up to use it.
-    fn initialize_logger_for_log_file(dir: &Path) -> Result<(), Illusion> {
+    fn initialize_logger_for_log_file(dir: &Path, progname: &str) -> Result<(), Illusion> {
         let path = dir.join(format!("log-{}.log", Self::get_time_representation()));
         match timber::init(&path) {
             Ok(ok) => {
-                println!("Welcome to perceptia");
+                println!("Welcome to {}", progname);
                 println!("Log file in {:?}", path);
                 Ok(ok)
             }
@@ -221,43 +226,43 @@ impl Env {
 // Creating directories
 impl Env {
     /// Create runtime directory.
-    fn create_runtime_dir() -> Result<PathBuf, Illusion> {
+    fn create_runtime_dir(progname: &str) -> Result<PathBuf, Illusion> {
         let mut path = Self::read_path(RUNTIME_DIR_VAR, DEFAULT_RUNTIME_DIR);
-        path.push(format!("perceptia-{}", Self::get_time_representation()));
+        path.push(format!("{}-{}", progname, Self::get_time_representation()));
         Self::mkdir(&path).and(Ok(path))
     }
 
     /// Create data directory.
-    fn create_data_dir() -> Result<PathBuf, Illusion> {
+    fn create_data_dir(progname: &str) -> Result<PathBuf, Illusion> {
         let mut default_path = std::env::home_dir().unwrap();
         default_path.push(DEFAULT_DATA_DIR_FRAGMENT);
         let mut path = Self::read_path(DATA_DIR_VAR, default_path.to_str().unwrap());
-        path.push("perceptia");
+        path.push(progname);
         Self::mkdir(&path).and(Ok(path))
     }
 
     /// Create cache directory.
-    fn create_cache_dir() -> Result<PathBuf, Illusion> {
+    fn create_cache_dir(progname: &str) -> Result<PathBuf, Illusion> {
         let mut default_path = std::env::home_dir().unwrap();
         default_path.push(DEFAULT_CACHE_DIR_FRAGMENT);
         let mut path = Self::read_path(CACHE_DIR_VAR, default_path.to_str().unwrap());
-        path.push("perceptia");
+        path.push(progname);
         Self::mkdir(&path).and(Ok(path))
     }
 
     /// Checks if config directories exist.
     ///
-    /// Global config directory is `/etc/perceptia/`.
+    /// Global config directory is `/etc/<program name>/`.
     ///
-    /// Local config directory is `$XDG_CONFIG_HOME/perceptia` if the variable exists, else
-    /// `~/.config/perceptia`.
-    fn check_config_dirs() -> (Option<PathBuf>, Option<PathBuf>) {
+    /// Local config directory is `$XDG_CONFIG_HOME/<program name>` if the variable exists, else
+    /// `~/.config/<program name>`.
+    fn check_config_dirs(progname: &str) -> (Option<PathBuf>, Option<PathBuf>) {
         // Check if local config directory exists
         let user_config_dir = {
             let mut default_path = std::env::home_dir().unwrap();
             default_path.push(DEFAULT_CONFIG_DIR_FRAGMENT);
             let mut user = Self::read_path(CONFIG_DIR_VAR, default_path.to_str().unwrap());
-            user.push("perceptia");
+            user.push(progname);
             if user.exists() && user.is_dir() {
                 Some(user)
             } else {
@@ -267,7 +272,7 @@ impl Env {
 
         // Check if global config directory exists
         let system_config_dir = {
-            let system = PathBuf::from(DEFAULT_SYSTEM_CONFIG_DIR);
+            let system = PathBuf::from(format!("{}{}", DEFAULT_SYSTEM_CONFIG_DIR_BASE, progname));
             if system.exists() && system.is_dir() {
                 Some(system)
             } else {
@@ -361,7 +366,7 @@ impl Env {
 impl Drop for Env {
     fn drop(&mut self) {
         self.cleanup();
-        log_info1!("Thank you for running perceptia! Bye!");
+        log_info1!("Thank you for running {}! Bye!", self.progname);
     }
 }
 

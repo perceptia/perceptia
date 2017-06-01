@@ -15,7 +15,6 @@ testing = []
 [dependencies]
 bitflags = "0.8"
 backtrace = "0.3"
-dbus = "0.5"
 libc = "0.2"
 libudev = "0.2"
 nix = "0.8"

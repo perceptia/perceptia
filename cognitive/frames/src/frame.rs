@@ -199,7 +199,7 @@ impl Parameters {
             mode: Mode::Root,
             pos: Position::default(),
             size: Size::default(),
-            title: "PERCEPTIA".to_owned(),
+            title: "root".to_owned(),
         }
     }
 

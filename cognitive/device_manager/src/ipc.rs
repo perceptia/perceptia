@@ -18,7 +18,7 @@ use nix::unistd::getpid;
 use std::os::unix::io::RawFd;
 use std::sync::{Arc, Mutex};
 
-use errors::Illusion;
+use qualia::Illusion;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -100,8 +100,8 @@ pub fn major_minor(rdev: u64) -> (u32, u32) {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper structure constituting shared memory between `Ipc`s from different threads.
-struct InnerIpc {
+/// Helper structure constituting shared memory between `Logind`s from different threads.
+struct Dbus {
     connection: Option<Connection>,
     login_destination: BusName<'static>,
     login_object_path: Path<'static>,
@@ -112,15 +112,15 @@ struct InnerIpc {
 
 // -------------------------------------------------------------------------------------------------
 
-impl InnerIpc {
-    /// `InnerIpc` constructor.
+impl Dbus {
+    /// Constructs new `Dbus`.
     pub fn new() -> Self {
         let connection = match Connection::get_private(BusType::System) {
             Ok(connection) => Some(connection),
             Err(_) => None,
         };
 
-        InnerIpc {
+        Dbus {
             connection: connection,
             login_destination: BusName::new(LOGIN_DESTINATION).unwrap(),
             login_object_path: Path::new(LOGIN_OBJECT_PATH).unwrap(),
@@ -224,22 +224,22 @@ impl InnerIpc {
 // -------------------------------------------------------------------------------------------------
 
 /// Structure proving access to interprocess communication.
-pub struct Ipc {
-    inner: Arc<Mutex<InnerIpc>>,
+pub struct Logind {
+    dbus: Arc<Mutex<Dbus>>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl Ipc {
-    /// `Ipc` constructor. Connects to DBUS.
+impl Logind {
+    /// Constructs new `Logind`. Connects to DBUS.
     pub fn new() -> Self {
-        Ipc { inner: Arc::new(Mutex::new(InnerIpc::new())) }
+        Logind { dbus: Arc::new(Mutex::new(Dbus::new())) }
     }
 
     /// Tries to take control over session. First tries session this application belongs to. If no
     /// session is assigned falls back to session for seat `seat0`.
     pub fn initialize(&mut self) -> Result<(), Illusion> {
-        let mut mine = self.inner.lock().unwrap();
+        let mut mine = self.dbus.lock().unwrap();
         mine.session_object_path = mine.get_session_by_pid();
         if mine.session_object_path.is_none() {
             mine.session_object_path = mine.get_session_by_seat("seat0");
@@ -249,7 +249,7 @@ impl Ipc {
 
     /// Communicates to `logind` to take control over given device.
     pub fn take_device(&self, rdev: u64) -> Result<RawFd, Illusion> {
-        let mine = self.inner.lock().unwrap();
+        let mine = self.dbus.lock().unwrap();
         let connection = get_connection_or_return!(mine.connection);
         let session_object_path = get_session_or_return!(mine.session_object_path);
         let message_name = "TakeDevice";
@@ -273,7 +273,7 @@ impl Ipc {
 
     /// Communicates to `logind` to release control over given device.
     pub fn release_device(&self, rdev: u64) -> Result<(), Illusion> {
-        let mine = self.inner.lock().unwrap();
+        let mine = self.dbus.lock().unwrap();
         let connection = get_connection_or_return!(mine.connection);
         let session_object_path = get_session_or_return!(mine.session_object_path);
         let message_name = "ReleaseDevice";

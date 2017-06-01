@@ -25,4 +25,4 @@ addons:
       - libxkbcommon-dev
 
 script: |
-    cargo build --all && cargo test --all --features testing
+    cargo build --all && cargo test --all

@@ -31,7 +31,7 @@ pub struct Udev<'a> {
 // -------------------------------------------------------------------------------------------------
 
 impl<'a> Udev<'a> {
-    /// `Udev` constructor.
+    /// Constructs new "Udev".
     pub fn new() -> Self {
         Udev {
             context: libudev::Context::new().expect("Failed to create udev context"),
@@ -39,8 +39,8 @@ impl<'a> Udev<'a> {
         }
     }
 
-    /// Iterate over connected input event devices and pass results to given handler.
-    /// Panic if something goes wrong - this is crucial for perceptia to have input.
+    /// Iterates over connected input event devices and pass results to given handler.
+    /// Panics if something goes wrong.
     pub fn iterate_event_devices<F>(&self, mut f: F)
         where F: FnMut(&Path, qualia::DeviceKind, &libudev::Device)
     {
@@ -62,8 +62,8 @@ impl<'a> Udev<'a> {
         }
     }
 
-    /// Iterate over connected output DRM devices and pass results to given handler.
-    /// Panic if something goes wrong - this is crucial for perceptia to have output.
+    /// Iterates over connected output DRM devices and pass results to given handler.
+    /// Panics if something goes wrong.
     pub fn iterate_drm_devices<F: FnMut(&Path, &libudev::Device)>(&self, mut f: F) {
         let mut enumerator =
             libudev::Enumerator::new(&self.context).expect("Failed to create device enumerator");
@@ -80,7 +80,7 @@ impl<'a> Udev<'a> {
         }
     }
 
-    /// Start device monitoring and return instance of `Dispatcher` `EventHandler` for processing
+    /// Starts device monitoring and returns instance of `Dispatcher` `EventHandler` for processing
     /// device events.
     ///
     /// Returned `DeviceMonitor` contains file descriptor from `udev` monitor. `DeviceMonitor` will

@@ -1,7 +1,7 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! This module provides error enumerations for perceptia.
+//! This module provides error enumerations.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -15,8 +15,7 @@ use graphics;
 
 /// Generic application-wide error.
 ///
-/// This enum could not be named `Error`. Illusion is "a distortion of the senses" (error in
-/// perceptia).
+/// This enum could not be named `Error`. This is `cognitive` error, hence `Illusion`.
 #[derive(Debug)]
 pub enum Illusion {
     Permissions(String),

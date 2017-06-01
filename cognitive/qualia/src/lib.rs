@@ -2,14 +2,12 @@
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 //! `qualia` is crate containing enumerations, macros and definitions common to all the crates of
-//! `perceptia` and traits used to decouple `perceptia`'s creates one from another (mainly for unit
-//! tests).
+//! `cognitive` and traits used to decouple `cognitive` creates one from another.
 //!
 //! Unfortunately it is also home for small tools not important enough to have their own crate.
 //! TODO: Identify and move to separate crate tools not fitting to purpose of this crate.
 
 extern crate backtrace;
-extern crate dbus;
 extern crate libc;
 extern crate libudev; // for implementation of `From` in `errors`.
 extern crate nix;
@@ -84,9 +82,6 @@ pub use env::{Env, LogDestination};
 
 pub mod settings;
 pub use settings::{Settings, Directories, KeymapSettings};
-
-pub mod ipc;
-pub use ipc::Ipc;
 
 #[cfg(feature = "testing")]
 pub mod coordinator_mock;

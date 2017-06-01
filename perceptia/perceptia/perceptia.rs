@@ -38,7 +38,7 @@ fn main() {
     std::panic::set_hook(Box::new(|info| gears::functions::panic_hook(info)));
 
     // Prepare tools
-    let env = qualia::Env::create(qualia::LogDestination::LogFile);
+    let env = qualia::Env::create(qualia::LogDestination::LogFile, "perceptia");
     let config = gears::Config::read_or_default(env.get_directories());
     let keymap = inputs::Keymap::new(&env, config.get_keyboard_config()).unwrap();
     let settings = qualia::Settings::new(keymap.get_settings());

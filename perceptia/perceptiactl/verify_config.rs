@@ -17,7 +17,7 @@ pub fn process() {
 /// Verifies validity of configuration files. In case of success prints effective configuration.
 /// In case of failure prints error returned by parser.
 fn verify_config() {
-    let env = qualia::env::Env::create(qualia::LogDestination::Disabled);
+    let env = qualia::env::Env::create(qualia::LogDestination::Disabled, "perceptia");
     match Config::read(env.get_directories()) {
         Ok(config) => {
             println!("Config valid!");

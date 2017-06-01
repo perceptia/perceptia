@@ -4,7 +4,7 @@
 //! Implementations of `drm` objects from Mesa project.
 //!
 //! This protocol is part of internal implementation of mesa, but implementing it here is the
-//! simplest way to make EGL applications talk to `perceptia`.
+//! simplest way to make EGL applications talk to surface compositor.
 
 use std::rc::Rc;
 use std::os::unix::io::RawFd;

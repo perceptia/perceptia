@@ -50,45 +50,53 @@ Directories
 
 Here is overview of directories (documentation in code will provide more details):
 
- * **src** - all applications source code
+ * **cognitive** - source code of all general purpose crates for creating surface compositors
 
- * **src/*/tests** - source code of unit tests
+ * **perceptia** - source code of `perceptia`
+
+ * ***/*/tests** - source code of unit tests
 
  * **info** - hand-written documentation
 
  * **target** - directory containing build artifacts created by `cargo`
 
-Sources are split into several modules:
+Sources are split into several crats:
 
- * **src/dharma** - managing threads and inter-thread communication
+ * **cognitive/dharma** - managing threads and inter-thread communication
 
- * **src/timber** - logging helper
+ * **cognitive/timber** - logging helper
 
- * **src/qualia** - contains common definitions and traits 
+ * **cognitive/graphics** - common tools related to hardware graphics
 
- * **src/renderer_gl** - rendering using GL
+ * **cognitive/qualia** - common definitions and traits
 
- * **src/output** - output related functionality
+ * **cognitive/renderer_gl** - rendering using GL
 
- * **src/testing** - common unit testing functionality
+ * **cognitive/inputs** - input related functionality
 
- * **src/frames** - framing
+ * **cognitive/outputs** - output related functionality
 
- * **src/exhibitor** - managing frames, displays and other compositing related stuff
+ * **cognitive/frames** - framing
 
- * **src/aesthetics** - functionality related to visual appearance. Aesthetics uses the same API as
-   exposed to client frontends.
+ * **cognitive/exhibitor** - managing frames, displays and other compositing related stuff
 
- * **src/device_manager** - device management functionality
+ * **cognitive/aesthetics** - functionality related to visual appearance. Aesthetics uses the same
+   API as exposed to client frontends.
 
- * **src/wayland_frontend** - Wayland related functionality
+ * **cognitive/device_manager** - device management functionality
 
- * **src/skylane_simple_framework** - example how `skylane` client could be written; used by
+ * **cognitive/wayland_frontend** - Wayland related functionality
+
+ * **perceptia/skylane_simple_framework** - example how `skylane` client could be written; used by
    perceptiactl
 
- * **src/perceptia** - main application
+ * **perceptia/gears** - various tools without better place to put them in
 
- * **src/perceptiactl** - supportive, diagnostic application
+ * **perceptia/coordination** - management of shared state and inter-thread communication
+
+ * **perceptia/perceptia** - `perceptia` main application
+
+ * **perceptia/perceptiactl** - supportive, diagnostic application
 
 Run unit tests
 --------------

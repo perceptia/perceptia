@@ -10,6 +10,7 @@ extern crate libudev;
 extern crate egl;
 extern crate gbm_rs as libgbm;
 extern crate drm as libdrm;
+extern crate dbus;
 
 extern crate dharma;
 extern crate cognitive_graphics;
@@ -20,16 +21,22 @@ extern crate timber;
 extern crate cognitive_qualia as qualia;
 extern crate cognitive_inputs as inputs;
 
+mod ipc;
 mod device_access;
 mod input_gateway;
 mod evdev_driver;
 mod drivers;
 mod pageflip;
-mod output_collector;
 mod device_monitor;
-mod virtual_terminal;
 
 pub mod udev;
+pub use udev::Udev;
+
+mod output_collector;
+pub use output_collector::OutputCollector;
+
+mod virtual_terminal;
+pub use virtual_terminal::VirtualTerminal;
 
 mod graphics_manager;
 pub use graphics_manager::GraphicsManager;

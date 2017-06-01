@@ -14,7 +14,9 @@ use nix::{self, Errno};
 use nix::fcntl::{open, OFlag};
 use nix::sys::stat::{Mode, stat};
 
-use qualia::{Illusion, Ipc};
+use qualia::Illusion;
+
+use ipc::Logind;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -26,7 +28,7 @@ use qualia::{Illusion, Ipc};
 /// `logind` allows to take device only once, and further tries will fail. `RestrictedOpener`
 /// handles IDs of open devices and releases them before next take.
 pub struct RestrictedOpener {
-    ipc: Ipc,
+    logind: Logind,
     taken_devices: RefCell<BTreeSet<u64>>,
 }
 
@@ -36,7 +38,7 @@ impl RestrictedOpener {
     /// Constructs new `RestrictedOpener`.
     pub fn new() -> Self {
         RestrictedOpener {
-            ipc: Ipc::new(),
+            logind: Logind::new(),
             taken_devices: RefCell::new(BTreeSet::new()),
         }
     }
@@ -60,7 +62,7 @@ impl RestrictedOpener {
 
     /// Initialize connection to `logind`.
     pub fn initialize_ipc(&mut self) -> Result<(), Illusion> {
-        self.ipc.initialize()
+        self.logind.initialize()
     }
 }
 
@@ -76,13 +78,13 @@ impl RestrictedOpener {
                 // If device is taken - release it first
                 let contains = self.taken_devices.borrow().contains(&rdev);
                 if contains {
-                    if self.ipc.release_device(rdev).is_ok() {
+                    if self.logind.release_device(rdev).is_ok() {
                         self.taken_devices.borrow_mut().remove(&rdev);
                     }
                 }
 
                 // Take the device
-                let result = self.ipc.take_device(rdev);
+                let result = self.logind.take_device(rdev);
                 if result.is_ok() {
                     self.taken_devices.borrow_mut().insert(rdev);
                 }

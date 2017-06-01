@@ -36,7 +36,7 @@ pub struct Exhibitor<C>
 
 /// General methods.
 impl<C> Exhibitor<C>
-    where C: ExhibitorCoordinationTrait
+    where C: ExhibitorCoordinationTrait + Clone
 {
     /// `Exhibitor` constructor.
     pub fn new(coordinator: C,
@@ -56,7 +56,7 @@ impl<C> Exhibitor<C>
 
 /// Notification handlers.
 impl<C> Exhibitor<C>
-    where C: ExhibitorCoordinationTrait
+    where C: ExhibitorCoordinationTrait + Clone
 {
     /// Handles notification about needed redraw.
     pub fn on_notify(&mut self) {
@@ -89,7 +89,7 @@ impl<C> Exhibitor<C>
         }
 
         log_info1!("Exhibitor: creating display");
-        let display_frame = self.compositor.create_display(info.area, info.make.clone());
+        let display_frame = self.compositor.create_display(info.id, info.area, info.make.clone());
         let display =
             Display::new(self.coordinator.clone(), self.pointer.clone(), output, display_frame);
         self.displays.insert(info.id, display);

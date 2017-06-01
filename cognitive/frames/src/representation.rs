@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::{Area, Position, Size, SurfaceId};
-use frame::{Frame, Parameters, Geometry, Mobility, Mode};
+use frame::{Frame, Parameters, Geometry, Mobility};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -25,7 +25,7 @@ impl FrameRepresentation {
     /// Creates representation of leaf `Frame`.
     pub fn new(params: Parameters, branches: Vec<FrameRepresentation>) -> Self {
         FrameRepresentation {
-            has_area: (params.mode == Mode::Display),
+            has_area: params.mode.is_display(),
             params: params,
             branches: branches,
         }
@@ -68,7 +68,7 @@ impl FrameRepresentation {
             Parameters::new_root(),
             vec![
                 FrameRepresentation::new(
-                    Parameters::new_display(area, String::default()),
+                    Parameters::new_display(1, area, String::default()),
                     workspaces,
                 )
             ]
@@ -86,10 +86,10 @@ impl FrameRepresentation {
             Parameters::new_root(),
             vec![
                 FrameRepresentation::new(
-                    Parameters::new_display(area, String::default()),
+                    Parameters::new_display(1, area, String::default()),
                     vec![
                         FrameRepresentation::new(
-                            Parameters::new_workspace("1".to_owned(), geometry),
+                            Parameters::new_workspace("1".to_owned(), geometry, true),
                             branches
                         ).with_area(area.pos.x, area.pos.y, area.size.width, area.size.height)
                     ]
@@ -119,7 +119,7 @@ impl FrameRepresentation {
                    "wrong mode in {:?}",
                    frame.get_sid());
 
-        if self.params.mode == Mode::Workspace {
+        if self.params.mode.is_workspace() {
             assert_eq!(frame.get_title(),
                        self.params.title,
                        "wrong title in {:?}",

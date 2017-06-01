@@ -30,7 +30,7 @@ use qualia::{Area, Position, Size, SurfaceId};
 ///
 pub fn make_simple_frames_appending()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r = Frame::new_workspace(String::new(), Vertical, true);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -89,7 +89,7 @@ pub fn make_simple_frames_appending()
 ///
 pub fn make_simple_frames_prepending()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r = Frame::new_workspace(String::new(), Vertical, true);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -135,7 +135,7 @@ pub fn make_simple_frames_prepending()
 ///
 pub fn make_simple_frames_joining()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r = Frame::new_workspace(String::new(), Vertical, true);
     let mut v = Frame::new_container(Vertical);
     let mut h = Frame::new_container(Horizontal);
     let mut s = Frame::new_container(Stacked);
@@ -193,7 +193,7 @@ pub fn make_simple_frames_joining()
 ///
 pub fn make_simple_for_deramifying()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r  = Frame::new_workspace(String::new(), Vertical);
+    let mut r  = Frame::new_workspace(String::new(), Vertical, true);
     let mut a1 = Frame::new_container(Stacked);
     let mut a2 = Frame::new_container(Stacked);
     let mut a3 = Frame::new_leaf(SurfaceId::new(1), Stacked);
@@ -217,6 +217,47 @@ pub fn make_simple_for_deramifying()
 
 // -------------------------------------------------------------------------------------------------
 
+/// Prepares frame layout used for testing deramification.
+///
+///                        R
+///
+///            ╭───────────┴───────────╮
+///
+///            D1                      D2
+///
+///      ╭─────┴──────╮                │
+///      │            │
+///                                    C
+///     W11          W12
+///                              ╭─────┴──────╮
+///      │                       │            │
+///
+///     W13                     W21          W22
+///
+pub fn make_simple_with_workspaces()
+-> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
+    let mut r = Frame::new_root();
+    let mut d1 = Frame::new_display(1, Area::default(), "test_1".to_string());
+    let mut d2 = Frame::new_display(2, Area::default(), "test_2".to_string());
+    let mut w11 = Frame::new_workspace("11".to_string(), Stacked, true);
+    let mut w12 = Frame::new_workspace("12".to_string(), Stacked, false);
+    let mut w13 = Frame::new_workspace("13".to_string(), Stacked, false);
+    let mut w21 = Frame::new_workspace("21".to_string(), Stacked, true);
+    let mut w22 = Frame::new_workspace("22".to_string(), Stacked, false);
+    let mut c1 = Frame::new_container(Stacked);
+    r.append(&mut d1);
+    r.append(&mut d2);
+    d1.append(&mut w11);
+    d1.append(&mut w12);
+    d2.append(&mut w21);
+    c1.append(&mut w21);
+    c1.append(&mut w22);
+    w11.append(&mut w13);
+    (r, d1, d2, w11, w12, w13, w21, w22, c1)
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Prepares layout for testing homogenizing. Frame have appropriate size to check if they are not
 /// homogenized when not resized along.
 ///
@@ -236,7 +277,7 @@ pub fn make_simple_for_deramifying()
 pub fn make_sized_for_homogenizing()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,
         Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Stacked);
+    let mut r = Frame::new_workspace(String::new(), Stacked, true);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -293,7 +334,7 @@ pub fn make_sized_for_homogenizing()
 /// Prepares layout for testing homogenizing vertical container with docks.
 pub fn make_sized_for_homogenizing_vertical_with_docked()
     -> (Frame, Frame, Frame, Frame, Frame, Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r = Frame::new_workspace(String::new(), Vertical, true);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -321,7 +362,7 @@ pub fn make_sized_for_homogenizing_vertical_with_docked()
 /// Prepares layout for testing homogenizing horizontal container with docks.
 pub fn make_sized_for_homogenizing_horizontal_with_docked()
     -> (Frame, Frame, Frame, Frame, Frame, Frame) {
-    let mut r = Frame::new_workspace(String::new(), Horizontal);
+    let mut r = Frame::new_workspace(String::new(), Horizontal, true);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -363,7 +404,7 @@ pub fn make_sized_for_homogenizing_horizontal_with_docked()
 ///
 pub fn make_positioned_for_searching()
     -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r = Frame::new_workspace(String::new(), Vertical);
+    let mut r = Frame::new_workspace(String::new(), Vertical, true);
     let mut a = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b = Frame::new_leaf(SurfaceId::new(2), Stacked);
     let mut c = Frame::new_leaf(SurfaceId::new(3), Stacked);
@@ -416,7 +457,7 @@ pub fn make_positioned_for_searching()
 ///
 pub fn make_positioned_for_jumping()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r     = Frame::new_workspace(String::new(), Vertical);
+    let mut r     = Frame::new_workspace(String::new(), Vertical, true);
     let mut w     = Frame::new_container(Vertical);
     let mut a     = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut b     = Frame::new_leaf(SurfaceId::new(2), Stacked);
@@ -472,14 +513,14 @@ pub fn make_positioned_for_jumping()
 pub fn make_positioned_for_displaying()
 -> (Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,
     Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame,Frame) {
-    let mut r  = Frame::new_display(Area::create(0, 0, 400, 400), "test_name".to_string());
+    let mut r  = Frame::new_display(1, Area::create(0, 0, 400, 400), "test_name".to_string());
     let mut k1 = Frame::new_container(Vertical);
     let mut k2 = Frame::new_container(Horizontal);
     let mut k3 = Frame::new_container(Stacked);
     let mut l1 = Frame::new_leaf(SurfaceId::new(101), Stacked);
     let mut l2 = Frame::new_leaf(SurfaceId::new(102), Stacked);
-    let mut w1 = Frame::new_workspace(String::new(), Stacked);
-    let mut w2 = Frame::new_workspace(String::new(), Horizontal);
+    let mut w1 = Frame::new_workspace(String::new(), Stacked, true);
+    let mut w2 = Frame::new_workspace(String::new(), Horizontal, false);
     let mut a  = Frame::new_container(Stacked);
     let mut a1 = Frame::new_leaf(SurfaceId::new(1), Stacked);
     let mut a2 = Frame::new_leaf(SurfaceId::new(2), Stacked);

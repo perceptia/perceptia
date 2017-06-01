@@ -57,7 +57,7 @@ fn test_remove() {
 
     // Prepare representation.
     let repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Vertical),
@@ -108,7 +108,7 @@ fn test_pop() {
 
     // Check timed layout.
     let time_repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Stacked),

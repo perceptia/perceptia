@@ -56,7 +56,7 @@ pub trait ExhibitorCommandShorthands {
 // -------------------------------------------------------------------------------------------------
 
 impl<C> ExhibitorCommandShorthands for Exhibitor<C>
-    where C: ExhibitorCoordinationTrait
+    where C: ExhibitorCoordinationTrait + Clone
 {
     /// Executes exalt command.
     fn exalt(&mut self) {

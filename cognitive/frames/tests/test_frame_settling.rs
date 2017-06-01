@@ -13,10 +13,9 @@ extern crate cognitive_frames as frames;
 mod common;
 
 use qualia::{Position, Size, SurfaceId};
-use frames::{Frame, Parameters};
+use frames::{Frame, Parameters, Settling};
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 use frames::Side::{Before, On, After};
-use frames::settling::Settling;
 use frames::representation::FrameRepresentation;
 use common::{assertions, layouts, surface_access_mock};
 
@@ -33,7 +32,7 @@ fn test_poping_directed() {
     r.pop_recursively(&mut h2);
 
     let repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Horizontal),
@@ -81,7 +80,7 @@ fn test_poping_stacked() {
     r.pop_recursively(&mut s2);
 
     let spaced_repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Vertical),
@@ -111,7 +110,7 @@ fn test_poping_stacked() {
     );
 
     let timed_repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Stacked),

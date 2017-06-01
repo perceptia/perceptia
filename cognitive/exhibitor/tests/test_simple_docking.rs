@@ -72,7 +72,7 @@ fn test_adding_dock() {
         Parameters::new_root(),
         vec![
             FrameRepresentation::new(
-                Parameters::new_display(e.output_info.area, e.output_info.make.clone()),
+                Parameters::new_display(1, e.output_info.area, e.output_info.make.clone()),
                 vec![
                     FrameRepresentation::new_leaf(2, Stacked)
                                         .with_mobility(Docked)
@@ -81,7 +81,7 @@ fn test_adding_dock() {
                         Parameters::new_container(Stacked),
                         vec![
                             FrameRepresentation::new(
-                                Parameters::new_workspace("1".to_owned(), Stacked),
+                                Parameters::new_workspace("1".to_owned(), Stacked, true),
                                 vec![FrameRepresentation::new_leaf(1, Vertical)
                                                          .with_mobility(Floating)]
                             ).with_area(0, 0, 100, 90),
@@ -114,7 +114,7 @@ fn test_adding_dock_and_workspace() {
         Parameters::new_root(),
         vec![
             FrameRepresentation::new(
-                Parameters::new_display(e.output_info.area, e.output_info.make.clone()),
+                Parameters::new_display(1, e.output_info.area, e.output_info.make.clone()),
                 vec![
                     FrameRepresentation::new_leaf(2, Stacked)
                                         .with_mobility(Docked)
@@ -123,12 +123,12 @@ fn test_adding_dock_and_workspace() {
                         Parameters::new_container(Stacked),
                         vec![
                             FrameRepresentation::new(
-                                Parameters::new_workspace("2".to_owned(), Stacked),
+                                Parameters::new_workspace("2".to_owned(), Stacked, true),
                                 vec![FrameRepresentation::new_leaf(3, Vertical)
                                                          .with_mobility(Floating)]
                             ).with_area(0, 0, 100, 90),
                             FrameRepresentation::new(
-                                Parameters::new_workspace("1".to_owned(), Stacked),
+                                Parameters::new_workspace("1".to_owned(), Stacked, false),
                                 vec![FrameRepresentation::new_leaf(1, Vertical)
                                                          .with_mobility(Floating)]
                             ).with_area(0, 0, 100, 90),
@@ -172,7 +172,7 @@ fn test_adding_dock_and_display() {
         Parameters::new_root(),
         vec![
             FrameRepresentation::new(
-                Parameters::new_display(output2_info.area, output2_info.make.clone()),
+                Parameters::new_display(2, output2_info.area, output2_info.make.clone()),
                 vec![
                     FrameRepresentation::new_leaf(3, Stacked)
                                         .with_mobility(Docked)
@@ -181,7 +181,7 @@ fn test_adding_dock_and_display() {
                         Parameters::new_container(Stacked),
                         vec![
                             FrameRepresentation::new(
-                                Parameters::new_workspace("2".to_owned(), Stacked),
+                                Parameters::new_workspace("2".to_owned(), Stacked, true),
                                 vec![FrameRepresentation::new_leaf(4, Vertical)
                                                          .with_mobility(Floating)]
                             ).with_area(0, 0, 200, 190),
@@ -190,7 +190,7 @@ fn test_adding_dock_and_display() {
                 ]
             ).with_geometry(Vertical),
             FrameRepresentation::new(
-                Parameters::new_display(e.output_info.area, e.output_info.make.clone()),
+                Parameters::new_display(1, e.output_info.area, e.output_info.make.clone()),
                 vec![
                     FrameRepresentation::new_leaf(2, Stacked)
                                         .with_mobility(Docked)
@@ -199,7 +199,7 @@ fn test_adding_dock_and_display() {
                         Parameters::new_container(Stacked),
                         vec![
                             FrameRepresentation::new(
-                                Parameters::new_workspace("1".to_owned(), Stacked),
+                                Parameters::new_workspace("1".to_owned(), Stacked, true),
                                 vec![FrameRepresentation::new_leaf(1, Vertical)
                                                          .with_mobility(Floating)]
                             ).with_area(0, 0, 100, 90),

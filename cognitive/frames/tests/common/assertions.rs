@@ -29,7 +29,7 @@ pub fn assert_frame_equal_exact(frame1: &Frame, frame2: &Frame) {
 /// Validate timed part if `simple` layout.
 pub fn assert_simple_frames_timed(frame: &Frame) {
     let repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Vertical),
@@ -66,7 +66,7 @@ pub fn assert_simple_frames_timed(frame: &Frame) {
 /// Validate timed part if `reversed simple` layout.
 pub fn assert_simple_frames_timed_reversed(frame: &Frame) {
     let repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Stacked),
@@ -103,7 +103,7 @@ pub fn assert_simple_frames_timed_reversed(frame: &Frame) {
 /// Validate spaced part if `simple` layout.
 pub fn assert_simple_frames_spaced(frame: &Frame) {
     let repr = FrameRepresentation::new(
-        Parameters::new_workspace(String::new(), Vertical),
+        Parameters::new_workspace(String::new(), Vertical, true),
         vec![
             FrameRepresentation::new(
                 Parameters::new_container(Vertical),

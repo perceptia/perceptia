@@ -35,4 +35,3 @@ members = [
 "cognitive-device-manager:0.0.2" = { path = 'cognitive/device_manager' }
 "cognitive-exhibitor:0.0.1" = { path = 'cognitive/exhibitor' }
 "cognitive-wayland-frontend:0.0.1" = { path = 'cognitive/wayland_frontend' }
-"cognitive:0.0.1" = { path = 'cognitive/cognitive' }

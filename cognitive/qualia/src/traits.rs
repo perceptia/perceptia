@@ -10,10 +10,10 @@ use dharma::{EventHandler, EventKind};
 use graphics::egl_tools::HwImage;
 use graphics::attributes::{EglAttributes, DmabufAttributes};
 
-use defs::DrmBundle;
+use defs::{DrmBundle, WorkspaceState};
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
-use memory::{Buffer, MappedMemory};
+use memory::{Buffer, Memory};
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -88,20 +88,17 @@ pub trait StatePublishing {
 /// Managing memory pools and views.
 pub trait MemoryManagement {
     /// Creates new memory pool from mapped memory. Returns ID of newly created pool.
-    fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId;
-
-    /// Creates new memory pool from buffer. Returns ID of newly created pool.
-    fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId;
+    fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId;
 
     /// Schedules destruction of memory pool identified by given ID. The pool will be destructed
     /// when all its views go out of the scope.
     ///
     /// If the poll was created from mapped memory, returns this memory.
-    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory>;
+    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<Memory>;
 
     /// Replaces mapped memory with other memory reusing its ID. This method may be used when
     /// client requests memory map resize.
-    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory);
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory);
 
     /// Creates new memory view from mapped memory.
     fn create_memory_view(&mut self,
@@ -142,6 +139,17 @@ pub trait HwGraphics {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Setting or getting window management info.
+pub trait WindowManagement {
+    /// Sets workspace state.
+    fn set_workspace_state(&mut self, state: WorkspaceState);
+
+    /// Returns workspace state.
+    fn get_workspace_state(&self) -> WorkspaceState;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Screenshooting related functionality.
 pub trait Screenshooting {
     /// Makes screenshot request.
@@ -173,9 +181,11 @@ pub trait GraphicsManagement {
 // -------------------------------------------------------------------------------------------------
 
 /// Helper trait gathering traits used by `Aesthetics`.
-pub trait AestheticsCoordinationTrait
-    : SurfaceControl + SurfaceManagement + AppearanceManagement + MemoryManagement {
-}
+pub trait AestheticsCoordinationTrait: SurfaceControl +
+                                       SurfaceManagement +
+                                       AppearanceManagement +
+                                       MemoryManagement +
+                                       WindowManagement {}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -188,7 +198,7 @@ pub trait ExhibitorCoordinationTrait: SurfaceControl +
                                       SurfaceFocusing +
                                       StatePublishing +
                                       Screenshooting +
-                                      Clone {}
+                                      WindowManagement {}
 
 // -------------------------------------------------------------------------------------------------
 

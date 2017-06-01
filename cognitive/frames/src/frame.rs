@@ -126,8 +126,8 @@ impl Mobility {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Mode {
     Root,
-    Display,
-    Workspace,
+    Display{id: i32},
+    Workspace{is_active: bool},
     Container,
     Leaf,
 }
@@ -135,9 +135,22 @@ pub enum Mode {
 // -------------------------------------------------------------------------------------------------
 
 impl Mode {
+    /// Returns `true` if mode is `Display`, `false` otherwise.
+    pub fn is_display(&self) -> bool {
+        if let Mode::Display{id: _} = *self {
+            true
+        } else {
+            false
+        }
+    }
+
     /// Returns `true` if mode is `Workspace`, `false` otherwise.
     pub fn is_workspace(&self) -> bool {
-        *self == Mode::Workspace
+        if let Mode::Workspace{is_active: _} = *self {
+            true
+        } else {
+            false
+        }
     }
 
     /// Returns `true` if mode is `Leaf`, `false` otherwise.
@@ -204,12 +217,12 @@ impl Parameters {
     }
 
     /// Creates new parameters for display frame.
-    pub fn new_display(area: Area, title: String) -> Self {
+    pub fn new_display(id: i32, area: Area, title: String) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             geometry: Geometry::Stacked,
             mobility: Mobility::Floating,
-            mode: Mode::Display,
+            mode: Mode::Display{id: id},
             pos: area.pos,
             size: area.size,
             title: title,
@@ -217,12 +230,12 @@ impl Parameters {
     }
 
     /// Creates new parameters for workspace frame.
-    pub fn new_workspace(title: String, geometry: Geometry) -> Self {
+    pub fn new_workspace(title: String, geometry: Geometry, active: bool) -> Self {
         Parameters {
             sid: SurfaceId::invalid(),
             geometry: geometry,
             mobility: Mobility::Anchored,
-            mode: Mode::Workspace,
+            mode: Mode::Workspace{is_active: active},
             pos: Position::default(),
             size: Size::default(),
             title: title,
@@ -315,17 +328,17 @@ impl Frame {
     }
 
     /// Creates new display frame.
-    pub fn new_display(area: Area, title: String) -> Self {
+    pub fn new_display(id: i32, area: Area, title: String) -> Self {
         Self::allocate(InnerFrame {
-                           params: Parameters::new_display(area, title),
+                           params: Parameters::new_display(id, area, title),
                            node: Node::default(),
                        })
     }
 
     /// Creates new workspace frame.
-    pub fn new_workspace(title: String, geometry: Geometry) -> Self {
+    pub fn new_workspace(title: String, geometry: Geometry, active: bool) -> Self {
         Self::allocate(InnerFrame {
-                           params: Parameters::new_workspace(title, geometry),
+                           params: Parameters::new_workspace(title, geometry, active),
                            node: Node::default(),
                        })
     }
@@ -448,7 +461,19 @@ impl Frame {
 
     /// Check if it should be possible to reorient or resize contents of frame.
     pub fn is_reorientable(&self) -> bool {
-        (!self.is_top()) || (self.get_mode() == Mode::Workspace)
+        (!self.is_top()) || (self.get_mode().is_workspace())
+    }
+
+    /// Activates or deactivates the frame.
+    ///
+    /// This method has effect only on workspaces. Not active workspace should not be drawn on
+    /// screen.
+    pub fn make_active(&self, active: bool) {
+        if self.get_mode().is_workspace() {
+            unsafe {
+                (*self.inner).params.mode = Mode::Workspace{is_active: active};
+            }
+        }
     }
 }
 

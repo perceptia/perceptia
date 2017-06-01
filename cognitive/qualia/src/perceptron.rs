@@ -45,6 +45,7 @@ pub const TRANSFER_OFFERED: SignalId = 41;
 pub const TRANSFER_REQUESTED: SignalId = 42;
 pub const TAKE_SCREENSHOT: SignalId = 101;
 pub const SCREENSHOT_DONE: SignalId = 102;
+pub const WORKSPACE_STATE_CHANGED: SignalId = 111;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -85,6 +86,7 @@ pub enum Perceptron {
     TransferRequested(String, RawFd),
     TakeScreenshot(i32),
     ScreenshotDone,
+    WorkspaceStateChanged,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -141,6 +143,7 @@ impl std::fmt::Debug for Perceptron {
             }
             Perceptron::TakeScreenshot(ref id) => write!(f, "TakeScreenshot({:?})", id),
             Perceptron::ScreenshotDone => write!(f, "ScreenshotDone"),
+            Perceptron::WorkspaceStateChanged => write!(f, "WorkspaceStateChanged"),
         }
     }
 }

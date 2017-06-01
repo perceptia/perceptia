@@ -44,22 +44,23 @@
 //! than with other more idiomatic ways, but loses Rusts guaranties. Runtime safety is ensured by
 //! unit tests.
 
-// -------------------------------------------------------------------------------------------------
-
 extern crate cognitive_qualia as qualia;
 
 mod frame;
 pub use frame::{Frame, FrameSpaceIterator, FrameTimeIterator, Side, Parameters};
 pub use frame::{Geometry, Mobility, Mode};
 
-mod displaying;
-pub use displaying::Displaying;
+mod converting;
+pub use converting::Converting;
 
-pub mod packing;
-pub mod searching;
-pub mod settling;
+mod packing;
+pub use packing::Packing;
+
+mod searching;
+pub use searching::Searching;
+
+mod settling;
+pub use settling::Settling;
 
 #[cfg(feature = "testing")]
 pub mod representation;
-
-// -------------------------------------------------------------------------------------------------

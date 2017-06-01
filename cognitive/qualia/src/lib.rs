@@ -37,7 +37,7 @@ pub use timing::Milliseconds;
 
 pub mod defs;
 pub use defs::{Area, Point, Position, OptionalPosition, Size, Slide, Vector};
-pub use defs::{Command, OutputInfo, DrmBundle};
+pub use defs::{Command, OutputInfo, DrmBundle, WorkspaceState, WorkspaceInfo};
 pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod input;
@@ -48,7 +48,7 @@ pub mod image;
 pub use image::{Image, Pixmap, PixelFormat};
 
 pub mod memory;
-pub use memory::{Buffer, MappedMemory, MemoryPool, MemoryView};
+pub use memory::{Buffer, Memory, MemoryPool, MemoryView};
 
 pub mod configuration;
 pub use configuration::{AestheticsConfig, CompositorConfig, ExhibitorConfig};
@@ -68,7 +68,7 @@ pub use perceptron::Perceptron;
 
 pub mod traits;
 pub use traits::{AppearanceManagement, DataTransferring, EventHandling, StatePublishing};
-pub use traits::{Screenshooting, MemoryManagement, HwGraphics};
+pub use traits::{Screenshooting, MemoryManagement, HwGraphics, WindowManagement};
 pub use traits::GraphicsManagement;
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 pub use traits::FrontendsCoordinationTrait;

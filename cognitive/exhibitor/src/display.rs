@@ -11,7 +11,7 @@ use std::cell::RefCell;
 use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron, Position};
 use qualia::{ExhibitorCoordinationTrait, SurfaceContext, SurfaceId};
 
-use frames::{Frame, Displaying};
+use frames::{Frame, Converting};
 use outputs::Output;
 
 use pointer::Pointer;

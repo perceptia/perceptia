@@ -8,6 +8,7 @@
 use std;
 use std::path::PathBuf;
 use std::os::unix::io::RawFd;
+use std::collections::HashMap;
 
 use enums;
 
@@ -436,6 +437,52 @@ impl OutputInfo {
             make: make,
             model: model,
         }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Keep information about workspace 
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub struct WorkspaceInfo {
+    /// Name of the workspace.
+    pub name: String,
+
+    /// State of the workspace.
+    pub is_active: bool,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl WorkspaceInfo {
+    /// Constructs new `WorkspaceState`.
+    pub fn new(name: String, is_active: bool) -> Self {
+        WorkspaceInfo {
+            name: name,
+            is_active: is_active,
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Keeps state of workspaces as map from display ID to list of `WorkspaceInfo`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct WorkspaceState {
+    pub workspaces: HashMap<i32, Vec<WorkspaceInfo>>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl WorkspaceState {
+    /// Constructs new `WorkspaceState`.
+    pub fn new(workspaces: HashMap<i32, Vec<WorkspaceInfo>>) -> Self {
+        WorkspaceState { workspaces: workspaces }
+    }
+
+    /// Constructs new empty `WorkspaceState`.
+    pub fn empty() -> Self {
+        WorkspaceState { workspaces: HashMap::new() }
     }
 }
 

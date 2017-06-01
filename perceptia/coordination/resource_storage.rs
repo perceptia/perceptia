@@ -12,7 +12,7 @@ use dharma;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
-use qualia::{Buffer, MappedMemory, MemoryPool, MemoryView, PixelFormat, GraphicsManagement};
+use qualia::{Memory, MemoryPool, MemoryView, PixelFormat, GraphicsManagement};
 use qualia::{perceptron, Perceptron};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{show_reason, surface_state};
@@ -373,18 +373,10 @@ impl ResourceStorage {
 // -------------------------------------------------------------------------------------------------
 
 impl ResourceStorage {
-    /// Creates new memory pool from mapped memory. Returns ID of newly created pool.
-    pub fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
+    /// Creates new memory pool. Returns ID of newly created pool.
+    pub fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId {
         let mpid = self.generate_next_memory_pool_id();
-        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_mapped_memory(memory));
-        self.memory_pools.insert(mpid, bundle);
-        mpid
-    }
-
-    /// Creates new memory pool from buffer. Returns ID of newly created pool.
-    pub fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
-        let mpid = self.generate_next_memory_pool_id();
-        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_buffer(buffer));
+        let bundle = MemoryPoolBundle::new(MemoryPool::new(memory));
         self.memory_pools.insert(mpid, bundle);
         mpid
     }
@@ -393,7 +385,7 @@ impl ResourceStorage {
     /// when all its views go out of the scope.
     ///
     /// If the poll was created from mapped memory, returns this memory.
-    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory> {
+    pub fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<Memory> {
         match self.memory_pools.remove(&mpid) {
             Some(memory_pool) => {
                 // Remove all related views
@@ -402,7 +394,7 @@ impl ResourceStorage {
                 }
 
                 // Remove the pool
-                memory_pool.pool.take_mapped_memory()
+                memory_pool.pool.take_memory()
             }
             None => None,
         }
@@ -410,9 +402,9 @@ impl ResourceStorage {
 
     /// Replaces mapped memory with other memory reusing its ID. This method may be used when
     /// client requests memory map resize.
-    pub fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+    pub fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory) {
         self.memory_pools.remove(&mpid);
-        let bundle = MemoryPoolBundle::new(MemoryPool::new_from_mapped_memory(memory));
+        let bundle = MemoryPoolBundle::new(MemoryPool::new(memory));
         self.memory_pools.insert(mpid, bundle);
     }
 
@@ -541,6 +533,8 @@ impl ResourceStorage {
 
 #[cfg(test)]
 mod tests {
+    use qualia;
+
     fn assert_storage_size(resources: &super::ResourceStorage) {
         assert!(resources.surfaces.len() == 0);
         assert!(resources.memory_views.len() == 0);
@@ -570,14 +564,14 @@ mod tests {
         let stride = format.get_size() * width;
 
         let data1 = vec![0; stride * height];
-        let buffer1 = super::Buffer::new(format, width, height, stride, data1);
+        let mut buffer1 = qualia::Buffer::new(format, width, height, stride, data1);
         let data2 = vec![0; stride * height];
-        let buffer2 = super::Buffer::new(format, width, height, stride, data2);
+        let mut buffer2 = qualia::Buffer::new(format, width, height, stride, data2);
 
-        let mpid1 = resources.create_pool_from_buffer(buffer1);
+        let mpid1 = resources.create_memory_pool(unsafe { buffer1.as_memory() });
         let mvid1 = resources.create_memory_view(mpid1, format, 0, width, height, stride).unwrap();
 
-        let mpid2 = resources.create_pool_from_buffer(buffer2);
+        let mpid2 = resources.create_memory_pool(unsafe { buffer2.as_memory() });
         resources.create_memory_view(mpid2, format, 0, width, height, stride).unwrap();
 
         resources.destroy_memory_view(mvid1);

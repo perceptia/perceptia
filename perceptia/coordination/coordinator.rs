@@ -14,13 +14,13 @@ use dharma;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
-use qualia::{Buffer, MappedMemory, PixelFormat, GraphicsManagement};
+use qualia::{Buffer, Memory, PixelFormat, GraphicsManagement, WorkspaceState};
 use qualia::{perceptron, Perceptron, Transfer, DrmBundle};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
 use qualia::{AppearanceManagement, DataTransferring, EventHandling, StatePublishing};
-use qualia::{MemoryManagement, HwGraphics, Screenshooting};
+use qualia::{MemoryManagement, HwGraphics, WindowManagement, Screenshooting};
 use qualia::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 use qualia::FrontendsCoordinationTrait;
 use qualia::{show_reason, surface_state};
@@ -49,6 +49,9 @@ struct InnerCoordinator {
 
     /// Represents possible data transfer between clients (e.g. copy-paste)
     transfer: Option<Transfer>,
+
+    /// State of workspaces.
+    workspace_state: WorkspaceState,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -65,6 +68,7 @@ impl InnerCoordinator {
             kfsid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
             transfer: None,
+            workspace_state: WorkspaceState::empty(),
         }
     }
 
@@ -168,6 +172,22 @@ impl InnerCoordinator {
                              event_handler: Box<dharma::EventHandler + Send>,
                              event_kind: dharma::EventKind) {
         self.dispatcher.add_source(event_handler, event_kind);
+    }
+
+    /// Stores new workspace state and informs other parts of application it has changed.
+    fn set_workspace_state(&mut self, state: WorkspaceState) {
+        self.workspace_state = state;
+
+        // NOTE: To avoid having to many signals this one should be the only one related to
+        // workspace state. If more fine informations is needed it should be provided inside
+        // `Perceptron::WorkspaceStateChanged`.
+        self.signaler.emit(perceptron::WORKSPACE_STATE_CHANGED,
+                           Perceptron::WorkspaceStateChanged{});
+    }
+
+    /// Returns current workspace state.
+    fn get_workspace_state(&self) -> WorkspaceState {
+        self.workspace_state.clone()
     }
 
     /// Makes screenshot request.
@@ -480,25 +500,19 @@ impl StatePublishing for Coordinator {
 
 impl MemoryManagement for Coordinator {
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
+    fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId {
         let mut mine = self.resources.lock().unwrap();
-        mine.create_pool_from_memory(memory)
+        mine.create_memory_pool(memory)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
-        let mut mine = self.resources.lock().unwrap();
-        mine.create_pool_from_buffer(buffer)
-    }
-
-    /// Lock and call corresponding method from `InnerCoordinator`.
-    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory> {
+    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<Memory> {
         let mut mine = self.resources.lock().unwrap();
         mine.destroy_memory_pool(mpid)
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory) {
         let mut mine = self.resources.lock().unwrap();
         mine.replace_memory_pool(mpid, memory)
     }
@@ -564,6 +578,22 @@ impl HwGraphics for Coordinator {
     fn destroy_dmabuf(&mut self, dbid: DmabufId) {
         let mut mine = self.resources.lock().unwrap();
         mine.destroy_dmabuf(dbid)
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl WindowManagement for Coordinator {
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn set_workspace_state(&mut self, state: WorkspaceState) {
+        let mut mine = self.inner.lock().unwrap();
+        mine.set_workspace_state(state);
+    }
+
+    /// Lock and call corresponding method from `InnerCoordinator`.
+    fn get_workspace_state(&self) -> WorkspaceState {
+        let mine = self.inner.lock().unwrap();
+        mine.get_workspace_state()
     }
 }
 

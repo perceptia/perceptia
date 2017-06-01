@@ -23,6 +23,9 @@ pub struct Cursor<C>
     /// Default surface ID of cursor surface.
     default_csid: SurfaceId,
 
+    /// Buffer for the default cursor surface.
+    buffer: Buffer,
+
     /// Coordinator.
     coordinator: C,
 }
@@ -38,6 +41,7 @@ impl<C> Cursor<C>
             csid: SurfaceId::invalid(),
             default_csid: SurfaceId::invalid(),
             coordinator: coordinator,
+            buffer: Buffer::empty(),
         }
     }
 
@@ -56,8 +60,8 @@ impl<C> Cursor<C>
         }
 
         self.default_csid = self.coordinator.create_surface();
-        let b = Buffer::new(format, w, h, stride, data);
-        let bid = self.coordinator.create_pool_from_buffer(b);
+        self.buffer = Buffer::new(format, w, h, stride, data);
+        let bid = self.coordinator.create_memory_pool(unsafe { self.buffer.as_memory() });
         if let Some(mvid) = self.coordinator.create_memory_view(bid, format, 0, w, h, stride) {
             self.coordinator.attach_shm(mvid, self.default_csid);
             self.coordinator.commit_surface(self.default_csid);

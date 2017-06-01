@@ -11,7 +11,7 @@ use std::os::unix::io::RawFd;
 use skylane::server as wl;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
-use qualia::{Area, MappedMemory, PixelFormat, Size, SurfaceId, Transfer, Vector, show_reason};
+use qualia::{Area, Memory, PixelFormat, Size, SurfaceId, Transfer, Vector, show_reason};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 
 // -------------------------------------------------------------------------------------------------
@@ -53,14 +53,14 @@ impl PositionerInfo {
 
 pub trait Facade {
     /// Requests creation of memory pool. Return ID of newly created pool.
-    fn create_memory_pool(&mut self, memory: MappedMemory) -> MemoryPoolId;
+    fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId;
 
     /// Requests destruction of memory pool. The pool will be destroyed by application after the
     /// last view goes out of the scope.
     fn destroy_memory_pool(&mut self, mpid: MemoryPoolId);
 
     /// Requests replacement of mapped memory after resize request from client.
-    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory);
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory);
 
     /// Requests creation of memory view.
     fn create_memory_view(&mut self,

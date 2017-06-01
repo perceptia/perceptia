@@ -20,7 +20,7 @@ use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_su
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
-use qualia::{Settings, Transfer, DrmBundle, MappedMemory};
+use qualia::{Settings, Transfer, DrmBundle, Memory};
 use qualia::{Area, Axis, Button, Key, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
@@ -169,7 +169,7 @@ pub struct Proxy {
     buffer_oid_to_info_dict: HashMap<wl::ObjectId, BufferInfo>,
     output_oid_to_id: HashMap<wl::ObjectId, i32>,
     screenshooter_oid: Option<wl::ObjectId>,
-    screenshot_memory: Option<MappedMemory>,
+    screenshot_memory: Option<Memory>,
     last_global_id: u32,
 }
 
@@ -326,8 +326,8 @@ impl Proxy {
 
 #[allow(unused_variables)]
 impl Facade for Proxy {
-    fn create_memory_pool(&mut self, memory: MappedMemory) -> MemoryPoolId {
-        let mpid = self.coordinator.create_pool_from_memory(memory);
+    fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId {
+        let mpid = self.coordinator.create_memory_pool(memory);
         self.memory_pools.insert(mpid);
         mpid
     }
@@ -337,7 +337,7 @@ impl Facade for Proxy {
         self.coordinator.destroy_memory_pool(mpid);
     }
 
-    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory) {
         self.coordinator.replace_memory_pool(mpid, memory);
     }
 

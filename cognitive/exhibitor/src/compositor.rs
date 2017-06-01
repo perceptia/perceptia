@@ -13,9 +13,8 @@ use qualia::{Action, Area, Command, Direction, Size, Vector};
 use qualia::{SurfaceId, CompositorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
-use frames::{Frame, Geometry, Mode, Side};
-use frames::searching::Searching;
-use frames::settling::Settling;
+use frames::{Frame, Geometry, Side};
+use frames::{Converting, Searching, Settling};
 
 use strategist::Strategist;
 
@@ -97,13 +96,14 @@ impl<C> Compositor<C>
     }
 
     /// Creates new display with default workspace.
-    pub fn create_display(&mut self, area: Area, name: String) -> Frame {
-        let mut display = Frame::new_display(area, name);
+    pub fn create_display(&mut self, id: i32, area: Area, name: String) -> Frame {
+        let mut display = Frame::new_display(id, area, name);
         let mut workspace = self.create_next_workspace()
             .expect("Could not create workspace. This probably indicates compositor logic error");
         self.root.append(&mut display);
         workspace.settle(&mut display, None, &mut self.coordinator);
         self.select(workspace);
+        self.update_workspace_state();
         display
     }
 
@@ -531,12 +531,15 @@ impl<C> Compositor<C>
 impl<C> Compositor<C>
     where C: ExhibitorCoordinationTrait
 {
-    /// Search for existing workspace with given title.
-    fn find_workspace(&self, title: &String) -> Option<Frame> {
-        self.root.find(Some(Mode::Workspace), Some(title))
+    /// Searches for existing workspace with given title.
+    fn find_workspace(&self, title: &str) -> Option<Frame> {
+        let matcher = |frame: &Frame| {
+            frame.get_mode().is_workspace() && (frame.get_title() == title)
+        };
+        self.root.find(&matcher)
     }
 
-    /// Search for existing workspace with given title.
+    /// Searches for workspace the selection is placed in.
     fn find_current_workspace(&self) -> Frame {
         self.selection.find_top().expect("selection should have `top`")
     }
@@ -544,16 +547,15 @@ impl<C> Compositor<C>
     /// Creates new frame, places it in proper place in frame tree and initializes it as a
     /// workspace.
     fn create_new_workspace(&mut self,
-                            mut display: &mut Frame,
+                            mut container: &mut Frame,
                             title: &String,
                             focus: bool)
                             -> Frame {
         log_info2!("Compositor: create new workspace (title: {}, focus: {})", title, focus);
-
         // Create and configure workspace
         // TODO: Make default workspace geometry configurable.
-        let mut workspace = Frame::new_workspace(title.clone(), Geometry::Stacked);
-        workspace.settle(&mut display, None, &mut self.coordinator);
+        let mut workspace = Frame::new_workspace(title.clone(), Geometry::Stacked, true);
+        workspace.settle(&mut container, None, &mut self.coordinator);
 
         // Focus if requested or make sure current selection stays focused
         if focus {
@@ -562,6 +564,10 @@ impl<C> Compositor<C>
         } else {
             self.root.pop_recursively(&mut self.selection);
         }
+
+        // Update global state
+        self.update_workspace_state();
+
         workspace
     }
 
@@ -574,7 +580,7 @@ impl<C> Compositor<C>
         for i in 1..MAX_WORKSPACES {
             let title = i.to_string();
             if self.find_workspace(&title).is_none() {
-                return Some(Frame::new_workspace(title, Geometry::Stacked));
+                return Some(Frame::new_workspace(title, Geometry::Stacked, true));
             }
         }
         log_error!("Don't you think {} workspaces isn't enough?", MAX_WORKSPACES);
@@ -588,21 +594,39 @@ impl<C> Compositor<C>
         } else {
             // TODO: For many output setup this should be configurable on which output the
             // workspace will be created.
-            let mut display_frame = self.find_current_workspace()
+            let mut workspace_container = self.find_current_workspace()
                 .get_parent()
-                .expect("workspace must be contained in display frame");
+                .expect("workspace must have parent");
 
-            self.create_new_workspace(&mut display_frame, title, focus)
+            self.create_new_workspace(&mut workspace_container, title, focus)
         }
     }
 
-    /// Focus workspace with given title.
+    /// Makes the workspace with given title the only active workspace on its display.
+    ///
+    /// If the workspace does not exist - create new one.
     fn focus_workspace(&mut self, title: &String) {
         log_info1!("Compositor: Change workspace to '{}'", title);
         let workspace = self.bring_workspace(title, true);
+
+        // Deactivate all workspaces on this display and activate only the chosen one.
+        for neighbour in workspace.get_parent().unwrap().space_iter() {
+            neighbour.make_active(false);
+        }
+        workspace.make_active(true);
+
+        // Select most recently used surface.
         let mut most_recent = self.find_most_recent(workspace);
         self.select(most_recent.clone());
         self.root.pop_recursively(&mut most_recent);
+
+        // Update global workspace state.
+        self.update_workspace_state();
+    }
+
+    /// Updates global workspace state.
+    fn update_workspace_state(&mut self) {
+        self.coordinator.set_workspace_state(self.root.to_workspace_state());
     }
 }
 

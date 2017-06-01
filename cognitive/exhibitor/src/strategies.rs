@@ -16,8 +16,7 @@ use rand::distributions::{IndependentSample, Range};
 
 use qualia::{Area, Position, Size, SurfaceInfo};
 
-use frames::{self, Frame};
-use frames::searching::Searching;
+use frames::{self, Frame, Searching};
 
 use strategist::{TargetDecision, FloatingDecision, Strategist};
 

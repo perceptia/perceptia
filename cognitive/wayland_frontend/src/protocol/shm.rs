@@ -15,7 +15,7 @@ use skylane_protocols::server::wayland::wl_shm;
 use skylane_protocols::server::wayland::wl_shm_pool;
 use skylane_protocols::server::wayland::wl_buffer;
 
-use qualia::{MappedMemory, MemoryPoolId, MemoryViewId, PixelFormat};
+use qualia::{Memory, MemoryPoolId, MemoryViewId, PixelFormat};
 
 use global::Global;
 use proxy::ProxyRef;
@@ -69,7 +69,7 @@ impl wl_shm::Interface for Shm {
                    fd: i32,
                    size: i32)
                    -> Task {
-        match MappedMemory::new(fd, size as usize) {
+        match Memory::new_mapped(fd, size as usize) {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
                 let mpid = proxy.create_memory_pool(memory);
@@ -169,7 +169,7 @@ impl wl_shm_pool::Interface for ShmPool {
     }
 
     fn resize(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, size: i32) -> Task {
-        match MappedMemory::new(self.fd, size as usize) {
+        match Memory::new_mapped(self.fd, size as usize) {
             Ok(memory) => {
                 let mut proxy = self.proxy.borrow_mut();
                 proxy.replace_memory_pool(self.mpid, memory);

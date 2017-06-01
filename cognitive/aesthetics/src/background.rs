@@ -23,6 +23,9 @@ pub struct Background<C>
     /// Path to background image from configuration.
     background_path: Option<PathBuf>,
 
+    /// Buffer for the background image.
+    buffer: Buffer,
+
     /// Coordinator.
     coordinator: C,
 }
@@ -37,6 +40,7 @@ impl<C> Background<C>
         Background {
             background_sid: SurfaceId::invalid(),
             background_path: config.background_path,
+            buffer: Buffer::empty(),
             coordinator: coordinator,
         }
     }
@@ -58,9 +62,11 @@ impl<C> Background<C>
                     let s = w * f.get_size();
                     let d = rgba.into_raw();
 
+                    self.buffer = Buffer::new(f, w, h, s, d);
+
+                    let memory = unsafe { self.buffer.as_memory() };
                     let background_sid = self.coordinator.create_surface();
-                    let buffer = Buffer::new(f, w, h, s, d);
-                    let bid = self.coordinator.create_pool_from_buffer(buffer);
+                    let bid = self.coordinator.create_memory_pool(memory);
 
                     if let Some(mvid) = self.coordinator.create_memory_view(bid, f, 0, w, h, s) {
                         self.coordinator.attach_shm(mvid, background_sid);

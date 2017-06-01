@@ -40,7 +40,9 @@ impl<'a> Module for AestheticsModule<'a> {
              perceptron::CURSOR_SURFACE_CHANGE,
              perceptron::BACKGROUND_SURFACE_CHANGE,
              perceptron::POINTER_FOCUS_CHANGED,
-             perceptron::SURFACE_DESTROYED]
+             perceptron::SURFACE_DESTROYED,
+             perceptron::WORKSPACE_STATE_CHANGED,
+        ]
     }
 
     fn initialize(&mut self) {
@@ -53,6 +55,7 @@ impl<'a> Module for AestheticsModule<'a> {
             Perceptron::PointerFocusChanged(old_pfsid, new_pfsid, _) => {
                 self.aesthetics.on_pointer_focus_changed(old_pfsid, new_pfsid);
             }
+            Perceptron::WorkspaceStateChanged => self.aesthetics.on_workspace_state_changed(),
             Perceptron::SurfaceDestroyed(sid) => self.aesthetics.on_surface_destroyed(sid),
             Perceptron::DisplayCreated(ref output) => self.aesthetics.on_display_created(output),
             Perceptron::BackgroundSurfaceChange(sid) => {

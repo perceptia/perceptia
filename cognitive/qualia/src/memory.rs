@@ -4,8 +4,8 @@
 //! This module provides buffer memory management tools.
 //!
 //! Clients usually share images with server using shared memory. Client creates big shared memory
-//! and then tells server which parts server should use for drawing on surfaces. `MappedMemory`
-//! represents these shared memory (and is owner of data) and `MemoryView` can be used to view parts
+//! and then tells server which parts server should use for drawing on surfaces. `Memory`
+//! represents this shared memory (and is owner of data) and `MemoryView` can be used to view parts
 //! of it.
 //!
 //! Images to redraw can be also created locally or read from file. These images can be stored in
@@ -13,9 +13,9 @@
 //! unlike `MemoryView`.
 //!
 //! `MemoryPool` is used to provide mechanism for storing mapped and buffered memory. The only way
-//! to construct `MemoryView` is through `MemoryPool`. Both have counted reference to
-//! `MappedMemory` and `MappedMemory` is destructed when its reference count goes to zero, so
-//! `MemoryView`s can be safely used even after `MappedMemory` was removed from `MemoryPool`.
+//! to construct `MemoryView` is through `MemoryPool`. Both have counted reference to `Memory` and
+//! the `Memory` is destructed when its reference count goes to zero, so `MemoryView`s can be
+//! safely used even after `Memory` was removed from `MemoryPool`.
 
 use std;
 use std::os::unix::io::RawFd;
@@ -91,6 +91,19 @@ impl Buffer {
     pub fn is_empty(&self) -> bool {
         (self.width == 0) || (self.height == 0) || (self.stride == 0) || (self.data.len() == 0)
     }
+
+    /// Converts `Buffer` to memory.
+    ///
+    /// Applications share memory with server. It is their responsibility to inform server which
+    /// buffer should be used and avoid drawing to it. The same way inner parts of compositor may
+    /// want to instruct render to draw surfaces for them and for simplicity they do this in the
+    /// same (relatively unsafe) way as clients. This method converts `Buffer` to `Memory` so it
+    /// can be used just as mapped memory obtained from client. It is programmes responsibility to
+    /// ensure `Buffer` exists until `Memory` exist and not to draw on it while it may be used for
+    /// rendering.
+    pub unsafe fn as_memory(&mut self) -> Memory {
+        Memory::new_borrowed(self.data.as_mut_ptr(), self.stride * self.height)
+    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -146,25 +159,33 @@ impl Pixmap for Buffer {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Represents memory shared with client.
-pub struct MappedMemory {
-    data: *mut u8,
-    size: usize,
+enum MemorySource {
+    Mapped,
+    Borrowed,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-unsafe impl Send for MappedMemory {}
-
-/// `MappedMemory` is `Sync` as long as its contents do not change. All modifying methods should be
-/// marked as `unsafe` and it is programmers responsibility to ensure they are used properly.
-unsafe impl Sync for MappedMemory {}
+/// Represents memory shared with client.
+pub struct Memory {
+    data: *mut u8,
+    size: usize,
+    source: MemorySource,
+}
 
 // -------------------------------------------------------------------------------------------------
 
-impl MappedMemory {
-    /// Constructs new `MappedMemory`.
-    pub fn new(fd: RawFd, size: usize) -> Result<MappedMemory, errors::Illusion> {
+unsafe impl Send for Memory {}
+
+/// `Memory` is `Sync` as long as its contents do not change. All modifying methods should be
+/// marked as `unsafe` and it is programmers responsibility to ensure they are used properly.
+unsafe impl Sync for Memory {}
+
+// -------------------------------------------------------------------------------------------------
+
+impl Memory {
+    /// Constructs new `Memory` as shared with other application.
+    pub fn new_mapped(fd: RawFd, size: usize) -> Result<Memory, errors::Illusion> {
         match mman::mmap(std::ptr::null_mut(),
                          size,
                          mman::PROT_READ | mman::PROT_WRITE,
@@ -172,12 +193,25 @@ impl MappedMemory {
                          fd,
                          0) {
             Ok(memory) => {
-                Ok(MappedMemory {
+                Ok(Memory {
                        data: memory as *mut u8,
                        size: size,
+                       source: MemorySource::Mapped,
                    })
             }
             Err(err) => Err(errors::Illusion::General(format!("Failed to map memory! {:?}", err))),
+        }
+    }
+
+    /// Constructs new `Memory` from borrowed pointer.
+    ///
+    /// This is unsafe operation because `Memory` does not owns the data. It must be ensured that
+    /// the `Memory` is destructed before the memory.
+    unsafe fn new_borrowed(data: *mut u8, size: usize) -> Self {
+        Memory {
+            data: data,
+            size: size,
+            source: MemorySource::Borrowed,
         }
     }
 
@@ -199,9 +233,12 @@ impl MappedMemory {
 
 // -------------------------------------------------------------------------------------------------
 
-impl Drop for MappedMemory {
+impl Drop for Memory {
     fn drop(&mut self) {
-        let _ = mman::munmap(self.data as *mut _, self.size);
+        match self.source {
+            MemorySource::Mapped => { let _ = mman::munmap(self.data as *mut _, self.size); }
+            MemorySource::Borrowed => {}
+        }
     }
 }
 
@@ -209,7 +246,7 @@ impl Drop for MappedMemory {
 
 /// Represents view into memory shared with client.
 pub struct MemoryView {
-    memory: Arc<MemoryKind>,
+    memory: Arc<Memory>,
     data: *mut u8,
     width: usize,
     height: usize,
@@ -292,34 +329,21 @@ impl Clone for MemoryView {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Enumeration used by `MemoryPool` to keep track of data types it holds.
-enum MemoryKind {
-    Mapped(MappedMemory),
-    Buffered(Buffer),
-}
-
-// -------------------------------------------------------------------------------------------------
-
 /// This structure is used to provide storage for images of different type: shared memory and
 /// buffers and return views to them.
 pub struct MemoryPool {
-    memory: Arc<MemoryKind>,
+    memory: Arc<Memory>,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl MemoryPool {
-    /// Creates new `MemoryPool` containing `MappedMemory`.
-    pub fn new_from_mapped_memory(memory: MappedMemory) -> Self {
-        MemoryPool { memory: Arc::new(MemoryKind::Mapped(memory)) }
+    /// Creates new `MemoryPool` containing `Memory`.
+    pub fn new(memory: Memory) -> Self {
+        MemoryPool { memory: Arc::new(memory) }
     }
 
-    /// Creates new `MemoryPool` containing `Buffer`.
-    pub fn new_from_buffer(buffer: Buffer) -> Self {
-        MemoryPool { memory: Arc::new(MemoryKind::Buffered(buffer)) }
-    }
-
-    /// Returns `MemoryView`s into `Buffer`s and `MappedMemory`s stored in `MemoryPool`.
+    /// Returns `MemoryView`s from `Memory`s stored in `MemoryPool`.
     pub fn get_memory_view(&self,
                            format: PixelFormat,
                            offset: usize,
@@ -328,44 +352,20 @@ impl MemoryPool {
                            stride: usize)
                            -> MemoryView {
         // FIXME: Check if boundaries given as arguments are correct.
-        match *self.memory {
-            MemoryKind::Mapped(ref map) => {
-                MemoryView {
-                    memory: self.memory.clone(),
-                    data: unsafe { map.data.offset(offset as isize) },
-                    width: width,
-                    height: height,
-                    stride: stride,
-                    format: format,
-                }
-            }
-            MemoryKind::Buffered(ref buffer) => {
-                MemoryView {
-                    memory: self.memory.clone(),
-                    data: unsafe { buffer.as_ptr() as *mut u8 },
-                    width: width,
-                    height: height,
-                    stride: stride,
-                    format: format,
-                }
-            }
+        MemoryView {
+            memory: self.memory.clone(),
+            data: unsafe { self.memory.data.offset(offset as isize) },
+            width: width,
+            height: height,
+            stride: stride,
+            format: format,
         }
     }
 
-    /// Consumes the pool and if
-    /// - it was created from mapped memory
-    /// - there are no other references to this memory left
-    /// returns the mapped memory.
-    pub fn take_mapped_memory(self) -> Option<MappedMemory> {
-        match Arc::try_unwrap(self.memory) {
-            Ok(kind) => {
-                match kind {
-                    MemoryKind::Mapped(mapped_memory) => Some(mapped_memory),
-                    MemoryKind::Buffered(_) => None,
-                }
-            }
-            Err(_) => None,
-        }
+    /// Consumes the pool and if there are no other references to this memory left returns the
+    /// `Memory`.
+    pub fn take_memory(self) -> Option<Memory> {
+        Arc::try_unwrap(self.memory).ok()
     }
 }
 

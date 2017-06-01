@@ -84,19 +84,19 @@ fn test_moving_surface_between_displays() {
         Parameters::new_root(),
         vec![
             FrameRepresentation::new(
-                Parameters::new_display(e.output2_info.area, e.output2_info.make.clone()),
+                Parameters::new_display(2, e.output2_info.area, e.output2_info.make.clone()),
                 vec![
                     FrameRepresentation::new(
-                        Parameters::new_workspace("2".to_owned(), Stacked),
+                        Parameters::new_workspace("2".to_owned(), Stacked, true),
                         vec![FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating)]
                     )
                 ]
             ),
             FrameRepresentation::new(
-                Parameters::new_display(e.output1_info.area, e.output1_info.make.clone()),
+                Parameters::new_display(1, e.output1_info.area, e.output1_info.make.clone()),
                 vec![
                     FrameRepresentation::new(
-                        Parameters::new_workspace("1".to_owned(), Stacked),
+                        Parameters::new_workspace("1".to_owned(), Stacked, true),
                         Vec::new()
                     )
                 ]
@@ -114,19 +114,19 @@ fn test_moving_surface_between_displays() {
         Parameters::new_root(),
         vec![
             FrameRepresentation::new(
-                Parameters::new_display(e.output2_info.area, e.output2_info.make.clone()),
+                Parameters::new_display(2, e.output2_info.area, e.output2_info.make.clone()),
                 vec![
                     FrameRepresentation::new(
-                        Parameters::new_workspace("2".to_owned(), Stacked),
+                        Parameters::new_workspace("2".to_owned(), Stacked, true),
                         Vec::new()
                     )
                 ]
             ),
             FrameRepresentation::new(
-                Parameters::new_display(e.output1_info.area, e.output1_info.make.clone()),
+                Parameters::new_display(1, e.output1_info.area, e.output1_info.make.clone()),
                 vec![
                     FrameRepresentation::new(
-                        Parameters::new_workspace("1".to_owned(), Stacked),
+                        Parameters::new_workspace("1".to_owned(), Stacked, true),
                         vec![FrameRepresentation::new_leaf(1, Vertical).with_mobility(Floating)]
                     )
                 ]

@@ -13,7 +13,7 @@ extern crate cognitive_frames as frames;
 mod common;
 
 use qualia::{Position, Size};
-use frames::packing::Packing;
+use frames::Packing;
 use common::{assertions, layouts, surface_access_mock};
 
 // -------------------------------------------------------------------------------------------------

@@ -15,7 +15,7 @@ mod common;
 use qualia::{Direction, Position, Size, SurfaceId};
 use frames::Frame;
 use frames::Geometry::{Horizontal, Stacked, Vertical};
-use frames::searching::Searching;
+use frames::Searching;
 use common::{assertions, layouts};
 
 // -------------------------------------------------------------------------------------------------
@@ -46,8 +46,8 @@ fn test_find_buildable() {
 #[test]
 fn test_find_top() {
     let mut r = Frame::new_root();
-    let mut s1 = Frame::new_workspace("".to_string(), Stacked);
-    let mut s2 = Frame::new_workspace("".to_string(), Stacked);
+    let mut s1 = Frame::new_workspace("".to_string(), Stacked, true);
+    let mut s2 = Frame::new_workspace("".to_string(), Stacked, true);
     let mut c1 = Frame::new_container(Horizontal);
     let mut c2 = Frame::new_container(Vertical);
     let mut l = Frame::new_leaf(SurfaceId::new(1), Stacked);
@@ -612,6 +612,20 @@ fn test_find_adjacent_stacked_frames() {
     // 2*End from A should be C
     let p = a.find_adjacent(Direction::End, 2);
     assertions::assert_frame_equal_exact(&p.unwrap(), &c);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Tests finding workspace.
+#[test]
+fn test_finding_workspace() {
+    let (r, _, _, _, _, _, _, w22, _) = layouts::make_simple_with_workspaces();
+
+    let matcher = |frame: &Frame| { frame.get_mode().is_workspace() && frame.get_title() == "22" };
+    let found = r.find(&matcher).unwrap();
+    assert!(found.equals_exact(&w22));
 
     r.destroy();
 }

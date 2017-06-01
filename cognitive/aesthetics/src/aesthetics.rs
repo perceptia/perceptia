@@ -21,7 +21,8 @@ pub struct Aesthetics<'a, C>
 {
     cursor: Cursor<C>,
     background: Background<C>,
-    panel: PanelManager<'a, C>,
+    panels: PanelManager<'a, C>,
+    coordinator: C,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -35,7 +36,8 @@ impl<'a, C> Aesthetics<'a, C>
         Aesthetics {
             cursor: Cursor::new(coordinator.clone()),
             background: Background::new(coordinator.clone(), config.clone()),
-            panel: PanelManager::new(coordinator.clone()),
+            panels: PanelManager::new(coordinator.get_workspace_state(), coordinator.clone()),
+            coordinator: coordinator,
         }
     }
 }
@@ -43,6 +45,8 @@ impl<'a, C> Aesthetics<'a, C>
 // -------------------------------------------------------------------------------------------------
 
 /// Notification handlers.
+///
+/// TODO: Don't use "on_" on method names of `Background` and `Cursor`.
 impl<'a, C> Aesthetics<'a, C>
     where C: AestheticsCoordinationTrait + Clone
 {
@@ -70,7 +74,12 @@ impl<'a, C> Aesthetics<'a, C>
     pub fn on_display_created(&mut self, output: &OutputInfo) {
         self.cursor.on_display_created();
         self.background.on_display_created();
-        self.panel.on_display_created(output);
+        self.panels.create_new_panel(output);
+    }
+
+    /// This method is called when state of workspaces changed.
+    pub fn on_workspace_state_changed(&mut self) {
+        self.panels.update_workspace_state(self.coordinator.get_workspace_state())
     }
 }
 

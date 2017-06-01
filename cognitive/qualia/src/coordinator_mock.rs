@@ -6,15 +6,16 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use defs::{DrmBundle, Position, SignalId, Size, Vector};
+use defs::{DrmBundle, Position, SignalId, Size, Vector, WorkspaceState};
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use surface::{DataSource, SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
-use memory::{Buffer, MappedMemory};
+use memory::{Buffer, Memory};
 use image::PixelFormat;
 use perceptron::Perceptron;
-use traits::{StatePublishing, Screenshooting, MemoryManagement, ExhibitorCoordinationTrait};
+use traits::{StatePublishing, Screenshooting, MemoryManagement, WindowManagement};
+use traits::{ExhibitorCoordinationTrait};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -142,16 +143,13 @@ impl StatePublishing for CoordinatorMock {
 
 #[allow(unused_variables)]
 impl MemoryManagement for CoordinatorMock {
-    fn create_pool_from_memory(&mut self, memory: MappedMemory) -> MemoryPoolId {
+    fn create_memory_pool(&mut self, memory: Memory) -> MemoryPoolId {
         MemoryPoolId::initial()
     }
-    fn create_pool_from_buffer(&mut self, buffer: Buffer) -> MemoryPoolId {
-        MemoryPoolId::initial()
-    }
-    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<MappedMemory> {
+    fn destroy_memory_pool(&mut self, mpid: MemoryPoolId) -> Option<Memory> {
         None
     }
-    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: MappedMemory) {}
+    fn replace_memory_pool(&mut self, mpid: MemoryPoolId, memory: Memory) {}
     fn create_memory_view(&mut self,
                           mpid: MemoryPoolId,
                           format: PixelFormat,
@@ -163,6 +161,14 @@ impl MemoryManagement for CoordinatorMock {
         None
     }
     fn destroy_memory_view(&mut self, mpid: MemoryViewId) {}
+}
+
+// -------------------------------------------------------------------------------------------------
+
+#[allow(unused_variables)]
+impl WindowManagement for CoordinatorMock {
+    fn set_workspace_state(&mut self, state: WorkspaceState) {}
+    fn get_workspace_state(&self) -> WorkspaceState { WorkspaceState::empty() }
 }
 
 // -------------------------------------------------------------------------------------------------

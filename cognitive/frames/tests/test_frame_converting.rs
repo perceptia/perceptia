@@ -12,16 +12,16 @@ extern crate cognitive_frames as frames;
 
 mod common;
 
-use qualia::{Position, SurfaceContext, SurfaceId};
-use frames::Displaying;
+use qualia::{Position, SurfaceContext, SurfaceId, WorkspaceInfo, WorkspaceState};
+use frames::Converting;
 use common::layouts;
 use common::surface_listing_mock::SurfaceListingMock;
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check if only one workspace will be visible on display.
+/// Checks if only one workspace will be visible on display.
 #[test]
-fn test_displaying_two_workspaces() {
+fn test_converting_two_workspaces_to_array() {
     let (r, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _, _) =
         layouts::make_positioned_for_displaying();
 
@@ -44,6 +44,28 @@ fn test_displaying_two_workspaces() {
     for (context, expected_context) in array.iter().zip(expected) {
         assert_eq!(*context, expected_context);
     }
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Checks if frames are correctly converted to `WorkspaceState` structure.
+///
+/// - workspaces which are not direct children on display should be included
+/// - workspaces under other workspaces should be ignored
+/// - activeness should be preserved
+#[test]
+fn test_converting_to_workspaces() {
+    let (r, _, _, _, _, _, _, _, _) = layouts::make_simple_with_workspaces();
+
+    let mut expected = WorkspaceState::empty();
+    expected.workspaces.insert(1, vec![WorkspaceInfo::new("11".to_string(), true),
+                                       WorkspaceInfo::new("12".to_string(), false)]);
+    expected.workspaces.insert(2, vec![WorkspaceInfo::new("21".to_string(), true),
+                                       WorkspaceInfo::new("22".to_string(), false)]);
+
+    assert_eq!(expected, r.to_workspace_state());
 
     r.destroy();
 }

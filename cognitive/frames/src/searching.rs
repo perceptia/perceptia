@@ -6,24 +6,20 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::{Direction, Position, SurfaceId};
-use frame::{Frame, Geometry, Mode};
+use frame::{Frame, Geometry};
 
 // -------------------------------------------------------------------------------------------------
 
 /// Extension trait for `Frame` adding more search functionality.
 pub trait Searching {
-    /// Returns first found frame with given non-`None` parameters. If all parameters are `None`,
-    /// `self` will be returned.
-    ///
-    /// List of parameters may be extended.
-    fn find(&self, mode: Option<Mode>, title: Option<&str>) -> Option<Frame>;
+    /// Returns first found frame upon which `matcher` returned `true`.
+    fn find(&self, matcher: &Fn(&Frame) -> bool) -> Option<Frame>;
 
     /// Finds first frame suitable for building.
     /// Returns `self` if `self` has no surface ID set, its parent otherwise.
     fn find_buildable(&self) -> Option<Frame>;
 
-    /// Finds first trunk which is `Special`.
-    /// For normal frame this should be workspace.
+    /// Finds first trunk which is `Workspace`.
     fn find_top(&self) -> Option<Frame>;
 
     /// Finds frame with given surface ID.
@@ -43,24 +39,12 @@ pub trait Searching {
 // -------------------------------------------------------------------------------------------------
 
 impl Searching for Frame {
-    fn find(&self, mode: Option<Mode>, title: Option<&str>) -> Option<Frame> {
-        let mut found = true;
-        if let Some(mode) = mode {
-            if mode != self.get_mode() {
-                found = false;
-            }
-        }
-        if let Some(title) = title {
-            if *title != self.get_title() {
-                found = false;
-            }
-        }
-
-        if found {
+    fn find(&self, matcher: &Fn(&Frame) -> bool) -> Option<Frame> {
+        if matcher(self) {
             Some(self.clone())
         } else {
             for subsurface in self.space_iter() {
-                let result = subsurface.find(mode, title);
+                let result = subsurface.find(matcher);
                 if result.is_some() {
                     return result;
                 }

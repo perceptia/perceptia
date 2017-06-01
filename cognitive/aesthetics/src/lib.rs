@@ -4,6 +4,7 @@
 //! This crate provides aesthetic additions like setting background or default cursor theme.
 
 extern crate image;
+extern crate font_loader;
 extern crate rusttype;
 
 #[macro_use]

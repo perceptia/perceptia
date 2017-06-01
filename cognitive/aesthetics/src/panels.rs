@@ -12,10 +12,8 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::collections::HashMap;
-use std::fs::File;
-use std::path::PathBuf;
-use std::io::Read;
 
+use font_loader::system_fonts::{self, FontPropertyBuilder};
 use rusttype::{Font, FontCollection, PositionedGlyph, Scale, point};
 
 use qualia::{Buffer, Image, OutputInfo, PixelFormat, Pixmap, Size};
@@ -214,34 +212,22 @@ impl<'a, C> PanelManager<'a, C>
 
     /// Loads font from file.
     pub fn load_font() -> Option<Font<'a>> {
-        // FIXME: Make path to fonts configurable.
-        let path = PathBuf::from("/usr/share/fonts/TTF/Inconsolata-Bold.ttf");
-        match File::open(&path) {
-            Ok(mut file) => {
-                let mut bytes = Vec::new();
-                match file.read_to_end(&mut bytes) {
-                    Ok(_) => {
-                        let collection = FontCollection::from_bytes(bytes);
-                        match collection.into_font() {
-                            Some(font) => {
-                                Some(font)
-                            }
-                            None => {
-                                log_warn1!("Failed create font from {:?}", path);
-                                None
-                            }
-                        }
-                    }
-                    Err(err) => {
-                        log_warn1!("Failed to read from {:?}: {}", path, err);
-                        None
-                    }
+        let builder = FontPropertyBuilder::new();
+        let property = builder.family("Inconsolata").bold().monospace().build();
+        if let Some((bytes, _)) = system_fonts::get(&property) {
+            let collection = FontCollection::from_bytes(bytes);
+            match collection.into_font() {
+                Some(font) => {
+                    Some(font)
+                }
+                None => {
+                    log_warn1!("Failed create font");
+                    None
                 }
             }
-            Err(err) => {
-                log_warn1!("Failed to open {:?}: {}", path, err);
-                None
-            }
+        } else {
+            log_error!("Failed to find font");
+            None
         }
     }
 }

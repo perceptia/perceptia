@@ -11,6 +11,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 image = "0.12.3"
+font-loader = "0.2.0"
 rusttype = "0.2.1"
 timber = "0.0.1"
 cognitive-qualia = "0.0.3"

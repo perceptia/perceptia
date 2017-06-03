@@ -124,9 +124,11 @@ impl Packing for Frame {
                     self.relax(sa);
                 }
             }
-            _ => {
+            Geometry::Stacked => {
                 for mut frame in self.space_iter() {
-                    frame.set_size(size.clone(), sa);
+                    if !frame.get_mobility().is_floating() {
+                        frame.set_size(size.clone(), sa);
+                    }
                 }
             }
         }

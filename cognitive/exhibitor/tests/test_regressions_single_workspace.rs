@@ -209,3 +209,31 @@ fn test_create_layout_of_four() {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Tests if frames did not change size after creating new workspace.
+///
+/// In buggy implementation floating frames were resized during relaxation after creating new
+/// workspace.
+#[test]
+fn test_frame_size_after_creating_new_workspace() {
+    let mut config = common::configurations::strategist();
+    config.choose_target = "always_floating".to_owned();
+    let strategist = Strategist::new_from_config(config);
+    let mut e = Environment::create(strategist);
+
+    // Create one floating frame and remember its area.
+    e.exhibitor.on_surface_ready(SurfaceId::new(1));
+    assert!(e.exhibitor.get_selection().get_sid() == SurfaceId::new(1));
+    let area_before = e.exhibitor.get_selection().get_area();
+
+    // Create new workspace.
+    e.exhibitor.focus_workspace("2");
+    e.exhibitor.focus_workspace("1");
+
+    // Check if the frame has preserved the area.
+    assert!(e.exhibitor.get_selection().get_sid() == SurfaceId::new(1));
+    let area_after = e.exhibitor.get_selection().get_area();
+    assert_eq!(area_before, area_after);
+}
+
+// -------------------------------------------------------------------------------------------------

@@ -12,6 +12,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::collections::HashMap;
+use chrono;
 
 use font_loader::system_fonts::{self, FontPropertyBuilder};
 use rusttype::{Font, FontCollection, PositionedGlyph, Scale, point};
@@ -157,15 +158,16 @@ impl<C> Panel<C>
             }
         }
 
-        // Paint the text
-        if let Some(workspaces) = workspaces {
-            let mut position = 0;
-            for workspace_info in workspaces.iter() {
-                // Paint the text
-                if let Some(ref font) = *font {
-                    let scale = Scale { x: 12.0, y: 12.0 };
-                    let v_metrics = font.v_metrics(scale);
-                    let offset = point(0.0, v_metrics.ascent);
+        if let Some(ref font) = *font {
+            let scale = Scale { x: 12.0, y: 12.0 };
+            let v_metrics = font.v_metrics(scale);
+            let offset = point(0.0, v_metrics.ascent);
+
+            // Paint the workspaces
+            if let Some(workspaces) = workspaces {
+                let mut position = 0;
+                for workspace_info in workspaces.iter() {
+                    // Paint the text
                     let glyphs: Vec<PositionedGlyph> =
                                 font.layout(&workspace_info.name, scale, offset).collect();
 
@@ -207,6 +209,29 @@ impl<C> Panel<C>
                     }
 
                     position += calculate_text_width(&glyphs) as usize + 5;
+                }
+            }
+
+            // Paint the clock
+            let fmttime = format!("{}", chrono::Local::now().format("%H:%M:%S, %A, %d %B %Y"));
+            let glyphs: Vec<PositionedGlyph> = font.layout(&fmttime, scale, offset).collect();
+            let clock_width = calculate_text_width(&glyphs) as usize + 5;
+            let clock_position = width - clock_width;
+
+            for g in glyphs.iter() {
+                if let Some(bb) = g.pixel_bounding_box() {
+                    g.draw(|x, y, v| {
+                        let x = (x as i32 + bb.min.x + clock_position as i32) as usize;
+                        let y = (y as i32 + bb.min.y + 2) as usize;
+                        if x < width && y < height {
+                            let value = 200 - (200.0 * v) as u8;
+                            let alpha = 150 + (105.0 * v) as u8;
+                            data[0 + 4 * (x + y * width)] = value;
+                            data[1 + 4 * (x + y * width)] = value;
+                            data[2 + 4 * (x + y * width)] = value;
+                            data[3 + 4 * (x + y * width)] = alpha;
+                        }
+                    })
                 }
             }
         }
@@ -287,9 +312,14 @@ impl<'a, C> PanelManager<'a, C>
         self.panels.insert(output.id, panel);
     }
 
-    /// Update the workspace state and redraw panels.
+    /// Updates the workspace state and redraws panels.
     pub fn update_workspace_state(&mut self, state: WorkspaceState) {
         self.workspace_state = state;
+        self.redraw_all();
+    }
+
+    /// Redraws panels.
+    pub fn redraw_all(&mut self) {
         for (display_id, ref mut panel) in self.panels.iter_mut() {
             panel.draw(&self.font, self.workspace_state.workspaces.get(display_id));
             panel.swap_buffers();

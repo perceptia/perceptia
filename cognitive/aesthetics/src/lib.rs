@@ -3,6 +3,7 @@
 
 //! This crate provides aesthetic additions like setting background or default cursor theme.
 
+extern crate chrono;
 extern crate image;
 extern crate font_loader;
 extern crate rusttype;

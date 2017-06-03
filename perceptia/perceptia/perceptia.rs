@@ -24,7 +24,7 @@ mod device_manager_module;
 mod exhibitor_module;
 mod wayland_service;
 
-use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, SignalEventHandler, Signaler};
+use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, Signaler};
 use coordination::{Context, Coordinator};
 
 use aesthetics_module::AestheticsModuleConstructor;
@@ -46,18 +46,13 @@ fn main() {
     // Prepare state
     let signaler = Signaler::new();
     let mut dispatcher = Dispatcher::new();
-    let mut dispatcher_controller = dispatcher.get_controller();
+    let dispatcher_controller = dispatcher.get_controller();
     let coordinator = Coordinator::new(signaler.clone(), dispatcher_controller.clone());
     let context = Context::new(config.clone(),
                                settings.clone(),
                                signaler.clone(),
                                dispatcher_controller.clone(),
                                coordinator.clone());
-
-    // Set up signal handler
-    let signal_source = Box::new(SignalEventHandler::new(dispatcher_controller.clone(),
-                                                         signaler.clone()));
-    dispatcher_controller.add_source(signal_source, dharma::event_kind::READ);
 
     // Create modules and services
     let aesthetics_module = AestheticsModuleConstructor::new();

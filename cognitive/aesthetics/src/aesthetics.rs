@@ -81,6 +81,11 @@ impl<'a, C> Aesthetics<'a, C>
     pub fn on_workspace_state_changed(&mut self) {
         self.panels.update_workspace_state(self.coordinator.get_workspace_state())
     }
+
+    /// Handles 500 millisecond timer for redrawing panels.
+    pub fn on_timer_500(&mut self) {
+        self.panels.redraw_all();
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

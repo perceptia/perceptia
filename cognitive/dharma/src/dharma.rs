@@ -36,6 +36,7 @@
 
 #[macro_use]
 extern crate bitflags;
+extern crate timerfd;
 extern crate nix;
 
 /// Communication between two endpoints in different threads.
@@ -65,3 +66,8 @@ pub use dispatcher::{EventHandler, EventHandlerId, EventKind, event_kind};
 ///
 pub mod system;
 pub use system::{block_signals, unblock_signals, SignalEventHandler};
+
+/// Timer functionality
+///
+pub mod timer;
+pub use timer::Timer;

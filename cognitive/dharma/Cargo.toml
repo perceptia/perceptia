@@ -11,6 +11,7 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 bitflags = "0.8"
+timerfd = "0.2"
 nix = { version = "0.8", features = ["signalfd"] }
 
 [lib]

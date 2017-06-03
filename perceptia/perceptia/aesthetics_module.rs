@@ -42,6 +42,7 @@ impl<'a> Module for AestheticsModule<'a> {
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::SURFACE_DESTROYED,
              perceptron::WORKSPACE_STATE_CHANGED,
+             perceptron::TIMER_500,
         ]
     }
 
@@ -61,6 +62,7 @@ impl<'a> Module for AestheticsModule<'a> {
             Perceptron::BackgroundSurfaceChange(sid) => {
                 self.aesthetics.on_background_surface_change(sid);
             }
+            Perceptron::Timer500 => self.aesthetics.on_timer_500(),
             _ => {}
         }
     }

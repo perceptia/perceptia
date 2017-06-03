@@ -9,6 +9,7 @@
 
 use std::os::unix::io::RawFd;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use dharma;
 
@@ -223,10 +224,33 @@ impl Coordinator {
     pub fn new(signaler: dharma::Signaler<Perceptron>,
                dispatcher: dharma::DispatcherController)
                -> Self {
-        Coordinator {
+        let mut mine = Coordinator {
             resources: Arc::new(Mutex::new(ResourceStorage::new(signaler.clone()))),
-            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler, dispatcher))),
-        }
+            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler.clone(), dispatcher.clone()))),
+        };
+
+        mine.setup(signaler, dispatcher);
+        mine
+    }
+
+    /// Sets up coordinations related stuff.
+    ///
+    /// - adds system signal event handler
+    /// - adds 500 millisecond timer
+    fn setup(&mut self,
+             signaler: dharma::Signaler<Perceptron>,
+             mut dispatcher: dharma::DispatcherController) {
+        // Set up signal handler
+        let signal_source = Box::new(dharma::SignalEventHandler::new(dispatcher.clone(),
+                                                                     signaler.clone()));
+        dispatcher.add_source(signal_source, dharma::event_kind::READ);
+
+        // Set up 500 milliseconds timer.
+        let mut timer_signaler = signaler.clone();
+        let timer = dharma::Timer::new(Duration::new(0, 500_000_000), move || {
+            timer_signaler.emit(perceptron::TIMER_500, Perceptron::Timer500);
+        }).expect("creating 500 millisecond timer");
+        dispatcher.add_source(Box::new(timer), dharma::event_kind::READ);
     }
 }
 

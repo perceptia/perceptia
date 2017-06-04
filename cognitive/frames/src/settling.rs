@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Area, Position, Vector, Size, SurfaceAccess, SurfaceId};
+use qualia::{Area, Direction, Position, Vector, Size, SurfaceAccess, SurfaceId};
 
 use frame::{Frame, Geometry, Mobility, Mode, Side};
 use searching::Searching;
@@ -63,8 +63,9 @@ pub trait Settling {
     /// necessary.
     fn deanchorize(&mut self, area: Area, sa: &mut SurfaceAccess);
 
-    /// Set new position for given frame and move it subframes accordingly.
-    fn set_position(&mut self, pos: Position);
+    /// Resize the frame. `direction` indicates the border which will be moved and `magnitude` is
+    /// move distance in pixels.
+    fn resize(&mut self, direction: Direction, magnitude: isize, sa: &mut SurfaceAccess);
 
     /// Move the frame and all subframes by given vector.
     fn move_with_contents(&mut self, vector: Vector);
@@ -83,7 +84,7 @@ impl Settling for Frame {
                 if let Some(area) = area {
                     self.set_plumbing_mobility(Mobility::Floating);
                     self.set_size(area.size, sa);
-                    self.set_position(area.pos);
+                    self.set_plumbing_position(area.pos);
                 } else {
                     self.set_plumbing_mobility(Mobility::Anchored);
                 }
@@ -169,8 +170,7 @@ impl Settling for Frame {
         self.remove();
         self.set_plumbing_mobility(Mobility::Anchored);
         self.set_plumbing_mode(frame_mode);
-        let opposite = self.get_position().opposite();
-        self.move_with_contents(opposite);
+        self.set_plumbing_position(Position::default());
         distancer.prepend(self);
         distancer
     }
@@ -243,7 +243,7 @@ impl Settling for Frame {
             // NOTE: Floating surface must be direct child of workspace.
             let parent = self.get_parent().expect("should have parent");
             self.set_size(parent.get_size(), sa);
-            self.set_position(Position::default());
+            self.set_plumbing_position(Position::default());
             self.set_plumbing_mobility(Mobility::Anchored);
         }
     }
@@ -257,14 +257,77 @@ impl Settling for Frame {
                 workspace.prepend(self);
             }
             self.set_size(area.size, sa);
-            self.set_position(area.pos);
+            self.set_plumbing_position(area.pos);
             self.set_plumbing_mobility(Mobility::Floating);
         }
     }
 
-    fn set_position(&mut self, pos: Position) {
-        let vector = pos - self.get_position();
-        self.move_with_contents(vector);
+    fn resize(&mut self, direction: Direction, magnitude: isize, sa: &mut SurfaceAccess) {
+        if direction.is_planar() && !self.is_top() {
+            match self.get_mobility() {
+                Mobility::Floating => {
+                    let move_vector = {
+                        if direction == Direction::North {
+                            Vector::new(0, -magnitude)
+                        } else if direction == Direction::West {
+                            Vector::new(-magnitude, 0)
+                        } else {
+                            Vector::new(0, 0)
+                        }
+                    };
+
+                    let resize_vector = {
+                        if direction == Direction::North || direction == Direction::South {
+                            Vector::new(0, magnitude)
+                        } else if direction == Direction::West || direction == Direction::East {
+                            Vector::new(magnitude, 0)
+                        } else {
+                            Vector::new(0, 0)
+                        }
+                    };
+
+                    let new_size = self.get_size().sized(resize_vector);
+                    self.set_size(new_size, sa);
+                    self.move_with_contents(move_vector);
+                }
+                Mobility::Anchored => {
+                    if let Some(neighbour) = self.find_neighbouring(direction) {
+                        if neighbour.get_mobility().is_anchored() {
+                            let (mut first, mut second) = {
+                                if direction == Direction::North || direction == Direction::West {
+                                    (neighbour.clone(), self.clone())
+                                } else {
+                                    (self.clone(), neighbour.clone())
+                                }
+                            };
+
+                            let (move_vector, resize_vector) = {
+                                if direction == Direction::North {
+                                    (Vector::new(0, -magnitude), Vector::new(0, magnitude))
+                                } else if direction == Direction::East {
+                                    (Vector::new(magnitude, 0), Vector::new(-magnitude, 0))
+                                } else if direction == Direction::South {
+                                    (Vector::new(0, magnitude), Vector::new(0, -magnitude))
+                                } else if direction == Direction::West {
+                                    (Vector::new(-magnitude, 0), Vector::new(magnitude, 0))
+                                } else {
+                                    (Vector::new(0, 0), Vector::new(0, 0))
+                                }
+                            };
+
+                            first.change_size(resize_vector.opposite(), sa);
+                            second.change_size(resize_vector, sa);
+                            second.move_with_contents(move_vector);
+                        }
+                    } else if let Some(mut parent) = self.get_parent() {
+                        parent.resize(direction, magnitude, sa);
+                    }
+                }
+                Mobility::Docked => {
+                    // Nothing to do
+                }
+            }
+        }
     }
 
     fn move_with_contents(&mut self, vector: Vector) {

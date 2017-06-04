@@ -290,6 +290,16 @@ impl Size {
         Size::new((scale * self.width as f32) as usize, (scale * self.height as f32) as usize)
     }
 
+    /// Returns new `Size` inflated or deflated by given vector.
+    pub fn sized(self, vector: Vector) -> Size {
+        let width = self.width as isize + vector.x;
+        let height = self.height as isize + vector.y;
+        Size {
+            width: if width > 0 { width as usize } else { 0 },
+            height: if height > 0 { height as usize } else { 0 },
+        }
+    }
+
     /// Check if `Size` has zero size.
     pub fn is_zero(&self) -> bool {
         self.width == 0 && self.height == 0

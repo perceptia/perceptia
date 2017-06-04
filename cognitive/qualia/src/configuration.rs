@@ -21,6 +21,9 @@ pub struct AestheticsConfig {
 pub struct CompositorConfig {
     /// Distance in pixels by which frames are moved by `move` command.
     pub move_step: u32,
+
+    /// Distance in pixels by which frames are resized by `resize` command.
+    pub resize_step: u32,
 }
 
 // -------------------------------------------------------------------------------------------------

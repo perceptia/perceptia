@@ -45,7 +45,10 @@ impl DefaultConfig for AestheticsConfig {
 
 impl DefaultConfig for CompositorConfig {
     fn default() -> Self {
-        CompositorConfig { move_step: 10 }
+        CompositorConfig {
+            move_step: 10,
+            resize_step: 10,
+        }
     }
 }
 
@@ -117,6 +120,9 @@ impl DefaultConfig for KeybindingsConfig {
                      BindingEntry::new(uinput_sys::KEY_M,
                                        modifier::NONE,
                                        binding_functions::PutMove::new()),
+                     BindingEntry::new(uinput_sys::KEY_R,
+                                       modifier::NONE,
+                                       binding_functions::PutResize::new()),
                      // directions
                      BindingEntry::new(uinput_sys::KEY_RIGHT,
                                        modifier::NONE,
@@ -171,6 +177,15 @@ impl DefaultConfig for KeybindingsConfig {
                                        modifier::NONE,
                                        binding_functions::PutMagnitude::new()),
                      BindingEntry::new(uinput_sys::KEY_10,
+                                       modifier::NONE,
+                                       binding_functions::PutMagnitude::new()),
+                     BindingEntry::new(uinput_sys::KEY_MINUS,
+                                       modifier::NONE,
+                                       binding_functions::PutMagnitude::new()),
+                     BindingEntry::new(uinput_sys::KEY_KPMINUS,
+                                       modifier::NONE,
+                                       binding_functions::PutMagnitude::new()),
+                     BindingEntry::new(uinput_sys::KEY_KPPLUS,
                                        modifier::NONE,
                                        binding_functions::PutMagnitude::new())]
             },

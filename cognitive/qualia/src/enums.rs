@@ -131,6 +131,14 @@ impl Direction {
             Direction::Workspace => Direction::Workspace,
         }
     }
+
+    /// Returns `true` if direction in planar, `false` otherwise.
+    pub fn is_planar(self) -> bool {
+        self == Direction::North ||
+        self == Direction::East ||
+        self == Direction::South ||
+        self == Direction::West
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

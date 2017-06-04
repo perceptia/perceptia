@@ -109,7 +109,7 @@ fn put_direction(context: &mut InputContext, direction: Direction) {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper macro definig implementation of `Executor`.
+/// Helper macro defining implementation of `Executor`.
 macro_rules! define_simple_executor {
     ($name:ident($context:ident) $callback:block) => {
         #[derive(Clone)]
@@ -182,6 +182,13 @@ define_simple_executor!(PutMove(context) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Sets resize action in command but do not execute.
+define_simple_executor!(PutResize(context) {
+    put_action(context, Action::Resize);
+});
+
+// -------------------------------------------------------------------------------------------------
+
 /// Sets north direction in command but do not execute.
 define_simple_executor!(PutNorth(context) {
     put_direction(context, Direction::North);
@@ -240,14 +247,22 @@ define_simple_executor!(PutEnd(context) {
 
 /// Sets magnitude in command but do not execute.
 define_simple_executor!(PutMagnitude(context) {
-    if let Some(number) = context.get_code_as_number() {
-        if context.previous_modification() == PreviousModification::Magnitude {
-            let magnitude = context.get_magnitude();
-            context.set_magnitude(10 * magnitude + number);
+    let magnitude = {
+        if let Some(number) = context.get_code_as_number() {
+            if context.previous_modification() == PreviousModification::Magnitude {
+                if number == -1 {
+                    -1 * context.get_magnitude()
+                } else {
+                    10 * context.get_magnitude() + number
+                }
+            } else {
+                number
+            }
         } else {
-            context.set_magnitude(number);
+            1
         }
-    }
+    };
+    context.set_magnitude(magnitude);
 });
 
 // -------------------------------------------------------------------------------------------------

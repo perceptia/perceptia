@@ -8,7 +8,10 @@ use qualia::{CompositorConfig, StrategistConfig};
 // -------------------------------------------------------------------------------------------------
 
 pub fn compositor() -> CompositorConfig {
-    CompositorConfig { move_step: 10 }
+    CompositorConfig {
+        move_step: 10,
+        resize_step: 10,
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

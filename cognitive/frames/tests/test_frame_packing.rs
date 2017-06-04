@@ -69,7 +69,7 @@ fn test_homogenizing_vertical_with_docked() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Test homogenizing horozontal with docked frames.
+/// Test homogenizing horizontal with docked frames.
 #[test]
 fn test_homogenizing_horizontal_with_docked() {
     let mut sa = surface_access_mock::SurfaceAccessMock::new();

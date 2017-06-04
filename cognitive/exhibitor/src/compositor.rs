@@ -152,6 +152,7 @@ impl<C> Compositor<C>
                     _ => self.dive(&mut frame, command.direction, command.magnitude),
                 }
             }
+            Action::Resize => self.resize_frame(&mut frame, command.direction, command.magnitude),
             Action::Move => self.move_frame(&mut frame, command.direction, command.magnitude),
             Action::Anchor => self.anchorize(frame),
             _ => CommandResult::NotHandled,
@@ -423,6 +424,17 @@ impl<C> Compositor<C>
             self.select(frame.clone());
             self.root.pop_recursively(&mut frame);
         }
+    }
+
+    /// Resizes the frame in given direction.
+    fn resize_frame(&mut self,
+                    frame: &mut Frame,
+                    direction: Direction,
+                    magnitude: i32)
+                    -> CommandResult {
+        let magnitude = self.config.resize_step as isize * magnitude as isize;
+        frame.resize(direction, magnitude, &mut self.coordinator);
+        CommandResult::Ok
     }
 
     /// Moves the frame in given direction.

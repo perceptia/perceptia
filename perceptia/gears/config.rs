@@ -198,7 +198,8 @@ impl Config {
             }
 
             load_config!{self.exhibitor.compositor; yaml["exhibitor"]["compositor"];
-                move_step: u32
+                move_step: u32,
+                resize_step: u32
             }
 
             load_config!{self.exhibitor.strategist; yaml["exhibitor"]["strategist"];

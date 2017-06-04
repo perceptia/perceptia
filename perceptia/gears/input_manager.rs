@@ -270,7 +270,8 @@ impl binding_functions::InputContext for InnerInputManager {
 
     fn get_code_as_number(&self) -> Option<i32> {
         match self.code as i32 {
-            uinput_sys::KEY_MINUS => Some(-1),
+            uinput_sys::KEY_MINUS |
+            uinput_sys::KEY_KPMINUS => Some(-1),
             uinput_sys::KEY_10 |
             uinput_sys::KEY_NUMERIC_0 => Some(0),
             uinput_sys::KEY_1 |

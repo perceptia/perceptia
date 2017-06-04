@@ -13,6 +13,7 @@ extern crate cognitive_frames as frames;
 mod common;
 
 use qualia::{Position, Size, SurfaceId};
+use qualia::Direction::{North, East, South, West};
 use frames::{Frame, Parameters, Settling};
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 use frames::Side::{Before, On, After};
@@ -520,6 +521,141 @@ fn should_jump_before_on_the_same_level() {
     );
 
     spaced_repr.assert_frames_spaced(&w);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Tests resizing floating frame.
+#[test]
+fn test_resizing_floating() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (r, _, _, _, _, _, _, _, _, _, _, _, _, _, _, mut z) =
+        layouts::make_sized_for_homogenizing();
+
+    let magnitude: isize = 10;
+    let mut area = z.get_area();
+
+    // Inflating north side.
+    z.resize(North, magnitude, &mut sa);
+    area.pos.y -= magnitude;
+    area.size.height += magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Inflating east side.
+    z.resize(East, magnitude, &mut sa);
+    area.size.width += magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Inflating south side.
+    z.resize(South, magnitude, &mut sa);
+    area.size.height += magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Inflating west side.
+    z.resize(West, magnitude, &mut sa);
+    area.pos.x -= magnitude;
+    area.size.width += magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Deflating north side.
+    z.resize(North, -magnitude, &mut sa);
+    area.pos.y += magnitude;
+    area.size.height -= magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Deflating east side.
+    z.resize(East, -magnitude, &mut sa);
+    area.size.width -= magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Deflating south side.
+    z.resize(South, -magnitude, &mut sa);
+    area.size.height -= magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    // Deflating west side.
+    z.resize(West, -magnitude, &mut sa);
+    area.pos.x += magnitude;
+    area.size.width -= magnitude as usize;
+    assertions::assert_area(&z, area.pos, area.size);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Tests resizing vertical anchored frame.
+#[test]
+fn test_resizing_vertical_anchored() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (r, _, _, _, _, mut bcd, mut a, _, mut c, _, _, _, _, _, _, _) =
+        layouts::make_sized_for_homogenizing();
+
+    let magnitude: isize = 10;
+    let mut a_area = a.get_area();
+    let mut bcd_area = bcd.get_area();
+
+    // Inflating north side.
+    bcd.resize(North, magnitude, &mut sa);
+    a_area.size.height -= magnitude as usize;
+    bcd_area.size.height += magnitude as usize;
+    bcd_area.pos.y -= magnitude;
+    assertions::assert_area(&bcd, bcd_area.pos, bcd_area.size);
+    assertions::assert_area(&a, a_area.pos, a_area.size);
+
+    // Deflating south side.
+    a.resize(South, -magnitude, &mut sa);
+    a_area.size.height -= magnitude as usize;
+    bcd_area.size.height += magnitude as usize;
+    bcd_area.pos.y -= magnitude;
+    assertions::assert_area(&bcd, bcd_area.pos, bcd_area.size);
+    assertions::assert_area(&a, a_area.pos, a_area.size);
+
+    // Deflating north side from deep.
+    c.resize(North, -magnitude, &mut sa);
+    a_area.size.height += magnitude as usize;
+    bcd_area.size.height -= magnitude as usize;
+    bcd_area.pos.y += magnitude;
+    assertions::assert_area(&bcd, bcd_area.pos, bcd_area.size);
+    assertions::assert_area(&c, Position::new(0, 0), bcd_area.size);
+    assertions::assert_area(&a, a_area.pos, a_area.size);
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Tests resizing horizontal anchored frame.
+#[test]
+fn test_resizing_horizontal_anchored() {
+    let mut sa = surface_access_mock::SurfaceAccessMock::new();
+    let (r, _, hi, _, _, mut bcd, _, _, _, _, _, _, g, mut h, _, _) =
+        layouts::make_sized_for_homogenizing();
+
+    let magnitude: isize = 10;
+    let mut bcd_area = bcd.get_area();
+    let mut g_area = g.get_area();
+    let mut hi_area = hi.get_area();
+
+    // Inflating west side.
+    h.resize(West, magnitude, &mut sa);
+    g_area.size.width -= magnitude as usize;
+    hi_area.size.width += magnitude as usize;
+    hi_area.pos.x -= magnitude;
+    assertions::assert_area(&bcd, bcd_area.pos, bcd_area.size);
+    assertions::assert_area(&g, g_area.pos, g_area.size);
+    assertions::assert_area(&hi, hi_area.pos, hi_area.size);
+
+    // Deflating east side.
+    bcd.resize(East, -magnitude, &mut sa);
+    bcd_area.size.width -= magnitude as usize;
+    g_area.size.width += magnitude as usize;
+    g_area.pos.x -= magnitude;
+    assertions::assert_area(&bcd, bcd_area.pos, bcd_area.size);
+    assertions::assert_area(&g, g_area.pos, g_area.size);
+    assertions::assert_area(&hi, hi_area.pos, hi_area.size);
 
     r.destroy();
 }

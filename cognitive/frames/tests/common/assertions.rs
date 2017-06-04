@@ -141,8 +141,8 @@ pub fn assert_simple_frames_spaced(frame: &Frame) {
 ///
 /// TODO: Extend this assertion to also check area set to `SurfaceAccess`.
 pub fn assert_area(frame: &Frame, pos: Position, size: Size) {
-    assert_eq!(pos, frame.get_position(), "");
-    assert_eq!(size, frame.get_size(), "");
+    assert_eq!(frame.get_position(), pos, "");
+    assert_eq!(frame.get_size(), size, "");
 }
 
 // -------------------------------------------------------------------------------------------------

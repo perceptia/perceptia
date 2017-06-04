@@ -29,6 +29,10 @@ pub trait Searching {
     /// lies outside `self`.
     fn find_pointed(&self, point: Position) -> Frame;
 
+    /// Returns neighbour in given planar direction. If parent is not aligned in the direction or
+    /// neighbour is not found returns `None`.
+    fn find_neighbouring(&self, direction: Direction) -> Option<Frame>;
+
     /// Finds top-most frame bordering with frame `self` in given direction.
     fn find_contiguous(&self, direction: Direction, distance: u32) -> Option<Frame>;
 
@@ -106,15 +110,9 @@ impl Searching for Frame {
         self.clone()
     }
 
-    fn find_contiguous(&self, direction: Direction, distance: u32) -> Option<Frame> {
-        // If distance is zero, this is the last step of recurrence
-        if distance == 0 {
-            return Some(self.clone());
-        }
-
+    fn find_neighbouring(&self, direction: Direction) -> Option<Frame> {
         if let Some(parent) = self.get_parent() {
-            // Find new frame which is farther
-            let mut frame = if parent.get_geometry() == Geometry::Vertical {
+            if parent.get_geometry() == Geometry::Vertical {
                 if direction == Direction::North {
                     self.get_prev_space()
                 } else if direction == Direction::South {
@@ -140,30 +138,39 @@ impl Searching for Frame {
                 }
             } else {
                 None
-            };
-
-            // If there is nothing farther go higher. If it is, decrease distance.
-            let new_distance = if frame.is_some() || (direction == Direction::Up) {
-                distance - 1
-            } else {
-                distance
-            };
-            if frame.is_none() {
-                frame = self.get_parent();
-            }
-
-            if let Some(frame) = frame {
-                // Next recurrence step if possible.
-                if frame.is_top() {
-                    None
-                } else {
-                    frame.find_contiguous(direction, new_distance)
-                }
-            } else {
-                None
             }
         } else {
-            // There is nowhere to go if nothing is up there
+            None
+        }
+    }
+
+    fn find_contiguous(&self, direction: Direction, distance: u32) -> Option<Frame> {
+        // If distance is zero, this is the last step of recurrence
+        if distance == 0 {
+            return Some(self.clone());
+        }
+
+        // Find new frame which is farther
+        let mut frame = self.find_neighbouring(direction);
+
+        // If there is nothing farther go higher. If it is, decrease distance.
+        let new_distance = if frame.is_some() || (direction == Direction::Up) {
+            distance - 1
+        } else {
+            distance
+        };
+        if frame.is_none() {
+            frame = self.get_parent();
+        }
+
+        if let Some(frame) = frame {
+            // Next recurrence step if possible.
+            if frame.is_top() {
+                None
+            } else {
+                frame.find_contiguous(direction, new_distance)
+            }
+        } else {
             None
         }
     }

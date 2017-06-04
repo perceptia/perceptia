@@ -63,6 +63,7 @@ List of all available options:
  * `exhibitor`
     * `compositor`
        - `move_step` - distance in pixels by which frames are moved by `move` command
+       - `resize_step` - distance in pixels by which frames are resized by `resize` command
     * `strategist` - changes strategies `compositor` uses to manager surfaces
        - `choose_target` - decides if new surface should be anchored or not and where to be placed.
          Possible values:

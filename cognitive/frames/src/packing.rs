@@ -9,7 +9,6 @@ use qualia::{Position, Size, Vector};
 use qualia::{SurfaceAccess, surface_state};
 
 use frame::{Frame, Geometry, Mobility};
-use settling::Settling;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -21,6 +20,9 @@ pub trait Packing {
     /// Make all subsurfaces have the same size and proper layout.
     /// Homogenizing works only on directed frames.
     fn homogenize(&mut self, sa: &mut SurfaceAccess);
+
+    /// Set size of the frame and resize its subframe accordingly.
+    fn change_size(&mut self, vactor: Vector, sa: &mut SurfaceAccess);
 
     /// Set size of the frame and resize its subframe accordingly.
     fn set_size(&mut self, size: Size, sa: &mut SurfaceAccess);
@@ -79,7 +81,7 @@ impl Packing for Frame {
             match frame.get_mobility() {
                 Mobility::Anchored => {
                     frame.set_size(size, sa);
-                    frame.set_position(pos);
+                    frame.set_plumbing_position(pos);
                     pos = pos + increment;
                 }
                 Mobility::Docked => {
@@ -92,6 +94,11 @@ impl Packing for Frame {
                 Mobility::Floating => {}
             }
         }
+    }
+
+    fn change_size(&mut self, vector: Vector, sa: &mut SurfaceAccess) {
+        let size = self.get_size().sized(vector);
+        self.set_size(size, sa);
     }
 
     fn set_size(&mut self, size: Size, sa: &mut SurfaceAccess) {

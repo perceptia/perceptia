@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use qualia::{Direction, Position, SurfaceId};
-use frame::{Frame, Geometry};
+use frame::{Frame, Geometry, Mode};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -95,7 +95,9 @@ impl Searching for Frame {
 
     fn find_pointed(&self, mut point: Position) -> Frame {
         let area = self.get_area().rebased();
-        point = point.casted(&area);
+        if self.get_mode() != Mode::Root {
+            point = point.casted(&area);
+        }
 
         for ref frame in self.time_iter() {
             let area = frame.get_area();

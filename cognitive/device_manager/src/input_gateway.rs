@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{modifier, KeyCatchResult, KeyCode, KeyValue, KeyState};
+use qualia::{modifier, CatchResult, InputCode, InputValue, KeyState};
 use qualia::{InputForwarding, InputHandling};
 use inputs::codes;
 
@@ -26,7 +26,7 @@ pub struct InputGateway {
     handler: Box<InputHandling>,
     forwarder: Box<InputForwarding>,
     vt: Option<VirtualTerminal>,
-    modifier_keys: Vec<(KeyCode, modifier::ModifierType)>,
+    modifier_keys: Vec<(InputCode, modifier::ModifierType)>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -42,14 +42,14 @@ impl InputGateway {
             handler: handler,
             forwarder: forwarder,
             vt: vt,
-            modifier_keys: vec![(codes::KEY_LEFTCTRL as KeyCode, modifier::LCTL),
-                                (codes::KEY_RIGHTCTRL as KeyCode, modifier::RCTL),
-                                (codes::KEY_LEFTSHIFT as KeyCode, modifier::LSHF),
-                                (codes::KEY_RIGHTSHIFT as KeyCode, modifier::RSHF),
-                                (codes::KEY_LEFTALT as KeyCode, modifier::LALT),
-                                (codes::KEY_RIGHTALT as KeyCode, modifier::RALT),
-                                (codes::KEY_LEFTMETA as KeyCode, modifier::LMTA),
-                                (codes::KEY_RIGHTMETA as KeyCode, modifier::RMTA)],
+            modifier_keys: vec![(codes::KEY_LEFTCTRL as InputCode, modifier::LCTL),
+                                (codes::KEY_RIGHTCTRL as InputCode, modifier::RCTL),
+                                (codes::KEY_LEFTSHIFT as InputCode, modifier::LSHF),
+                                (codes::KEY_RIGHTSHIFT as InputCode, modifier::RSHF),
+                                (codes::KEY_LEFTALT as InputCode, modifier::LALT),
+                                (codes::KEY_RIGHTALT as InputCode, modifier::RALT),
+                                (codes::KEY_LEFTMETA as InputCode, modifier::LMTA),
+                                (codes::KEY_RIGHTMETA as InputCode, modifier::RMTA)],
         }
     }
 }
@@ -60,22 +60,22 @@ impl InputForwarding for InputGateway {
     /// Emits keyboards event.
     fn emit_key(&mut self, code: u16, value: i32) {
         // Ignore repeats
-        if (value != KeyState::Pressed as KeyValue) && (value != KeyState::Released as KeyValue) {
+        if (value != KeyState::Pressed as InputValue) && (value != KeyState::Released as InputValue) {
             return;
         }
 
         // Update modifiers
-        if self.update_modifiers(code, value) != KeyCatchResult::Passed {
+        if self.update_modifiers(code, value) != CatchResult::Passed {
             return;
         }
 
         // Catch built-in key bindings
-        if self.catch_key(code, value) != KeyCatchResult::Passed {
+        if self.catch_key(code, value) != CatchResult::Passed {
             return;
         }
 
         // Try to execute key binding
-        if self.handler.catch_key(code, value, self.modifiers) == KeyCatchResult::Passed {
+        if self.handler.catch_key(code, value, self.modifiers) == CatchResult::Passed {
             self.forwarder.emit_key(code, value);
         }
     }
@@ -92,7 +92,10 @@ impl InputForwarding for InputGateway {
 
     /// Emits button event.
     fn emit_button(&mut self, code: u16, value: i32) {
-        self.forwarder.emit_button(code, value);
+        // Try to execute button binding
+        if self.handler.catch_button(code, value, self.modifiers) == CatchResult::Passed {
+            self.forwarder.emit_button(code, value);
+        }
     }
 
     /// Emits exist event.
@@ -109,24 +112,19 @@ impl InputForwarding for InputGateway {
     fn emit_system_activity_event(&mut self) {
         self.forwarder.emit_system_activity_event();
     }
-
-    /// Clones the `InputGateway` as unsized instance of `InputForwarding`.
-    fn duplicate(&self) -> Box<InputForwarding> {
-        Box::new(self.clone())
-    }
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl InputGateway {
     /// Helper method for updating modifiers.
-    fn update_modifiers(&mut self, code: KeyCode, value: KeyValue) -> KeyCatchResult {
-        let mut result = KeyCatchResult::Passed;
+    fn update_modifiers(&mut self, code: InputCode, value: InputValue) -> CatchResult {
+        let mut result = CatchResult::Passed;
         for &(modifier_code, modifier_flag) in self.modifier_keys.iter() {
             if code == modifier_code {
-                if value == KeyState::Pressed as KeyValue {
+                if value == KeyState::Pressed as InputValue {
                     if (self.modifiers & modifier_flag) != 0x0 {
-                        result = KeyCatchResult::Caught;
+                        result = CatchResult::Caught;
                     } else {
                         self.modifiers |= modifier_flag;
                     }
@@ -140,20 +138,20 @@ impl InputGateway {
     }
 
     /// Helper method for executing built-in key bindings.
-    fn catch_key(&self, code: KeyCode, value: KeyValue) -> KeyCatchResult {
+    fn catch_key(&self, code: InputCode, value: InputValue) -> CatchResult {
         if (codes::KEY_F1 <= code) && (code <= codes::KEY_F12) {
             if (self.modifiers == (modifier::LALT | modifier::LCTL)) ||
                (self.modifiers == (modifier::LALT | modifier::RCTL)) ||
                (self.modifiers == (modifier::RALT | modifier::LCTL)) ||
                (self.modifiers == (modifier::RALT | modifier::RCTL)) {
-                if value == KeyState::Pressed as KeyValue {
+                if value == KeyState::Pressed as InputValue {
                     self.switch_vt((code + 1 - codes::KEY_F1) as i32);
                 }
-                return KeyCatchResult::Caught;
+                return CatchResult::Caught;
             }
         }
 
-        KeyCatchResult::Passed
+        CatchResult::Passed
     }
 
     /// Helper method for switching virtual terminals.
@@ -165,22 +163,6 @@ impl InputGateway {
             }
         } else {
             log_warn1!("Virtual terminals were not set up properly");
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Manually implement `Clone` as `input_forwarder` and `input_handler` do not provide standard way
-/// to clone.
-impl Clone for InputGateway {
-    fn clone(&self) -> Self {
-        InputGateway {
-            modifiers: self.modifiers,
-            handler: self.handler.duplicate(),
-            forwarder: self.forwarder.duplicate(),
-            vt: self.vt,
-            modifier_keys: self.modifier_keys.clone(),
         }
     }
 }

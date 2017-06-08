@@ -8,6 +8,7 @@
 use std::mem;
 use std::os::unix::io;
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 use libc;
 
 use nix::fcntl;
@@ -20,7 +21,6 @@ use inputs::codes;
 
 use drivers;
 use device_access::RestrictedOpener;
-use input_gateway::InputGateway;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ pub struct Evdev {
     fd: io::RawFd,
     device_kind: DeviceKind,
     config: InputConfig,
-    gateway: InputGateway,
+    gateway: Arc<Mutex<InputForwarding>>,
     pressure: i32,
 }
 
@@ -50,7 +50,7 @@ impl drivers::InputDriver for Evdev {
     fn initialize_device(devnode: &Path,
                          device_kind: DeviceKind,
                          config: InputConfig,
-                         gateway: InputGateway,
+                         gateway: Arc<Mutex<InputForwarding>>,
                          ro: &RestrictedOpener)
                          -> Result<Box<Self>, Illusion> {
         let r = ro.open(devnode, fcntl::O_RDONLY | fcntl::O_CLOEXEC, stat::Mode::empty());
@@ -72,7 +72,7 @@ impl EventHandler for Evdev {
         if event_kind.intersects(event_kind::READ) {
             self.read_events();
         } else if event_kind.intersects(event_kind::HANGUP) {
-            self.gateway.emit_system_activity_event();
+            self.gateway.lock().unwrap().emit_system_activity_event();
         }
     }
 }
@@ -84,7 +84,7 @@ impl Evdev {
     fn new(fd: io::RawFd,
            device_kind: DeviceKind,
            config: InputConfig,
-           gateway: InputGateway)
+           gateway: Arc<Mutex<InputForwarding>>)
            -> Self {
         Evdev {
             fd: fd,
@@ -115,7 +115,7 @@ impl Evdev {
     /// Helper method for processing keyboard events.
     fn process_keyboard_event(&mut self, ev: &InputEvent) {
         if ev.kind == codes::EV_KEY {
-            self.gateway.emit_key(ev.code, ev.value);
+            self.gateway.lock().unwrap().emit_key(ev.code, ev.value);
         }
     }
 
@@ -126,19 +126,19 @@ impl Evdev {
         } else if ev.kind == codes::EV_KEY {
             if (ev.code == codes::BTN_LEFT) || (ev.code == codes::BTN_MIDDLE) ||
                (ev.code == codes::BTN_RIGHT) {
-                self.gateway.emit_button(ev.code, ev.value);
+                self.gateway.lock().unwrap().emit_button(ev.code, ev.value);
             } else {
                 log_nyimp!("Unhandled mouse key event (code: {}, value: {})", ev.code, ev.value);
             }
         } else if ev.kind == codes::EV_REL {
             if ev.code == codes::ABS_X {
                 let value = ev.value as f32 * self.config.mouse_scale;
-                self.gateway.emit_motion(value as isize, 0);
+                self.gateway.lock().unwrap().emit_motion(value as isize, 0);
             } else if ev.code == codes::ABS_Y {
                 let value = ev.value as f32 * self.config.mouse_scale;
-                self.gateway.emit_motion(0, value as isize);
+                self.gateway.lock().unwrap().emit_motion(0, value as isize);
             } else if ev.code == codes::REL_WHEEL {
-                self.gateway.emit_axis(0, ev.value as isize);
+                self.gateway.lock().unwrap().emit_axis(0, ev.value as isize);
             } else {
                 log_nyimp!("Unhandled mouse relative event (code: {}, value: {})",
                            ev.code,
@@ -161,10 +161,10 @@ impl Evdev {
         } else if ev.kind == codes::EV_KEY {
             if (ev.code == codes::BTN_LEFT) || (ev.code == codes::BTN_MIDDLE) ||
                (ev.code == codes::BTN_RIGHT) {
-                self.gateway.emit_button(ev.code, ev.value);
+                self.gateway.lock().unwrap().emit_button(ev.code, ev.value);
             } else if (ev.code == codes::BTN_TOOL_FINGER) ||
                       (ev.code == codes::BTN_TOUCH) {
-                self.gateway.emit_position_reset();
+                self.gateway.lock().unwrap().emit_position_reset();
             } else {
                 log_nyimp!("Unhandled touchpad key event (code: {}, value: {})", ev.code, ev.value);
             }
@@ -177,16 +177,16 @@ impl Evdev {
                 log_info4!("Touchpad pressure: {:?}", ev.value);
                 self.pressure = ev.value;
             } else if ev.code == codes::ABS_MT_TRACKING_ID {
-                self.gateway.emit_position_reset();
+                self.gateway.lock().unwrap().emit_position_reset();
             } else if self.pressure > self.config.touchpad_pressure_threshold {
                 if (ev.code == codes::ABS_MT_POSITION_X) ||
                    (ev.code == codes::ABS_X) {
                     let value = ev.value as f32 * self.config.touchpad_scale;
-                    self.gateway.emit_position(Some(value as isize), None);
+                    self.gateway.lock().unwrap().emit_position(Some(value as isize), None);
                 } else if (ev.code == codes::ABS_MT_POSITION_Y) ||
                           (ev.code == codes::ABS_Y) {
                     let value = ev.value as f32 * self.config.touchpad_scale;
-                    self.gateway.emit_position(None, Some(value as isize));
+                    self.gateway.lock().unwrap().emit_position(None, Some(value as isize));
                 }
             }
         } else {

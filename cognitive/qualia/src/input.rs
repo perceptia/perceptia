@@ -12,8 +12,8 @@ use defs::{Slide, Vector};
 
 pub type Key = Button;
 
-pub type KeyCode = u16;
-pub type KeyValue = i32;
+pub type InputCode = u16;
+pub type InputValue = i32;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -39,7 +39,7 @@ pub mod modifier {
 
 /// Enumeration for possible results of catching key.
 #[derive(PartialEq)]
-pub enum KeyCatchResult {
+pub enum CatchResult {
     Caught,
     Passed,
 }
@@ -51,7 +51,7 @@ pub enum KeyCatchResult {
 /// Used as key in hash maps.
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub struct Binding {
-    code: KeyCode,
+    code: InputCode,
     modifiers: modifier::ModifierType,
 }
 
@@ -64,13 +64,13 @@ impl Binding {
     /// places.
     pub fn new(code: i32, modifiers: modifier::ModifierType) -> Self {
         Binding {
-            code: code as KeyCode,
+            code: code as InputCode,
             modifiers: modifiers,
         }
     }
 
     /// `Binding` constructor.
-    pub fn create(code: KeyCode, modifiers: modifier::ModifierType) -> Self {
+    pub fn create(code: InputCode, modifiers: modifier::ModifierType) -> Self {
         Binding {
             code: code,
             modifiers: modifiers,
@@ -146,10 +146,17 @@ impl Axis {
 pub trait InputHandling: Send {
     /// Catches and processes the keyboard event.
     fn catch_key(&mut self,
-                 code: KeyCode,
-                 value: KeyValue,
+                 code: InputCode,
+                 value: InputValue,
                  modifiers: modifier::ModifierType)
-                 -> KeyCatchResult;
+                 -> CatchResult;
+
+    /// Catches and processes the button event.
+    fn catch_button(&mut self,
+                    code: InputCode,
+                    value: InputValue,
+                    modifiers: modifier::ModifierType)
+                    -> CatchResult;
 
     /// Clones the instance of `InputHandling`.
     fn duplicate(&self) -> Box<InputHandling>;
@@ -179,9 +186,6 @@ pub trait InputForwarding: Send {
 
     /// Emits system activity event.
     fn emit_system_activity_event(&mut self);
-
-    /// Clones the instance of `InputForwarding`.
-    fn duplicate(&self) -> Box<InputForwarding>;
 }
 
 // -------------------------------------------------------------------------------------------------

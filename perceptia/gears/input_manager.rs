@@ -14,8 +14,8 @@ use std::sync::{Arc, Mutex};
 use uinput_sys;
 
 use dharma::Signaler;
-use qualia::{Action, Command, Direction, OptionalPosition, Slide, Vector};
-use qualia::{modifier, Axis, Binding, Button, KeyCatchResult, Key, KeyCode, KeyValue, KeyState};
+use qualia::{Action, Command, Direction, OptionalPosition, InteractionMode, Slide, Vector};
+use qualia::{modifier, Axis, Binding, Button, CatchResult, Key, InputCode, InputValue, KeyState};
 use qualia::{InputForwarding, InputHandling};
 use qualia::{perceptron, Perceptron};
 
@@ -28,6 +28,7 @@ pub mod mode_name {
     pub const COMMON: &'static str = "common";
     pub const INSERT: &'static str = "insert";
     pub const NORMAL: &'static str = "normal";
+    pub const VISUAL: &'static str = "visual";
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -91,7 +92,7 @@ impl Mode {
 /// For thread-safe public version see `InputManager`.
 struct InnerInputManager {
     modes: Vec<Mode>,
-    code: KeyCode,
+    code: InputCode,
     command: Command,
     previous_modification: binding_functions::PreviousModification,
     signaler: Signaler<Perceptron>,
@@ -137,9 +138,16 @@ impl InnerInputManager {
                              b.executor.duplicate());
         }
 
-        // Apply  mode bindings
+        // Apply normal mode bindings
         for b in config.normal.iter() {
             self.add_binding(mode_name::NORMAL.to_owned(),
+                             b.binding.clone(),
+                             b.executor.duplicate());
+        }
+
+        // Apply visual mode bindings
+        for b in config.visual.iter() {
+            self.add_binding(mode_name::VISUAL.to_owned(),
                              b.binding.clone(),
                              b.executor.duplicate());
         }
@@ -160,18 +168,39 @@ impl InnerInputManager {
     /// Tries for find executor matching to given key and state of modifiers and execute it if
     /// found.
     pub fn catch_key(&mut self,
-                     code: KeyCode,
-                     value: KeyValue,
+                     code: InputCode,
+                     value: InputValue,
                      modifiers: modifier::ModifierType)
-                     -> KeyCatchResult {
+                     -> CatchResult {
+         self.catch(code, value, modifiers)
+    }
+
+    /// Tries for find executor matching to given button and state of modifiers and execute it if
+    /// found.
+    fn catch_button(&mut self,
+                    code: InputCode,
+                    value: InputValue,
+                    modifiers: modifier::ModifierType)
+                    -> CatchResult {
+         self.catch(code, value, modifiers)
+    }
+
+    /// Helper method for searching and executing an executor.
+    fn catch(&mut self,
+             code: InputCode,
+             value: InputValue,
+             modifiers: modifier::ModifierType)
+             -> CatchResult {
         self.code = code;
         if let Some(executor) = self.find_executor(&Binding::create(code, modifiers)) {
-            if value == KeyState::Pressed as KeyValue {
-                executor.execute(self);
+            if value == KeyState::Pressed as InputValue {
+                executor.activate(self);
+            } else if value == KeyState::Released as InputValue {
+                executor.release(self);
             }
-            KeyCatchResult::Caught
+            CatchResult::Caught
         } else {
-            KeyCatchResult::Passed
+            CatchResult::Passed
         }
     }
 
@@ -262,9 +291,13 @@ impl binding_functions::InputContext for InnerInputManager {
 
     fn activate_mode(&mut self, mode_name: &'static str, active: bool) {
         self.make_mode_active(mode_name.to_string(), active);
+        if mode_name == mode_name::VISUAL {
+            self.signaler.emit(perceptron::MODE,
+                               Perceptron::Mode{active: active, mode: InteractionMode::Visual});
+        }
     }
 
-    fn get_code(&self) -> KeyCode {
+    fn get_code(&self) -> InputCode {
         self.code
     }
 
@@ -333,13 +366,24 @@ impl InputManager {
 impl InputHandling for InputManager {
     /// Lock and call corresponding method from `InnerInputManager`.
     fn catch_key(&mut self,
-                 code: KeyCode,
-                 value: KeyValue,
+                 code: InputCode,
+                 value: InputValue,
                  modifiers: modifier::ModifierType)
-                 -> KeyCatchResult {
+                 -> CatchResult {
         let mut mine = self.inner.lock().unwrap();
         mine.catch_key(code, value, modifiers)
     }
+
+    /// Lock and call corresponding method from `InnerInputManager`.
+    fn catch_button(&mut self,
+                    code: InputCode,
+                    value: InputValue,
+                    modifiers: modifier::ModifierType)
+                    -> CatchResult {
+        let mut mine = self.inner.lock().unwrap();
+        mine.catch_button(code, value, modifiers)
+    }
+
 
     /// Clones the `InputManager` as unsized.
     fn duplicate(&self) -> Box<InputHandling> {
@@ -415,11 +459,6 @@ impl InputForwarding for InputForwarder {
     /// Emits system activity event.
     fn emit_system_activity_event(&mut self) {
         self.signaler.emit(perceptron::NOTIFY, Perceptron::Notify);
-    }
-
-    /// Clones the `InputManager` as unsized instance of `InputForwarding`.
-    fn duplicate(&self) -> Box<InputForwarding> {
-        Box::new(self.clone())
     }
 }
 

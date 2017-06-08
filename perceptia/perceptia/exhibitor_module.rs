@@ -48,6 +48,7 @@ impl Module for ExhibitorModule {
              perceptron::PAGE_FLIP,
              perceptron::OUTPUT_FOUND,
              perceptron::COMMAND,
+             perceptron::MODE,
              perceptron::INPUT_POINTER_MOTION,
              perceptron::INPUT_POINTER_POSITION,
              perceptron::INPUT_POINTER_BUTTON,
@@ -87,6 +88,10 @@ impl Module for ExhibitorModule {
 
             Perceptron::KeyboardFocusChanged(_, sid) => {
                 self.exhibitor.on_keyboard_focus_changed(sid);
+            }
+
+            Perceptron::Mode{active, mode} => {
+                self.exhibitor.on_mode_switched(active, mode);
             }
 
             Perceptron::Suspend => self.exhibitor.on_suspend(),

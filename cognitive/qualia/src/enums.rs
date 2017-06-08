@@ -142,3 +142,13 @@ impl Direction {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Defines different modes user may interact with application.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum InteractionMode {
+    Normal,
+    Insert,
+    Visual,
+}
+
+// -------------------------------------------------------------------------------------------------

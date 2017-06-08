@@ -336,10 +336,20 @@ impl DefaultConfig for KeybindingsConfig {
                      BindingEntry::new(uinput_sys::KEY_SPACE,
                                        modifier::LMTA,
                                        binding_functions::ToggleAnchorization::new()),
+                     BindingEntry::new(uinput_sys::BTN_LEFT,
+                                       modifier::LMTA,
+                                       binding_functions::SurfaceDrag::new()),
                      // spawning processes
                      BindingEntry::new(uinput_sys::KEY_T,
                                        modifier::LCTL | modifier::LMTA,
                                        binding_functions::SpawnProcess::new(&["weston-terminal"]))]
+            },
+            visual: {
+                vec![// visual
+                     BindingEntry::new(uinput_sys::BTN_LEFT,
+                                       modifier::LMTA,
+                                       binding_functions::SurfaceDrag::new()),
+                ]
             },
         }
     }

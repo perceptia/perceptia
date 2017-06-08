@@ -7,7 +7,7 @@
 
 use xkbcommon::xkb;
 
-use qualia::{Illusion, KeyboardConfig, KeyCode, KeyValue};
+use qualia::{Illusion, KeyboardConfig, InputCode, InputValue};
 
 use keymap::XkbKeymap;
 
@@ -72,7 +72,7 @@ impl KeyboardState {
     }
 
     /// Updates state with given key. Returns `true` when modifiers changed, false otherwise.
-    pub fn update(&mut self, code: KeyCode, value: KeyValue) -> bool {
+    pub fn update(&mut self, code: InputCode, value: InputValue) -> bool {
         let direction = if value == 0 {
             xkb::KeyDirection::Up
         } else {

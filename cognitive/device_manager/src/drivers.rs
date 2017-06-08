@@ -6,10 +6,10 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::path::Path;
+use std::sync::{Arc, Mutex};
 
-use qualia::{DeviceKind, Illusion, InputConfig};
+use qualia::{DeviceKind, Illusion, InputConfig, InputForwarding};
 
-use input_gateway::InputGateway;
 use device_access::RestrictedOpener;
 
 // -------------------------------------------------------------------------------------------------
@@ -20,7 +20,7 @@ pub trait InputDriver {
     fn initialize_device(devnode: &Path,
                          device_kind: DeviceKind,
                          config: InputConfig,
-                         gateway: InputGateway,
+                         gateway: Arc<Mutex<InputForwarding>>,
                          ro: &RestrictedOpener)
                          -> Result<Box<Self>, Illusion>;
 }

@@ -148,8 +148,7 @@ impl<C> Pointer<C>
 
         let mut sid = SurfaceId::invalid();
         let mut surface_relative = Position::default();
-        let display_relative = Position::new(self.position.x - display_area.pos.x,
-                                             self.position.y - display_area.pos.y);
+        let display_relative = self.position - display_area.pos;
 
         // Find surface pointer hovers
         for context in surfaces.iter().rev() {

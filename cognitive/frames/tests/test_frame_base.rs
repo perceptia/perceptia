@@ -12,6 +12,7 @@ extern crate cognitive_frames as frames;
 
 mod common;
 
+use qualia::Position;
 use frames::Parameters;
 use frames::Geometry::{Horizontal, Stacked, Vertical};
 use frames::representation::FrameRepresentation;
@@ -19,7 +20,7 @@ use common::{assertions, layouts};
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check is simple frame layout is constructed correctly by appending all frames.
+/// Checks if simple frame layout is constructed correctly by appending all frames.
 #[test]
 fn test_append() {
     let r = layouts::make_simple_frames_appending().0;
@@ -30,7 +31,7 @@ fn test_append() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check is simple frame layout is constructed correctly by prepending all frames.
+/// Checks if simple frame layout is constructed correctly by prepending all frames.
 #[test]
 fn test_prepend() {
     let r = layouts::make_simple_frames_prepending().0;
@@ -41,7 +42,7 @@ fn test_prepend() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check remove from begin, center and end works correctly.
+/// Checks remove from begin, center and end works correctly.
 #[test]
 fn test_remove() {
     let (r, _, _, _, mut v1, _, _, _, mut h2, _, _, _, mut s3) =
@@ -91,7 +92,7 @@ fn test_remove() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check if popping surfaces works correctly. Test popping from the end and from inside. Spaced
+/// Checks if popping surfaces works correctly. Test popping from the end and from inside. Spaced
 /// order should not change.
 #[test]
 fn test_pop() {
@@ -144,7 +145,7 @@ fn test_pop() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Check if spaced order is correct when inserting frames at the begin, center and end.
+/// Checks if spaced order is correct when inserting frames at the begin, center and end.
 #[test]
 fn test_prejoin_adjoin() {
     let (r, _, _, _, mut v1, mut v2, _, mut h1, mut h2, _, mut s1, mut s2, _) =
@@ -167,7 +168,7 @@ fn test_prejoin_adjoin() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Test forward iteration in time.
+/// Tests forward iteration in time.
 #[test]
 fn test_iteration_forward_in_time() {
     let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
@@ -183,7 +184,7 @@ fn test_iteration_forward_in_time() {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Test backward iteration in time.
+/// Tests backward iteration in time.
 #[test]
 fn test_iteration_backward_in_time() {
     let (r, v, _, _, v1, v2, v3, _, _, _, _, _, _) = layouts::make_simple_frames_appending();
@@ -193,6 +194,22 @@ fn test_iteration_backward_in_time() {
     assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v2);
     assertions::assert_frame_equal_exact(&iter.next().unwrap(), &v1);
     assert!(iter.next().is_none());
+
+    r.destroy();
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Tests calculating global position.
+#[test]
+fn test_calculating_global_position() {
+    let (r, _, _, _, _, _, _, _, _, _, _, f, _, _, _, z) =
+        layouts::make_sized_for_homogenizing();
+
+    assert_eq!(f.get_position(), Position::new(60, 0));
+    assert_eq!(f.calculate_global_position(), Position::new(60, 300));
+    assert_eq!(z.get_position(), Position::new(13, 23));
+    assert_eq!(z.calculate_global_position(), Position::new(13, 23));
 
     r.destroy();
 }

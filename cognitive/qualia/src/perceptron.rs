@@ -2,6 +2,8 @@
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 //! Definitions of events used in whole application.
+//!
+//! TODO: Perceptron is `perceptia`-specific and should be moved out of `cognitive`.
 
 // -------------------------------------------------------------------------------------------------
 
@@ -11,6 +13,7 @@ use std::os::unix::io::RawFd;
 use dharma::SignalId;
 
 use timing::Milliseconds;
+use enums::InteractionMode;
 use defs::{Command, OutputInfo, SurfaceId};
 use defs::{Position, OptionalPosition, Vector, Size, DrmBundle};
 use input::{Axis, Button, Key};
@@ -25,7 +28,6 @@ pub const PAGE_FLIP: SignalId = 4;
 pub const INPUTS_CHANGED: SignalId = 5;
 pub const OUTPUTS_CHANGED: SignalId = 6;
 pub const OUTPUT_FOUND: SignalId = 7;
-pub const COMMAND: SignalId = 8;
 pub const DISPLAY_CREATED: SignalId = 9;
 pub const INPUT_POINTER_MOTION: SignalId = 10;
 pub const INPUT_POINTER_POSITION: SignalId = 11;
@@ -45,6 +47,8 @@ pub const POINTER_RELATIVE_MOTION: SignalId = 32;
 pub const KEYBOARD_FOCUS_CHANGED: SignalId = 33;
 pub const TRANSFER_OFFERED: SignalId = 41;
 pub const TRANSFER_REQUESTED: SignalId = 42;
+pub const COMMAND: SignalId = 51;
+pub const MODE: SignalId = 52;
 pub const TAKE_SCREENSHOT: SignalId = 101;
 pub const SCREENSHOT_DONE: SignalId = 102;
 pub const WORKSPACE_STATE_CHANGED: SignalId = 111;
@@ -69,7 +73,6 @@ pub enum Perceptron {
     VerticalBlank(i32),
     PageFlip(i32),
     OutputFound(DrmBundle),
-    Command(Command),
     DisplayCreated(OutputInfo),
     InputPointerMotion(Vector),
     InputPointerPosition(OptionalPosition),
@@ -89,6 +92,8 @@ pub enum Perceptron {
     KeyboardFocusChanged(SurfaceId, SurfaceId),
     TransferOffered,
     TransferRequested(String, RawFd),
+    Command(Command),
+    Mode{active: bool, mode: InteractionMode},
     TakeScreenshot(i32),
     ScreenshotDone,
     WorkspaceStateChanged,
@@ -110,7 +115,6 @@ impl std::fmt::Debug for Perceptron {
             Perceptron::VerticalBlank(ref data) => write!(f, "VerticalBlank({:?})", data),
             Perceptron::PageFlip(ref data) => write!(f, "PageFlip({:?})", data),
             Perceptron::OutputFound(ref bundle) => write!(f, "OutputFound({:?})", bundle),
-            Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
             Perceptron::DisplayCreated(ref info) => write!(f, "DisplayCreated({:?})", info),
             Perceptron::InputPointerMotion(ref vector) => {
                 write!(f, "InputPointerMotion({:?})", vector)
@@ -148,6 +152,10 @@ impl std::fmt::Debug for Perceptron {
             Perceptron::TransferOffered => write!(f, "TransferOffered"),
             Perceptron::TransferRequested(ref mime_type, fd) => {
                 write!(f, "TransferRequested('{:?}', fd: {:?})", mime_type, fd)
+            }
+            Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
+            Perceptron::Mode{active, mode} => {
+                write!(f, "Mode(active: {:?}, mode: {:?})", active, mode)
             }
             Perceptron::TakeScreenshot(ref id) => write!(f, "TakeScreenshot({:?})", id),
             Perceptron::ScreenshotDone => write!(f, "ScreenshotDone"),

@@ -9,7 +9,7 @@
 use std;
 
 use timber;
-use qualia::{Action, Area, Command, Direction, Size, Vector};
+use qualia::{Action, Area, Command, Direction, Position, Size, Vector};
 use qualia::{SurfaceId, CompositorConfig, ExhibitorCoordinationTrait};
 
 use surface_history::SurfaceHistory;
@@ -253,6 +253,32 @@ impl<C> Compositor<C>
         }
     }
 
+    /// Moves given surface by given vector. Only floating surfaces are moved. This movement is
+    /// associated with interaction with user and `pin_point` describes point on surface by which
+    /// the surface is dragged. If `pin_point` changes display the surface frame is resettled to
+    /// corresponding workspace.
+    pub fn move_globally(&mut self, sid: SurfaceId, vector: Vector, pin_point: Position) {
+        if let Some(mut frame) = self.root.find_with_sid(sid) {
+            // Find workspaces
+            let pointed = self.root.find_pointed(pin_point);
+            let mut pointed_workspace = pointed.find_top().expect("pointed frame must have parent");
+            let frame_workspace = frame.find_top().expect("workspace must have parent");
+
+            if pointed_workspace.equals_exact(&frame_workspace) {
+                // If workspace does not change simply move the frame
+                frame.move_with_contents(vector);
+            } else {
+                // If workspace changes resettle the frame with correct position
+                let first_global_position = frame.calculate_global_position();
+                let second_global_position = pointed_workspace.calculate_global_position();
+                let target_position = first_global_position + vector - second_global_position;
+                frame.resettle(&mut pointed_workspace, Some(target_position), &mut self.coordinator);
+                self.root.pop_recursively(&mut frame);
+            }
+            self.log_frames();
+        }
+    }
+
     /// Returns root frame.
     pub fn get_root(&self) -> Frame {
         self.root.clone()
@@ -383,7 +409,7 @@ impl<C> Compositor<C>
         let old_workspace = self.find_current_workspace();
         let mut new_workspace = self.bring_workspace(title, false);
         if !old_workspace.equals_exact(&new_workspace) {
-            frame.resettle(&mut new_workspace, &mut self.coordinator);
+            frame.resettle(&mut new_workspace, None, &mut self.coordinator);
             let most_recent = self.find_most_recent(old_workspace);
             self.select(most_recent);
         }
@@ -507,7 +533,7 @@ impl<C> Compositor<C>
             };
 
             // Resettle to target
-            frame.resettle(&mut target, &mut self.coordinator);
+            frame.resettle(&mut target, None, &mut self.coordinator);
         }
     }
 }

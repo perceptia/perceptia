@@ -5,7 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{Action, Direction, KeyCode};
+use qualia::{Action, Direction, InputCode};
 
 use input_manager::mode_name;
 use functions;
@@ -14,7 +14,13 @@ use functions;
 
 /// Type definition for functions to be executed as key binding handler.
 pub trait Executor: Send + Sync {
-    fn execute(&self, &mut InputContext);
+    /// Executes an action when key or button was pressed.
+    fn activate(&self, &mut InputContext);
+
+    /// Executes an action when key or button was released.
+    fn release(&self, &mut InputContext) {}
+
+    /// Clones this trait object.
     fn duplicate(&self) -> Box<Executor>;
 }
 
@@ -75,7 +81,7 @@ pub trait InputContext {
     fn activate_mode(&mut self, mode_name: &'static str, active: bool);
 
     /// Returns the code of key that triggered the binging executor.
-    fn get_code(&self) -> KeyCode;
+    fn get_code(&self) -> InputCode;
 
     /// Just like `get_code` but returns number if number key was pressed, `None` otherwise.
     fn get_code_as_number(&self) -> Option<i32>;
@@ -109,7 +115,7 @@ fn put_direction(context: &mut InputContext, direction: Direction) {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper macro defining implementation of `Executor`.
+/// Helper macro defining implementation of `Executor` without `release` method.
 macro_rules! define_simple_executor {
     ($name:ident($context:ident) $callback:block) => {
         #[derive(Clone)]
@@ -119,8 +125,30 @@ macro_rules! define_simple_executor {
         }
         impl Executor for $name {
             fn duplicate(&self) -> Box<Executor> { Self::new() }
-            fn execute(&self, $context: &mut InputContext) {
+            fn activate(&self, $context: &mut InputContext) {
                 $callback
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Helper macro defining implementation of `Executor` with release method.
+macro_rules! define_full_executor {
+    ($name:ident($context:ident) activate => $activate:block release => $release:block) => {
+        #[derive(Clone)]
+        pub struct $name {}
+        impl $name {
+            pub fn new() -> Box<Self> { Box::new(Self{}) }
+        }
+        impl Executor for $name {
+            fn duplicate(&self) -> Box<Executor> { Self::new() }
+            fn activate(&self, $context: &mut InputContext) {
+                $activate
+            }
+            fn release(&self, $context: &mut InputContext) {
+                $release
             }
         }
     }
@@ -524,6 +552,20 @@ define_simple_executor!(SwapModeInsertToNormal(context) {
 
 // -------------------------------------------------------------------------------------------------
 
+/// Switches visual mode on and off.
+define_full_executor!{SurfaceDrag(context)
+    activate => {
+        log_info2!("Start surface drag");
+        context.activate_mode(mode_name::VISUAL, true);
+    }
+    release => {
+        log_info2!("Stop surface drag");
+        context.activate_mode(mode_name::VISUAL, false);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// Spawns new process.
 #[derive(Clone)]
 pub struct SpawnProcess {
@@ -543,7 +585,7 @@ impl SpawnProcess {
 }
 
 impl Executor for SpawnProcess {
-    fn execute(&self, _context: &mut InputContext) {
+    fn activate(&self, _context: &mut InputContext) {
         functions::spawn_process(&self.command);
     }
 

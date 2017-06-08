@@ -21,7 +21,9 @@ pub trait Settling {
     fn settle(&mut self, target: &mut Frame, area: Option<Area>, sa: &mut SurfaceAccess);
 
     /// Remove given frame, relax old parent and settle the frame on given target.
-    fn resettle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess);
+    ///
+    /// If frame is floating and optional position is given it will be used to place the frame.
+    fn resettle(&mut self, target: &mut Frame, position: Option<Position>, sa: &mut SurfaceAccess);
 
     /// Pop the surface `pop` and its parents inside surface `self`.
     ///
@@ -96,11 +98,15 @@ impl Settling for Frame {
         }
     }
 
-    fn resettle(&mut self, target: &mut Frame, sa: &mut SurfaceAccess) {
+    fn resettle(&mut self, target: &mut Frame, position: Option<Position>, sa: &mut SurfaceAccess) {
         let area = {
             // Preserve area if resettling to another workspace
             if self.get_mobility().is_floating() && target.get_mode().is_workspace() {
-                Some(self.get_area())
+                let mut area = self.get_area();
+                if let Some(position) = position {
+                    area.pos = position;
+                }
+                Some(area)
             } else {
                 None
             }

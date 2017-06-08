@@ -9,7 +9,7 @@ use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use qualia::{SurfaceId, Button, Command, OptionalPosition, Position, Size, Vector};
+use qualia::{SurfaceId, Button, InteractionMode, Command, OptionalPosition, Position, Size, Vector};
 use qualia::{perceptron, Perceptron};
 use qualia::{CompositorConfig, ExhibitorCoordinationTrait};
 use outputs::Output;
@@ -22,6 +22,14 @@ use strategist::Strategist;
 
 // -------------------------------------------------------------------------------------------------
 
+/// Helper structure for dragging surfaces.
+struct SurfaceDragger {
+    sid: SurfaceId,
+    position: Position,
+}
+
+// -------------------------------------------------------------------------------------------------
+
 /// `Exhibitor` manages tasks related to drawing and compositing surfaces.
 pub struct Exhibitor<C>
     where C: ExhibitorCoordinationTrait
@@ -29,6 +37,7 @@ pub struct Exhibitor<C>
     compositor: Compositor<C>,
     pointer: Rc<RefCell<Pointer<C>>>,
     displays: HashMap<i32, Display<C>>,
+    dragger: Option<SurfaceDragger>,
     coordinator: C,
 }
 
@@ -47,6 +56,7 @@ impl<C> Exhibitor<C>
             compositor: Compositor::new(coordinator.clone(), strategist, compositor_config),
             pointer: Rc::new(RefCell::new(Pointer::new(coordinator.clone()))),
             displays: HashMap::new(),
+            dragger: None,
             coordinator: coordinator,
         }
     }
@@ -171,12 +181,14 @@ impl<C> Exhibitor<C>
     /// Handle pointer motion event.
     pub fn on_motion(&mut self, vector: Vector) {
         self.pointer.borrow_mut().move_and_cast(vector, &self.displays);
+        self.drag_surface_if_needed();
         self.coordinator.notify();
     }
 
     /// Handle pointer position event.
     pub fn on_position(&mut self, position: OptionalPosition) {
         self.pointer.borrow_mut().update_position(position, &self.displays);
+        self.drag_surface_if_needed();
         self.coordinator.notify();
     }
 
@@ -194,6 +206,20 @@ impl<C> Exhibitor<C>
     /// Handle pointer position reset event.
     pub fn on_position_reset(&self) {
         self.pointer.borrow_mut().reset_position()
+    }
+
+    /// Handles interaction mode switch.
+    ///
+    /// Exhibitor is concerned only about visual mode. When switched on it starts dragging surface
+    /// under cursor along the cursor.
+    pub fn on_mode_switched(&mut self, active: bool, mode: InteractionMode) {
+        if mode == InteractionMode::Visual {
+            if active {
+                self.activate_surface_drag();
+            } else {
+                self.deactivate_surface_drag();
+            }
+        }
     }
 }
 
@@ -216,7 +242,39 @@ impl<C> Exhibitor<C>
 
 // -------------------------------------------------------------------------------------------------
 
-/// Helper methods
+/// Dragging helper methods
+impl<C> Exhibitor<C>
+    where C: ExhibitorCoordinationTrait
+{
+    fn activate_surface_drag(&mut self) {
+        let pointer = self.pointer.borrow();
+        let position = pointer.get_global_position();
+        let sid = pointer.get_pointer_focussed_sid();
+        if sid.is_valid() {
+            self.dragger = Some(SurfaceDragger {
+                position:  position,
+                sid: sid,
+            })
+        }
+    }
+
+    fn deactivate_surface_drag(&mut self) {
+        self.dragger = None;
+    }
+
+    fn drag_surface_if_needed(&mut self) {
+        if let Some(ref mut dragger) = self.dragger {
+            let new_position = self.pointer.borrow().get_global_position();
+            let vector = new_position - dragger.position;
+            self.compositor.move_globally(dragger.sid, vector, new_position);
+            dragger.position = new_position;
+        }
+    }
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Other helper methods
 impl<C> Exhibitor<C>
     where C: ExhibitorCoordinationTrait
 {

@@ -107,6 +107,9 @@ pub struct KeybindingsConfig {
 
     /// Bindings for `normal` mode.
     pub normal: Vec<BindingEntry>,
+
+    /// Bindings for `visual` mode.
+    pub visual: Vec<BindingEntry>,
 }
 
 // -------------------------------------------------------------------------------------------------

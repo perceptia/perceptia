@@ -869,6 +869,15 @@ impl Frame {
         }
         result
     }
+
+    /// Calculates global position of the frame.
+    pub fn calculate_global_position(&self) -> Position {
+        if let Some(parent) = self.get_parent() {
+            self.get_position() + parent.calculate_global_position()
+        } else {
+            Position::default()
+        }
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

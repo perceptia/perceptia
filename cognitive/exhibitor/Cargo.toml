@@ -17,6 +17,7 @@ cognitive-outputs = "0.0.2"
 cognitive-frames = "0.0.1"
 
 [dev-dependencies]
+cognitive-qualia = { version = "0.0.3", features = ["testing"] }
 cognitive-outputs = { version = "0.0.2", features = ["testing"] }
 cognitive-frames = { version = "0.0.1", features = ["testing"] }
 

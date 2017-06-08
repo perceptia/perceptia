@@ -12,8 +12,8 @@ extern crate cognitive_exhibitor as exhibitor;
 
 mod common;
 
-use qualia::{OutputInfo, SurfaceId};
-use qualia::{Area, Position, Size};
+use qualia::{InteractionMode, OutputInfo, SurfaceId};
+use qualia::{Area, Position, Size, Vector};
 use qualia::coordinator_mock::CoordinatorMock;
 use outputs::output_mock::OutputMock;
 use frames::Geometry::{Stacked, Vertical};
@@ -26,6 +26,7 @@ use common::exhibitor_mixins::ExhibitorCommandShorthands;
 // -------------------------------------------------------------------------------------------------
 
 struct Environment {
+    coordinator_mock: CoordinatorMock,
     exhibitor: Exhibitor<CoordinatorMock>,
     output1_info: OutputInfo,
     output2_info: OutputInfo,
@@ -52,8 +53,8 @@ impl Environment {
         let output1 = Box::new(OutputMock::new(output1_info.clone()));
         let output2 = Box::new(OutputMock::new(output2_info.clone()));
 
-        let coordinator = CoordinatorMock::new();
-        let mut exhibitor = Exhibitor::new(coordinator.clone(),
+        let coordinator_mock = CoordinatorMock::new();
+        let mut exhibitor = Exhibitor::new(coordinator_mock.clone(),
                                            strategist,
                                            common::configurations::compositor());
 
@@ -61,10 +62,23 @@ impl Environment {
         exhibitor.on_output_found(output2);
 
         Environment {
+            coordinator_mock: coordinator_mock,
             exhibitor: exhibitor,
             output1_info: output1_info,
             output2_info: output2_info,
         }
+    }
+
+    pub fn redraw(&mut self) {
+        self.exhibitor.on_notify();
+        self.exhibitor.on_pageflip(1);
+        self.exhibitor.on_pageflip(2);
+    }
+
+    pub fn create_surface(&mut self, id: u64) {
+        let sid = SurfaceId::new(id);
+        self.coordinator_mock.add_surface(sid);
+        self.exhibitor.on_surface_ready(sid);
     }
 }
 
@@ -134,6 +148,103 @@ fn test_moving_surface_between_displays() {
         ]
     );
 
+    repr.assert_frames_spaced(&e.exhibitor.get_root());
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Test dragging surface by switching visual mode on and moving pointer. If visual mode is off the
+/// surface should not be dragged.
+#[test]
+fn test_dragging_surface_in_visual_mode() {
+    let mut config = common::configurations::strategist();
+    config.choose_target = "always_floating".to_owned();
+    config.choose_floating = "always_centered".to_owned();
+    let strategist = Strategist::new_from_config(config);
+    let mut e = Environment::create(strategist);
+
+    let vector = Vector::new(10, 20);
+
+    // Make one surface and redraw to update hover state
+    e.exhibitor.focus_workspace("1");
+    e.create_surface(1);
+    e.redraw();
+    let selection = e.exhibitor.get_selection();
+    let mut area = selection.get_area();
+
+    // Switch visual mode on and move cursor
+    e.exhibitor.on_mode_switched(true, InteractionMode::Visual);
+    e.exhibitor.on_motion(vector);
+    area.pos = area.pos + vector;
+    assert_eq!(e.exhibitor.get_selection().get_area().pos, area.pos);
+
+    // After switching visual mode off nothing should be moved
+    e.exhibitor.on_mode_switched(false, InteractionMode::Visual);
+    e.exhibitor.on_motion(vector);
+    assert_eq!(e.exhibitor.get_selection().get_area().pos, area.pos);
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Test dragging surface by switching visual mode on and moving pointer to another display. The
+/// surface should then be resettled to corresponding workspace. If visual mode is off the surface
+/// should not be dragged.
+#[test]
+fn test_dragging_surface_in_visual_mode_to_different_display() {
+    let mut config = common::configurations::strategist();
+    config.choose_target = "always_floating".to_owned();
+    config.choose_floating = "always_centered".to_owned();
+    let strategist = Strategist::new_from_config(config);
+    let mut e = Environment::create(strategist);
+
+    // Make one surface and redraw to update hover state
+    e.exhibitor.focus_workspace("1");
+    e.create_surface(1);
+    e.redraw();
+    let selection = e.exhibitor.get_selection();
+    let area = selection.get_area();
+
+    // Switch visual mode on and move cursor to different display
+    let vector = Vector::new(110, 20);
+    e.exhibitor.on_mode_switched(true, InteractionMode::Visual);
+    e.exhibitor.on_motion(vector);
+
+    let new_pos = Position::new(35, 45);
+
+    // Check structure
+    let repr = FrameRepresentation::new(
+        Parameters::new_root(),
+        vec![
+            FrameRepresentation::new(
+                Parameters::new_display(2, e.output2_info.area, e.output2_info.make.clone()),
+                vec![
+                    FrameRepresentation::new(
+                        Parameters::new_workspace("2".to_owned(), Stacked, true),
+                        vec![FrameRepresentation::new_leaf(1, Vertical)
+                            .with_mobility(Floating)
+                            .with_area(new_pos.x, new_pos.y, area.size.width, area.size.height)
+                        ]
+                    )
+                ]
+            ),
+            FrameRepresentation::new(
+                Parameters::new_display(1, e.output1_info.area, e.output1_info.make.clone()),
+                vec![
+                    FrameRepresentation::new(
+                        Parameters::new_workspace("1".to_owned(), Stacked, true),
+                        Vec::new()
+                    )
+                ]
+            ),
+        ]
+    );
+
+    repr.assert_frames_spaced(&e.exhibitor.get_root());
+
+    // After switching visual mode off nothing should be moved
+    let vector = Vector::new(10, 20);
+    e.exhibitor.on_mode_switched(false, InteractionMode::Visual);
+    e.exhibitor.on_motion(vector);
     repr.assert_frames_spaced(&e.exhibitor.get_root());
 }
 

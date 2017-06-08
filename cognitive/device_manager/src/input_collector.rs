@@ -9,6 +9,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::rc::Rc;
+use std::sync::{Arc, Mutex};
 
 use dharma::{EventHandlerId, event_kind};
 use qualia::{Illusion, DeviceKind, EventHandling, InputConfig, InputForwarding, InputHandling};
@@ -46,10 +47,8 @@ impl DeviceInfo {
 /// `InputCollector` manages plugging-in and out input devices.
 pub struct InputCollector<C> where C: EventHandling {
     coordinator: C,
-    input_handler: Box<InputHandling>,
-    input_forwarder: Box<InputForwarding>,
     input_config: InputConfig,
-    vt: Option<virtual_terminal::VirtualTerminal>,
+    gateway: Arc<Mutex<InputForwarding>>,
     restricted_opener: Rc<RefCell<RestrictedOpener>>,
     current_devices: HashMap<DeviceInfo, EventHandlerId>,
 }
@@ -65,13 +64,12 @@ impl<C> InputCollector<C> where C: EventHandling {
                vt: Option<virtual_terminal::VirtualTerminal>,
                restricted_opener: Rc<RefCell<RestrictedOpener>>)
                -> Self {
+
         InputCollector {
             coordinator: coordinator,
-            input_handler: input_handler,
-            input_forwarder: input_forwarder,
             input_config: input_config,
+            gateway: Arc::new(Mutex::new(InputGateway::new(input_handler, input_forwarder, vt))),
             restricted_opener: restricted_opener,
-            vt: vt,
             current_devices: HashMap::new(),
         }
     }
@@ -103,13 +101,10 @@ impl<C> InputCollector<C> where C: EventHandling {
 impl<C> InputCollector<C> where C: EventHandling {
     /// Handles new device by creating new instance of drive for it and adding new event handler.
     fn handle_new_device(&mut self, device: DeviceInfo) {
-        let gateway = InputGateway::new(self.input_handler.duplicate(),
-                                        self.input_forwarder.duplicate(),
-                                        self.vt.clone());
         let r = evdev_driver::Evdev::initialize_device(&device.devnode,
                                                        device.device_kind,
                                                        self.input_config.clone(),
-                                                       gateway,
+                                                       self.gateway.clone(),
                                                        &self.restricted_opener.borrow());
         match r {
             Ok(driver) => {

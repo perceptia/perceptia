@@ -24,7 +24,7 @@ extern crate dharma;
 extern crate cognitive_graphics as graphics;
 
 pub mod enums;
-pub use enums::{DeviceKind, KeyState, Action, Direction};
+pub use enums::{DeviceKind, KeyState, Action, Direction, InteractionMode};
 
 pub mod errors;
 pub use errors::Illusion;
@@ -41,7 +41,7 @@ pub use defs::{Command, OutputInfo, DrmBundle, WorkspaceState, WorkspaceInfo};
 pub use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId};
 
 pub mod input;
-pub use input::{Axis, Button, Binding, Key, KeyCatchResult, KeyCode, KeyValue, modifier};
+pub use input::{Axis, Button, Binding, Key, CatchResult, InputCode, InputValue, modifier};
 pub use input::{InputForwarding, InputHandling};
 
 pub mod image;

@@ -18,7 +18,7 @@ pub use defs::{SurfaceId, SurfaceIdType};
 // -------------------------------------------------------------------------------------------------
 
 /// This structure defines how the surface should be drawn.
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 pub struct SurfaceContext {
     pub id: SurfaceId,
     pub pos: Position,
@@ -145,6 +145,7 @@ impl DataSource {
 // -------------------------------------------------------------------------------------------------
 
 /// Structure containing public information about surface.
+#[derive(Clone)]
 pub struct SurfaceInfo {
     pub id: SurfaceId,
     pub offset: Vector,

@@ -6,9 +6,26 @@ technology and want to try a tiling window manager running on Wayland? `percepti
 `perceptia` tries to merge concepts from most popular tiling window managers like `i3`, `awesome`,
 `ratpoison` or `dwm` with the freshness of Wayland.
 
-There are still many things to work on. If you are looking for a working compositor it is much too
-early to choose `perceptia`, but if you have programming skills and want to join the development team,
-your help will be appreciated.
+For main objectives of the project see [the Perceptia Manifesto](./info/manifesto.md).
+
+Status
+------
+
+There are still many things to work on. If you are looking for a working compositor it is a bit too
+early to choose `perceptia`, but if you have programming skills and want to join the development team, your help will be appreciated.
+
+Backbone of every project is community. User input is especially valuable for young projects. It is
+the users that shape what the project will later become. Please go to
+[github](https://github.com/perceptia/perceptia/issues) and vote for features you want to see in
+`perceptia` or share your own ideas. Your input will help to decide which features should be
+implemented first and how they should be designed.
+
+This repository consists of:
+
+ * `cognitive` - a loose set of (Rust) crates helping creating surface compositors or other low
+   level graphic applications
+
+ * `perceptia` - a dynamic (tilling or stacking) Wayland surface compositor basing on `cognitive`.
 
 Getting Started
 ---------------

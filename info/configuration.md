@@ -139,6 +139,8 @@ Insert mode:
 
  * `[lctrl]+[lmeta]+T` - spawn `weston-terminal`
 
+ * `[lmeta]+[left button]` - starts interactive surface drag
+
 Normal mode:
 
  * `[esc]` - clean the command

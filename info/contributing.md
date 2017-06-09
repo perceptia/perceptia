@@ -54,7 +54,7 @@ Here is overview of directories (documentation in code will provide more details
 
  * **perceptia** - source code of `perceptia`
 
- * ***/*/tests** - source code of unit tests
+ * **\*/\*/tests** - source code of unit tests
 
  * **info** - hand-written documentation
 

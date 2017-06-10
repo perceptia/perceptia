@@ -93,7 +93,7 @@ pub enum Perceptron {
     TransferOffered,
     TransferRequested(String, RawFd),
     Command(Command),
-    Mode{active: bool, mode: InteractionMode},
+    Mode { active: bool, mode: InteractionMode },
     TakeScreenshot(i32),
     ScreenshotDone,
     WorkspaceStateChanged,
@@ -154,7 +154,7 @@ impl std::fmt::Debug for Perceptron {
                 write!(f, "TransferRequested('{:?}', fd: {:?})", mime_type, fd)
             }
             Perceptron::Command(ref command) => write!(f, "Command({:?})", command),
-            Perceptron::Mode{active, mode} => {
+            Perceptron::Mode { active, mode } => {
                 write!(f, "Mode(active: {:?}, mode: {:?})", active, mode)
             }
             Perceptron::TakeScreenshot(ref id) => write!(f, "TakeScreenshot({:?})", id),

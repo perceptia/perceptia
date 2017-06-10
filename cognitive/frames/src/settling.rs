@@ -23,7 +23,10 @@ pub trait Settling {
     /// Remove given frame, relax old parent and settle the frame on given target.
     ///
     /// If frame is floating and optional position is given it will be used to place the frame.
-    fn resettle(&mut self, target: &mut Frame, position: Option<Position>, sa: &mut SurfaceAccess);
+    fn resettle(&mut self,
+                target: &mut Frame,
+                position: Option<Position>,
+                sa: &mut SurfaceAccess);
 
     /// Pop the surface `pop` and its parents inside surface `self`.
     ///
@@ -98,7 +101,10 @@ impl Settling for Frame {
         }
     }
 
-    fn resettle(&mut self, target: &mut Frame, position: Option<Position>, sa: &mut SurfaceAccess) {
+    fn resettle(&mut self,
+                target: &mut Frame,
+                position: Option<Position>,
+                sa: &mut SurfaceAccess) {
         let area = {
             // Preserve area if resettling to another workspace
             if self.get_mobility().is_floating() && target.get_mode().is_workspace() {
@@ -214,8 +220,7 @@ impl Settling for Frame {
                 }
                 Side::On => {
                     let mut new_target = {
-                        if !target_parent.is_top() &&
-                           target_parent.count_children() == 1 {
+                        if !target_parent.is_top() && target_parent.count_children() == 1 {
                             target_parent.clone()
                         } else if target.get_mode().is_leaf() {
                             target.ramify(Geometry::Stacked)

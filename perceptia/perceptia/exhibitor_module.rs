@@ -90,7 +90,7 @@ impl Module for ExhibitorModule {
                 self.exhibitor.on_keyboard_focus_changed(sid);
             }
 
-            Perceptron::Mode{active, mode} => {
+            Perceptron::Mode { active, mode } => {
                 self.exhibitor.on_mode_switched(active, mode);
             }
 

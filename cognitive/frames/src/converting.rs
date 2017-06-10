@@ -37,7 +37,7 @@ impl Converting for Frame {
                 -> Vec<SurfaceContext> {
         let mut result = Vec::new();
         for frame in self.time_iter() {
-            if let Mode::Workspace{is_active} = frame.get_mode() {
+            if let Mode::Workspace { is_active } = frame.get_mode() {
                 if !is_active {
                     continue;
                 }
@@ -67,7 +67,7 @@ impl Converting for Frame {
 // -------------------------------------------------------------------------------------------------
 
 fn root_to_displays(frame: &Frame, displays: &mut HashMap<i32, Vec<WorkspaceInfo>>) {
-    if let Mode::Display{id} = frame.get_mode() {
+    if let Mode::Display { id } = frame.get_mode() {
         let mut workspaces = Vec::new();
         display_to_workspaces(frame, &mut workspaces);
         workspaces.sort();
@@ -82,7 +82,7 @@ fn root_to_displays(frame: &Frame, displays: &mut HashMap<i32, Vec<WorkspaceInfo
 // -------------------------------------------------------------------------------------------------
 
 fn display_to_workspaces(frame: &Frame, workspaces: &mut Vec<WorkspaceInfo>) {
-    if let Mode::Workspace{is_active} = frame.get_mode() {
+    if let Mode::Workspace { is_active } = frame.get_mode() {
         workspaces.push(WorkspaceInfo::new(frame.get_title(), is_active));
     } else {
         for subframe in frame.space_iter() {

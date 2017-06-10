@@ -16,7 +16,7 @@ use memory::{Buffer, Memory};
 use image::PixelFormat;
 use perceptron::Perceptron;
 use traits::{StatePublishing, Screenshooting, MemoryManagement, WindowManagement};
-use traits::{ExhibitorCoordinationTrait};
+use traits::ExhibitorCoordinationTrait;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -29,9 +29,7 @@ pub struct InnerCoordinatorMock {
 
 impl InnerCoordinatorMock {
     pub fn new() -> Self {
-        InnerCoordinatorMock {
-            surfaces: HashMap::new(),
-        }
+        InnerCoordinatorMock { surfaces: HashMap::new() }
     }
 
     pub fn add_surface(&mut self, sid: SurfaceId) {
@@ -108,14 +106,14 @@ impl SurfaceViewer for CoordinatorMock {
             Some(info.clone())
         } else {
             Some(SurfaceInfo {
-                 id: sid,
-                 offset: Vector::default(),
-                 parent_sid: SurfaceId::invalid(),
-                 desired_size: Size::default(),
-                 requested_size: Size::default(),
-                 state_flags: surface_state::REGULAR,
-                 data_source: DataSource::None,
-             })
+                     id: sid,
+                     offset: Vector::default(),
+                     parent_sid: SurfaceId::invalid(),
+                     desired_size: Size::default(),
+                     requested_size: Size::default(),
+                     state_flags: surface_state::REGULAR,
+                     data_source: DataSource::None,
+                 })
         }
     }
 }
@@ -203,7 +201,9 @@ impl MemoryManagement for CoordinatorMock {
 
 impl WindowManagement for CoordinatorMock {
     fn set_workspace_state(&mut self, _state: WorkspaceState) {}
-    fn get_workspace_state(&self) -> WorkspaceState { WorkspaceState::empty() }
+    fn get_workspace_state(&self) -> WorkspaceState {
+        WorkspaceState::empty()
+    }
 }
 
 // -------------------------------------------------------------------------------------------------

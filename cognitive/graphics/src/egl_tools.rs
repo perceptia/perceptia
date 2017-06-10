@@ -508,7 +508,8 @@ impl EglContext {
         if egl::swap_buffers(self.egl.display, self.egl.surface) {
             Ok(())
         } else {
-            Err(GraphicsError::new(format!("Failed to swap EGL buffers (0x{:x})", egl::get_error())))
+            Err(GraphicsError::new(format!("Failed to swap EGL buffers (0x{:x})",
+                                           egl::get_error())))
         }
     }
 }

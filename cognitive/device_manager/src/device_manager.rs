@@ -43,7 +43,8 @@ impl<C> DeviceManager<C>
     pub fn new(input_handler: Box<InputHandling>,
                input_forwarder: Box<InputForwarding>,
                input_config: InputConfig,
-               coordinator: C) -> Self {
+               coordinator: C)
+               -> Self {
         // Prepare restricted opener
         let restricted_opener = Self::prepare_restricted_opener();
 
@@ -127,11 +128,9 @@ impl<C> DeviceManager<C>
     /// Find and initialize outputs.
     fn scan_output_devices(&mut self) {
         let oc = &mut self.output_collector;
-        self.udev.iterate_output_devices(|devnode, _| {
-            if let Err(err) = oc.scan_device(devnode) {
-                log_error!("{}", err);
-            }
-        });
+        self.udev.iterate_output_devices(|devnode, _| if let Err(err) = oc.scan_device(devnode) {
+                                             log_error!("{}", err);
+                                         });
     }
 
     /// Initialize device monitoring.

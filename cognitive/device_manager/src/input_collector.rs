@@ -45,7 +45,9 @@ impl DeviceInfo {
 // -------------------------------------------------------------------------------------------------
 
 /// `InputCollector` manages plugging-in and out input devices.
-pub struct InputCollector<C> where C: EventHandling {
+pub struct InputCollector<C>
+    where C: EventHandling
+{
     coordinator: C,
     input_config: InputConfig,
     gateway: Arc<Mutex<InputForwarding>>,
@@ -55,7 +57,9 @@ pub struct InputCollector<C> where C: EventHandling {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> InputCollector<C> where C: EventHandling {
+impl<C> InputCollector<C>
+    where C: EventHandling
+{
     /// Constructs new `InputCollector`.
     pub fn new(coordinator: C,
                input_handler: Box<InputHandling>,
@@ -81,8 +85,8 @@ impl<C> InputCollector<C> where C: EventHandling {
         let mut new_devices = HashSet::<DeviceInfo>::new();
 
         udev.iterate_input_devices(|devnode, devkind, _| {
-            new_devices.insert(DeviceInfo::new(devnode, devkind));
-        });
+                                       new_devices.insert(DeviceInfo::new(devnode, devkind));
+                                   });
 
         for dev in new_devices.difference(&old_devices) {
             self.handle_new_device(dev.clone());
@@ -94,11 +98,13 @@ impl<C> InputCollector<C> where C: EventHandling {
 
         Ok(())
     }
- }
+}
 
 // -------------------------------------------------------------------------------------------------
 
-impl<C> InputCollector<C> where C: EventHandling {
+impl<C> InputCollector<C>
+    where C: EventHandling
+{
     /// Handles new device by creating new instance of drive for it and adding new event handler.
     fn handle_new_device(&mut self, device: DeviceInfo) {
         let r = evdev_driver::Evdev::initialize_device(&device.devnode,
@@ -131,7 +137,9 @@ impl<C> InputCollector<C> where C: EventHandling {
 // -------------------------------------------------------------------------------------------------
 
 // Helper methods.
-impl<C> InputCollector<C> where C: EventHandling {
+impl<C> InputCollector<C>
+    where C: EventHandling
+{
     /// Converts inner collection of devices to set.
     fn collect_current_devices(&self) -> HashSet<DeviceInfo> {
         let mut set = HashSet::new();

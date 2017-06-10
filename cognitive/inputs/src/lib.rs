@@ -12,4 +12,4 @@ pub mod keyboard_state;
 pub use keyboard_state::{KeyboardState, KeyMods};
 
 pub mod keymap;
-pub use keymap::{Keymap};
+pub use keymap::Keymap;

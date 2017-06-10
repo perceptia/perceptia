@@ -60,7 +60,8 @@ impl InputForwarding for InputGateway {
     /// Emits keyboards event.
     fn emit_key(&mut self, code: u16, value: i32) {
         // Ignore repeats
-        if (value != KeyState::Pressed as InputValue) && (value != KeyState::Released as InputValue) {
+        if (value != KeyState::Pressed as InputValue) &&
+           (value != KeyState::Released as InputValue) {
             return;
         }
 

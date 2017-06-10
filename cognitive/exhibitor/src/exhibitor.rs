@@ -252,9 +252,9 @@ impl<C> Exhibitor<C>
         let sid = pointer.get_pointer_focussed_sid();
         if sid.is_valid() {
             self.dragger = Some(SurfaceDragger {
-                position:  position,
-                sid: sid,
-            })
+                                    position: position,
+                                    sid: sid,
+                                })
         }
     }
 

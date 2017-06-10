@@ -42,8 +42,7 @@ impl<'a> Module for AestheticsModule<'a> {
              perceptron::POINTER_FOCUS_CHANGED,
              perceptron::SURFACE_DESTROYED,
              perceptron::WORKSPACE_STATE_CHANGED,
-             perceptron::TIMER_500,
-        ]
+             perceptron::TIMER_500]
     }
 
     fn initialize(&mut self) {

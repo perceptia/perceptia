@@ -199,7 +199,7 @@ impl InnerCoordinator {
         // workspace state. If more fine informations is needed it should be provided inside
         // `Perceptron::WorkspaceStateChanged`.
         self.signaler.emit(perceptron::WORKSPACE_STATE_CHANGED,
-                           Perceptron::WorkspaceStateChanged{});
+                           Perceptron::WorkspaceStateChanged {});
     }
 
     /// Returns current workspace state.
@@ -242,7 +242,8 @@ impl Coordinator {
                -> Self {
         let mut mine = Coordinator {
             resources: Arc::new(Mutex::new(ResourceStorage::new(signaler.clone()))),
-            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler.clone(), dispatcher.clone()))),
+            inner: Arc::new(Mutex::new(InnerCoordinator::new(signaler.clone(),
+                                                             dispatcher.clone()))),
         };
 
         mine.setup(signaler, dispatcher);

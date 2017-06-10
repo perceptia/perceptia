@@ -15,7 +15,9 @@ use dispatcher::{EventHandler, EventKind, event_kind};
 // -------------------------------------------------------------------------------------------------
 
 /// General purpose timer implementing `EventHandler`.
-pub struct Timer<F> where F: FnMut() -> () {
+pub struct Timer<F>
+    where F: FnMut() -> ()
+{
     /// Callback function called every time timer expires.
     callback: F,
 
@@ -25,16 +27,21 @@ pub struct Timer<F> where F: FnMut() -> () {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<F> Timer<F> where F: FnMut() -> () {
+impl<F> Timer<F>
+    where F: FnMut() -> ()
+{
     /// Constructs new `Timer` expiring periodically with given interval and calling given
     /// `callback`.
     pub fn new(interval: Duration, callback: F) -> Result<Self, ()> {
         if let Ok(mut timer_fd) = TimerFd::new_custom(false, true, true) {
-            timer_fd.set_state(TimerState::Periodic{current: interval, interval: interval});
+            timer_fd.set_state(TimerState::Periodic {
+                                   current: interval,
+                                   interval: interval,
+                               });
             Ok(Timer {
-                callback: callback,
-                timer_fd: timer_fd,
-            })
+                   callback: callback,
+                   timer_fd: timer_fd,
+               })
         } else {
             Err(())
         }
@@ -43,7 +50,9 @@ impl<F> Timer<F> where F: FnMut() -> () {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<F> EventHandler for Timer<F> where F: FnMut() -> () {
+impl<F> EventHandler for Timer<F>
+    where F: FnMut() -> ()
+{
     fn get_fd(&self) -> RawFd {
         self.timer_fd.as_raw_fd()
     }

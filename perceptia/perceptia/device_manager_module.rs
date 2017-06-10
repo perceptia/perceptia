@@ -49,12 +49,10 @@ impl Module for DeviceManagerModule {
     type C = Context;
 
     fn get_signals(&self) -> Vec<SignalId> {
-        vec![
-            perceptron::SUSPEND,
-            perceptron::WAKEUP,
-            perceptron::INPUTS_CHANGED,
-            perceptron::OUTPUTS_CHANGED,
-        ]
+        vec![perceptron::SUSPEND,
+             perceptron::WAKEUP,
+             perceptron::INPUTS_CHANGED,
+             perceptron::OUTPUTS_CHANGED]
     }
 
     fn initialize(&mut self) {

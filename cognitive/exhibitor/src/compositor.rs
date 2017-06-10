@@ -272,7 +272,9 @@ impl<C> Compositor<C>
                 let first_global_position = frame.calculate_global_position();
                 let second_global_position = pointed_workspace.calculate_global_position();
                 let target_position = first_global_position + vector - second_global_position;
-                frame.resettle(&mut pointed_workspace, Some(target_position), &mut self.coordinator);
+                frame.resettle(&mut pointed_workspace,
+                               Some(target_position),
+                               &mut self.coordinator);
                 self.root.pop_recursively(&mut frame);
             }
             self.log_frames();
@@ -571,9 +573,8 @@ impl<C> Compositor<C>
 {
     /// Searches for existing workspace with given title.
     fn find_workspace(&self, title: &str) -> Option<Frame> {
-        let matcher = |frame: &Frame| {
-            frame.get_mode().is_workspace() && (frame.get_title() == title)
-        };
+        let matcher =
+            |frame: &Frame| frame.get_mode().is_workspace() && (frame.get_title() == title);
         self.root.find(&matcher)
     }
 
@@ -632,9 +633,8 @@ impl<C> Compositor<C>
         } else {
             // TODO: For many output setup this should be configurable on which output the
             // workspace will be created.
-            let mut workspace_container = self.find_current_workspace()
-                .get_parent()
-                .expect("workspace must have parent");
+            let mut workspace_container =
+                self.find_current_workspace().get_parent().expect("workspace must have parent");
 
             self.create_new_workspace(&mut workspace_container, title, focus)
         }

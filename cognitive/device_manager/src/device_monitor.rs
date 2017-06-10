@@ -25,7 +25,9 @@ use udev;
 ///
 /// `libudev-rs` unfortunately does not support sending monitor between threads so raw
 /// `libudev-sys` pointers are used.
-pub struct DeviceMonitor<P> where P: StatePublishing + Send {
+pub struct DeviceMonitor<P>
+    where P: StatePublishing + Send
+{
     context: *mut libudev_sys::udev,
     monitor: *mut libudev_sys::udev_monitor,
     state_publisher: P,
@@ -35,11 +37,16 @@ pub struct DeviceMonitor<P> where P: StatePublishing + Send {
 
 /// `DeviceMonitor` contains only sendables and pointers to `libudev` objects and does not expose
 /// to user anything constructed by `libudev` so it is safe for send it to other thread.
-unsafe impl<P> Send for DeviceMonitor<P> where P: StatePublishing + Send {}
+unsafe impl<P> Send for DeviceMonitor<P>
+    where P: StatePublishing + Send
+{
+}
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> DeviceMonitor<P> where P: StatePublishing + Send {
+impl<P> DeviceMonitor<P>
+    where P: StatePublishing + Send
+{
     /// Constructs new `DeviceMonitor`.
     ///
     /// Starts device monitoring and returns instance of `Dispatcher` `EventHandler` for processing
@@ -60,17 +67,19 @@ impl<P> DeviceMonitor<P> where P: StatePublishing + Send {
             libudev_sys::udev_monitor_enable_receiving(monitor);
 
             Ok(DeviceMonitor {
-                context: context,
-                monitor: monitor,
-                state_publisher: state_publisher,
-            })
+                   context: context,
+                   monitor: monitor,
+                   state_publisher: state_publisher,
+               })
         }
     }
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> Drop for DeviceMonitor<P> where P: StatePublishing + Send {
+impl<P> Drop for DeviceMonitor<P>
+    where P: StatePublishing + Send
+{
     fn drop(&mut self) {
         unsafe {
             libudev_sys::udev_monitor_unref(self.monitor);
@@ -82,7 +91,9 @@ impl<P> Drop for DeviceMonitor<P> where P: StatePublishing + Send {
 // -------------------------------------------------------------------------------------------------
 
 /// This code executes in main dispatchers thread.
-impl<P> EventHandler for DeviceMonitor<P> where P: StatePublishing + Send {
+impl<P> EventHandler for DeviceMonitor<P>
+    where P: StatePublishing + Send
+{
     fn get_fd(&self) -> io::RawFd {
         unsafe { libudev_sys::udev_monitor_get_fd(self.monitor) }
     }
@@ -92,7 +103,8 @@ impl<P> EventHandler for DeviceMonitor<P> where P: StatePublishing + Send {
         if !device.is_null() {
             let sysname = unsafe {
                 let ptr = libudev_sys::udev_device_get_sysname(device);
-                let slice = std::slice::from_raw_parts(ptr as *const u8, libc::strlen(ptr) as usize);
+                let slice = std::slice::from_raw_parts(ptr as *const u8,
+                                                       libc::strlen(ptr) as usize);
                 OsStr::from_bytes(slice)
             };
 

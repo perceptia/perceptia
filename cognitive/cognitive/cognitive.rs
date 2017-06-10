@@ -28,4 +28,3 @@ pub extern crate cognitive_renderer_gl as renderer_gl;
 pub extern crate cognitive_inputs as inputs;
 pub extern crate cognitive_outputs as outputs;
 pub extern crate cognitive_device_manager as device_manager;
-

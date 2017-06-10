@@ -452,7 +452,7 @@ impl OutputInfo {
 
 // -------------------------------------------------------------------------------------------------
 
-/// Keep information about workspace 
+/// Keeps information about workspace.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct WorkspaceInfo {
     /// Name of the workspace.

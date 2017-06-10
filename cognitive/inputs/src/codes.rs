@@ -20,6 +20,8 @@
 //! TODO: This should be part of separate crate, but none not-deprecated seem to have enough
 //! low-level support for them. Maybe create new crate containing only this file?
 
+#![cfg_attr(rustfmt, rustfmt_skip)]
+
 // Device properties and quirks
 pub const INPUT_PROP_POINTER:        u16 = 0x00; // needs a pointer
 pub const INPUT_PROP_DIRECT:         u16 = 0x01; // direct input devices

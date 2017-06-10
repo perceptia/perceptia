@@ -172,7 +172,7 @@ impl InnerInputManager {
                      value: InputValue,
                      modifiers: modifier::ModifierType)
                      -> CatchResult {
-         self.catch(code, value, modifiers)
+        self.catch(code, value, modifiers)
     }
 
     /// Tries for find executor matching to given button and state of modifiers and execute it if
@@ -182,7 +182,7 @@ impl InnerInputManager {
                     value: InputValue,
                     modifiers: modifier::ModifierType)
                     -> CatchResult {
-         self.catch(code, value, modifiers)
+        self.catch(code, value, modifiers)
     }
 
     /// Helper method for searching and executing an executor.
@@ -293,7 +293,10 @@ impl binding_functions::InputContext for InnerInputManager {
         self.make_mode_active(mode_name.to_string(), active);
         if mode_name == mode_name::VISUAL {
             self.signaler.emit(perceptron::MODE,
-                               Perceptron::Mode{active: active, mode: InteractionMode::Visual});
+                               Perceptron::Mode {
+                                   active: active,
+                                   mode: InteractionMode::Visual,
+                               });
         }
     }
 

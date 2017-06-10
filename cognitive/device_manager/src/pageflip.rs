@@ -14,13 +14,17 @@ use qualia::StatePublishing;
 // -------------------------------------------------------------------------------------------------
 
 /// Context passed ti libdrm to handle page flips.
-struct PageFlipContext<P> where P: StatePublishing {
+struct PageFlipContext<P>
+    where P: StatePublishing
+{
     state_publisher: P,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> PageFlipContext<P> where P: StatePublishing {
+impl<P> PageFlipContext<P>
+    where P: StatePublishing
+{
     /// `PageFlipContext` constructor.
     pub fn new(state_publisher: P) -> Self {
         PageFlipContext { state_publisher: state_publisher }
@@ -29,7 +33,9 @@ impl<P> PageFlipContext<P> where P: StatePublishing {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> drm::EventContext for PageFlipContext<P> where P: StatePublishing {
+impl<P> drm::EventContext for PageFlipContext<P>
+    where P: StatePublishing
+{
     #[allow(unused_variables)]
     fn vblank_handler(&mut self, fd: io::RawFd, sequence: u32, sec: u32, usec: u32, data: i32) {
         self.state_publisher.emit_vblank(data);
@@ -44,14 +50,18 @@ impl<P> drm::EventContext for PageFlipContext<P> where P: StatePublishing {
 // -------------------------------------------------------------------------------------------------
 
 /// `dharma` event handler for pageflip events.
-pub struct PageFlipEventHandler<P> where P: StatePublishing {
+pub struct PageFlipEventHandler<P>
+    where P: StatePublishing
+{
     drm_fd: io::RawFd,
     state_publisher: P,
 }
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> PageFlipEventHandler<P> where P: StatePublishing {
+impl<P> PageFlipEventHandler<P>
+    where P: StatePublishing
+{
     /// `PageFlipEventHandler` constructor.
     pub fn new(fd: io::RawFd, state_publisher: P) -> Self {
         PageFlipEventHandler {
@@ -64,7 +74,9 @@ impl<P> PageFlipEventHandler<P> where P: StatePublishing {
 // -------------------------------------------------------------------------------------------------
 
 /// This code executes in main dispatchers thread.
-impl<P> EventHandler for PageFlipEventHandler<P> where P: 'static + StatePublishing + Send + Clone {
+impl<P> EventHandler for PageFlipEventHandler<P>
+    where P: 'static + StatePublishing + Send + Clone
+{
     fn get_fd(&self) -> io::RawFd {
         self.drm_fd
     }

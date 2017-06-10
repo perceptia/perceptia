@@ -162,8 +162,7 @@ impl Evdev {
             if (ev.code == codes::BTN_LEFT) || (ev.code == codes::BTN_MIDDLE) ||
                (ev.code == codes::BTN_RIGHT) {
                 self.gateway.lock().unwrap().emit_button(ev.code, ev.value);
-            } else if (ev.code == codes::BTN_TOOL_FINGER) ||
-                      (ev.code == codes::BTN_TOUCH) {
+            } else if (ev.code == codes::BTN_TOOL_FINGER) || (ev.code == codes::BTN_TOUCH) {
                 self.gateway.lock().unwrap().emit_position_reset();
             } else {
                 log_nyimp!("Unhandled touchpad key event (code: {}, value: {})", ev.code, ev.value);
@@ -179,12 +178,10 @@ impl Evdev {
             } else if ev.code == codes::ABS_MT_TRACKING_ID {
                 self.gateway.lock().unwrap().emit_position_reset();
             } else if self.pressure > self.config.touchpad_pressure_threshold {
-                if (ev.code == codes::ABS_MT_POSITION_X) ||
-                   (ev.code == codes::ABS_X) {
+                if (ev.code == codes::ABS_MT_POSITION_X) || (ev.code == codes::ABS_X) {
                     let value = ev.value as f32 * self.config.touchpad_scale;
                     self.gateway.lock().unwrap().emit_position(Some(value as isize), None);
-                } else if (ev.code == codes::ABS_MT_POSITION_Y) ||
-                          (ev.code == codes::ABS_Y) {
+                } else if (ev.code == codes::ABS_MT_POSITION_Y) || (ev.code == codes::ABS_Y) {
                     let value = ev.value as f32 * self.config.touchpad_scale;
                     self.gateway.lock().unwrap().emit_position(None, Some(value as isize));
                 }

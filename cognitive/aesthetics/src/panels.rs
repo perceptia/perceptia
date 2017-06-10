@@ -74,7 +74,8 @@ impl<C> Panel<C>
            display_id: i32,
            font: &Option<Font>,
            workspaces: Option<&Vec<WorkspaceInfo>>,
-           coordinator: C) -> Self {
+           coordinator: C)
+           -> Self {
         let mut mine = Panel {
             coordinator: coordinator,
             sid: SurfaceId::invalid(),
@@ -119,12 +120,13 @@ impl<C> Panel<C>
         // Give the `Coordinator` the buffers later used for drawing panel.
         for ref mut info in self.buffers.iter_mut() {
             info.mpid = self.coordinator.create_memory_pool(unsafe { info.buffer.as_memory() });
-            if let Some(mvid) = self.coordinator.create_memory_view(info.mpid,
-                                                                    info.buffer.get_format(),
-                                                                    0,
-                                                                    info.buffer.get_width(),
-                                                                    info.buffer.get_height(),
-                                                                    info.buffer.get_stride()) {
+            if let Some(mvid) =
+                self.coordinator.create_memory_view(info.mpid,
+                                                    info.buffer.get_format(),
+                                                    0,
+                                                    info.buffer.get_width(),
+                                                    info.buffer.get_height(),
+                                                    info.buffer.get_stride()) {
                 info.mvid = mvid;
             }
         }
@@ -169,7 +171,7 @@ impl<C> Panel<C>
                 for workspace_info in workspaces.iter() {
                     // Paint the text
                     let glyphs: Vec<PositionedGlyph> =
-                                font.layout(&workspace_info.name, scale, offset).collect();
+                        font.layout(&workspace_info.name, scale, offset).collect();
 
                     let workspace_width = calculate_text_width(&glyphs) + 10;
                     let bg_intensity = {
@@ -279,9 +281,7 @@ impl<'a, C> PanelManager<'a, C>
         if let Some((bytes, _)) = system_fonts::get(&property) {
             let collection = FontCollection::from_bytes(bytes);
             match collection.into_font() {
-                Some(font) => {
-                    Some(font)
-                }
+                Some(font) => Some(font),
                 None => {
                     log_warn1!("Failed create font");
                     None
@@ -331,12 +331,16 @@ impl<'a, C> PanelManager<'a, C>
 
 fn calculate_text_width(glyphs: &Vec<PositionedGlyph>) -> usize {
     glyphs.iter()
-          .rev()
-          .filter_map(|g| g.pixel_bounding_box()
-                           .map(|b| b.min.x as f32 + g.unpositioned().h_metrics().advance_width))
-          .next()
-          .unwrap_or(0.0)
-          .ceil() as usize
+        .rev()
+        .filter_map(|g| {
+                        g.pixel_bounding_box().map(|b| {
+                                                       b.min.x as f32 +
+                                                       g.unpositioned().h_metrics().advance_width
+                                                   })
+                    })
+        .next()
+        .unwrap_or(0.0)
+        .ceil() as usize
 }
 
 // -------------------------------------------------------------------------------------------------

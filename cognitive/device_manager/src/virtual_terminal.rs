@@ -46,7 +46,9 @@ mod ioctl {
 // -------------------------------------------------------------------------------------------------
 
 /// Handler for events about switching virtual terminal.
-pub struct SwitchHandler<P> where P: StatePublishing {
+pub struct SwitchHandler<P>
+    where P: StatePublishing
+{
     signal_fd: signalfd::SignalFd,
     tty_fd: RawFd,
     state_publisher: P,
@@ -54,7 +56,9 @@ pub struct SwitchHandler<P> where P: StatePublishing {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> SwitchHandler<P> where P: StatePublishing {
+impl<P> SwitchHandler<P>
+    where P: StatePublishing
+{
     /// Constructs new `SwitchHandler`.
     pub fn new(tty_fd: RawFd, state_publisher: P) -> Self {
         let mut mask = signal::SigSet::empty();
@@ -70,7 +74,9 @@ impl<P> SwitchHandler<P> where P: StatePublishing {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> SwitchHandler<P> where P: StatePublishing {
+impl<P> SwitchHandler<P>
+    where P: StatePublishing
+{
     /// Handles activation of virtual terminal this application is assigned to.
     fn handle_activation(&mut self) {
         log_info1!("Virtual terminal activation");
@@ -93,7 +99,9 @@ impl<P> SwitchHandler<P> where P: StatePublishing {
 
 // -------------------------------------------------------------------------------------------------
 
-impl<P> EventHandler for SwitchHandler<P> where P: StatePublishing {
+impl<P> EventHandler for SwitchHandler<P>
+    where P: StatePublishing
+{
     fn get_fd(&self) -> RawFd {
         self.signal_fd.as_raw_fd()
     }
@@ -225,10 +233,7 @@ impl VirtualTerminal {
 // -------------------------------------------------------------------------------------------------
 
 /// Subscribes for terminal activation and deactivation events.
-fn subscribe<C>(path: &Path,
-                mut coordinator: C,
-                ro: &RestrictedOpener)
-                -> Result<(), Illusion>
+fn subscribe<C>(path: &Path, mut coordinator: C, ro: &RestrictedOpener) -> Result<(), Illusion>
     where C: 'static + StatePublishing + EventHandling + Send + Clone
 {
     match ro.open(path, fcntl::O_WRONLY | fcntl::O_CLOEXEC, stat::Mode::empty()) {
@@ -258,10 +263,7 @@ fn subscribe<C>(path: &Path,
 // -------------------------------------------------------------------------------------------------
 
 /// Sets up virtual terminal by subscribing messages about its activation and deactivation.
-pub fn setup<C>(tty_num: u32,
-                coordinator: C,
-                ro: &RestrictedOpener)
-                -> Result<(), Illusion>
+pub fn setup<C>(tty_num: u32, coordinator: C, ro: &RestrictedOpener) -> Result<(), Illusion>
     where C: 'static + StatePublishing + EventHandling + Send + Clone
 {
     let path_str = format!("{}{}", BASE_TTY_PATH, tty_num);

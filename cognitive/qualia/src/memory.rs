@@ -236,7 +236,9 @@ impl Memory {
 impl Drop for Memory {
     fn drop(&mut self) {
         match self.source {
-            MemorySource::Mapped => { let _ = mman::munmap(self.data as *mut _, self.size); }
+            MemorySource::Mapped => {
+                let _ = mman::munmap(self.data as *mut _, self.size);
+            }
             MemorySource::Borrowed => {}
         }
     }

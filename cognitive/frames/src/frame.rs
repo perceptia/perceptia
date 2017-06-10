@@ -126,8 +126,8 @@ impl Mobility {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Mode {
     Root,
-    Display{id: i32},
-    Workspace{is_active: bool},
+    Display { id: i32 },
+    Workspace { is_active: bool },
     Container,
     Leaf,
 }
@@ -137,7 +137,7 @@ pub enum Mode {
 impl Mode {
     /// Returns `true` if mode is `Display`, `false` otherwise.
     pub fn is_display(&self) -> bool {
-        if let Mode::Display{id: _} = *self {
+        if let Mode::Display { id: _ } = *self {
             true
         } else {
             false
@@ -146,7 +146,7 @@ impl Mode {
 
     /// Returns `true` if mode is `Workspace`, `false` otherwise.
     pub fn is_workspace(&self) -> bool {
-        if let Mode::Workspace{is_active: _} = *self {
+        if let Mode::Workspace { is_active: _ } = *self {
             true
         } else {
             false
@@ -222,7 +222,7 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             geometry: Geometry::Stacked,
             mobility: Mobility::Floating,
-            mode: Mode::Display{id: id},
+            mode: Mode::Display { id: id },
             pos: area.pos,
             size: area.size,
             title: title,
@@ -235,7 +235,7 @@ impl Parameters {
             sid: SurfaceId::invalid(),
             geometry: geometry,
             mobility: Mobility::Anchored,
-            mode: Mode::Workspace{is_active: active},
+            mode: Mode::Workspace { is_active: active },
             pos: Position::default(),
             size: Size::default(),
             title: title,
@@ -471,7 +471,7 @@ impl Frame {
     pub fn make_active(&self, active: bool) {
         if self.get_mode().is_workspace() {
             unsafe {
-                (*self.inner).params.mode = Mode::Workspace{is_active: active};
+                (*self.inner).params.mode = Mode::Workspace { is_active: active };
             }
         }
     }

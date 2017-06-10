@@ -253,8 +253,7 @@ impl SimpleEgl {
         }
 
         // Create EGL DRM image
-        let img = if let Some(create_img) =
-            egl_tools::get_proc_addr_of_create_drm_image_mesa() {
+        let img = if let Some(create_img) = egl_tools::get_proc_addr_of_create_drm_image_mesa() {
             let mut attribs = [egl::EGL_NONE; 9];
 
             attribs[0] = egl::EGL_WIDTH;

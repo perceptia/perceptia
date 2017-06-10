@@ -348,8 +348,7 @@ impl DefaultConfig for KeybindingsConfig {
                 vec![// visual
                      BindingEntry::new(uinput_sys::BTN_LEFT,
                                        modifier::LMTA,
-                                       binding_functions::SurfaceDrag::new()),
-                ]
+                                       binding_functions::SurfaceDrag::new())]
             },
         }
     }

@@ -259,25 +259,27 @@ impl<C> Compositor<C>
     /// corresponding workspace.
     pub fn move_globally(&mut self, sid: SurfaceId, vector: Vector, pin_point: Position) {
         if let Some(mut frame) = self.root.find_with_sid(sid) {
-            // Find workspaces
-            let pointed = self.root.find_pointed(pin_point);
-            let mut pointed_workspace = pointed.find_top().expect("pointed frame must have parent");
-            let frame_workspace = frame.find_top().expect("workspace must have parent");
+            if frame.get_mobility().is_floating() {
+                // Find workspaces
+                let pointed = self.root.find_pointed(pin_point);
+                let mut pointed_workspace = pointed.find_top().expect("frame must have parent");
+                let frame_workspace = frame.find_top().expect("workspace must have parent");
 
-            if pointed_workspace.equals_exact(&frame_workspace) {
-                // If workspace does not change simply move the frame
-                frame.move_with_contents(vector);
-            } else {
-                // If workspace changes resettle the frame with correct position
-                let first_global_position = frame.calculate_global_position();
-                let second_global_position = pointed_workspace.calculate_global_position();
-                let target_position = first_global_position + vector - second_global_position;
-                frame.resettle(&mut pointed_workspace,
-                               Some(target_position),
-                               &mut self.coordinator);
-                self.root.pop_recursively(&mut frame);
+                if pointed_workspace.equals_exact(&frame_workspace) {
+                    // If workspace does not change simply move the frame
+                    frame.move_with_contents(vector);
+                } else {
+                    // If workspace changes resettle the frame with correct position
+                    let first_global_position = frame.calculate_global_position();
+                    let second_global_position = pointed_workspace.calculate_global_position();
+                    let target_position = first_global_position + vector - second_global_position;
+                    frame.resettle(&mut pointed_workspace,
+                                   Some(target_position),
+                                   &mut self.coordinator);
+                    self.root.pop_recursively(&mut frame);
+                }
+                self.log_frames();
             }
-            self.log_frames();
         }
     }
 

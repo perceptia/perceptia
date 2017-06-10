@@ -22,6 +22,7 @@ use std::os::unix::io::RawFd;
 use std::sync::Arc;
 
 use nix::sys::mman;
+use nix::unistd;
 
 use errors;
 use defs::Size;
@@ -159,14 +160,16 @@ impl Pixmap for Buffer {
 
 // -------------------------------------------------------------------------------------------------
 
+#[derive(Debug)]
 enum MemorySource {
-    Mapped,
+    Mapped { fd: RawFd },
     Borrowed,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 /// Represents memory shared with client.
+#[derive(Debug)]
 pub struct Memory {
     data: *mut u8,
     size: usize,
@@ -196,7 +199,7 @@ impl Memory {
                 Ok(Memory {
                        data: memory as *mut u8,
                        size: size,
-                       source: MemorySource::Mapped,
+                       source: MemorySource::Mapped { fd: fd },
                    })
             }
             Err(err) => Err(errors::Illusion::General(format!("Failed to map memory! {:?}", err))),
@@ -236,8 +239,9 @@ impl Memory {
 impl Drop for Memory {
     fn drop(&mut self) {
         match self.source {
-            MemorySource::Mapped => {
-                let _ = mman::munmap(self.data as *mut _, self.size);
+            MemorySource::Mapped { fd } => {
+                mman::munmap(self.data as *mut _, self.size).expect("unmapping memory pool");
+                unistd::close(fd).expect("closing memory pool");
             }
             MemorySource::Borrowed => {}
         }

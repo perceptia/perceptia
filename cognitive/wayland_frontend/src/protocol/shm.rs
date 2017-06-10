@@ -5,7 +5,9 @@
 
 // TODO: Consider if it would be simpler to have all objects in one handler.
 
+use std::os::unix::io::RawFd;
 use std::rc::Rc;
+use nix;
 
 use skylane::server as wl;
 use skylane::server::{Bundle, Object, ObjectId, Task};
@@ -66,7 +68,7 @@ impl wl_shm::Interface for Shm {
                    this_object_id: ObjectId,
                    bundle: &mut Bundle,
                    new_pool_id: ObjectId,
-                   fd: i32,
+                   fd: RawFd,
                    size: i32)
                    -> Task {
         match Memory::new_mapped(fd, size as usize) {
@@ -93,14 +95,14 @@ impl wl_shm::Interface for Shm {
 struct ShmPool {
     proxy: ProxyRef,
     mpid: MemoryPoolId,
-    fd: i32,
+    fd: RawFd,
     size: usize,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl ShmPool {
-    fn new(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: i32, size: usize) -> Self {
+    fn new(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: RawFd, size: usize) -> Self {
         ShmPool {
             proxy: proxy_ref,
             mpid: mpid,
@@ -109,7 +111,7 @@ impl ShmPool {
         }
     }
 
-    fn new_object(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: i32, size: usize) -> Box<Object> {
+    fn new_object(proxy_ref: ProxyRef, mpid: MemoryPoolId, fd: RawFd, size: usize) -> Box<Object> {
         Box::new(Handler::<_, wl_shm_pool::Dispatcher>::new(Self::new(proxy_ref, mpid, fd, size)))
     }
 }
@@ -169,14 +171,23 @@ impl wl_shm_pool::Interface for ShmPool {
     }
 
     fn resize(&mut self, this_object_id: ObjectId, bundle: &mut Bundle, size: i32) -> Task {
-        match Memory::new_mapped(self.fd, size as usize) {
-            Ok(memory) => {
-                let mut proxy = self.proxy.borrow_mut();
-                proxy.replace_memory_pool(self.mpid, memory);
-                self.size = size as usize;
+        // NOTE: `Memory` take ownership of the file descriptor, so here it has to be duplicated.
+        match nix::unistd::dup(self.fd) {
+            Ok(fd) => {
+                self.fd = fd;
+                match Memory::new_mapped(self.fd, size as usize) {
+                    Ok(memory) => {
+                        let mut proxy = self.proxy.borrow_mut();
+                        proxy.replace_memory_pool(self.mpid, memory);
+                        self.size = size as usize;
+                    }
+                    Err(err) => {
+                        log_error!("Failed to map memory! {:?}", err);
+                    }
+                }
             }
             Err(err) => {
-                log_error!("Failed to map memory! {:?}", err);
+                log_error!("Failed to duplicate memory pool file descriptor! {:?}", err);
             }
         }
         Task::None

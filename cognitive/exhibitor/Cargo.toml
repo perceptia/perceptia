@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-exhibitor"
-version = "0.0.1"
+version = "0.1.0"
 description = "Managing displays and compositing surfaces for `cognitive`"
 documentation = "https://docs.rs/cognitive-exhibitor"
 homepage = "https://github.com/perceptia/perceptia"
@@ -11,15 +11,15 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 rand = "0.3"
-timber = "0.0.1"
-cognitive-qualia = "0.0.3"
-cognitive-outputs = "0.0.2"
-cognitive-frames = "0.0.1"
+timber = "0.1"
+cognitive-qualia = "0.1"
+cognitive-outputs = "0.1"
+cognitive-frames = "0.1"
 
 [dev-dependencies]
-cognitive-qualia = { version = "0.0.3", features = ["testing"] }
-cognitive-outputs = { version = "0.0.2", features = ["testing"] }
-cognitive-frames = { version = "0.0.1", features = ["testing"] }
+cognitive-qualia = { version = "0.1", features = ["testing"] }
+cognitive-outputs = { version = "0.1", features = ["testing"] }
+cognitive-frames = { version = "0.1", features = ["testing"] }
 
 [lib]
 name = "cognitive_exhibitor"

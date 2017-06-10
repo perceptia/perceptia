@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-renderer-gl"
-version = "0.0.2"
+version = "0.1.0"
 description = "GL rendering for `cognitive`"
 documentation = "https://docs.rs/cognitive-renderer-gl"
 homepage = "https://github.com/perceptia/perceptia"
@@ -10,12 +10,12 @@ license = "MPL-2.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-libc = "0.2.18"
-egl = "0.2.6"
-gl = "0.6.0"
-timber = "0.0.1"
-cognitive-graphics = "0.0.1"
-cognitive-qualia = "0.0.3"
+libc = "0.2"
+egl = "0.2"
+gl = "0.6"
+timber = "0.1"
+cognitive-graphics = "0.1"
+cognitive-qualia = "0.1"
 
 [lib]
 name = "cognitive_renderer_gl"

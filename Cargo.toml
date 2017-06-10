@@ -23,15 +23,15 @@ members = [
     ]
 
 [replace]
-"dharma:0.0.1" = { path = 'cognitive/dharma' }
-"timber:0.0.1" = { path = 'cognitive/timber' }
-"cognitive-graphics:0.0.1" = { path = 'cognitive/graphics' }
-"cognitive-qualia:0.0.3" = { path = 'cognitive/qualia' }
-"cognitive-renderer-gl:0.0.2" = { path = 'cognitive/renderer_gl' }
-"cognitive-inputs:0.0.3" = { path = 'cognitive/inputs' }
-"cognitive-outputs:0.0.2" = { path = 'cognitive/outputs' }
-"cognitive-frames:0.0.1" = { path = 'cognitive/frames' }
-"cognitive-aesthetics:0.0.1" = { path = 'cognitive/aesthetics' }
-"cognitive-device-manager:0.0.2" = { path = 'cognitive/device_manager' }
-"cognitive-exhibitor:0.0.1" = { path = 'cognitive/exhibitor' }
-"cognitive-wayland-frontend:0.0.1" = { path = 'cognitive/wayland_frontend' }
+"dharma:0.1.0" = { path = 'cognitive/dharma' }
+"timber:0.1.0" = { path = 'cognitive/timber' }
+"cognitive-graphics:0.1.0" = { path = 'cognitive/graphics' }
+"cognitive-qualia:0.1.0" = { path = 'cognitive/qualia' }
+"cognitive-renderer-gl:0.1.0" = { path = 'cognitive/renderer_gl' }
+"cognitive-inputs:0.1.0" = { path = 'cognitive/inputs' }
+"cognitive-outputs:0.1.0" = { path = 'cognitive/outputs' }
+"cognitive-frames:0.1.0" = { path = 'cognitive/frames' }
+"cognitive-aesthetics:0.1.0" = { path = 'cognitive/aesthetics' }
+"cognitive-device-manager:0.1.0" = { path = 'cognitive/device_manager' }
+"cognitive-exhibitor:0.1.0" = { path = 'cognitive/exhibitor' }
+"cognitive-wayland-frontend:0.1.0" = { path = 'cognitive/wayland_frontend' }

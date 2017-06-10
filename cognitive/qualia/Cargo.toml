@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-qualia"
-version = "0.0.3"
+version = "0.1.0"
 description = "Basic definitions and traits for `cognitive`"
 documentation = "https://docs.rs/cognitive-qualia"
 homepage = "https://github.com/perceptia/perceptia"
@@ -21,9 +21,9 @@ nix = "0.8"
 time = "0.1"
 serde = "0.9"
 serde_derive = "0.9"
-dharma = "0.0.1"
-timber = "0.0.1"
-cognitive-graphics = "0.0.1"
+dharma = "0.1"
+timber = "0.1"
+cognitive-graphics = "0.1"
 
 [lib]
 name = "cognitive_qualia"

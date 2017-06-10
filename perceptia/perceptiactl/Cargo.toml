@@ -1,20 +1,20 @@
 [package]
 name = "perceptiactl"
-version = "0.0.1"
+version = "0.5.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-clap = "2.19.3"
-egl = "0.2.6"
-gl = "0.6.0"
-nix = "0.8.0"
-libudev = "0.2.0"
-drm-rs = "0.1.2"
-image = "0.12.3"
-timber = "0.0.1"
-cognitive-graphics = "0.0.1"
-cognitive-qualia = "0.0.3"
-cognitive-device-manager = "0.0.2"
+clap = "2.19"
+egl = "0.2"
+gl = "0.6"
+nix = "0.8"
+libudev = "0.2"
+drm-rs = "0.1"
+image = "0.12"
+timber = "0.1"
+cognitive-graphics = "0.1"
+cognitive-qualia = "0.1"
+cognitive-device-manager = "0.1"
 gears = { path = "../gears" }
 skylane_simple_framework = { path = "../skylane_simple_framework" }
 

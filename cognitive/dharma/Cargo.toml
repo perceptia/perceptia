@@ -1,6 +1,6 @@
 [package]
 name = "dharma"
-version = "0.0.1"
+version = "0.1.0"
 description = "High-level framework for multi-thread applications"
 documentation = "https://docs.rs/dharma"
 homepage = "https://github.com/perceptia/perceptia"

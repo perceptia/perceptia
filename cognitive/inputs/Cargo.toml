@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-inputs"
-version = "0.0.3"
+version = "0.1.0"
 description = "Input related functionality for `cognitive`"
 documentation = "https://docs.rs/cognitive-inputs"
 homepage = "https://github.com/perceptia/perceptia"
@@ -11,8 +11,8 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
 xkbcommon = "0.2"
-timber = "0.0.1"
-cognitive-qualia = "0.0.3"
+timber = "0.1"
+cognitive-qualia = "0.1"
 
 [lib]
 name = "cognitive_inputs"

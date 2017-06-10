@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-outputs"
-version = "0.0.2"
+version = "0.1.0"
 description = "Output related functionality for `cognitive`"
 documentation = "https://docs.rs/cognitive-outputs"
 homepage = "https://github.com/perceptia/perceptia"
@@ -13,13 +13,13 @@ authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 testing = []
 
 [dependencies]
-libc = "0.2.18"
-drm-rs = "0.1.2"
-gbm-rs = "0.2.0"
-egl = "0.2.6"
-cognitive-graphics = "0.0.1"
-cognitive-qualia = "0.0.3"
-cognitive-renderer-gl = "0.0.2"
+libc = "0.2"
+drm-rs = "0.1"
+gbm-rs = "0.2"
+egl = "0.2"
+cognitive-graphics = "0.1"
+cognitive-qualia = "0.1"
+cognitive-renderer-gl = "0.1"
 
 [lib]
 name = "cognitive_outputs"

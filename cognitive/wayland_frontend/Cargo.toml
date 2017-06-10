@@ -1,6 +1,6 @@
 [package]
 name = "cognitive-wayland-frontend"
-version = "0.0.1"
+version = "0.1.0"
 description = "Wayland frontend for `cognitive`"
 documentation = "https://docs.rs/cognitive-wayland-frontend"
 homepage = "https://github.com/perceptia/perceptia"
@@ -10,15 +10,15 @@ license = "MPL-2.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
-nix = "0.8.0"
-drm-rs = "0.1.2"
-skylane = "0.1.2"
-skylane_protocols = "0.1.2"
-dharma = "0.0.1"
-timber = "0.0.1"
-cognitive-graphics = "0.0.1"
-cognitive-qualia = "0.0.3"
-cognitive-inputs = "0.0.3"
+nix = "0.8"
+drm-rs = "0.1"
+skylane = "0.1"
+skylane_protocols = "0.1"
+dharma = "0.1"
+timber = "0.1"
+cognitive-graphics = "0.1"
+cognitive-qualia = "0.1"
+cognitive-inputs = "0.1"
 
 [lib]
 name = "cognitive_wayland_frontend"

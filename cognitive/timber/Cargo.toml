@@ -1,6 +1,6 @@
 [package]
 name = "timber"
-version = "0.0.1"
+version = "0.1.0"
 description = "Simple configurable logging"
 documentation = "https://docs.rs/timber"
 homepage = "https://github.com/perceptia/perceptia"

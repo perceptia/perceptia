@@ -11,13 +11,14 @@
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 use uinput_sys;
 
 use dharma::Signaler;
 use qualia::{Action, Command, Direction, OptionalPosition, InteractionMode, Slide, Vector};
 use qualia::{modifier, Axis, Binding, Button, CatchResult, Key, InputCode, InputValue, KeyState};
 use qualia::{InputForwarding, InputHandling};
-use qualia::{perceptron, Perceptron};
+use qualia::{perceptron, Perceptron, Milliseconds};
 
 use config::KeybindingsConfig;
 use binding_functions::{self, Executor};
@@ -400,15 +401,27 @@ impl InputHandling for InputManager {
 /// events.
 #[derive(Clone)]
 pub struct InputForwarder {
+    /// Signaler for emitting signal to the rest of the application.
     signaler: Signaler<Perceptron>,
+
+    /// Reference time for obtaining event timestamps.
+    reference_time: Instant,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl InputForwarder {
     /// Constructs new `InputForwarder`.
-    pub fn new(signaler: Signaler<Perceptron>) -> Self {
-        InputForwarder { signaler: signaler }
+    pub fn new(signaler: Signaler<Perceptron>, reference_time: Instant) -> Self {
+        InputForwarder {
+            signaler: signaler,
+            reference_time: reference_time,
+        }
+    }
+
+    /// Helper method for obtaining event time stamp as milliseconds.
+    fn get_timestamp(&self) -> Milliseconds {
+        Milliseconds::elapsed_from(&self.reference_time)
     }
 }
 
@@ -417,7 +430,7 @@ impl InputForwarder {
 impl InputForwarding for InputForwarder {
     /// Emits key event.
     fn emit_key(&mut self, code: u16, value: i32) {
-        let key = Key::new_now(code, value);
+        let key = Key::new(code, value, self.get_timestamp());
         self.signaler.emit(perceptron::INPUT_KEYBOARD, Perceptron::InputKeyboard(key));
     }
 
@@ -437,7 +450,7 @@ impl InputForwarding for InputForwarder {
 
     /// Emits button event.
     fn emit_button(&mut self, code: u16, value: i32) {
-        let btn = Button::new_now(code, value);
+        let btn = Button::new(code, value, self.get_timestamp());
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_BUTTON, Perceptron::InputPointerButton(btn));
@@ -445,8 +458,9 @@ impl InputForwarding for InputForwarder {
 
     /// Emits exist event.
     fn emit_axis(&mut self, horizontal: isize, vertical: isize) {
-        let axis = Axis::new_now(Vector::new(horizontal, vertical),
-                                 Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32));
+        let axis = Axis::new(Vector::new(horizontal, vertical),
+                             Slide::new(10.0 * horizontal as f32, 10.0 * vertical as f32),
+                             self.get_timestamp());
 
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_AXIS, Perceptron::InputPointerAxis(axis));

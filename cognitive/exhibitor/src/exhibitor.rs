@@ -8,6 +8,7 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::time::Instant;
 
 use qualia::{SurfaceId, Button, InteractionMode, Command, OptionalPosition, Position, Size, Vector};
 use qualia::{perceptron, Perceptron};
@@ -38,6 +39,7 @@ pub struct Exhibitor<C>
     pointer: Rc<RefCell<Pointer<C>>>,
     displays: HashMap<i32, Display<C>>,
     dragger: Option<SurfaceDragger>,
+    reference_time: Instant,
     coordinator: C,
 }
 
@@ -49,14 +51,16 @@ impl<C> Exhibitor<C>
 {
     /// `Exhibitor` constructor.
     pub fn new(coordinator: C,
+               reference_time: Instant,
                strategist: Strategist,
                compositor_config: CompositorConfig)
                -> Self {
         Exhibitor {
             compositor: Compositor::new(coordinator.clone(), strategist, compositor_config),
-            pointer: Rc::new(RefCell::new(Pointer::new(coordinator.clone()))),
+            pointer: Rc::new(RefCell::new(Pointer::new(reference_time, coordinator.clone()))),
             displays: HashMap::new(),
             dragger: None,
+            reference_time: reference_time,
             coordinator: coordinator,
         }
     }
@@ -100,8 +104,11 @@ impl<C> Exhibitor<C>
 
         log_info1!("Exhibitor: creating display");
         let display_frame = self.compositor.create_display(info.id, info.area, info.make.clone());
-        let display =
-            Display::new(self.coordinator.clone(), self.pointer.clone(), output, display_frame);
+        let display = Display::new(self.coordinator.clone(),
+                                   self.reference_time,
+                                   self.pointer.clone(),
+                                   output,
+                                   display_frame);
         self.displays.insert(info.id, display);
 
         self.coordinator.emit(perceptron::DISPLAY_CREATED, Perceptron::DisplayCreated(info));

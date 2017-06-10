@@ -5,6 +5,8 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::time::Instant;
+
 use dharma::{DispatcherController, EventHandler, EventKind, Signaler, SignalId};
 
 use qualia::{Settings, Perceptron};
@@ -22,6 +24,7 @@ pub struct Context {
     signaler: Signaler<Perceptron>,
     dispatcher: DispatcherController,
     coordinator: Coordinator,
+    reference_time: Instant,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -40,44 +43,51 @@ impl Context {
             signaler: signaler,
             dispatcher: dispatcher,
             coordinator: coordinator,
+            reference_time: Instant::now(),
         }
     }
 
-    /// Emit signal with given `id` and `package` data.
+    /// Emits signal with given `id` and `package` data.
     pub fn emit(&mut self, id: SignalId, package: Perceptron) {
         self.signaler.emit(id, package);
     }
 
-    /// Add new event handler.
+    /// Adds new event handler.
     pub fn add_event_handler(&mut self,
                              event_handler: Box<EventHandler + Send>,
                              event_kind: EventKind) {
         self.dispatcher.add_source(event_handler, event_kind);
     }
 
-    /// Get global configuration.
+    /// Returns global configuration.
     pub fn get_config(&self) -> &Config {
         &self.config
     }
 
-    /// Get global settings.
+    /// Returns global settings.
     pub fn get_settings(&self) -> &Settings {
         &self.settings
     }
 
-    /// Get reference to `Signaler`.
+    /// Returns reference to `Signaler`.
     pub fn get_signaler(&mut self) -> &mut Signaler<Perceptron> {
         &mut self.signaler
     }
 
-    /// Get reference to `DispatcherController`.
+    /// Returns reference to `DispatcherController`.
     pub fn get_dispatcher(&mut self) -> &mut DispatcherController {
         &mut self.dispatcher
     }
 
-    /// Get reference to `Coordinator`.
+    /// Returns reference to `Coordinator`.
     pub fn get_coordinator(&mut self) -> &mut Coordinator {
         &mut self.coordinator
+    }
+
+    /// Returns `Instant` created during construction used as reference time for obtaining
+    /// timestamps for events.
+    pub fn get_reference_time(&self) -> Instant {
+        self.reference_time
     }
 }
 

@@ -30,7 +30,7 @@ impl DeviceManagerModule {
         let input_manager = InputManager::new(config.get_keybindings_config(), signaler.clone());
 
         // Construct `InputForwarder` implementing `InputForwarding`.
-        let input_forwarder = InputForwarder::new(signaler);
+        let input_forwarder = InputForwarder::new(signaler, context.get_reference_time());
 
         // Construct the module.
         DeviceManagerModule {

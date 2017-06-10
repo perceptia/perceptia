@@ -44,6 +44,7 @@ impl Environment {
         let output = Box::new(OutputMock::new(output_info.clone()));
         let coordinator = CoordinatorMock::new();
         let mut exhibitor = Exhibitor::new(coordinator.clone(),
+                                           std::time::Instant::now(),
                                            Strategist::default(),
                                            common::configurations::compositor());
 

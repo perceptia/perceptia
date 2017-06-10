@@ -3,26 +3,29 @@
 
 //! This module contains functionality for storing time.
 
-use time;
+use std::time::{Duration, Instant};
 
 // -------------------------------------------------------------------------------------------------
 
 /// This structure represents amount of time in milliseconds.
 #[derive(Clone, Copy, Debug, PartialEq, PartialOrd)]
 pub struct Milliseconds {
-    milliseconds: u64,
+    ms: u64,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Milliseconds {
-    pub fn now() -> Self {
-        let now = time::now();
-        Milliseconds { milliseconds: now.tm_sec as u64 * 1000 + now.tm_nsec as u64 / 1000000 }
+    pub fn elapsed_from(instant: &Instant) -> Self {
+        Self::from_duration(&instant.elapsed())
+    }
+
+    pub fn from_duration(d: &Duration) -> Self {
+        Milliseconds { ms: d.as_secs() * 1000 + d.subsec_nanos() as u64 / 1000000 }
     }
 
     pub fn get_value(&self) -> u64 {
-        self.milliseconds
+        self.ms
     }
 }
 

@@ -3,9 +3,6 @@
 
 //! `qualia` is crate containing enumerations, macros and definitions common to all the crates of
 //! `cognitive` and traits used to decouple `cognitive` creates one from another.
-//!
-//! Unfortunately it is also home for small tools not important enough to have their own crate.
-//! TODO: Identify and move to separate crate tools not fitting to purpose of this crate.
 
 extern crate backtrace;
 extern crate libc;
@@ -73,15 +70,15 @@ pub use traits::GraphicsManagement;
 pub use traits::{AestheticsCoordinationTrait, ExhibitorCoordinationTrait};
 pub use traits::FrontendsCoordinationTrait;
 
+pub mod settings;
+pub use settings::{Settings, Directories, KeymapSettings};
+
 #[macro_use]
 pub mod log;
 pub use log::level;
 
 pub mod env;
 pub use env::{Env, LogDestination};
-
-pub mod settings;
-pub use settings::{Settings, Directories, KeymapSettings};
 
 #[cfg(feature = "testing")]
 pub mod coordinator_mock;

@@ -7,6 +7,7 @@
 
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::time::Instant;
 
 use qualia::{Buffer, Illusion, Milliseconds, OutputInfo, perceptron, Perceptron, Position};
 use qualia::{ExhibitorCoordinationTrait, SurfaceContext, SurfaceId};
@@ -23,6 +24,7 @@ pub struct Display<C>
     where C: ExhibitorCoordinationTrait
 {
     coordinator: C,
+    reference_time: Instant,
     pointer: Rc<RefCell<Pointer<C>>>,
     output: Box<Output>,
     frame: Frame,
@@ -38,12 +40,14 @@ impl<C> Display<C>
 {
     /// `Display` constructor.
     pub fn new(coordinator: C,
+               reference_time: Instant,
                pointer: Rc<RefCell<Pointer<C>>>,
                output: Box<Output>,
                frame: Frame)
                -> Self {
         let mut d = Display {
             coordinator: coordinator,
+            reference_time: reference_time,
             pointer: pointer,
             output: output,
             frame: frame,
@@ -152,7 +156,8 @@ impl<C> Display<C>
 
         // Send frame notifications
         for context in surfaces {
-            let frame = Perceptron::SurfaceFrame(context.id, Milliseconds::now());
+            let ms = Milliseconds::elapsed_from(&self.reference_time);
+            let frame = Perceptron::SurfaceFrame(context.id, ms);
             self.coordinator.emit(perceptron::SURFACE_FRAME, frame);
         }
 

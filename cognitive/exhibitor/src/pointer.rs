@@ -6,6 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use std::collections::HashMap;
+use std::time::Instant;
 
 use qualia::{Area, Milliseconds, OptionalPosition, Position, Vector};
 use qualia::{perceptron, Perceptron, SurfaceContext, SurfaceId, ExhibitorCoordinationTrait};
@@ -39,6 +40,9 @@ pub struct Pointer<C>
     /// Surface ID of keyboard-focused surface.
     kfsid: SurfaceId,
 
+    /// Reference time for obtaining event timestamps.
+    reference_time: Instant,
+
     /// Coordinator.
     coordinator: C,
 }
@@ -49,7 +53,7 @@ impl<C> Pointer<C>
     where C: ExhibitorCoordinationTrait
 {
     /// `Pointer` constructor.
-    pub fn new(coordinator: C) -> Self {
+    pub fn new(reference_time: Instant, coordinator: C) -> Self {
         Pointer {
             position: Position::default(),
             last_position: OptionalPosition::default(),
@@ -58,6 +62,7 @@ impl<C> Pointer<C>
             csid: SurfaceId::invalid(),
             pfsid: SurfaceId::invalid(),
             kfsid: SurfaceId::invalid(),
+            reference_time: reference_time,
             coordinator: coordinator,
         }
     }
@@ -169,10 +174,10 @@ impl<C> Pointer<C>
             self.csid = SurfaceId::invalid();
             self.coordinator.set_pointer_focus(sid, surface_relative)
         } else if self.pfsid.is_valid() && (surface_relative != self.last_surface_relative) {
-            let now = Milliseconds::now();
+            let ms = Milliseconds::elapsed_from(&self.reference_time);
             self.last_surface_relative = surface_relative;
             self.coordinator.emit(perceptron::POINTER_RELATIVE_MOTION,
-                                  Perceptron::PointerRelativeMotion(sid, surface_relative, now));
+                                  Perceptron::PointerRelativeMotion(sid, surface_relative, ms));
         }
     }
 }

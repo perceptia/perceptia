@@ -99,15 +99,6 @@ impl Button {
             time: milliseconds,
         }
     }
-
-    /// Constructs `Button` with current time.
-    pub fn new_now(code: u16, value: i32) -> Self {
-        Button {
-            code: code,
-            value: value,
-            time: timing::Milliseconds::now(),
-        }
-    }
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -128,14 +119,6 @@ impl Axis {
             discrete: discrete,
             continuous: continuous,
             time: time,
-        }
-    }
-
-    pub fn new_now(discrete: Vector, continuous: Slide) -> Self {
-        Axis {
-            discrete: discrete,
-            continuous: continuous,
-            time: timing::Milliseconds::now(),
         }
     }
 }

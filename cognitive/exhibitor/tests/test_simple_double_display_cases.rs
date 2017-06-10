@@ -55,6 +55,7 @@ impl Environment {
 
         let coordinator_mock = CoordinatorMock::new();
         let mut exhibitor = Exhibitor::new(coordinator_mock.clone(),
+                                           std::time::Instant::now(),
                                            strategist,
                                            common::configurations::compositor());
 

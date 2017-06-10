@@ -29,6 +29,7 @@ impl ExhibitorModule {
         ExhibitorModule {
             last_output_id: 0,
             exhibitor: Exhibitor::new(coordinator,
+                                      context.get_reference_time(),
                                       Strategist::new_from_config(config.strategist.clone()),
                                       config.compositor.clone()),
         }

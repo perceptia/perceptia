@@ -1,0 +1,17 @@
+[package]
+name = "cognitive-renderer-pixmap"
+version = "0.1.0"
+description = "Simple pixmap rendering for `cognitive`"
+documentation = "https://docs.rs/cognitive-renderer-pixmap"
+homepage = "https://github.com/perceptia/perceptia"
+repository = "https://github.com/perceptia/perceptia"
+keywords = ["rendering", "cognitive"]
+license = "MPL-2.0"
+authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
+
+[dependencies]
+cognitive-qualia = "0.1"
+
+[lib]
+name = "cognitive_renderer_pixmap"
+path = "src/lib.rs"

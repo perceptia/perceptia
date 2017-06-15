@@ -7,9 +7,67 @@
 
 use xkbcommon::xkb;
 
-use qualia::{Illusion, KeyboardConfig, InputCode, InputValue};
+use qualia::{modifier, CatchResult, Illusion, KeyState, KeyboardConfig, InputCode, InputValue};
 
 use keymap::XkbKeymap;
+use codes;
+
+// -------------------------------------------------------------------------------------------------
+
+/// This structure holds current state of modifier keys.
+#[derive(Debug)]
+pub struct ModState {
+    /// Current state of modifiers.
+    modifiers: modifier::ModifierType,
+
+    /// List of key codes used as modifiers.
+    modifier_keys: Vec<(InputCode, modifier::ModifierType)>,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+impl ModState {
+    /// Constructs new `ModState`.
+    pub fn new() -> Self {
+        ModState {
+            modifiers: modifier::NONE,
+            modifier_keys: vec![(codes::KEY_LEFTCTRL as InputCode, modifier::LCTL),
+                                (codes::KEY_RIGHTCTRL as InputCode, modifier::RCTL),
+                                (codes::KEY_LEFTSHIFT as InputCode, modifier::LSHF),
+                                (codes::KEY_RIGHTSHIFT as InputCode, modifier::RSHF),
+                                (codes::KEY_LEFTALT as InputCode, modifier::LALT),
+                                (codes::KEY_RIGHTALT as InputCode, modifier::RALT),
+                                (codes::KEY_LEFTMETA as InputCode, modifier::LMTA),
+                                (codes::KEY_RIGHTMETA as InputCode, modifier::RMTA)],
+        }
+    }
+
+    /// Returns current state of modifier keys.
+    #[inline]
+    pub fn get(&self) -> modifier::ModifierType {
+        self.modifiers
+    }
+
+    /// Updating state of the modifiers.
+    pub fn update(&mut self, code: InputCode, value: InputValue) -> CatchResult {
+        let mut result = CatchResult::Passed;
+        for &(modifier_code, modifier_flag) in self.modifier_keys.iter() {
+            if code == modifier_code {
+                if value == KeyState::Pressed as InputValue {
+                    if (self.modifiers & modifier_flag) != 0x0 {
+                        result = CatchResult::Caught;
+                    } else {
+                        self.modifiers |= modifier_flag;
+                    }
+                } else {
+                    self.modifiers &= !modifier_flag;
+                }
+                break;
+            }
+        }
+        result
+    }
+}
 
 // -------------------------------------------------------------------------------------------------
 
@@ -73,10 +131,12 @@ impl KeyboardState {
 
     /// Updates state with given key. Returns `true` when modifiers changed, false otherwise.
     pub fn update(&mut self, code: InputCode, value: InputValue) -> bool {
-        let direction = if value == 0 {
-            xkb::KeyDirection::Up
-        } else {
-            xkb::KeyDirection::Down
+        let direction = {
+            if value == 0 {
+                xkb::KeyDirection::Up
+            } else {
+                xkb::KeyDirection::Down
+            }
         };
 
         // Offset the key code by 8, as the evdev XKB rules reflect X's

@@ -17,11 +17,13 @@ extern crate cognitive_exhibitor as exhibitor;
 extern crate cognitive_wayland_frontend as wayland_frontend;
 
 extern crate gears;
+extern crate virtualization;
 extern crate coordination;
 
 mod aesthetics_module;
 mod device_manager_module;
 mod exhibitor_module;
+mod virtualization_module;
 mod wayland_service;
 
 use dharma::{EventLoopInfo, Dispatcher, ServiceInfo, Signaler};
@@ -30,6 +32,7 @@ use coordination::{Context, Coordinator};
 use aesthetics_module::AestheticsModuleConstructor;
 use device_manager_module::DeviceManagerModuleConstructor;
 use exhibitor_module::ExhibitorModuleConstructor;
+use virtualization_module::VirtualizationModuleConstructor;
 use wayland_service::WaylandServiceConstructor;
 
 fn main() {
@@ -38,7 +41,7 @@ fn main() {
     std::panic::set_hook(Box::new(|info| gears::functions::panic_hook(info)));
 
     // Prepare tools
-    let env = qualia::Env::create(qualia::LogDestination::LogFile, "perceptia");
+    let env = qualia::Env::create(qualia::LogDestination::StdOut, "perceptia");
     let config = gears::Config::read_or_default(env.get_directories());
     let keymap = inputs::Keymap::new(&env, config.get_keyboard_config()).unwrap();
     let settings = qualia::Settings::new(keymap.get_settings());
@@ -58,6 +61,7 @@ fn main() {
     let aesthetics_module = AestheticsModuleConstructor::new();
     let device_manager_module = DeviceManagerModuleConstructor::new();
     let exhibitor_module = ExhibitorModuleConstructor::new();
+    let virtualization_module = VirtualizationModuleConstructor::new();
     let wayland_service = WaylandServiceConstructor::new(context.clone());
 
     // Create loops
@@ -70,7 +74,11 @@ fn main() {
     let wayland_info = ServiceInfo::new("p:wayland".to_owned(), wayland_service);
 
     // Assign modules to threads
-    utils_info.add_module(device_manager_module);
+    if settings.is_test_mode() {
+        utils_info.add_module(virtualization_module);
+    } else {
+        utils_info.add_module(device_manager_module);
+    }
     utils_info.add_module(aesthetics_module);
     exhibitor_info.add_module(exhibitor_module);
 

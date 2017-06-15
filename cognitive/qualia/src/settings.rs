@@ -5,6 +5,7 @@
 
 // -------------------------------------------------------------------------------------------------
 
+use std::env;
 use std::sync::{Arc, RwLock};
 use std::os::unix::io::RawFd;
 use std::path::PathBuf;
@@ -37,19 +38,31 @@ pub struct KeymapSettings {
 #[derive(Clone)]
 pub struct Settings {
     keymap: Arc<RwLock<KeymapSettings>>,
+    is_test_mode: bool,
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Settings {
-    /// `Settings` constructor.
+    /// Constructs new `Settings`.
     pub fn new(keymap: KeymapSettings) -> Self {
-        Settings { keymap: Arc::new(RwLock::new(keymap)) }
+        Settings {
+            keymap: Arc::new(RwLock::new(keymap)),
+            is_test_mode: env::var("DISPLAY").is_ok() || env::var("WAYLAND_DISPLAY").is_ok(),
+        }
     }
 
-    /// Get key map related settings.
+    /// Returns key map related settings.
     pub fn get_keymap(&self) -> KeymapSettings {
         self.keymap.read().unwrap().clone()
+    }
+
+    /// Returns true if the application is in test mode.
+    ///
+    /// In test mode the application does not use any input nor output device. Whole user
+    /// interaction with the application it provided by some remote desktop protocol.
+    pub fn is_test_mode(&self) -> bool {
+        self.is_test_mode
     }
 }
 

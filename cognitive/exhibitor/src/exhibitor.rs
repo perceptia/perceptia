@@ -211,8 +211,8 @@ impl<C> Exhibitor<C>
     }
 
     /// Handle pointer position reset event.
-    pub fn on_position_reset(&self) {
-        self.pointer.borrow_mut().reset_position()
+    pub fn on_position_reset(&self, position: Option<Position>) {
+        self.pointer.borrow_mut().reset_position(position, &self.displays);
     }
 
     /// Handles interaction mode switch.

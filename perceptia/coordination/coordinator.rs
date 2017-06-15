@@ -16,7 +16,7 @@ use dharma;
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
 use qualia::{Position, Size, Vector, DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
 use qualia::{Buffer, Memory, PixelFormat, GraphicsManagement, WorkspaceState};
-use qualia::{perceptron, Perceptron, Transfer, DrmBundle};
+use qualia::{perceptron, Perceptron, Transfer, OutputType};
 use qualia::{SurfaceContext, SurfaceId, SurfaceInfo, DataSource};
 use qualia::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use qualia::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -146,8 +146,8 @@ impl InnerCoordinator {
     }
 
     /// Publishes newly found output.
-    fn publish_output(&mut self, drm_bundle: DrmBundle) {
-        self.signaler.emit(perceptron::OUTPUT_FOUND, Perceptron::OutputFound(drm_bundle));
+    fn publish_output(&mut self, output_type: OutputType) {
+        self.signaler.emit(perceptron::OUTPUT_FOUND, Perceptron::OutputFound(output_type));
     }
 
     /// Notifies about V-blank.
@@ -263,7 +263,7 @@ impl Coordinator {
         dispatcher.add_source(signal_source, dharma::event_kind::READ);
 
         // Set up 500 milliseconds timer.
-        let mut timer_signaler = signaler.clone();
+        let timer_signaler = signaler.clone();
         let timer = dharma::Timer::new(Duration::new(0, 500_000_000), move || {
             timer_signaler.emit(perceptron::TIMER_500, Perceptron::Timer500);
         }).expect("creating 500 millisecond timer");
@@ -538,9 +538,9 @@ impl StatePublishing for Coordinator {
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.
-    fn publish_output(&mut self, drm_budle: DrmBundle) {
+    fn publish_output(&mut self, output_type: OutputType) {
         let mut mine = self.inner.lock().unwrap();
-        mine.publish_output(drm_budle);
+        mine.publish_output(output_type);
     }
 
     /// Lock and call corresponding method from `InnerCoordinator`.

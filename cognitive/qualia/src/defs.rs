@@ -6,8 +6,6 @@
 // -------------------------------------------------------------------------------------------------
 
 use std;
-use std::path::PathBuf;
-use std::os::unix::io::RawFd;
 use std::collections::HashMap;
 
 use enums;
@@ -354,6 +352,23 @@ impl Area {
         }
     }
 
+    /// Returns new area constituting an intersection between two other areas. If areas do not
+    /// overlap returns `None`.
+    pub fn intersected(&self, other: &Area) -> Option<Area> {
+        let left = std::cmp::max(self.pos.x, other.pos.x);
+        let top = std::cmp::max(self.pos.y, other.pos.y);
+        let right = std::cmp::min(self.pos.x + self.size.width as isize,
+                                  other.pos.x + other.size.width as isize);
+        let bottom = std::cmp::min(self.pos.y + self.size.height as isize,
+                                   other.pos.y + other.size.height as isize);
+
+        if (left < right) && (top < bottom) {
+            Some(Area::create(left, top, (right - left) as usize, (bottom - top) as usize))
+        } else {
+            None
+        }
+    }
+
     /// Check if `Area` has zero area.
     pub fn is_zero(&self) -> bool {
         self.size.is_zero()
@@ -411,41 +426,6 @@ impl std::default::Default for Area {
         Area {
             pos: Position::default(),
             size: Size::default(),
-        }
-    }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Set of informations about output.
-#[derive(Clone, Debug)]
-pub struct OutputInfo {
-    pub id: i32, // TODO: Define new type for output ID.
-    pub area: Area,
-    pub physical_size: Size,
-    pub refresh_rate: usize,
-    pub make: String,
-    pub model: String,
-}
-
-// -------------------------------------------------------------------------------------------------
-
-impl OutputInfo {
-    /// Constructs new `OutputInfo`.
-    pub fn new(id: i32,
-               area: Area,
-               physical_size: Size,
-               refresh_rate: usize,
-               make: String,
-               model: String)
-               -> Self {
-        OutputInfo {
-            id: id,
-            area: area,
-            physical_size: physical_size,
-            refresh_rate: refresh_rate,
-            make: make,
-            model: model,
         }
     }
 }
@@ -518,17 +498,6 @@ impl std::default::Default for Command {
             string: "".to_owned(),
         }
     }
-}
-
-// -------------------------------------------------------------------------------------------------
-
-/// Structure containing all data needed to initialize DRM output.
-#[derive(Clone, Debug)]
-pub struct DrmBundle {
-    pub path: PathBuf,
-    pub fd: RawFd,
-    pub crtc_id: u32,
-    pub connector_id: u32,
 }
 
 // -------------------------------------------------------------------------------------------------

@@ -116,7 +116,7 @@ impl RendererGl {
         Ok(())
     }
 
-    /// Draw passed frame scene.
+    /// Draws passed frame scene.
     pub fn draw(&mut self,
                 layunder: &Vec<SurfaceContext>,
                 surfaces: &Vec<SurfaceContext>,
@@ -132,7 +132,7 @@ impl RendererGl {
         Ok(())
     }
 
-    /// Swap buffers.
+    /// Swaps buffers.
     pub fn swap_buffers(&mut self) -> Result<(), Illusion> {
         let context = self.egl.make_current()?;
         context.swap_buffers()?;

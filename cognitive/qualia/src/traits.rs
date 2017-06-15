@@ -10,10 +10,10 @@ use dharma::{EventHandler, EventHandlerId, EventKind};
 use graphics::egl_tools::HwImage;
 use graphics::attributes::{EglAttributes, DmabufAttributes};
 
-use defs::{DrmBundle, WorkspaceState};
-use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
+use defs::{WorkspaceState, DmabufId, EglImageId, MemoryPoolId, MemoryViewId, SignalId, SurfaceId};
 use image::PixelFormat;
 use memory::{Buffer, Memory};
+use output::OutputType;
 use perceptron::Perceptron;
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -84,7 +84,7 @@ pub trait StatePublishing {
     fn notify(&mut self);
 
     /// Publishes newly found output.
-    fn publish_output(&mut self, drm_budle: DrmBundle);
+    fn publish_output(&mut self, output_type: OutputType);
 
     /// Notifies about V-blank.
     fn emit_vblank(&mut self, display_id: i32);

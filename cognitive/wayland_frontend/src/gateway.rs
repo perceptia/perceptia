@@ -7,7 +7,7 @@
 
 use std::os::unix::io::RawFd;
 
-use qualia::{Axis, Button, DrmBundle, Key, Milliseconds, OutputInfo, Position, Size};
+use qualia::{Axis, Button, Key, Milliseconds, OutputInfo, OutputType, Position, Size};
 use qualia::{SurfaceId, surface_state};
 use inputs::KeyMods;
 
@@ -15,7 +15,7 @@ use inputs::KeyMods;
 
 pub trait Gateway {
     /// Notifies output was found.
-    fn on_output_found(&mut self, bundle: DrmBundle);
+    fn on_output_found(&mut self, output_type: OutputType);
 
     /// Notifies display was created.
     fn on_display_created(&mut self, output_info: OutputInfo);

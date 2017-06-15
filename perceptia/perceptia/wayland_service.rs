@@ -184,7 +184,7 @@ impl WaylandService {
             Perceptron::ScreenshotDone => {
                 self.engine.on_screenshot_done();
             }
-            Perceptron::OutputFound(bundle) => self.engine.on_output_found(bundle),
+            Perceptron::OutputFound(output_type) => self.engine.on_output_found(output_type),
             _ => {}
         }
     }

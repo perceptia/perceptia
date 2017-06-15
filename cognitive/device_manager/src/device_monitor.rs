@@ -98,7 +98,7 @@ impl<P> EventHandler for DeviceMonitor<P>
         unsafe { libudev_sys::udev_monitor_get_fd(self.monitor) }
     }
 
-    fn process_event(&mut self, _: EventKind) {
+    fn process_event(&mut self, _: EventKind) -> Result<(), ()> {
         let device = unsafe { libudev_sys::udev_monitor_receive_device(self.monitor) };
         if !device.is_null() {
             let sysname = unsafe {
@@ -116,6 +116,7 @@ impl<P> EventHandler for DeviceMonitor<P>
         } else {
             log_warn2!("Received empty device monitor event");
         };
+        Ok(())
     }
 }
 

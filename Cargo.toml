@@ -1,11 +1,14 @@
 [workspace]
 
 members = [
+        "extra/rust-vnc",
+
         "cognitive/dharma",
         "cognitive/timber",
         "cognitive/graphics",
         "cognitive/qualia",
         "cognitive/renderer_gl",
+        "cognitive/renderer_pixmap",
         "cognitive/inputs",
         "cognitive/outputs",
         "cognitive/frames",
@@ -28,6 +31,7 @@ members = [
 "cognitive-graphics:0.1.0" = { path = 'cognitive/graphics' }
 "cognitive-qualia:0.1.0" = { path = 'cognitive/qualia' }
 "cognitive-renderer-gl:0.1.0" = { path = 'cognitive/renderer_gl' }
+#"cognitive-renderer-pixmap:0.1.0" = { path = 'cognitive/renderer_pixmap' }
 "cognitive-inputs:0.1.0" = { path = 'cognitive/inputs' }
 "cognitive-outputs:0.1.0" = { path = 'cognitive/outputs' }
 "cognitive-frames:0.1.0" = { path = 'cognitive/frames' }
@@ -35,3 +39,4 @@ members = [
 "cognitive-device-manager:0.1.0" = { path = 'cognitive/device_manager' }
 "cognitive-exhibitor:0.1.0" = { path = 'cognitive/exhibitor' }
 "cognitive-wayland-frontend:0.1.0" = { path = 'cognitive/wayland_frontend' }
+"vnc:0.4.0" = { path = 'extra/rust-vnc' }

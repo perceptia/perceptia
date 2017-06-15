@@ -14,6 +14,7 @@ cognitive-device-manager = "0.1"
 cognitive-exhibitor = "0.1"
 cognitive-wayland-frontend = "0.1"
 gears = { path = "../gears" }
+virtualization = { path = "../virtualization" }
 coordination = { path = "../coordination" }
 
 [[bin]]

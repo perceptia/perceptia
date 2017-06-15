@@ -75,7 +75,7 @@ impl<P> Signaler<P>
     }
 
     /// Emit signal `id` containing data `package`. All subscribed `Receiver`s will be notified.
-    pub fn emit(&mut self, id: bridge::SignalId, package: P) {
+    pub fn emit(&self, id: bridge::SignalId, package: P) {
         let mut mine = self.inner.lock().unwrap();
 
         // Find sender assigned to signal
@@ -94,7 +94,7 @@ impl<P> Signaler<P>
     /// application) is going to shut down.
     pub fn terminate(&mut self) {
         let mut mine = self.inner.lock().unwrap();
-        for mut sender in mine.registry.iter_mut() {
+        for sender in mine.registry.iter_mut() {
             sender.send_special(bridge::SpecialCommand::Terminate);
         }
     }

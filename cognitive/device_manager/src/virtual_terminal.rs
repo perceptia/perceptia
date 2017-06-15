@@ -106,7 +106,7 @@ impl<P> EventHandler for SwitchHandler<P>
         self.signal_fd.as_raw_fd()
     }
 
-    fn process_event(&mut self, _: EventKind) {
+    fn process_event(&mut self, _: EventKind) -> Result<(), ()> {
         match self.signal_fd.read_signal() {
             Ok(ossi) => {
                 match ossi {
@@ -123,9 +123,11 @@ impl<P> EventHandler for SwitchHandler<P>
                         log_warn1!("Received invalid siginfo!");
                     }
                 }
+                Ok(())
             }
             Err(err) => {
                 log_warn1!("Error occurred during processing signal! ({:?})", err);
+                Err(())
             }
         }
     }

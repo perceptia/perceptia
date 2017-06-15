@@ -6,7 +6,7 @@
 // -------------------------------------------------------------------------------------------------
 
 use timing;
-use defs::{Slide, Vector};
+use defs::{Position, Slide, Vector};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -165,7 +165,7 @@ pub trait InputForwarding: Send {
     fn emit_axis(&mut self, horizontal: isize, vertical: isize);
 
     /// Emits position reset event.
-    fn emit_position_reset(&mut self);
+    fn emit_position_reset(&mut self, position: Option<Position>);
 
     /// Emits system activity event.
     fn emit_system_activity_event(&mut self);

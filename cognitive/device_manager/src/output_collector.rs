@@ -14,7 +14,7 @@ use nix::sys::stat;
 use libdrm::drm_mode;
 
 use dharma::event_kind;
-use qualia::{DrmBundle, Illusion, EventHandling, HwGraphics, StatePublishing};
+use qualia::{DrmBundle, Illusion, EventHandling, HwGraphics, OutputType, StatePublishing};
 
 use graphics_manager::GraphicsManager;
 use pageflip::PageFlipEventHandler;
@@ -96,7 +96,7 @@ impl<C> OutputCollector<C>
                     connector_id: connector.get_connector_id(),
                     crtc_id: encoder.get_crtc_id(),
                 };
-                self.coordinator.publish_output(bundle);
+                self.coordinator.publish_output(OutputType::Drm(bundle));
             } else {
                 log_warn1!("No encoder for connector '{:?}'", connector.get_connector_id());
             }

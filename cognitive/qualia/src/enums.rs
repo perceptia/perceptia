@@ -3,8 +3,7 @@
 
 //! Enum definitions.
 
-// -------------------------------------------------------------------------------------------------
-
+use std::os::unix::io::RawFd;
 use std::fmt;
 
 // -------------------------------------------------------------------------------------------------
@@ -149,6 +148,18 @@ pub enum InteractionMode {
     Normal,
     Insert,
     Visual,
+}
+
+// -------------------------------------------------------------------------------------------------
+
+/// Describes change of clients state.
+#[derive(Debug, Clone, Copy)]
+pub enum ClientChange {
+    /// New client connected. `fd` is file descriptor of the connection.
+    Connected { fd: RawFd },
+
+    /// Client was disconnected. `id` contains event handler ID of that connection.
+    Disconnected { id: u64 },
 }
 
 // -------------------------------------------------------------------------------------------------

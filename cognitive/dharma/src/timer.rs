@@ -57,11 +57,12 @@ impl<F> EventHandler for Timer<F>
         self.timer_fd.as_raw_fd()
     }
 
-    fn process_event(&mut self, event_kind: EventKind) {
+    fn process_event(&mut self, event_kind: EventKind) -> Result<(), ()> {
         if event_kind.intersects(event_kind::READ) {
             self.timer_fd.read();
             (self.callback)();
         }
+        Ok(())
     }
 }
 

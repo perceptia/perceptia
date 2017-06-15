@@ -68,12 +68,13 @@ impl EventHandler for Evdev {
         self.fd
     }
 
-    fn process_event(&mut self, event_kind: EventKind) {
+    fn process_event(&mut self, event_kind: EventKind) -> Result<(), ()> {
         if event_kind.intersects(event_kind::READ) {
             self.read_events();
         } else if event_kind.intersects(event_kind::HANGUP) {
             self.gateway.lock().unwrap().emit_system_activity_event();
         }
+        Ok(())
     }
 }
 
@@ -163,7 +164,7 @@ impl Evdev {
                (ev.code == codes::BTN_RIGHT) {
                 self.gateway.lock().unwrap().emit_button(ev.code, ev.value);
             } else if (ev.code == codes::BTN_TOOL_FINGER) || (ev.code == codes::BTN_TOUCH) {
-                self.gateway.lock().unwrap().emit_position_reset();
+                self.gateway.lock().unwrap().emit_position_reset(None);
             } else {
                 log_nyimp!("Unhandled touchpad key event (code: {}, value: {})", ev.code, ev.value);
             }
@@ -176,7 +177,7 @@ impl Evdev {
                 log_info4!("Touchpad pressure: {:?}", ev.value);
                 self.pressure = ev.value;
             } else if ev.code == codes::ABS_MT_TRACKING_ID {
-                self.gateway.lock().unwrap().emit_position_reset();
+                self.gateway.lock().unwrap().emit_position_reset(None);
             } else if self.pressure > self.config.touchpad_pressure_threshold {
                 if (ev.code == codes::ABS_MT_POSITION_X) || (ev.code == codes::ABS_X) {
                     let value = ev.value as f32 * self.config.touchpad_scale;

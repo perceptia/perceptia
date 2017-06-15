@@ -1,10 +1,8 @@
 // This Source Code Form is subject to the terms of the Mozilla Public License, v. 2.0. If a copy of
 // the MPL was not distributed with this file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-//! This crate contains code dedicated to managing output device like buffer swapping or controlling
-//! v-blanks.
-
-// -------------------------------------------------------------------------------------------------
+//! This crate contains code dedicated to rendering the surfaces and other elements of the scene
+//! using OpenGL.
 
 extern crate libc;
 extern crate gl;
@@ -23,5 +21,3 @@ mod cache_gl;
 pub mod renderer_gl;
 
 pub use renderer_gl::RendererGl;
-
-// -------------------------------------------------------------------------------------------------

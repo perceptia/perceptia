@@ -145,3 +145,32 @@ fn should_inflate_area() {
 }
 
 // -------------------------------------------------------------------------------------------------
+
+/// Check if results of intersection of two areas are correct.
+#[test]
+fn should_intersect_area() {
+    #[cfg_attr(rustfmt, rustfmt_skip)]
+    let tests: [(Area, Area); 10] = [
+        (Area::create( 0,  0, 20, 20), Area::create(10, 10, 10, 10)),
+        (Area::create(20,  0, 10, 20), Area::create(20, 10, 10, 10)),
+        (Area::create(30,  0, 20, 20), Area::create(30, 10, 10, 10)),
+        (Area::create( 0, 20, 20, 10), Area::create(10, 20, 10, 10)),
+        (Area::create(20, 20, 10, 10), Area::create(20, 20, 10, 10)),
+        (Area::create(30, 20, 20, 10), Area::create(30, 20, 10, 10)),
+        (Area::create( 0, 30, 20, 20), Area::create(10, 30, 10, 10)),
+        (Area::create(20, 30, 10, 20), Area::create(20, 30, 10, 10)),
+        (Area::create(30, 30, 20, 20), Area::create(30, 30, 10, 10)),
+        (Area::create( 0,  0, 50, 50), Area::create(10, 10, 30, 30))
+    ];
+
+    for test in &tests {
+        let area = Area::create(10, 10, 30, 30).intersected(&test.0).unwrap();
+        assert!(area == test.1,
+                "Area inflated by {:?} should be {:?}, is {:?}",
+                test.0,
+                test.1,
+                area);
+    }
+}
+
+// -------------------------------------------------------------------------------------------------

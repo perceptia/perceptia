@@ -6,8 +6,8 @@
 // -------------------------------------------------------------------------------------------------
 
 use dharma::{Module, ModuleConstructor, SignalId};
-use qualia::{DrmBundle, perceptron, Perceptron};
-use outputs::DrmOutput;
+use qualia::{OutputType, perceptron, Perceptron};
+use outputs::{DrmOutput, VirtualOutput};
 use coordination::{Context, Coordinator};
 use exhibitor::{Exhibitor, Strategist};
 
@@ -74,11 +74,12 @@ impl Module for ExhibitorModule {
             Perceptron::PageFlip(id) => self.exhibitor.on_pageflip(id),
             Perceptron::Command(ref command) => self.exhibitor.on_command(command.clone()),
 
-            Perceptron::InputPointerMotion(ref vector) => self.exhibitor.on_motion(vector.clone()),
-            Perceptron::InputPointerPosition(ref pos) => self.exhibitor.on_position(pos.clone()),
-            Perceptron::InputPointerButton(ref btn) => self.exhibitor.on_button(btn.clone()),
-            Perceptron::InputPointerPositionReset => self.exhibitor.on_position_reset(),
-
+            Perceptron::InputPointerMotion(vector) => self.exhibitor.on_motion(vector),
+            Perceptron::InputPointerPosition(position) => self.exhibitor.on_position(position),
+            Perceptron::InputPointerButton(button) => self.exhibitor.on_button(button),
+            Perceptron::InputPointerPositionReset(position) => {
+                self.exhibitor.on_position_reset(position);
+            }
             Perceptron::CursorSurfaceChange(sid) => self.exhibitor.on_cursor_surface_change(sid),
 
             Perceptron::SurfaceReady(sid) => self.exhibitor.on_surface_ready(sid),
@@ -117,16 +118,32 @@ impl ExhibitorModule {
     /// Helper method for handling new output.
     ///
     /// For unit testing construction of the output must be done outside `Exhibitor`.
-    fn on_output_found(&mut self, bundle: DrmBundle) {
+    fn on_output_found(&mut self, output_type: OutputType) {
         self.last_output_id += 1;
-        match DrmOutput::new(bundle, self.last_output_id) {
-            Ok(output) => {
-                log_info2!("Created output: {}", output.get_info().make);
-                self.exhibitor.on_output_found(output);
+        match output_type {
+            OutputType::Drm(bundle) => {
+                match DrmOutput::new(bundle, self.last_output_id) {
+                    Ok(output) => {
+                        log_info2!("Created DRM output: {}", output.get_info().make);
+                        self.exhibitor.on_output_found(output);
+                    }
+                    Err(err) => {
+                        log_error!("Could not create DRM output: {}", err);
+                        return;
+                    }
+                }
             }
-            Err(err) => {
-                log_error!("Could not create output: {}", err);
-                return;
+            OutputType::Virtual(bundle) => {
+                match VirtualOutput::new(bundle, self.last_output_id) {
+                    Ok(output) => {
+                        log_info2!("Created virtual output: {}", output.get_info().make);
+                        self.exhibitor.on_output_found(output);
+                    }
+                    Err(err) => {
+                        log_error!("Could not create virtual output: {}", err);
+                        return;
+                    }
+                }
             }
         }
     }

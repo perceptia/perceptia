@@ -12,12 +12,16 @@ extern crate gbm_rs as libgbm;
 extern crate cognitive_graphics as graphics;
 extern crate cognitive_qualia as qualia;
 extern crate cognitive_renderer_gl as renderer_gl;
+extern crate cognitive_renderer_pixmap as renderer_pixmap;
 
 mod output;
 pub use output::Output;
 
 mod drm_output;
 pub use drm_output::DrmOutput;
+
+mod virtual_output;
+pub use virtual_output::VirtualOutput;
 
 #[cfg(feature = "testing")]
 pub mod output_mock;

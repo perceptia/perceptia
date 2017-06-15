@@ -7,8 +7,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use defs::{DrmBundle, Position, SignalId, Size, Vector, WorkspaceState};
+use defs::{Position, SignalId, Size, Vector, WorkspaceState};
 use defs::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
+use output::OutputType;
 use surface::{DataSource, SurfaceContext, SurfaceId, SurfaceInfo, surface_state, show_reason};
 use surface::{SurfaceManagement, SurfaceControl, SurfaceViewer};
 use surface::{SurfaceAccess, SurfaceListing, SurfaceFocusing};
@@ -169,7 +170,7 @@ impl StatePublishing for CoordinatorMock {
     fn input_devices_changed(&mut self) {}
     fn output_devices_changed(&mut self) {}
     fn notify(&mut self) {}
-    fn publish_output(&mut self, _drm_bundle: DrmBundle) {}
+    fn publish_output(&mut self, _output_type: OutputType) {}
     fn emit_vblank(&mut self, _display_id: i32) {}
     fn emit_page_flip(&mut self, _display_id: i32) {}
 }

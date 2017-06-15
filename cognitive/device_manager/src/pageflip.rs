@@ -81,7 +81,7 @@ impl<P> EventHandler for PageFlipEventHandler<P>
         self.drm_fd
     }
 
-    fn process_event(&mut self, event_kind: EventKind) {
+    fn process_event(&mut self, event_kind: EventKind) -> Result<(), ()> {
         if event_kind.intersects(event_kind::READ) {
             let ctx = Box::new(PageFlipContext::new(self.state_publisher.clone()));
             drm::handle_event(self.drm_fd, ctx);
@@ -89,6 +89,7 @@ impl<P> EventHandler for PageFlipEventHandler<P>
             // It seems that DRM devices do not hang-up during virtual terminal switch and after
             // application regains access they are ready to use.
         }
+        Ok(())
     }
 }
 

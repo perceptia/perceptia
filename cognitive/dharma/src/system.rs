@@ -76,7 +76,7 @@ impl<P> EventHandler for SignalEventHandler<P>
         self.fd.as_raw_fd()
     }
 
-    fn process_event(&mut self, _: EventKind) {
+    fn process_event(&mut self, _: EventKind) -> Result<(), ()> {
         match self.fd.read_signal() {
             Ok(ossi) => {
                 match ossi {
@@ -97,6 +97,7 @@ impl<P> EventHandler for SignalEventHandler<P>
                 panic!("Error occurred during processing signal! ({:?})", err);
             }
         }
+        Ok(())
     }
 }
 

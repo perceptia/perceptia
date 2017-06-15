@@ -5,9 +5,9 @@
 
 // -------------------------------------------------------------------------------------------------
 
-use qualia::{modifier, CatchResult, InputCode, InputValue, KeyState};
+use qualia::{modifier, CatchResult, InputCode, InputValue, KeyState, Position};
 use qualia::{InputForwarding, InputHandling};
-use inputs::codes;
+use inputs::{codes, ModState};
 
 // For built-in VT switching
 use virtual_terminal::VirtualTerminal;
@@ -22,11 +22,10 @@ use virtual_terminal::VirtualTerminal;
 /// as used-defined bindings. If neither caught the event it is emitted to the rest of application
 /// using `InputForwarder`.
 pub struct InputGateway {
-    modifiers: modifier::ModifierType,
+    modifiers: ModState,
     handler: Box<InputHandling>,
     forwarder: Box<InputForwarding>,
     vt: Option<VirtualTerminal>,
-    modifier_keys: Vec<(InputCode, modifier::ModifierType)>,
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -38,18 +37,10 @@ impl InputGateway {
                vt: Option<VirtualTerminal>)
                -> Self {
         InputGateway {
-            modifiers: modifier::NONE,
+            modifiers: ModState::new(),
             handler: handler,
             forwarder: forwarder,
             vt: vt,
-            modifier_keys: vec![(codes::KEY_LEFTCTRL as InputCode, modifier::LCTL),
-                                (codes::KEY_RIGHTCTRL as InputCode, modifier::RCTL),
-                                (codes::KEY_LEFTSHIFT as InputCode, modifier::LSHF),
-                                (codes::KEY_RIGHTSHIFT as InputCode, modifier::RSHF),
-                                (codes::KEY_LEFTALT as InputCode, modifier::LALT),
-                                (codes::KEY_RIGHTALT as InputCode, modifier::RALT),
-                                (codes::KEY_LEFTMETA as InputCode, modifier::LMTA),
-                                (codes::KEY_RIGHTMETA as InputCode, modifier::RMTA)],
         }
     }
 }
@@ -66,7 +57,7 @@ impl InputForwarding for InputGateway {
         }
 
         // Update modifiers
-        if self.update_modifiers(code, value) != CatchResult::Passed {
+        if self.modifiers.update(code, value) != CatchResult::Passed {
             return;
         }
 
@@ -76,7 +67,7 @@ impl InputForwarding for InputGateway {
         }
 
         // Try to execute key binding
-        if self.handler.catch_key(code, value, self.modifiers) == CatchResult::Passed {
+        if self.handler.catch_key(code, value, self.modifiers.get()) == CatchResult::Passed {
             self.forwarder.emit_key(code, value);
         }
     }
@@ -94,7 +85,7 @@ impl InputForwarding for InputGateway {
     /// Emits button event.
     fn emit_button(&mut self, code: u16, value: i32) {
         // Try to execute button binding
-        if self.handler.catch_button(code, value, self.modifiers) == CatchResult::Passed {
+        if self.handler.catch_button(code, value, self.modifiers.get()) == CatchResult::Passed {
             self.forwarder.emit_button(code, value);
         }
     }
@@ -105,8 +96,8 @@ impl InputForwarding for InputGateway {
     }
 
     /// Emits position reset event.
-    fn emit_position_reset(&mut self) {
-        self.forwarder.emit_position_reset();
+    fn emit_position_reset(&mut self, position: Option<Position>) {
+        self.forwarder.emit_position_reset(position);
     }
 
     /// Emits system activity event.
@@ -118,33 +109,13 @@ impl InputForwarding for InputGateway {
 // -------------------------------------------------------------------------------------------------
 
 impl InputGateway {
-    /// Helper method for updating modifiers.
-    fn update_modifiers(&mut self, code: InputCode, value: InputValue) -> CatchResult {
-        let mut result = CatchResult::Passed;
-        for &(modifier_code, modifier_flag) in self.modifier_keys.iter() {
-            if code == modifier_code {
-                if value == KeyState::Pressed as InputValue {
-                    if (self.modifiers & modifier_flag) != 0x0 {
-                        result = CatchResult::Caught;
-                    } else {
-                        self.modifiers |= modifier_flag;
-                    }
-                } else {
-                    self.modifiers &= !modifier_flag;
-                }
-                break;
-            }
-        }
-        result
-    }
-
     /// Helper method for executing built-in key bindings.
     fn catch_key(&self, code: InputCode, value: InputValue) -> CatchResult {
         if (codes::KEY_F1 <= code) && (code <= codes::KEY_F12) {
-            if (self.modifiers == (modifier::LALT | modifier::LCTL)) ||
-               (self.modifiers == (modifier::LALT | modifier::RCTL)) ||
-               (self.modifiers == (modifier::RALT | modifier::LCTL)) ||
-               (self.modifiers == (modifier::RALT | modifier::RCTL)) {
+            if (self.modifiers.get() == (modifier::LALT | modifier::LCTL)) ||
+               (self.modifiers.get() == (modifier::LALT | modifier::RCTL)) ||
+               (self.modifiers.get() == (modifier::RALT | modifier::LCTL)) ||
+               (self.modifiers.get() == (modifier::RALT | modifier::RCTL)) {
                 if value == KeyState::Pressed as InputValue {
                     self.switch_vt((code + 1 - codes::KEY_F1) as i32);
                 }

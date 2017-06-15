@@ -55,12 +55,13 @@ impl dharma::EventHandler for DisplayEventHandler {
         self.socket.get_fd()
     }
 
-    fn process_event(&mut self, event_kind: dharma::EventKind) {
-        if event_kind.intersects(dharma::event_kind::HANGUP) {
-            self.terminate();
-        } else if event_kind.intersects(dharma::event_kind::READ) {
+    fn process_event(&mut self, event_kind: dharma::EventKind) -> Result<(), ()> {
+        if event_kind.intersects(dharma::event_kind::READ) {
             self.process_events();
+        } else if event_kind.intersects(dharma::event_kind::HANGUP) {
+            self.terminate();
         }
+        Ok(())
     }
 }
 
@@ -109,12 +110,13 @@ impl dharma::EventHandler for ClientEventHandler {
         self.socket.get_fd()
     }
 
-    fn process_event(&mut self, event_kind: dharma::EventKind) {
+    fn process_event(&mut self, event_kind: dharma::EventKind) -> Result<(), ()> {
         if event_kind.intersects(dharma::event_kind::HANGUP) {
             self.terminate();
         } else if event_kind.intersects(dharma::event_kind::READ) {
             self.process_events();
         }
+        Ok(())
     }
 
     fn set_id(&mut self, id: dharma::EventHandlerId) {

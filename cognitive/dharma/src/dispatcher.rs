@@ -101,7 +101,7 @@ pub trait EventHandler {
     fn get_fd(&self) -> RawFd;
 
     /// Callback function executed on event received.
-    fn process_event(&mut self, event_kind: EventKind);
+    fn process_event(&mut self, event_kind: EventKind) -> Result<(), ()>;
 
     /// This method is called by `Dispatcher` right after adding this `EventHandler`. Passed value
     /// is newly assigned ID of `EventHandler` which can be later used to delete it from
@@ -165,10 +165,14 @@ impl<E> InnerState<E>
     ///
     /// If file descriptor hung up the corresponding handler is removed.
     pub fn process(&mut self, id: EventHandlerId, event_kind: EventKind) {
-        if let Some(handler) = self.handlers.get_mut(&id) {
-            handler.process_event(event_kind);
-        }
-        if event_kind == event_kind::HANGUP {
+        let result = {
+            if let Some(handler) = self.handlers.get_mut(&id) {
+                handler.process_event(event_kind)
+            } else {
+                Ok(())
+            }
+        };
+        if event_kind == event_kind::HANGUP || result.is_err() {
             self.delete_source(id);
         }
     }

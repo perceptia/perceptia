@@ -139,8 +139,13 @@ impl<C> Pointer<C>
     }
 
     /// Reset position of the pointer.
-    pub fn reset_position(&mut self) {
-        self.last_position = OptionalPosition::default()
+    pub fn reset_position(&mut self,
+                          position: Option<Position>,
+                          displays: &HashMap<i32, Display<C>>) {
+        self.last_position = OptionalPosition::default();
+        if let Some(position) = position {
+            self.position = self.cast(position, displays);
+        }
     }
 
     /// Checks for change of surface pointer is hovering or relative position to this surface and

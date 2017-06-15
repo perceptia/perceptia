@@ -20,7 +20,7 @@ use skylane_protocols::server::xdg_shell_unstable_v6::{zxdg_toplevel_v6, zxdg_su
 use skylane_protocols::server::weston_screenshooter::weston_screenshooter;
 
 use cognitive_graphics::attributes::{EglAttributes, DmabufAttributes};
-use qualia::{Settings, Transfer, DrmBundle, Memory};
+use qualia::{Settings, Transfer, OutputType, Memory};
 use qualia::{Area, Axis, Button, Key, Milliseconds};
 use qualia::{OutputInfo, PixelFormat, Position, Size, Vector};
 use qualia::{DmabufId, EglImageId, MemoryPoolId, MemoryViewId};
@@ -630,7 +630,7 @@ impl Facade for Proxy {
 // -------------------------------------------------------------------------------------------------
 
 impl Gateway for Proxy {
-    fn on_output_found(&mut self, _bundle: DrmBundle) {}
+    fn on_output_found(&mut self, _output_type: OutputType) {}
 
     fn on_display_created(&mut self, output_info: OutputInfo) {
         self.register_global(protocol::output::get_global(output_info));

@@ -15,10 +15,11 @@ use std::time::Instant;
 use uinput_sys;
 
 use dharma::Signaler;
-use qualia::{Action, Command, Direction, OptionalPosition, InteractionMode, Slide, Vector};
-use qualia::{modifier, Axis, Binding, Button, CatchResult, Key, InputCode, InputValue, KeyState};
+use qualia::{Action, Axis, Binding, Button, CatchResult, Command};
+use qualia::{Direction, InputCode, InputValue, InteractionMode, Key, KeyState};
+use qualia::{Milliseconds, OptionalPosition, Position, Slide, Vector, modifier};
 use qualia::{InputForwarding, InputHandling};
-use qualia::{perceptron, Perceptron, Milliseconds};
+use qualia::{perceptron, Perceptron};
 
 use config::KeybindingsConfig;
 use binding_functions::{self, Executor};
@@ -467,10 +468,10 @@ impl InputForwarding for InputForwarder {
     }
 
     /// Emits position reset event.
-    fn emit_position_reset(&mut self) {
+    fn emit_position_reset(&mut self, position: Option<Position>) {
         // Signal event
         self.signaler.emit(perceptron::INPUT_POINTER_POSITION_RESET,
-                           Perceptron::InputPointerPositionReset);
+                           Perceptron::InputPointerPositionReset(position));
     }
 
     /// Emits system activity event.

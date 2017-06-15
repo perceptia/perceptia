@@ -12,7 +12,7 @@ use std::os::unix::io::RawFd;
 use dharma;
 use skylane::server as wl;
 
-use qualia::{Axis, Button, DrmBundle, Milliseconds, OutputInfo, Position, Size};
+use qualia::{Axis, Button, Milliseconds, OutputInfo, OutputType, Position, Size};
 use qualia::{Key, KeyboardConfig, Perceptron, Settings};
 use qualia::{surface_state, SurfaceId};
 use qualia::FrontendsCoordinationTrait;
@@ -207,8 +207,10 @@ impl Engine {
 // -------------------------------------------------------------------------------------------------
 
 impl Gateway for Engine {
-    fn on_output_found(&mut self, bundle: DrmBundle) {
-        self.mediator.borrow_mut().set_drm_device(bundle.fd, bundle.path);
+    fn on_output_found(&mut self, output_type: OutputType) {
+        if let OutputType::Drm(bundle) = output_type {
+            self.mediator.borrow_mut().set_drm_device(bundle.fd, bundle.path);
+        }
     }
 
     fn on_display_created(&mut self, output_info: OutputInfo) {

@@ -13,10 +13,10 @@ use std::os::unix::io::RawFd;
 use dharma::SignalId;
 
 use timing::Milliseconds;
-use enums::InteractionMode;
-use defs::{Command, OutputInfo, SurfaceId};
-use defs::{Position, OptionalPosition, Vector, Size, DrmBundle};
+use enums::{ClientChange, InteractionMode};
+use defs::{Command, SurfaceId, Position, OptionalPosition, Vector, Size};
 use input::{Axis, Button, Key};
+use output::{OutputInfo, OutputType};
 
 // -------------------------------------------------------------------------------------------------
 
@@ -53,6 +53,7 @@ pub const TAKE_SCREENSHOT: SignalId = 101;
 pub const SCREENSHOT_DONE: SignalId = 102;
 pub const WORKSPACE_STATE_CHANGED: SignalId = 111;
 pub const TIMER_500: SignalId = 121;
+pub const REMOTE_CLIENT_CHANGE: SignalId = 131;
 
 // -------------------------------------------------------------------------------------------------
 
@@ -72,13 +73,13 @@ pub enum Perceptron {
     CustomId(u64),
     VerticalBlank(i32),
     PageFlip(i32),
-    OutputFound(DrmBundle),
+    OutputFound(OutputType),
     DisplayCreated(OutputInfo),
     InputPointerMotion(Vector),
     InputPointerPosition(OptionalPosition),
     InputPointerButton(Button),
     InputPointerAxis(Axis),
-    InputPointerPositionReset,
+    InputPointerPositionReset(Option<Position>),
     InputKeyboard(Key),
     SurfaceReady(SurfaceId),
     SurfaceDestroyed(SurfaceId),
@@ -98,6 +99,7 @@ pub enum Perceptron {
     ScreenshotDone,
     WorkspaceStateChanged,
     Timer500,
+    RemoteClientChange(ClientChange),
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -124,7 +126,9 @@ impl std::fmt::Debug for Perceptron {
             }
             Perceptron::InputPointerButton(ref btn) => write!(f, "InputPointerButton({:?})", btn),
             Perceptron::InputPointerAxis(ref axis) => write!(f, "InputPointerAxis({:?})", axis),
-            Perceptron::InputPointerPositionReset => write!(f, "InputPointerPositionReset"),
+            Perceptron::InputPointerPositionReset(ref position) => {
+                write!(f, "InputPointerPositionReset({:?})", position)
+            }
             Perceptron::InputKeyboard(ref key) => write!(f, "InputKeyboard({:?})", key),
 
             Perceptron::SurfaceReady(ref sid) => write!(f, "SurfaceReady({})", sid),
@@ -161,6 +165,7 @@ impl std::fmt::Debug for Perceptron {
             Perceptron::ScreenshotDone => write!(f, "ScreenshotDone"),
             Perceptron::WorkspaceStateChanged => write!(f, "WorkspaceStateChanged"),
             Perceptron::Timer500 => write!(f, "Timer500"),
+            Perceptron::RemoteClientChange(change) => write!(f, "RemoteClientChange({:?})", change),
         }
     }
 }

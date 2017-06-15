@@ -17,9 +17,11 @@ libc = "0.2"
 drm-rs = "0.1"
 gbm-rs = "0.2"
 egl = "0.2"
+vnc = "0.4"
 cognitive-graphics = "0.1"
 cognitive-qualia = "0.1"
 cognitive-renderer-gl = "0.1"
+cognitive-renderer-pixmap = { path = "../renderer_pixmap" }
 
 [lib]
 name = "cognitive_outputs"

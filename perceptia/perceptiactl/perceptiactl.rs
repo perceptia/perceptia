@@ -10,6 +10,7 @@ extern crate gl;
 extern crate libudev;
 extern crate drm as libdrm;
 extern crate image;
+extern crate chrono;
 
 extern crate timber;
 extern crate cognitive_graphics as graphics;
@@ -37,7 +38,12 @@ fn main() {
         .subcommand(clap::SubCommand::with_name("about")
             .about("Prints information about this program."))
         .subcommand(clap::SubCommand::with_name("screenshot")
-            .about("Takes screenshot"))
+            .about("Takes screenshot")
+            .arg(clap::Arg::with_name("path")
+                .long("path")
+                .help("Sets screenshot path")
+                .value_name("PATH")
+                .takes_value(true)))
         .subcommand(clap::SubCommand::with_name("verify-config")
             .about("Verifies validity of configurations files(s)"))
         .get_matches();
@@ -49,8 +55,13 @@ fn main() {
         ("about", Some(_)) => {
             about::process();
         }
-        ("screenshot", Some(_)) => {
-            screenshot::process();
+        ("screenshot", Some(subcommand)) => {
+            if let Some(path) = subcommand.value_of("path") {
+                screenshot::process(String::from(path));
+            } else {
+                let now = chrono::Local::now();
+                screenshot::process(now.format("screenshot-%Y-%m-%d_%H%M%S.png").to_string());
+            }
         }
         ("verify-config", Some(_)) => {
             verify_config::process();

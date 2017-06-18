@@ -4,6 +4,7 @@ version = "0.5.0"
 authors = ["Wojciech Kluczka <wojciech.kluczka@gmail.com>"]
 
 [dependencies]
+chrono = "0.3.1"
 clap = "2.19"
 egl = "0.2"
 gl = "0.6"

@@ -741,6 +741,7 @@ dependencies = [
 name = "perceptiactl"
 version = "0.5.0"
 dependencies = [
+ "chrono 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "clap 2.24.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "cognitive-device-manager 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "cognitive-graphics 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",

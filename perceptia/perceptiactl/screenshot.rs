@@ -19,18 +19,22 @@ const GLOBAL_SCREENSHOOTER: &'static str = "weston_screenshooter";
 
 // -------------------------------------------------------------------------------------------------
 
-pub fn process() {
+pub fn process(path: String) {
     println!("Taking screenshot");
-    Application::new().run(ScreenshooterConstructor::new())
+    Application::new().run(ScreenshooterConstructor::new(path))
 }
 
 // -------------------------------------------------------------------------------------------------
 
-struct ScreenshooterConstructor {}
+struct ScreenshooterConstructor {
+    path: String,
+}
 
 impl ScreenshooterConstructor {
-    fn new() -> Self {
-        ScreenshooterConstructor {}
+    fn new(path: String) -> Self {
+        ScreenshooterConstructor {
+            path: path,
+        }
     }
 }
 
@@ -38,7 +42,7 @@ impl ListenerConstructor for ScreenshooterConstructor {
     type Listener = Screenshooter;
 
     fn construct(&self, controller: Controller) -> Box<Self::Listener> {
-        Box::new(Screenshooter::new(controller))
+        Box::new(Screenshooter::new(controller, self.path.clone()))
     }
 }
 
@@ -50,18 +54,20 @@ struct Screenshooter {
     image: Option<image::RgbaImage>,
     x_offset: isize,
     y_offset: isize,
+    path: String
 }
 
 // -------------------------------------------------------------------------------------------------
 
 impl Screenshooter {
-    pub fn new(controller: Controller) -> Self {
+    pub fn new(controller: Controller, path: String) -> Self {
         Screenshooter {
             controller: controller,
             outputs: Vec::new(),
             image: None,
             x_offset: 0,
             y_offset: 0,
+            path: path,
         }
     }
 
@@ -84,8 +90,7 @@ impl Screenshooter {
         if self.outputs.len() > 0 {
             self.controller.take_screenshot(&self.outputs.last().expect("get output"));
         } else {
-            // TODO: Generate better file name and allow passing it from command line.
-            let path = Path::new("screenshot.png");
+            let path = Path::new(&self.path);
 
             println!("Writing to {:?}", path);
             match self.image.as_mut().expect("borrow image").save(&path) {
